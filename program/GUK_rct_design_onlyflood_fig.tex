@@ -1,0 +1,381 @@
+% Set the overall layout of the tree
+\tikzstyle{level 1}=[level distance = 1.75cm, sibling distance = 2.1cm]
+\tikzstyle{level 2}=[level distance = 3.00cm, sibling distance = 2.0cm]
+\tikzstyle{level 3}=[level distance = 1.5cm, sibling distance = 0.85cm]
+\tikzstyle{level 4}=[level distance = 2.5cm, sibling distance = 1cm]
+\tikzstyle{level 5}=[level distance = 3cm, sibling distance = 2cm]
+\tikzstyle{level 6}=[level distance = 3cm, sibling distance = 2cm]
+\tikzstyle{level 7}=[level distance = 3cm, sibling distance = 2cm]
+\tikzstyle{level 8}=[level distance = 2.25cm, sibling distance = 2cm]
+% Define styles for bags and leafs
+\tikzstyle{bag} = [text width = 5em, text centered, thick]
+\tikzstyle{testbag} = [minimum width=2.5em, text centered, thick, top color = darkgreen, bottom color = green]
+\tikzstyle{Hbbag} = [text width=3em, text centered, thick, top color = blue!40, bottom color = blue!40, color = black] 
+\tikzstyle{govbag} = [minimum width=2.5em, text centered, thick, top color = gray!30, bottom color = gray!10, color = black]
+%\tikzstyle{end} = [circle, minimum width = 3pt, fill, inner sep = 0pt]
+\tikzstyle{end} = [text width = 4em, text centered, thick]
+\tikzstyle{endbox} = [draw, very thick, fill = white, rectangle, 
+	minimum height = 3em, minimum width=7em, 
+	node distance = 8em, font = {\sffamily\bfseries}]
+\tikzstyle{endboxEdgePortion} = [black, thick]
+\tikzstyle{endboxEdge} = [endboxEdgePortion, ->]
+\tikzstyle{edgeLabel} = [pos = 0.5, text centered, font = {\sffamily\small}]
+\tikzstyle{bracebag} = [decoration = {brace}, decorate]
+\tikzstyle{surveybag} = [edgeLabel, xshift = 0em, shading = ball,
+				top color = green, bottom color = green, color = black]
+\tikzstyle{floodbag} = [edgeLabel, xshift = 0em, shading = ball,
+				top color = paleblue, bottom color = blue, color = black]
+\tikzstyle{nobackground} = [text centered, thick, top color =yellow!30, 
+				bottom color = yellow!30, opacity = 50, color = black]
+% The sloped option gives rotated edge labels. Personally
+% I find sloped labels a bit difficult to read. Remove the sloped options
+% to get horizontal labels. 
+\hspace{-2cm}\begin{tikzpicture}
+[	grow = right, sloped, 
+%	every node/.style={top color = blue, bottom color = blue!30, rounded corners, text = white}
+	every node/.style = {shading = ball, rounded corners, text = white},
+	%background rectangle/.style = {fill = gray, opacity = .2}, 
+	%framed
+	decoration={brace, amplitude = 2pt},
+]
+
+\node (randomize) [testbag] {randomize}
+child 
+{
+	%	start packaged loans arm
+	node (packaged) {}
+		child
+		{
+			node (ps) {}
+				child 
+				{
+					node (pc1) [Hbbag] {control}
+					child { 
+							node (pc2) {}
+								child { node (pc3) {}
+									child { node (pcend) {} }
+									}
+						}
+				}
+				child 
+				{
+					node (pt1) [Hbbag] {cows}
+					child { 
+							node (pt2) {}
+								child { node (pt3) {}
+									child { node (ptend) {} }
+									}
+						}
+				}
+			edge from parent
+		}
+	edge from parent
+}
+child 
+{
+	%	start large loans with grace arm
+	node (grace) {}
+		child 
+		{
+			node (gs) {}
+				child 
+				{
+					node (gc1) [Hbbag] {control}
+					child { 
+							node (gc2) {}
+								child { node (gc3) {}
+									child { node (gcend) {} }
+									}
+						}
+				}
+				child 
+				{
+					node (gt1) [Hbbag] {large}
+					child { 
+							node (gt2) {}
+								child { node (gt3) {}
+									child { node (gtend) {} }
+									}
+						}
+				}
+			edge from parent
+		}
+	edge from parent
+}
+child 
+{
+	%	start large loans arm
+	node (large) {}
+		child 
+		{
+			node (ls) {}
+				child 
+				{
+					node (lc1) [Hbbag] {control}
+					child { 
+							node (lc2) {}
+								child { node (lc3) {}
+									child { node (lcend) {} }
+									}
+						}
+				}
+				child 
+				{
+					node (lt1) [Hbbag] {large}
+					child { 
+							node (lt2) {}
+								child { node (lt3) {}
+									child { node (ltend) {} }
+									}
+						}
+				}
+			edge from parent
+		}
+	edge from parent
+}
+child 
+{
+	%	start small loans arm
+	node (traditional) {}
+		child 
+		{
+			node (ts) {}
+				child 
+				{
+					node (tc1) [Hbbag] {control}
+					child { 
+							node (tc2) {}
+								child { node (tc3) {}
+									child { node (tcend) {} }
+									}
+						}
+				}
+				child 
+				{
+					node (tt1) [Hbbag] {small}
+					child { 
+							node (tt2) {}
+								child { node (tt3) {}
+									child { node (ttend) {} }
+									}
+						}
+				}
+			edge from parent
+		}
+	edge from parent
+}
+;
+
+% time line
+%\node (calendar1) at ($(baseline) + (0, -5cm)$){};
+%\node (calendar2) at ($(f3) + (0, -5cm)$){};
+%\draw (calendar1) -- (calendar2);
+\setcounter{armindex}{2011}
+\def\ytimeline{-5.35}
+\def\ytimelinetwo{1}
+\def\ytimelinethree{8}
+\draw [thick] (1cm, \ytimeline cm) -- (15cm, \ytimeline cm);
+\foreach \x in {1, 7, 10.35, 13.35}
+{
+	\stepcounter{armindex}
+	\draw [thick] (\x cm, \ytimeline) -- ($(\x cm, \ytimeline) + (0, .5cm)$);
+	\draw ($(\x cm, \ytimeline) + (0, .75cm)$) node [text centered] {\thearmindex};
+	\ifthenelse{\equal{\thearmindex}{12}}{\setcounter{armindex}{0}}{};
+	\draw [thick] (\x cm, \ytimeline) -- ($(\x cm, \ytimeline) + (0, .25cm)$);
+};
+
+%  target
+\node (peri) at ($(randomize) + (0, 2cm)$)
+	{\hfil\begin{minipage}[t]{1.75cm}
+	\hfil villages\\
+	\hfil on chars\setlength{\baselineskip}{12pt}
+	\end{minipage}};
+\draw[->, >= latex', thick] (peri.south) -- (randomize.north);
+
+%	%  curly braced texts
+%		%	mirror: turn brace to opposite side
+%	\path (cp1.west |- cn.north)+(0, .5ex) node (phase1topleft) {};
+%	\path (tp2.east |- cn.north)+(0, .5ex) node (phase1topright) {};
+%	\path (tp4.west |- cn.north)+(0, .5ex) node (phase2topleft) {};
+%	\path (tp5.east |- cn.north)+(0, .5ex) node (phase2topright) {};
+%	\draw[bracebag] let \p1=(phase1topleft), \p2=(phase1topright) in
+%		($(\x1, \y1)$) -- ($(\x2, \y1)$) 
+%		node (ph1) [midway, govbag, above = 2pt] {Phase 1};
+%	\draw[bracebag] let \p1=(phase2topleft), \p2=(phase2topright) in
+%		($(\x1, \y1)$) -- ($(\x2, \y1)$) 
+%		node (ph2) [midway, govbag, above = 2pt] {Phase 2};
+
+% composition of arms
+% \pause;
+\node (armcomp)[govbag] at ($(tt1.north |- tt1.east) + (10em, 10ex)$)
+	{\mpage{3.5cm}{7 ultra poor\hfill\\ 3 moderately poor\hfill\setlength{\baselineskip}{10pt}}\mpage{2cm}{per village}};
+\draw (armcomp.west) edge[out = 180, in = 90, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (tt1.north);
+% \pause;
+\node (armsize)[govbag] at ($(tt1.north |- tt1.east) + (-10em, 10ex)$)
+	{\mpage{3.75cm}{20 HHs$\times$20 villages\hfill\\ = 400 HHs\hfill\setlength{\baselineskip}{10pt}} \mpage{2cm}{per arm}};
+\draw (armsize.east) edge[out = 0, in = 90, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (tt1.north);
+%\node (armcomp)[govbag] at ($(tt1.south) + (1em, -3ex)$){400 HHs};
+%\node (armcomp)[govbag] at ($(gt1.south) + (1em, -3ex)$){400 HHs};
+%\node (armcomp)[govbag] at ($(lt1.south) + (1em, -3ex)$){400 HHs};
+%\node (armcomp)[govbag] at ($(pt1.south) + (1em, -3ex)$){400 HHs};
+
+%	breakaway control ==> treated
+% \pause;
+\draw (tc1.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (tt2.west);
+% \pause;
+\draw (tc2.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (tt3.west);
+% \pause;
+\draw (lc1.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (lt2.west);
+% \pause;
+\draw (lc2.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (lt3.west);
+% \pause;
+\draw (gc1.east) edge[out = 0, in = 180, ->, >= latex', dotted] 
+	node[midway, above, nobackground] {} (gt2.west);
+% \pause;
+\draw (gc2.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (gt3.west);
+% \pause;
+\draw (pc1.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (pt2.west);
+% \pause;
+\draw (pc2.east) edge[out = 0, in = 180, ->, >= latex', thick] 
+	node[midway, above, nobackground] {} (pt3.west);
+
+%	common events
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (3ex, -12.0ex)$)
+	edge[endboxEdge] node (listing) [edgeLabel, xshift = 0em, shading = ball,
+				top color = orange, bottom color = orange, color = black]
+		{\mpage{9cm}{\hfil household census and gradation}} 
+	($(large) + (3ex, 3.5ex)$);
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (7.5ex, -12.0ex)$)
+	edge[endboxEdge] node (baseline) [surveybag]
+		{\mpage{9cm}{\hfil baseline survey}} 
+	($(large) + (7.5ex, 3.5ex)$);
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (12ex, -12.0ex)$)
+	edge[endboxEdge] node (selection) [edgeLabel, xshift = 0em, shading = ball,
+				top color = purple, bottom color = purple]
+		{\mpage{9cm}{\hfil randomized selection}} 
+	($(large) + (12ex, 3.5ex)$);
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (16ex, -12.0ex)$)
+	edge[endboxEdge] node (training) [edgeLabel, xshift = 0em, shading = ball,
+				top color = darkpurple, bottom color = purple]
+		{\mpage{9cm}{\hfil training}} 
+	($(large) + (16ex, 3.5ex)$);
+%	\draw[->, >= latex', thick, dashed]
+%		($(large) + (30ex, -0.5ex)$)
+%		edge[endboxEdge] node (selection) [edgeLabel, xshift = 0em, shading = ball,
+%					top color = green, bottom color = green]
+%			{\mpage{8cm}{\hfil follow up survey 1}} 
+%		($(large) + (30ex, 1.5ex)$);
+
+% traditinal loans arm
+% \pause;
+\draw[fill = red, opacity = .15] 
+	($(tt1) + (-1cm, -1.4cm)$) rectangle 
+	($(ttend) + (.5cm, .75cm)$);
+% \pause;
+\node (trepay1) at ($(tt1.north |- tt1.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (trad1) at ($(tt2.north |- tt2.east) + (3.5em, 2ex)$){loan 2};
+% \pause;
+\node (trepay2) at ($(tt2.north |- tt2.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (trad2) at ($(tt3.north |- tt3.east) + (3.5em, 2ex)$){loan 3};
+% \pause;
+\node (trepay3) at ($(tt3.north |- tt3.east) + (3.5em, -2ex)$){repay};
+% large loans arm
+% \pause;
+\draw[fill = green, opacity = .15] 
+	($(lt1) + (-1cm, -1.4cm)$) rectangle 
+	($(ltend) + (.5cm, .6cm)$);
+% \pause;
+\node (lrepay1) at ($(lt1.north |- lt1.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (lrepay2) at ($(lt2.north |- lt2.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (lrepay3) at ($(lt3.north |- lt3.east) + (3.5em, -2ex)$){repay};
+% large loans with grace arm
+% \pause;
+\draw[fill = red, opacity = .15] 
+	($(gt1) + (-1cm, -1.4cm)$) rectangle 
+	($(gtend) + (.5cm, .6cm)$);
+% \pause;
+\node (lrepay2) at ($(gt2.north |- gt2.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (lrepay3) at ($(gt3.north |- gt3.east) + (3.5em, -2ex)$){repay};
+% packaged loans arm
+% \pause;
+\draw[fill = yellow, opacity = .15] 
+	($(pt1) + (-1cm, -1.4cm)$) rectangle 
+	($(ptend) + (.5cm, .6cm)$);
+% \pause;
+\node (prepay2) at ($(pt2.north |- pt2.east) + (3.5em, -2ex)$){repay};
+% \pause;
+\node (prepay3) at ($(pt3.north |- pt3.east) + (3.5em, -2ex)$){repay};
+
+% surveys
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (7.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f1) [surveybag]
+		{\mpage{9cm}{\hfil follow up survey 1}} 
+	($(large) + (7.0cm, 3.5ex)$);
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (10.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f2) [surveybag]
+		{\mpage{9cm}{\hfil follow up survey 2}} 
+	($(large) + (10.0cm, 3.5ex)$);
+% \pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (13.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f3) [surveybag]
+		{\mpage{9cm}{\hfil follow up survey 3}} 
+	($(large) + (13.0cm, 3.5ex)$);
+
+% Overwrite with flood
+\pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (7.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f1) [floodbag]
+		{\mpage{9cm}{\hfil Flood}} 
+	($(large) + (7.0cm, 3.5ex)$);
+\pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (10.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f2) [surveybag]
+		{\mpage{9cm}{\hfil follow up survey 1}} 
+	($(large) + (10.0cm, 3.5ex)$);
+\pause;
+\draw[->, >= latex', thick, dashed]
+	($(large) + (13.0cm, -12.0ex)$)
+	edge[endboxEdge] node (f3) [surveybag]
+		{\mpage{9cm}{\hfil follow up survey 2}} 
+	($(large) + (13.0cm, 3.5ex)$);
+
+
+% 	% Draw the background
+% \begin{pgfonlayer}{background}
+% 	\path (peri.west |- peri.north)+(-0.5em, 8.5em) 
+% 		node (topleft1) {};
+% 	\path (pcend.east |- pcend.south)+(0.5cm, -4.5em) 
+% 		node (bottomright1) {};
+% 	\path[fill = yellow!30, rounded corners]
+% 		(topleft1) rectangle (bottomright1);
+% \end{pgfonlayer}
+
+\end{tikzpicture}

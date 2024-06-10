@@ -1,0 +1,80 @@
+
+\textcolor{blue}{This file reads data from a list \textsf{\Sexpr{gsub("\\_", "\\\\_", "data_read_in_a_list_with_baseline_patched.rds")}}, merge all non-roster files with admin-roster, and saves in \Sexpr{pathsaveHere}.}
+
+<<compute mean RR, echo = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+ad0 <- adw2[grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & 
+  !grepl("tw|dou", TradGroup), .(Arm, povertystatus, MonthsElapsed, CumNetSaving, CumRepaid)]
+ad0[, RepaymentRate := CumRepaid / (125*45*3)]
+ad0[, EffectiveRepaymentRate := (CumRepaid + CumNetSaving) / (125*45*3)]
+ad0[grepl("gr|co", Arm), c("RepaymentRate", "EffectiveRepaymentRate") := 
+  .(CumRepaid / (190*45*2), (CumRepaid + CumNetSaving)/ (190*45*2))]
+ad0[, Arm := factor(Arm, levels = c("traditional", "large", "large grace", "cow"))]
+setkey(ad0, Arm)
+meanRR <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate)), by = Arm]
+meanRR2 <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate))]
+meanERR	 <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate)), by = Arm]
+meanERR2 <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate))]
+meanPERR <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = .(Arm, povertystatus)]
+meanPERR2 <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = povertystatus]
+meanPRR	 <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = .(Arm, povertystatus)]
+meanPRR2 <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = povertystatus]
+<<get file names from source, ecno = F>>=
+setwd(path1234)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+fn <- list.files(path = foldername, pattern = ".dta$", 
+	recursive = T, full.names = T)
+fn <- fn[!grepl("orking|Live.*p.dta", fn)]
+fn <- unique(fn)
+fnd <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn)))
+@
+
+\section{Summary}
+
+\subsection{Definitions}
+
+(125*45*3) or, CumRepaid/(190*45*2)
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Traditional]	A cash loan of Tk. 5600 with one year maturity. Repay Tk 125 * 45 weeks = \Sexpr{125*45} each year for 3 years.
+\item[Large]	A cash loan of Tk. 16800 with three year maturity. Repay Tk 125 * 45 weeks * 3 years = \Sexpr{125*45*3}
+\item[Large Grace]	A cash loan of Tk. 16800 with a one year grace period and three year maturity. Repay Tk 190 * 45 weeks * 2 years = \Sexpr{190*45*2}.
+\item[Cow]	An in-kind loan of a cow worth Tk. 16800 with a one year grace period and three year maturity. Repay Tk 190 * 45 weeks * 2 years = \Sexpr{190*45*2}.
+\item[LargeSize]	An indicator variable takes the value of 1 if the arm is Large, Large Grace, or Cow.
+\item[WithGrace]	An indicator variable takes the value of 1 if the arm is Large Grace or Cow.
+\item[InKind]	Same as Cow.
+\end{description}
+When one uses covariates \textsf{Large, Large Grace, Cow} in estimation, their estimates represent each arm's characteristics relative to \textsf{Traditional}. When one uses covariates \textsf{LargeSize, WithGrace, InKind}, their estimates represent their labeled names.
+
+\subsection{Inference}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	First-difference estimators are used. This can be seen as an extension of DID to multi-periods (although historically the latter precedes the former). FD is used also for a binary indicator such as schooling.
+\item	All the standard errors are clustered at the group (char) level.
+\item	To aid the understanding if the data is more suited to the assumption of first-difference rather than fixed-effects, I used a check suggested by \citet[][10.71]{Wooldridge2010}. It is an AR(1) regression of FD residuals. Most of results show low autocorrelations which is consistent with the assumption of FD estimator. The use of cluster-robust standard errors gives consistent estimates of SEs, so it boils down to efficiency. 
+\item	I rely more on the formulation using \textsf{LargeSize, WithGrace, InKind} than \textsf{Large, LargeGrace, Cow} due to an ease in interpretation. Numerically, both are equivalent.
+\item	A caution on reading the estimates: All are estimates on increments. If \textsf{LargeSize} has an estimate of 10, then it is a 10 unit larger change than the baseline (traditional). If the interaction of \textsf{LargeSize} with rd 2-3 is 10, then it is a 10 unit larger change than rd 2-3 change of baseline. If the estimated value of intercept is 10 and rd 2-3 is 10, then rd 2-3 change is 20 for baseline, 30 for \textsf{LargeSize}. 
+\end{itemize}
+
+\subsection{Findings}
+
+Overall, the intervention reveals that larger sized loans accerelate the timing of becoming an owner of large livestock without adversely affecting the repayments. This applies to both the ultra poor and the moderately poor. A loan amount seems to have convex returns at a low level of assets. Higher growths come at a cost of slower school progression of older girls and smaller increases in consumption for the arm of in-kind, so the welfare implication is mixed. In addition, given that the number of cows per owner remains the similar after 2 years, it does not provide evidence for accelerated growth of livestock after becoming an owner in this short window. Another note is that the loan repayment was poor for unknown reasons so, in the hindsight, the risks required a higher margin for this type of lending to the target population, which could have reduced participation.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Net saving and repayments]	 Sample uses administrative records of \textcolor{red}{all borrowers in the original 800 households}. Smaller net saving for \textsf{traditional} arm. Period of rds 2, 3 saw a positive net saving, then became negative in rd 4 for \textsf{LargeGrace, Cow}. Repayment is greater for \textsf{Large, LargeGrace, Cow} in rds 2, 3. In rd 4, repayment of \textsf{Large} becomes statistically the same with \textsf{Traditional} while \textsf{LargeGrace, Cow} are greater (\textsc{Table \ref{tab FD saving original HH}}). \textsc{\normalsize Table \ref{tab FD saving attributes original HH}} (1) reveals \textsf{LargeSize} have larger net saving while (2) shows \textsf{WithGrace} has a faster decline in rds 2, 3, 4. Repayment is larger with \textsf{LargeSize} but smaller with \textsf{WithGrace} in (3). (4) shows rd 2-3 have larger repayment for \textsf{WithGrace}, which is by design. Repayment is positively autocorrelated and is negatively correlated with previous net saving. The ultra poor repaid just as much as the moderately poor, (\textsc{Table \ref{tab FD saving2 original HH}}). This is evidence against the popular belief that the ultra poor are riskier.  
+\item[Schooling]	Enrollment changes are larger for primary school girls in \textsf{Large} and \textsf{Cow} arms for primary but smaller for junior in rd 1 vs rd 4 comparisons (\textsc{Table \ref{tab FD enroll5 original HH}}). When seen by attributes in \textsc{\normalsize Table \ref{tab FD enroll5 attributes original HH}}, \textsf{LargeSize} shows smaller changes especially for primary school boys. Primary school girls in \textsf{LargeSize} and \textsf{InKind} show larger changes, while junior and high school girls in \textsf{LargeSize} show smaller changes than boys. This indicates that large sized arms have detrimetal impacts on older girls' schooling but promotional impacts on primary school aged girls. No decline in enrollment changes when repaying for the arms of \textsf{WithGrace}, despite the larger installments.
+\item[Assets]	Household assets increased in all arms. Asset values initially increased then decreased, but do not fully cancel out and remain increased. There might have been liquidation of assets to repay the loans. Productive assets declined consecutively. Flood in rd 1 makes the increase in household assets smaller. Productive assets see a major decline among \textsf{Large} during rd 3-4 period (\textsc{\normalsize Table \ref{tab FD assets original HH}}). Comparison by attributes (\textsc{\normalsize Table \ref{tab FD assets attributes original HH}}) or of rd 2 and rd 4 gives the same picture (\textsc{\normalsize Table \ref{tab FD assets rd24 original HH}}). Comparison against the loan non-recipients shows that they also experience a similar, increase-increase-decrease pattern. This indicates that the pattern observed among the loan recipients may be a systemic pattern of the area, not necessarily reflecting the repayment burdern (\textsc{\normalsize Table \ref{tab FD assets pure control original HHs}}). Comparison of productive asset holding of loan recipients (\textsc{\footnotesize Figure \ref{fig PAssets}}) and loan nonrecipients (\textsc{\footnotesize Figure \ref{fig PAssetsLoanNonrecipients}}) reveals that productive asset holding declined at the top end of loan nonrecipients in all arms (they only save or left the program). This indicates that the decline in productive asset holding among the loan recipients are not due to the repayment burden but a general pattern of the area.
+\item[Livestock]	Larger increases in holding values in rd 1-2, smaller increases in rd 2-3, no change in rd 3-4. Previous cow owners show a smaller increase in rd 1-2 while not rd 3-4 or rd 2-3 in the \textsf{Cow} arm (\textsc{\normalsize Table \ref{tab FD livestock original HH}}). Figures show that cow ownership increased for all arms but the \textsf{traditional} arm (see \textsc{\normalsize Figure \ref{Figure Number of cows by year original HHs}}). \textsc{\normalsize Table \ref{tab FD livestock attributes original HH}} shows baseline trend is a large increse in rd 1-2, a small increase in rd 2-3, a small decline in rd 3-4, while \textsf{LargeSize} sees an even larger increase in rd 1-2 and similar trend as baseline afterwards. This shows that member who received a larger sized disbursement could hold on to its level of livestock accumulation. \textsc{\normalsize Table \ref{tab FD livestock poor original HH}} shows, albeit at $p$ values around 10\%, the ultra poor has a larger increase relative to the moderately poor, which is another manifestation against the popular notion that the ultra poor are riskier.
+\item[Total asset values]	Similar resulsts as assets.
+\item[Labour incomes]	Small sample. Increased during rd 2-3 in all arms (\textsc{\normalsize Table \ref{tab FD incomes original HH}}). 
+\item[Consumption]	Increased during rd 2-3 in all arms, a decrese in rd 3-4 (\textsc{\normalsize Table \ref{tab FD consumption original HH}}). Another notable result is that \textsf{InKind} reduced the consumption in rd 3-4 even further than the baseline loan (\textsc{\normalsize Table \ref{tab FD consumption attributes original HH}}).
+\item[IGAs]	Multiple IGAs for \textsf{Tradtional} arm. Everyone else chose to invest in cows, suggesting entrepreneurship does not seem to matter in the uptake of loans. It is consistent with the presence of a poverty trap induced by a liquidity constraint and convexity in livestock production technology.
+\item[Project choice]	\textsf{Traditional} arm has a smaller rate of second investments, and second investment amounts are generally smaller (\textsc{\footnotesize Figure \ref{fig first2ndFixedInvest}}). This confirms that most of \textsf{Traditional} arm members do not use own fund to increase the size of investments even after a few years into the program.
+\end{description}
+
+One sees changes in investment choices when one compares \textsf{traditional} and all other arms. However, consumption does not seem to differ. Repayments and asset holding are greater in all other arms. These are consistent with households are enforcing the repayment disciplines and reinvesting the proceeds rather than increasing consumption. 
+
+
+

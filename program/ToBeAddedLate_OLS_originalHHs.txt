@@ -1,0 +1,921 @@
+<<ReadTrimSchoolingFDData original HHs, eval = F, cache = F, child='c:/data/GUK/analysis/program/ReadTrimSchoolingOriginalHHsFDData.rnw'>>=
+@
+If using \textsf{s1x}, retain only the complete portion of panel. \textsf{sch1} has \Sexpr{nrow(s01)} rows. Drop \Sexpr{nrow(s01[grepl("nnn", Spattern), ])} observations in \textsf{sch1} with nnn in \textsf{Spattern} and \Sexpr{nrow(s01[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ])} observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. We further dropped \Sexpr{nrow(s.1[is.na(Fromxid), ])} additional entries who were added after the flood. 
+This leaves us with \Sexpr{nrow(s1x[(Fromxid), ])} rows. 
+With OLS,  \Sexpr{table(s1x[Fromxid & tee == 1, Tee])} individuals are repeatedly observed for \Sexpr{names(table(s1x[Fromxid & tee == 1, Tee]))} times, respectively. With FD, \textsf{s1x} is reduced to \Sexpr{nrow(ds1xd)} rows after first-differencing with \Sexpr{table(ds1xd[tee == 2, Tee])} individuals with repeatedly observed for \Sexpr{as.numeric(names(table(ds1xd[tee == 2, Tee])))+1} times, respectively.
+<<sc regressions original HHs, warning = F>>=
+s1x <- s1x[!grepl("nnn", Spattern), ]
+s1x <- s1x[!grepl("1001", EnrollPattern), ]
+table(s1x[tee == 1, Spattern])
+s1x <- cbind(s1x, makeDummyFromFactor(s1x[, sex]))
+s2x <- cbind(s2x, makeDummyFromFactor(s2x[, sex]))
+s1x[, Enrolled := as.numeric(Enrolled)]
+s2x[, Enrolled := as.numeric(Enrolled)]
+s1x[, CumEffectiveRepayment := CumEffectiveRepayment/1000]
+s2x[, CumEffectiveRepayment := CumEffectiveRepayment/1000]
+# NAs in Schooling
+s1x[is.na(Schooling) & Age_1 >= 5 & Age_1 <= 12, Schooling := "primary0512"]
+s1x[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
+s1x[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]
+s2x[is.na(Schooling) & Age_1 >= 5 & Age_1 <= 12, Schooling := "primary0512"]
+s2x[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
+s2x[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]
+# individual level regressions
+scOLS11 <- lm(Enrolled  ~ -1 + dummyTraditional + 
+  dummyLarge + dummyLargeGrace +
+  dummyCow, data = s1x)
+scOLS12 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + 
+  Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  #RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  factor(Year), data = s1x)
+scOLS13 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS14 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS15 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  FloodInRd1 +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS21 <- lm(Enrolled  ~ -1 + dummyTraditional + 
+  dummyLarge + dummyLargeGrace +
+  dummyCow, data = s2x)
+scOLS22 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  factor(Year), data = s2x)
+scOLS23 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS24 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS25 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  FloodInRd1 +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+#s1x[, Schooling := factor(Schooling, levels = c("junior1315", "high1618", "primary0512"))]
+#s2x[, Schooling := factor(Schooling, levels = c("junior1315", "high1618", "primary0512"))]
+scOLS31 <- lm(Enrolled  ~ -1 + 
+  dummySmallSize + dummyLargeSize, data = s1x)
+scOLS32 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize +
+  factor(Year), data = s1x)
+scOLS33 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  factor(Year), data = s1x)
+scOLS34 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  factor(Year), data = s1x)
+scOLS35 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  FloodInRd1 +
+  factor(Year), data = s1x)
+scOLS36 <- lm(Enrolled  ~ -1 + 
+  dummySmallSize + dummyLargeSize, data = s2x)
+scOLS37 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize +
+  factor(Year), data = s2x)
+scOLS38 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS39 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS40 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  FloodInRd1 +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+
+scOLS41 <- lm(Enrolled  ~ -1 + dummyWithoutGrace + 
+  dummyWithGrace, data = s1x)
+scOLS42 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  factor(Year), data = s1x)
+scOLS43 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS44 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS45 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  FloodInRd1 +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scOLS46 <- lm(Enrolled  ~ -1 + dummyWithoutGrace + 
+  dummyWithGrace, data = s2x)
+scOLS47 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS48 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS49 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scOLS50 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  FloodInRd1 +
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+
+scp1 <- lm(Enrolled  ~ -1 + dummyUltraPoor + dummyModeratelyPoor, data = s1x)
+scp2 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor +
+  factor(Year), data = s1x)
+scp3 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+scp4 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s1x)
+
+scp6 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor +
+  factor(Year), data = s2x)
+scp7 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scp8 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+scp9 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  FloodInRd1 +
+  RMvalue.repay + RMvalue.NetSaving + RMOtherRepaid + 
+  HeadAge + HeadLiteracy +
+  factor(Year), data = s2x)
+
+scXlist <- list(
+  matrix(s1x[, groupid]),
+  matrix(s1x[, groupid]),
+  matrix(s1x[-scOLS13$na.action, groupid]),
+  matrix(s1x[-scOLS14$na.action, groupid]),
+  matrix(s1x[-scOLS15$na.action, groupid]),
+  matrix(s2x[, groupid]),
+  matrix(s2x[-scOLS22$na.action, groupid]),
+  matrix(s2x[-scOLS23$na.action, groupid]),
+  matrix(s2x[-scOLS24$na.action, groupid]),
+  matrix(s2x[-scOLS25$na.action, groupid]))
+sclist <- list(scOLS11, scOLS12, scOLS13, scOLS14, scOLS15, scOLS21, scOLS22, scOLS23, scOLS24, scOLS25)
+reglists.header <- c("sc")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+#unique(unlist(lapply(sc.estlist, rownames)))
+#sc.tab <- tabs2latex(sc.estlist, roworder = "^Sch.*[0-9]$|^sexFemale$|^Arm.*[^l][^e]$")
+sc.tab <- tabs2latex(sc.estlist)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time.?2", "round 1 - 2",
+    "Time.?3", "round 2 - 3",
+    "Time.?4", "round 3 - 4",
+    "RMvalue.(.*)", "6M \\1",
+    "RM(.*)", "6M \\1",
+    "[rR]epay", "repayment",
+    "dummy", "",
+    "NetSaving", "net saving",
+    "Other", "other member ",
+    "\\.", " $\\\\times$ ",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "HeadLiteracy", "Head literate",
+    "HeadAge", "Head age",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(sc.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+sc.tb <- rbind(as.matrix(cbind(covariates = rn, sc.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", sc.M),
+  c("\\bar{R}^{2}", sc.R),
+  c("N", sc.N))
+# omit year effects
+sc.tb <- sc.tb[-(rep(grep("Year2", sc.tb[, "covariates"]), each = 2) + 0:1), ]
+sc.ltxtb <- latextab(sc.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, rep(1.1, ncol(sc.tb)-1)), hright = "$", 
+  headercolor = "gray80",, adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 5, separatingcolwidth = .2)
+sc.ltxtb <- rbind(sc.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{5}{c}{\\scriptsize\\hfil s1x} & & \\multicolumn{5}{c}{\\scriptsize\\hfil s2x (Augmented data)}\\\\",
+  "\\cline{2-6} \\cline{8-12}\\\\",
+  sc.ltxtb[-(1:2), , drop = F])
+write.tablev(sc.ltxtb, 
+  paste0(pathsaveHere, "SchoolingOLSEstimationResults.tex"), colnamestrue = F)
+
+scOLS2Xlist <- list(
+  matrix(s1x[, groupid]),
+  matrix(s1x[, groupid]),
+  matrix(s1x[, groupid]),
+  matrix(s1x[-scOLS34$na.action, groupid]),
+  matrix(s1x[-scOLS35$na.action, groupid]),
+  matrix(s2x[, groupid]),
+  matrix(s2x[-scOLS37$na.action, groupid]),
+  matrix(s2x[-scOLS38$na.action, groupid]),
+  matrix(s2x[-scOLS39$na.action, groupid]),
+  matrix(s2x[-scOLS40$na.action, groupid]))
+scOLS2list <- list(scOLS31, scOLS32, scOLS33, scOLS34, scOLS35, scOLS36, scOLS37, scOLS38, scOLS39, scOLS40)
+reglists.header <- c("scOLS2")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+#scOLS2.tab <- tabs2latex(scOLS2.estlist)
+scOLS2.tab <- tabs2latex(scOLS2.estlist, roworder = 
+paste0("^dummyS.*Size$|^dummyL.*Size$|^dummyW.*Grace$|^Sch.*[0-9]$|",
+  "^dummyFemale$|^Sch.*[0-9].dummyFemale$|",
+  "^Sch.*[0-9].dummyLargeSize$|^Sch.*LargeSize.*ale$|^Sch.*ale.*SmallSize$|",
+  "^Sch.*[0-9].dummyWithGrace$|^Sch.*Gr.*ale$|^Sch.*Fem.*ace$"))
+rn <- rownames(scOLS2.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+scOLS2.tb <- rbind(as.matrix(cbind(covariates = rn, scOLS2.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", scOLS2.M),
+  c("\\bar{R}^{2}", scOLS2.R),
+  c("N", scOLS2.N))
+# omit year effects
+scOLS2.tb <- scOLS2.tb[-(rep(grep("Year2", scOLS2.tb[, "covariates"]), each = 2) + 0:1), ]
+scOLS2.ltxtb <- latextab(scOLS2.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, 1.1, 1.2, rep(1.10, ncol(scOLS2.tb)-3)), hright = "$", 
+  headercolor = "gray80",, adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 5, separatingcolwidth = .2, )
+scOLS2.ltxtb <- rbind(scOLS2.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{5}{c}{\\scriptsize\\hfil s1x} & & \\multicolumn{5}{c}{\\scriptsize\\hfil s2x (Augmented data)}\\\\",
+  "\\cline{2-6} \\cline{8-12}\\\\",
+  scOLS2.ltxtb[-(1:2), , drop = F])
+write.tablev(scOLS2.ltxtb, 
+  paste0(pathsaveHere, "SchoolingOLSEstimationResults2.tex"), colnamestrue = F)
+
+scOLS4Xlist <- list(
+  matrix(s1x[, groupid]),
+  matrix(s1x[, groupid]),
+  matrix(s1x[-scOLS43$na.action, groupid]),
+  matrix(s1x[-scOLS44$na.action, groupid]),
+  matrix(s1x[-scOLS45$na.action, groupid]),
+  matrix(s2x[, groupid]),
+  matrix(s2x[-scOLS47$na.action, groupid]),
+  matrix(s2x[-scOLS48$na.action, groupid]),
+  matrix(s2x[-scOLS49$na.action, groupid]),
+  matrix(s2x[-scOLS50$na.action, groupid]))
+scOLS4list <- list(scOLS41, scOLS42, scOLS43, scOLS44, scOLS45, scOLS46, scOLS47, scOLS48, scOLS49, scOLS50)
+reglists.header <- c("scOLS4")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+scOLS4.tab <- tabs2latex(scOLS4.estlist, roworder = 
+paste0("^dummyS.*Size$|^dummyL.*Size$|^dummyW.*Grace$|^Sch.*[0-9]$|",
+  "^dummyFemale$|^Sch.*[0-9].dummyFemale$|",
+  "^Sch.*[0-9].dummyLargeSize$|^Sch.*LargeSize.*ale$|^Sch.*ale.*SmallSize$|",
+  "^Sch.*[0-9].dummyWithGrace$|^Sch.*Gr.*ale$|^Sch.*Fem.*ace$"))
+rn <- rownames(scOLS4.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+scOLS4.tb <- rbind(as.matrix(cbind(covariates = rn, scOLS4.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", scOLS4.M),
+  c("\\bar{R}^{2}", scOLS4.R),
+  c("N", scOLS4.N))
+# omit year effects
+scOLS4.tb <- scOLS4.tb[-(rep(grep("Year2", scOLS4.tb[, "covariates"]), each = 2) + 0:1), ]
+scOLS4.ltxtb <- latextab(scOLS4.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, 1.1, 1.2, rep(1.10, ncol(scOLS4.tb)-3)), hright = "$", 
+  headercolor = "gray80",, adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 5, separatingcolwidth = .2, )
+scOLS4.ltxtb <- rbind(scOLS4.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{5}{c}{\\scriptsize\\hfil s1x} & & \\multicolumn{5}{c}{\\scriptsize\\hfil s2x (Augmented data)}\\\\",
+  "\\cline{2-6} \\cline{8-12}\\\\",
+  scOLS4.ltxtb[-(1:2), , drop = F])
+write.tablev(scOLS4.ltxtb, 
+  paste0(pathsaveHere, "SchoolingOLSEstimationResults3.tex"), colnamestrue = F)
+
+scpXlist <- list(
+  matrix(s1x[, groupid]),
+  matrix(s1x[, groupid]),
+  matrix(s1x[-scp3$na.action, groupid]),
+  matrix(s2x[-scp6$na.action, groupid]),
+  matrix(s2x[-scp7$na.action, groupid]),
+  matrix(s2x[-scp8$na.action, groupid]),
+  matrix(s2x[-scp9$na.action, groupid]))
+scplist <- list(scp1, scp2, scp3, scp6, scp7, scp8, scp9)
+reglists.header <- c("scp")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+scp.tab <- tabs2latex(scp.estlist)
+rn <- rownames(scp.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+scp.tb <- rbind(as.matrix(cbind(covariates = rn, scp.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", scp.M),
+  c("\\bar{R}^{2}", scp.R),
+  c("N", scp.N))
+# omit year effects
+scp.tb <- scp.tb[-(rep(grep("Year2", scp.tb[, "covariates"]), each = 2) + 0:1), ]
+scp.ltxtb <- latextab(scp.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, rep(1.10, ncol(scp.tb)-1)), hright = "$", 
+  headercolor = "gray80",, adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 3, separatingcolwidth = rep(.2, 1))
+scp.ltxtb <- rbind(scp.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{9}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{3}{c}{\\scriptsize\\hfil s1x} & & \\multicolumn{4}{c}{\\scriptsize\\hfil s2x (Augmented data)}\\\\",
+  "\\cline{2-4} \\cline{6-9}\\\\",
+  scp.ltxtb[-(1:2), , drop = F])
+write.tablev(scp.ltxtb, 
+  paste0(pathsaveHere, "SchoolingOLSEstimationPovertystatusResults.tex"), colnamestrue = F)
+@
+<<>>=
+# dummy chunk
+@
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment\label{tab ols school}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingOLSEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{s1x} is complete portion of panel. \textsf{s2x} is a panel data augmenting attrited members in \textsf{s1x} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. Number of observations decreases in (2) relative to (1) because of NAs in \textsf{Schooling} (because \textsf{Age\_1} is missing) erroneous entries in calendar \textsf{Year} in \textsf{IntDate} which result in NAs. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Check number of observations in each cell:
+<<check number of obs in schooling ols original HHs>>=
+scDatalist <- list(
+  s1x,
+  s1x,
+  s1x[-scOLS13$na.action, ],
+  s1x[-scOLS14$na.action, ],
+  s1x[-scOLS15$na.action, ],
+  s2x,
+  s2x[-scOLS22$na.action, ],
+  s2x[-scOLS23$na.action, ],
+  s2x[-scOLS24$na.action, ],
+  s2x[-scOLS25$na.action, ])
+scOLS2Datalist <- list(
+  s1x,
+  s1x,
+  s1x,
+  s1x[-scOLS34$na.action, ],
+  s1x[-scOLS35$na.action, ],
+  s2x,
+  s2x[-scOLS37$na.action, ],
+  s2x[-scOLS38$na.action, ],
+  s2x[-scOLS39$na.action, ],
+  s2x[-scOLS40$na.action, ])
+scOLS4Datalist <- list(
+  s1x,
+  s1x,
+  s1x[-scOLS43$na.action, ],
+  s1x[-scOLS44$na.action, ],
+  s1x[-scOLS45$na.action, ],
+  s2x,
+  s2x[-scOLS47$na.action, ],
+  s2x[-scOLS48$na.action, ],
+  s2x[-scOLS49$na.action, ],
+  s2x[-scOLS50$na.action, ]
+)
+<<Interaction between 2 matrices original HHs, warning = F>>=
+# Interaction between 2 matrices.
+interactXY <- function(x, y, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrix x and matrix y.
+#  Column names are created by pasting "x sepcharacter y".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (all(grepl("integer", c(sapply(x, class), sapply(y, class))))) {
+    z <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)), as.integer(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        set(z, j = (j1 - 1) * ncol(y) + j2, value = as.integer(x[[j1]] * y[[j2]]))
+  } else {
+    z <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)), as.numeric(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        set(z, j = (j1 - 1) * ncol(y) + j2, value = as.numeric(x[[j1]] * y[[j2]]))
+  }
+  setnames(z, unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))))
+  if (ReturnMatrix) z <- as.matrix(z)
+  return(z)
+}
+z <- interactXY(x, y)
+interactXYZ2 <- function(x, y, z, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrices x, y, z.
+#  Column names are created by pasting "x sepcharacter y sepcharacter z".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (!is.data.table(z)) z <- data.table(z)
+  xy <- interactXY(x, y)
+  xz <- interactXY(x, z)
+  yz <- interactXY(y, z)
+  if (all(grepl("integer", c(sapply(x, class), sapply(y, class), sapply(z, class))))) {
+    xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), as.integer(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        for (j3 in 1:ncol(z)) 
+          set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                          (j2 - 1) * (ncol(z)) + 
+                           j3, 
+            value = as.integer(x[[j1]] * y[[j2]] * z[[j3]]))
+  } else {
+    xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), as.numeric(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        for (j3 in 1:ncol(z)) 
+          set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                          (j2 - 1) * ncol(z) + 
+                          j3, 
+            value = as.numeric(x[[j1]] * y[[j2]] * z[[j3]]))
+  }
+  cn.xyz <- unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))) 
+  cn.xyz <- unlist(lapply(1:length(cn.xyz), function(i) 
+     paste0(cn.xyz[i], sepcharacter, colnames(z)))) 
+  setnames(xyz, cn.xyz)
+  w <- data.table(xy, xz, yz, xyz)
+  if (ReturnMatrix) w <- as.matrix(w)
+  return(w)
+}
+interactXYZ <- function(x, y, z, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrices x, y, z.
+#  Column names are created by pasting "x sepcharacter y sepcharacter z".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (!is.data.table(z)) z <- data.table(z)
+  xy <- interactXY(x, y)
+  xz <- interactXY(x, z)
+  yz <- interactXY(y, z)
+  xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), unclass(NA)))
+  for (j1 in 1:ncol(x)) 
+    for (j2 in 1:ncol(y)) 
+      for (j3 in 1:ncol(z)) 
+        set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                        (j2 - 1) * (ncol(z)) + 
+                        j3, 
+          value = x[[j1]] * y[[j2]] * z[[j3]])
+  cn.xyz <- unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))) 
+  cn.xyz <- unlist(lapply(1:length(cn.xyz), function(i) 
+     paste0(cn.xyz[i], sepcharacter, colnames(z)))) 
+  setnames(xyz, cn.xyz)
+  w <- data.table(xy, xz, yz, xyz)
+  if (ReturnMatrix) w <- as.matrix(w)
+  return(w)
+}
+combineNamesXYZ <- function(x, y, z, sepcharacter = "*", pivot = "x") {
+#  x, y, z: character vectors
+  if (pivot == "x") {
+    cn.xyz <- unlist(lapply(1:length(x), function(i) 
+       paste0(x[i], sepcharacter, y))) 
+    cn.xyz <- unlist(lapply(1:length(cn.xyz), function(i) 
+       paste0(cn.xyz[i], sepcharacter, z))) 
+  } else 
+  if (pivot == "z") {
+    cn.xyz <- unlist(lapply(1:length(y), function(i) 
+       paste0(x, sepcharacter, y[i]))) # 1a, 2a, 1b, 2b
+    cn.xyz <- unlist(lapply(1:length(z), function(i) 
+       paste0(cn.xyz, sepcharacter, z[i]))) # 1aA, 2aA, 1bA, 2bA, 1aB, 2aB, 1bB, 2bB, 
+  }
+  cn.xyz
+}
+#combineNamesXYZ(1:3, letters[1:2], toupper(letters[1:2]), pivot = "z")
+
+eks <- s1x[-scOLS14$na.action, ]
+# x <- matrix(rep(c(1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0), 10000), ncol = 10)
+# y <- matrix(rep(c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0), 50000), ncol = 50)
+# z <- matrix(rep(c(1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1), 20000), ncol = 20)
+# colnames(x) <- paste0("x", 1:10)
+# colnames(y) <- paste0("y", 1:50)
+# colnames(z) <- paste0("z", 1:20)
+# XYZ is faster than XYZ2
+#rbind(system.time(interactXYZ(x, y, z)),
+#  system.time(interactXYZ2(x, y, z)))
+x <- matrix(rep(c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2), 1), ncol = 2)
+y <- matrix(rep(c(1, 0, 1, 0, 1, 0, 2, 0, 2, 0, 2, 0)*2, 1), ncol = 2)
+z <- matrix(rep(c(1, 1, 0, 0, 1, 1, 2, 2, 0, 0, 2, 2)*3, 1), ncol = 2)
+colnames(x) <- paste0("x", 1:2)
+colnames(y) <- paste0("y", 1:2)
+colnames(z) <- paste0("z", 1:2)
+if (!is.data.table(x)) x <- data.table(x)
+if (!is.data.table(y)) y <- data.table(y)
+if (!is.data.table(z)) z <- data.table(z)
+xy <- interactXY(x, y)
+xd <- scDatalist[[1]]
+x <- makeDummyFromFactor(xd[, Arm], NULL) 
+y <- makeDummyFromFactor(xd[, Schooling], NULL)
+z <- makeDummyFromFactor(xd[, sex], NULL)
+#x[, grepout("Dr", colnames(x)) := NULL]
+w <- interactXYZ(y, x, z)
+s1x <- s1x[, which(unlist(lapply(s1x, function(x) !all(is.na(x))))), with=F]
+#nrow(xd[grepl("cow", Arm) & grepl("hi", Schooling) & grepl("F", sex), 
+#  .(hhid, mid, survey, Age_1, Attrit)])
+#lapply(InTerms, function(x)
+#  Reduce(cbind, lapply(1:ncol(x), function(i) 
+#    matrix(as.numeric(unlist(x[, .(sum(x[[i]]), nrow(x))]))))))
+<<tabulating number of obs in schooling ols original HHs, warning = F>>=
+InTerms <- lapply(scDatalist, function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Arm], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms <- rbindlist(lapply(InTerms, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms <- InTerms[, which(unlist(lapply(InTerms, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms <- t(InTerms)
+colnames(InTerms) <- paste0("(", 1:ncol(InTerms), ")") 
+InTerms <- InTerms[c(grep("Tra", rownames(InTerms)), 
+  grep("Large[^g]", rownames(InTerms)),
+  grep("Largeg", rownames(InTerms)),
+  grep("Cow", rownames(InTerms)),
+  grep("total", rownames(InTerms))
+  ), ]
+# reorder within a group
+rn.j <- rownames(InTerms)
+newroworder <- NULL
+for (j in c("Tra", "Large[^g]", "Largeg", "Cow"))
+  newroworder <- c(newroworder, 
+    c(grep(paste0(j, ".*ale$"), rn.j), grep(paste0(j, ".*P"), rn.j), 
+      grep(paste0(j, ".*J"), rn.j), grep(paste0(j, ".*H"), rn.j)))
+InTerms <- InTerms[c(newroworder, nrow(InTerms)), ]
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("Traditional|Large|Largegrace|Cow", "", rn0)
+IntT.tb <- as.matrix(cbind(" " = rn, InTerms))
+IntT.ltxtb <- latextab(IntT.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfil$", ncol(IntT.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT.tb) - 1)), hright = "$", 
+  headercolor = "gray80",, #adjustlineskip = "-.6ex", 
+  #adjlskiprows = c(1:2, 4, 6, 8, c(1:2, 4, 6, 8)+9, c(1:2, 4, 6, 8)+9*2, c(1:2, 4, 6, 8)+9*3),
+  delimiterline= NULL,
+  addseparatingcols = 5, separatingcolwidth = .2)
+IntTtb <- rbind(IntT.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize } & \\multicolumn{5}{c}{\\scriptsize\\hfil s1x} & & \\multicolumn{5}{c}{\\scriptsize\\hfil s2x (Augmented data)}\\\\",
+  "\\cline{2-6} \\cline{8-12}\\\\",
+  "\\makebox[3cm]{\\scriptsize Traditional\\hfill} & \\multicolumn{11}{c}{}\\\\",
+  IntT.ltxtb[1:max(grep("Tra", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large\\hfill} & \\multicolumn{11}{c}{}\\\\",
+  IntT.ltxtb[min(grep("Large[^g]", rn0)):(min(grep("Largeg", rn0) - 1)) + 2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large grace\\hfill} & \\multicolumn{11}{c}{}\\\\",
+  IntT.ltxtb[min(grep("Largeg", rn0)):(min(grep("Cow", rn0)) - 1) + 2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Cow\\hfill} & \\multicolumn{11}{c}{}\\\\",
+  IntT.ltxtb[(min(grep("Cow", rn0))+2):(nrow(IntT.ltxtb) -2), , drop = F],
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  IntT.ltxtb[(min(grep("total", rn0))+2):nrow(IntT.ltxtb), , drop = F]
+  )
+write.tablev(IntTtb, 
+  paste0(pathsaveHere, "NumObsSchoolingOLS.tex"), colnamestrue = F)
+@
+<<tabulating number of obs in schooling ols by Size original HHs, warning = F>>=
+# Size
+InTerms2 <- lapply(scOLS2Datalist, function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Size], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms4 <- lapply(scOLS4Datalist, function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Grace], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms2 <- rbindlist(lapply(InTerms2, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms4 <- rbindlist(lapply(InTerms4, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms2 <- InTerms2[, which(unlist(lapply(InTerms2, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms4 <- InTerms4[, which(unlist(lapply(InTerms4, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms2 <- t(InTerms2)
+InTerms4 <- t(InTerms4)
+colnames(InTerms2) <- paste0("(", 1:ncol(InTerms2), ")") 
+colnames(InTerms4) <- paste0("(", 1:ncol(InTerms4), ")") 
+InTerms2 <- InTerms2[c(grep("SmallS", rownames(InTerms2)), 
+  grep("LargeS", rownames(InTerms2)),
+  grep("total", rownames(InTerms2))
+  ), ]
+InTerms4 <- InTerms4[c(grep("Witho", rownames(InTerms4)), 
+  grep("WithG", rownames(InTerms4)),
+  grep("total", rownames(InTerms4))
+  ), ]
+# reorder within a group
+rn.j21 <- rownames(InTerms2)
+rn.j22 <- rownames(InTerms4)
+newroworder2 <- newroworder4 <- NULL
+for (j in c("SmallS", "LargeS"))
+  newroworder2 <- c(newroworder2, 
+    c(grep(paste0(j, ".*ale$"), rn.j21), grep(paste0(j, ".*P"), rn.j21), 
+      grep(paste0(j, ".*J"), rn.j21), grep(paste0(j, ".*H"), rn.j21)))
+for (j in c("Witho", "WithG"))
+  newroworder4 <- c(newroworder4, 
+    c(grep(paste0(j, ".*ale$"), rn.j22), grep(paste0(j, ".*P"), rn.j22), 
+      grep(paste0(j, ".*J"), rn.j22), grep(paste0(j, ".*H"), rn.j22)))
+InTerms2 <- InTerms2[c(newroworder2, nrow(InTerms2)), ]
+InTerms4 <- InTerms4[c(newroworder4, nrow(InTerms4)), ]
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms2), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("SmallSize|LargeSize", "", rn0)
+IntT2.tb <- as.matrix(cbind(" " = rn, InTerms2))
+IntT2.ltxtb <- latextab(IntT2.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfill$", ncol(IntT2.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT2.tb) - 1)), hright = "$", 
+  headercolor = "gray80",, 
+  delimiterline= NULL)
+IntT2tb <- rbind(IntT2.ltxtb[1:2, , drop = F], 
+  "\\makebox[3cm]{\\scriptsize Small Size\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT2.ltxtb[1:max(grep("SmallS", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large Size\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT2.ltxtb[(min(grep("LargeS", rn0)) + 2):(nrow(IntT2.ltxtb) -2), , drop = F],
+  "\\multicolumn{5}{c}{}\\\\[-.5ex]",
+  IntT2.ltxtb[(min(grep("total", rn0))+2):nrow(IntT2.ltxtb), , drop = F]
+  )
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms4), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("WithoutGrace|WithGrace", "", rn0)
+IntT4.tb <- as.matrix(cbind(" " = rn, InTerms4))
+IntT4.ltxtb <- latextab(IntT4.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfill$", ncol(IntT4.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT4.tb) - 1)), hright = "$", 
+  headercolor = "gray80",,
+  delimiterline= NULL)
+IntT4tb <- rbind(IntT4.ltxtb[1:2, , drop = F], 
+  "\\makebox[3cm]{\\scriptsize No Grace\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT4.ltxtb[1:max(grep("Witho", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Grace\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT4.ltxtb[(min(grep("WithG", rn0) + 2)):(nrow(IntT4.ltxtb) -2), , drop = F],
+  "\\multicolumn{5}{c}{}\\\\[-.5ex]",
+  IntT4.ltxtb[(min(grep("total", rn0))+2):nrow(IntT4.ltxtb), , drop = F]
+  )
+write.tablev(IntT2tb, 
+  paste0(pathsaveHere, "NumObsSchoolingOLS2.tex"), colnamestrue = F)
+write.tablev(IntT4tb, 
+  paste0(pathsaveHere, "NumObsSchoolingOLS4.tex"), colnamestrue = F)
+<<>>=
+#dummy chunk
+@
+
+\hspace{-1.0cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each cells of schooling regression in Table \ref{tab ols school}\label{tab num obs ols school}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.45}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumObsSchoolingOLS.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK administrative and survey data.}\\
+Notes: & 1. &  \\
+& 2. & %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment, different grouping\label{tab ols school2}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingOLSEstimationResults2.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{s1x} is complete portion of panel. \textsf{s2x} is a panel data augmenting attrited members in \textsf{s1x} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \textsf{SmallSize} includes \textsf{Traditional}, \textsf{LargeSize} includes \textsf{Large, Large grace, Cow}. \textsf{WithoutGrace} includes \textsf{Traditional, Large}, \textsf{WithGrace} includes \textsf{Large grace, cow}.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment, small vs. large sized \label{tab ols school3}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingOLSEstimationResults3.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{s1x} is complete portion of panel. \textsf{s2x} is a panel data augmenting attrited members in \textsf{s1x} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \textsf{SmallSize} includes \textsf{Traditional}, \textsf{LargeSize} includes \textsf{Large, Large grace, Cow}. \textsf{WithoutGrace} includes \textsf{Traditional, Large}, \textsf{WithGrace} includes \textsf{Large grace, cow}.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each cells of schooling regression in Table \ref{tab ols school2}, \ref{tab ols school3}\label{tab num obs ols school3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.45}
+\hfil\begin{tikzpicture}
+\node (tbl) {
+\input{\Sexpr{paste0(pathsaveHere, "NumObsSchoolingOLS2.tex")}}};
+\end{tikzpicture}\\
+
+\hfil\begin{tikzpicture}
+\node (tbl2) {
+\input{\Sexpr{paste0(pathsaveHere, "NumObsSchoolingOLS4.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK administrative and survey data.}\\
+Notes: & 1. &  \\
+& 2. & %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment, ultra poor vs. moderately poor\label{tab ols school4}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingOLSEstimationPovertystatusResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{s1x} is complete portion of panel. \textsf{s2x} is a panel data augmenting attrited members in \textsf{s1x} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textit{The following does not apply to first-difference estimation.} \sout{\textsc{\small Table \ref{tab ols school}} shows school enrollment is higher for \textsf{s1x} than \textsf{s2x}, indicating nonattriting members are school goers. When using \textsf{s1x} data, \textsf{cow} and \textsf{large grace} show negative impacts for older children, yet not for girls in junior high schools. In fact, (1) shows that girles in high school have higher enrollment in \textsf{s1x} and both junior and high schools for \textsf{s2x} in (4). This may be due to increased labour demand within a family for boys. Similar patterns are found in \textsf{s2x} data, yet not statistically significant, probably because data augmentation introduces more school dropouts among older girls. In \textsc{\small Table \ref{tab ols school2}} when using with grace/without grace grouping, the pattern becomes statistically significant for both \textsf{s1x} and \textsf{s2x}. Large size vs. small size contrast has smaller statistical power that more subtle outcomes cannot be detected. No difference between ultra and moderately poor is found in \textsc{\small Table \ref{tab ols school4}}.} In first-difference estimation, rd 1 and rd 4 comparison of \textsc{\normalsize Table \ref{tab FD enroll5}} (2) - (4) show a marginally statistically significant higher enrollment rates for girls of \textsf{Cow}. 
+\end{finding}
+\end{palepinkleftbar}
+

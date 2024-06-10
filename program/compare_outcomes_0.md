@@ -1,0 +1,1609 @@
+
+
+```r
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.nar <- paste0(path0, "received/mar/")
+%   path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.nar <- paste0(path0, "received/mar/"); system("recycle c:/data/GUK/analysis/program/cache/compare_outcomes_0/"); library(knitr); knit("compare_outcomes_0.rnw", "compare_outcomes_0.tex"); system("platex compare_outcomes_0"); system("pbibtex compare_outcomes_0"); system("dvipdfmx compare_outcomes_0")
+
+\input{c:/data/knitr_preamble.rnw}
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_chunk$set(fig.path='figure/compare_outcomes_0', cache.path='cache/compare_outcomes_0', cache = F, echo = F, results = 'hide', tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+pathsave <- paste0(path, "save/")
+pathreceived.oct <- paste0(path0, "received/oct/")
+@
+
+\hfil Comparing outcomes between groups\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\tableofcontents
+
+\setlength{\parindent}{1em}
+
+\vspace{2ex}
+
+There are a few key variables.
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{receivedCredit}: The actual treatment status. This is time-invariant. It is T if a subject is receives a loan in our observation period.
+\item	\textsf{assignment}: The original treatment assignement. This is time-invariant. This differs from \textsf{receivedCredit} because in our design everyone is deemed to get treated at the end (but there are subjects who opted out of a loan but remained in a group).
+\item	\textsf{disbursed}: If a subject received a loan. This is time-variant.
+\item	\textsf{elapsed}: The number of days since receiving a loan at rd 3 interview date. This is time-invariant as it is computed only at rd 3. This defines the eventual treatment dose and should be our main covariate.
+\end{itemize}
+
+Following results are obtained.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Figure 1]	This plots the mean of ``3 meals per day'' in each round. Left panel is control vs. treated in \textsf{receivedCredit} (actual assignmemt). Right panel is control vs. treated in \textsf{assignment} (original assignment). The question is changed in rd 2 onwards so direct comparison across rd 1 and 2,3 are not tenable. However, one sees a rising ``3 meals per day'', but almost paralel trend between rd 2 and 3 (which are comparable).
+\item[Table 1]	This is a first-difference (linear probability) estimation result of ``3 meals per day'' on \textsf{disbursed}, \textsf{arm}, their interactions, \textsf{assignment}, \textsf{elapsed} days, using the post treatment data of rds 2, 3. It shows positive impacts of receiving a loan (\textsf{disbursed} under the covariate name ``credit'') aafter controlling for \textsf{arm}. \textsf{control/treated} are relative to ``lost to flood'' or ``rejections,'' so it is not surprising to have better food intake.
+\item[Figure 2]	Livestock is the main stated usage of loans.
+\item[Figure 3]	Work hours seem to get longer.
+\item[Figure 4]	New loans increased in rd 2, whose recall period corresponds to the timing disbursement.
+\item[Figure 5]	Asset holding by \textsf{receivedCredit}= T/F and rds = 1,2,3. Asset holding is computed with rd 1 asset holding, asset addition in rd 2, 3, while assuming an annual rate of 5\% depreciation. \textsf{receivedCredit} not randomised allocation as loan receipt must be agreed by subjects. It shows that the loan receivers have higher mean asset in rd 3, but not in rd 1 or 2, where the latter is good. Red dotted lines are medians, blue dotted lines are means.
+\item[Figure 6]	Asset holding by \textsf{disbursed}=T/F and rds=1,2,3. This is also an endogenous switch. The basic picture is the same as Figure 5.
+\item[Figure 7]	Asset holding by \textsf{elapsed} days grouped into ``early receivers'' and ``late receivers'' according to median elapsed day. This is (roughly) a randomised switch. It shows increasing asset levels, but no mean or median difference between early and late receivers.
+\item[Figure 8]	Asset holding by \textsf{elapsed} days and \textsf{arms}. Not much to see here.
+\item[Figure 9]	Difference in group-average asset holding between the treated and the control in \textsf{assignment} by difference in \textsf{elapsed} and \textsf{arms}. So it is group differences among original treatment assignment (treated - control) within the same cluster. It controls for cluster FE, and dose and outcome differences are taken between randomly assigned treatment status. This should be one of our main comparisons. (This is not DID: If I plot the first-difference version of the plots between rds, it will be double difference estimates.) When I draw loess curves, I see no trend over various elapsed day (``treatment dose'') differences. It hints a zero gradient of dose levels.
+\item[Figure 10]	Same identification idea as Figure 9 on livestock values. Again, we do not see markedly strong impacts, but we see some differences in terms of dispersion. \textsf{cow} arm has smaller variations around the loess curves in rds 2 and 3 relative to the \textsf{large grace} arm. \textsf{traditional} arm has a simlar pattern as \textsf{large grace}.
+\item[Figure 11]	Livestock holding by \textsf{elapsed} days. Substantial heterogeneity in rd 3 but no statistical significant changes.
+\item[Figure 13]	Total asset holding by \textsf{elapsed} days. Substantial heterogeneity in rd 3 but no statistical significant changes.
+\item[Table 3]	DID estimation of total asset holding by \textsf{elapsed} days. Zero impact.
+\end{description}
+
+\underline{Please ignore} the texts hereafter as they are my memos in programming.
+
+
+\section{Read}
+
+List folder names and read files.
+<<warning = F>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("add|ori|^\\.$|1$", foldername)]
+fn <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+X = lapply(fn, fread, integer64 = "double")
+@
+
+\section{Treatment through time}
+
+<<echo = F, results = 'hide'>>=
+setwd(pathsave)
+tr <- fread("treatment_assignment.prn")
+tr0 <- tr[, .(gid, hhid, memstatus, assignment, arm, receivedCredit, 
+	elapsed, daysFromStart)]
+table(tr0[is.na(receivedCredit), .(memstatus, arm)])
+@
+Treatment assignment file. There are \Sexpr{table(tr0[, assignment])[1]} cases of attrition who are group rejections (\Sexpr{table(tr0[, memstatus])["group rejection"]}) and lost to flood (\Sexpr{table(tr0[, memstatus])["lost to flood"]}). 
+<<>>=
+setwd(pathsave)
+tr <- fread("treatment_assignment.prn")
+tr[, disburseDate := as.POSIXct(disburseDate, format = "%Y-%m-%d")]
+tr[, purchaseDate := as.POSIXct(purchaseDate, format = "%Y-%m-%d")]
+tr[, arm := factor(arm)]
+tr[, memstatus := factor(memstatus)]
+tr[, assignment := factor(assignment)]
+tr0 <- tr[, .(gid, hhid, memstatus, assignment, arm, receivedCredit, elapsed, daysFromStart)]
+table0(tr0[, .(memstatus, assignment)])
+table0(tr0[, .(arm, assignment)])
+table0(tr0[, .(memstatus, arm)])
+tr1 <- tr0[, -grep("Cre", colnames(tr0)), with = F]
+@
+\textsf{tr0} and \textsf{tr1} are based on the information at rd 3.
+<<warning = F>>=
+setwd(pathsave)
+indate <- fread("interview_dates_long.prn", integer64 = "double")
+indate[, intDate := as.POSIXct(intDate, format = "%Y-%m-%d")]
+indate[, daysSince2014 := 
+	asn(intDate - as.POSIXct("2014-01-01", format = "%Y-%m-%d"))]
+indate <- reshape(indate, direction = "wide", idvar = "hhid",
+	timevar = "rd", 
+	v.names = c("disbursed", "purchased", "intDate", "daysSince2014"))
+@
+Merge interview dates with treatment assignment info \textsf{tr1}.
+<<>>=
+setkey(indate, hhid); setkey(tr0, hhid); setkey(tr1, hhid)
+tr0 <- indate[tr0]
+tr1 <- indate[tr1]
+<<>>=
+tr1l <- reshape(tr1, direction = "long", idvar = c("gid", "hhid", 
+	"assignment", "arm", "memstatus"), varying = grepout("\\.\\d", colnames(tr0)))
+setnames(tr1l, "time", "rd"); setkey(tr1l, hhid, rd)
+table(tr1l[ ,.(rd, disbursed, assignment)], useNA = "ifany")
+table(tr1l[ ,.(rd, disbursed, memstatus)], useNA = "ifany")
+@
+
+
+\section{Food consumption (23B in rd 1, 3B in rds 2, 3)}
+
+<<echo = F, results = 'hide'>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("add|ori|^\\.$|1$", foldername)]
+fn <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+<<>>=
+setwd(pathsource.mar)
+grepout("sect.*\\_3b|23b_m|23b.prn", fn)
+sec3b = copy(X[grep("sect.*\\_3b|23b_m|23b.prn", fn)])
+setnames(sec3b[[2]], "id", "hhid")
+setnames(sec3b[[3]], "id", "hhid")
+@
+There is pure duplication in rd 1 files. Drop them.
+<<>>=
+lapply(sec3b[1], 
+	function(x) x[hhid %in% x[duplicated(x[, .(hhid, mid)]), hhid], ])
+sec3b[1] <- lapply(sec3b[1], 
+	function(x) x[!duplicated(x[, .(hhid, mid)]), ])
+sec3b[[2]] <- sec3b[[2]][!duplicated(hhid), ]
+asl(lapply(sec3b[1], 
+	function(x) any(duplicated(x[, .(hhid, mid)]))))
+@
+There is only one HH that reports food intake of a non-head member. I will drop this non-head member.
+<<>>=
+table0(sec3b[[1]][!is.na(s23b_1), mid])
+sec3b[[1]][hhid %in% hhid[!is.na(s23b_1) & mid != 1], ]
+# drop all non-head members
+sec3b[[1]] <- sec3b[[1]][mid == 1, ]
+@
+Drop hhid = NA.
+<<>>=
+sec3b <- lapply(sec3b, function(x) x[!is.na(hhid), ])
+@
+Merge treatment assignment info.
+<<results = 'hide'>>=
+invisible(lapply(sec3b, setkey, hhid)); setkey(tr0, hhid)
+sec3b <- lapply(sec3b, merge, tr0, by = "hhid", all.x = T)
+@
+Some \textsf{gid}s are missing in sec3b. Check if the merge is done correctly. Check if this is due to hhid = 980... cases. Strip leading 980/990 and see if the matched observations have variables originally from \textsf{tr0}.
+<<>>=
+nahhids <- lapply(sec3b, function(x) asn(unique(x[is.na(gid), hhid])))
+nahhids <- lapply(nahhids, gsub, pattern = "^980|^990", replacement = "")
+nahhids <- lapply(nahhids, asn)
+table0(sec3b[[1]][hhid %in% nahhids[[1]], assignment])
+table0(sec3b[[2]][hhid %in% nahhids[[2]], assignment])
+table0(sec3b[[3]][hhid %in% nahhids[[3]], assignment])
+@
+Rd 1 seems to be merged OK. Rd 2, 3 show that there are duplicated \textsf{hhid} so drop all entries with duplication.
+<<>>=
+sec3b[[2]] <- sec3b[[2]][!(hhid %in% nahhids[[2]]), ]
+sec3b[[3]] <- sec3b[[3]][!(hhid %in% nahhids[[3]]), ]
+@
+There still remains unmatched observations as seen in NAs in \textsf{assignment} (found in Sec 3B files but not in identification files.) We drop these observations.
+<<>>=
+lapply(sec3b, function(x) table0(x[is.na(gid), assignment]))
+sec3b <- lapply(sec3b, function(x) x[!is.na(gid), ])
+asn(lapply(sec3b, dim))
+<<echo = F, eval = F>>=
+for (i in 1:3) {
+	sec3b[[i]][, gid2 := substr(asc(hhid), 1, nchar(asc(hhid))-2)]
+	sec3b[[i]][, gid2 := gsub("^9.0", "", gid2)]
+	if ((nn <- nrow(sec3b[[i]][is.na(gid) & !is.na(gid2), ])) > 0) {
+		print(paste0("Rd ", i, ": Supplement ", nn, " gid from hhid."), quote = F)
+		sec3b[[i]][, gid := asn(gid2)]
+	}
+	sec3b[[i]][, gid2 := NULL]
+}
+@
+
+	Three meals. In rd 1, we ask for all the members about the number of times they eat meals, during monga and off-monga seasons. On average, there is only 1 out of \Sexpr{round(nrow(sec3b[[1]])/sum(!is.na(sec3b[[1]][, s23b_1])), 1)} HH members reponding to the question, which are all HH head members. In rds 2 and 3, we ask a blanket question if all the members eat three times a day for the whole year. So rd 1 question is more likely to be responded as ``3 times'' than in rd 2, 3 questions, \textit{cetris paribus}. So observing more ``3 times'' responses in the latter rds indicate that there may be improvements in household food intake. 
+
+%Duplication of \textsf{hhid} in ``original'' and ``additional'' samples. In close inspection, I find that 9808148207 is in between 8148206 and 8148208 in original sample file. I will drop leading 980 from 9808148207 as there is no 8148207 in both files. Same is true for 9808148220 where I change to 8148220 in the original file.
+<<echo = F, eval = F, results = 'hide'>>=
+table(tb <- table0(sec3b[[1]][, .(hhid, mid)]))
+(hhid.dup <- tb[apply(tb == 2, 1, any), ])
+if (length(hhid.dup) > 0) sec3b[[1]][hhid %in% rownames(hhid.dup), ]
+sec3b[[2]][hhid == 9808148207, hhid := 8148207]
+sec3b[[2]][hhid == 9808148220, hhid := 8148220]
+@
+Combine rd 1 original and additional into a single file, then put into a list with rds 2, 3.
+<<>>=
+meal3.0 <- c(asn(table0(grepl("3", sec3b[[1]][, s23b_1]) & grepl("3", sec3b[[1]][, s23b_2]) & 
+	grepl("3", sec3b[[1]][, s23b_5]) & grepl("3", sec3b[[1]][, s23b_6]))),
+	asn(lapply(sec3b[2:3], function(x) table0(grepl("y", x[, s8bq1])))))
+# leave monga out
+meal3 <- c(asn(table0(grepl("3", sec3b[[1]][, s23b_1]) & grepl("3", sec3b[[1]][, s23b_2]))),
+	asn(lapply(sec3b[2:3], function(x) table0(grepl("y", x[, s8bq1])))))
+meal3 <- matrix(meal3, byrow = T, ncol = 2)
+dimnames(meal3) <- list(paste0("rd", 1:3), c("FALSE", "TRUE"))
+meal3
+iiD1 <- sec3b[[1]][, receivedCredit]
+iiD2 <- sec3b[[2]][, receivedCredit]
+iiD3 <- sec3b[[3]][, receivedCredit]
+iiI1 <- grepl("treated", sec3b[[1]][, assignment])
+iiI2 <- grepl("treated", sec3b[[2]][, assignment])
+iiI3 <- grepl("treated", sec3b[[3]][, assignment])
+meal3D1 <- 
+	c(asn(table0(grepl("3", sec3b[[1]][iiD1, s23b_1]) & grepl("3", sec3b[[1]][iiD1, s23b_2]))),
+	asn(table0(grepl("y", sec3b[[2]][iiD2, s8bq1]))),
+	asn(table0(grepl("y", sec3b[[3]][iiD3, s8bq1]))))
+meal3D0 <- 
+	c(asn(table0(grepl("3", sec3b[[1]][!iiD1, s23b_1]) & grepl("3", sec3b[[1]][!iiD1, s23b_2]))),
+	asn(table0(grepl("y", sec3b[[2]][!iiD2, s8bq1]))),
+	asn(table0(grepl("y", sec3b[[3]][!iiD3, s8bq1]))))
+meal3I1 <- 
+	c(asn(table0(grepl("3", sec3b[[1]][iiI1, s23b_1]) & grepl("3", sec3b[[1]][iiI1, s23b_2]))),
+	asn(table0(grepl("y", sec3b[[2]][iiI2, s8bq1]))),
+	asn(table0(grepl("y", sec3b[[3]][iiI3, s8bq1]))))
+meal3I0 <- 
+	c(asn(table0(grepl("3", sec3b[[1]][!iiI1, s23b_1]) & grepl("3", sec3b[[1]][!iiI1, s23b_2]))),
+	asn(table0(grepl("y", sec3b[[2]][!iiI2, s8bq1]))),
+	asn(table0(grepl("y", sec3b[[3]][!iiI3, s8bq1]))))
+meal3D1 <- matrix(meal3D1, byrow = T, ncol = 2)
+meal3D0 <- matrix(meal3D0, byrow = T, ncol = 2)
+meal3I1 <- matrix(meal3I1, byrow = T, ncol = 2)
+meal3I0 <- matrix(meal3I0, byrow = T, ncol = 2)
+dimnames(meal3D1) <- dimnames(meal3D0) <- 
+dimnames(meal3I1) <- dimnames(meal3I0) <- 
+	list(paste0("rd", 1:3), c("FALSE", "TRUE"))
+meal3DI <- data.table(rbind(repseq(c("D=1", "D=0", "I=1", "I=0"), 2), 
+	cbind(meal3D1, meal3D0, meal3I1, meal3I0)))
+meal3DI
+#z.0 <- parse(text = "s8bq")
+#sec3b[[1]][, zval := eval(z.0)]
+@
+<<echo = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 4, fig.cap = "3 meals per day", fig.lp = 'Figure'>>=
+ml3 <- 	cbind(meal3D1, meal3D0, meal3I1, meal3I0)
+colnames(ml3) <- paste0(repseq(c("D1", "D0", "I1", "I0"), 2), c("n", "y"))
+ml3 <- ml3r <- data.table(ml3)
+ml3r[, c("D1y", "D1n") := list(D1y/(D1y+D1n), D1n/(D1y+D1n))]
+ml3r[, c("D0y", "D0n") := list(D0y/(D0y+D0n), D0n/(D0y+D0n))]
+ml3r[, c("I1y", "I1n") := list(I1y/(I1y+I1n), I1n/(I1y+I1n))]
+ml3r[, c("I0y", "I0n") := list(I0y/(I0y+I0n), I0n/(I0y+I0n))]
+ml3r <- ml3r[, grepout("y", colnames(ml3r)), with = F]
+ml3r <- data.table(repseq(c("actual", "intention"), 6),
+	rep(rep(c("treated", "control"), 3), 2),
+	1:3, asn(ml3r))
+setnames(ml3r, colnames(ml3r), c("policy", "status", "rd", "value"))
+library(ggplot2)
+ggplot(data = ml3r, aes(x = rd, y = value)) + 
+	geom_point(aes(color = status, shape = status), size = 1.5) +
+	geom_line(aes(color = status), size = .5) +
+	ylab("rate") + xlab("Round") +
+	scale_x_continuous(breaks=1:3) +
+	facet_wrap(~ policy) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5)),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.5)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size=rel(.5)),
+		strip.text = element_text(size=rel(.25)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+Given the questions are different, it is not surprising that we have different proportion of subjects with three meals per day. Despite this limitation, we have an increasing food consumption security which is promissing.
+
+Form data for regression.
+<<>>=
+s3b <- merge(sec3b[[1]][, .(gid, hhid, s23b_1, s23b_2, arm, assignment, 
+	disbursed.1, purchased.1, receivedCredit, 
+	daysFromStart, daysSince2014.1, intDate.1)],
+	sec3b[[2]][, .(gid, hhid, s8bq1, arm, assignment, 
+	disbursed.2, purchased.2, receivedCredit, daysSince2014.2, intDate.2)], 
+	by = c("gid", "hhid", "arm", "assignment"), all = T, , suffixes = c(".1", ".2"))
+s3b <- merge(s3b, sec3b[[3]][, .(gid, hhid, s8bq1, arm, assignment, 
+	disbursed.3, purchased.3, receivedCredit, daysSince2014.3, intDate.3)], 
+	by = c("gid", "hhid", "arm", "assignment"), all = T, suffixes = c(".2", ".3"))
+setnames(s3b, "receivedCredit", "receivedCredit.3")
+dim(s3b); dim(s3b <- s3b[!is.na(hhid) | !is.na(gid), ])
+s3b[, c("disbursed.1", "purchased.1", "receivedCredit.1") := F]
+if (nrow(s3b[is.na(assignment), ]) > 0) 
+	s3b[is.na(assignment), assignment := "drop out"]
+dim(s3b <- s3b[!duplicated(s3b), ])
+@
+3 meals per day in regular times for rd 1. For rd 2, 3, yes to the question.
+<<>>=
+s3b[, c("m3.1", "m3.2", "m3.3") := 
+	list(grepl("3", s3b[, s23b_1]) & grepl("3", s3b[, s23b_2]),
+	grepl("y", s3b[, s8bq1.2]),
+	grepl("y", s3b[, s8bq1.3]))]
+s3b[is.na(s23b_1) | is.na(s23b_2), m3.1 := NA]
+s3b[is.na(s3b[, s8bq1.2]), m3.2 := NA]
+s3b[is.na(s3b[, s8bq1.3]), m3.3 := NA]
+@
+Rescale days by 100. Note that \textsf{assignment} has empty observations who either group rejected or lost to flood. They form the reference group for \textsf{assignment (control, treated)}. 
+<<cache = F>>=
+s3b[, daysFromStart := daysFromStart/100]
+dim(s3b <- s3b[, !grepl("^s\\d", colnames(s3b)), with = F])
+#s3bl <- reshape(s3b, direction = "long", 
+#	idvar = c("gid", "hhid", "assignment", "arm"),
+#	varying = grepout("\\.\\d", colnames(s3b)))
+dim(s3b.comp <- s3b[!is.na(m3.2) & !is.na(m3.3) & 
+	!is.na(receivedCredit.2) & !is.na(receivedCredit.3), ])
+s3bl <- reshape(s3b.comp, direction = "long", 
+	idvar = c("gid", "hhid", "assignment", "arm"),
+	varying = grepout("\\.\\d", colnames(s3b.comp)))
+m3data <- s3bl[time > 1, ]
+setkey(m3data, hhid, time)
+table(table(m3data[, hhid]))
+m3data[, m3 := m3+0]
+m3data[, arm := factor(arm, levels = c("traditional", "large", "large grace", "cow", "lost to flood"))]
+m3data[, assigncredit := grepl("tre", assignment) * receivedCredit]
+@
+\textsf{m3data}: Rd 2-3 data on three meals per day. 
+<<>>=
+dm3 <- data.table(m3data[seq(1, nrow(m3data), 2), 
+	.(gid, arm, assignment, receivedCredit, assigncredit, daysFromStart)],
+	m3data[seq(2, nrow(m3data), 2), .(disbursed, purchased, daysSince2014, m3)]-
+	m3data[seq(1, nrow(m3data), 2), .(disbursed, purchased, daysSince2014, m3)])
+l1 <- glm(m3 ~ arm, data = dm3)
+l2 <- glm(m3 ~ assignment, data = dm3)
+l3 <- glm(m3 ~ arm*disbursed, data = dm3)
+l4 <- glm(m3 ~ assignment + disbursed + assigncredit, data = dm3)
+l5 <- glm(m3 ~ arm + daysFromStart, data = dm3)
+l6 <- glm(m3 ~ arm*disbursed + daysFromStart, data = dm3)
+#p1 <- glm(m3 ~ arm, family=binomial(link="probit"), data = m3data)
+linprob <- list(l1, l2, l3, l4, l5, l6)
+linest <- lapply(linprob, clx.regobj, Cluster = "gid")
+linest <- lapply(linest, function(x) x[, -3])
+linest <- tabs2latex(linest)
+R2 <- round(asn(lapply(linprob, 
+	function(x) 1-crossprod(summary(x)$deviance.res)/summary(x)$null.dev)), 3)
+en <- asn(lapply(linprob, function(x) length(x$y)))
+rn <- rownames(linest)
+rn <- gsub("arm|assignment|^se.*", "", rn)
+rn <- gsub("assigncredit", "treated * credit", rn)
+rn <- gsub("disbursed", "credit", rn)
+rn <- gsub(":", " * ", rn)
+rn <- gsub("daysFromStart", "elapsed days * 100", rn)
+ltab <- rbind(as.matrix(cbind(rn, linest)), c("$R^{2}$", R2), 
+	c("$n$", en))
+write.tablev(latextab(ltab, delimiterline = NULL, alternatecolor2 = "gray90",
+	hleft = c("\\footnotesize", rep("\\scriptsize\\hfil$", ncol(ltab)-1)),
+	hcenter = c(2.2, rep(1.25, ncol(ltab)-1)), 
+	hright = c("\\hfill", rep("$", ncol(ltab)-1)),
+	adjustlineskip = "-.4ex"), 
+	paste0(pathsave, "3meals.tex"), colnamestrue = F)
+@
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{9cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: FD estimates of three meals per day, round 2, 3\label{FD3meals}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/3meals.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+
+\vspace{-4ex}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{11.5cm}<{\hfill}}
+Notes:& 1. & First-difference estimates of having three meals per day using rd 2 and 3 information. Standard errors are clustered at the group level.\\[-1ex]
+& 2. & \textsf{large, large grace, cow, lost to flood, control, treated, credit} are all time invariant and are interacted with a trend term. 
+Regressions (1) - (4) include subjects who group-rejected or lost to flood as a reference group. Regressions (5) - (6) drop subjects who group-rejected or lost to flood and use the subjects who were initially assigned to the control as a reference group.\\
+& 3. & $*$, $**$, $***$ indicate significance levels at 10\%, 5\%, 1\%, respectively.\\
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+We see no impacts of intervention when comparing two perids after the disbursement. 
+
+\section{Credit use}
+
+<<>>=
+cruse.files <- grepout("21", fn)
+cruse.files <- cruse.files[!grepl("com", cruse.files)]
+@
+File names of rd 3 files are named for the page ordering. For example, \textsf{\footnotesize\Sexpr{gsub("\\_", "\\\\_", cruse.files[1])}} are the first 2 questions of Section 20, which is named as 21 as it is an unnumbered page that comes right after Section 20. \textsf{\footnotesize\Sexpr{gsub("\\_", "\\\\_", fn[80])}} is Section 18.
+<<>>=
+setwd(pathsource.mar)
+fread(cruse.files[1], integer64 = "double")
+fn21 <- grepout("2/section_23.prn|3/section_21", fn)
+@
+In rd 2, Section 21 is stored under \textsf{\footnotesize\Sexpr{gsub("\\_", "\\\\_", fn21[1])}}, in rd 3, \textsf{\footnotesize\Sexpr{gsub("\\_", "\\\\_", fn21[-1])}}.
+<<warning = F>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("add|ori|^\\.$|1$", foldername)]
+fn <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+X = lapply(fn, fread, integer64 = "double")
+<<>>=
+Cr = copy(X[fn %in% fn21])
+Cr <- lapply(Cr, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+invisible(lapply(Cr, setkey, hhid))
+Cr2 <- Cr[[1]]
+setnames(Cr2, colnames(Cr2)[-1],
+	paste0("V", 1:(ncol(Cr2)-1), "_", colnames(Cr2)[-1]))
+setnames(Cr2, colnames(Cr2), 
+	gsub("seca3_", "", colnames(Cr2)))
+setnames(Cr2, colnames(Cr2), 
+	gsub("_\\d_|_q\\d_|__", "_", colnames(Cr2)))
+setnames(Cr2, colnames(Cr2), 
+	gsub("_\\d_", "_", colnames(Cr2)))
+Cr3 <- Cr[[2]][Cr[[3]]]
+setnames(Cr3, colnames(Cr3)[-1],
+	paste0("V", 1:(ncol(Cr3)-1), "_", colnames(Cr3)[-1]))
+setnames(Cr3, colnames(Cr3), 
+	gsub("_q.*?_([a-z])", "_\\1", colnames(Cr3)))
+setnames(Cr3, colnames(Cr3), 
+	gsub("_a_", "_", colnames(Cr3)))
+Cr3 <- Cr3[!is.na(hhid), ]
+setkey(Cr3, hhid, V5_from_when_you_started_1, 
+	V6_from_when_you_started_2)
+#setnames(Cr3, colnames(Cr3)[-1], 
+#	paste0("V", putzeroontop(1:(ncol(Cr3)-1), totaldigits = 2)))
+Cr3[, iga := 1:.N, by = hhid]
+Cr3[, igas := .N, by = hhid]
+setkey(Cr3, hhid, iga)
+@
+Merge rd 2 and 3.
+<<>>=
+setnames(Cr2, grepout("from.oth", colnames(Cr2)), "loanFromOther")
+setnames(Cr3, grepout("from.oth", colnames(Cr3)), "loanFromOther")
+setnames(Cr3, grepout("deta.*j$", colnames(Cr3)), "igaContent")
+setnames(Cr3, grepout("deta.*i$", colnames(Cr3)), "specify")
+setnames(Cr3, grepout("am.*ed", colnames(Cr3)), "investValue")
+setnames(Cr3, grepout("start.*_1", colnames(Cr3)), "startY")
+setnames(Cr3, grepout("start.*_2", colnames(Cr3)), "startM")
+setnames(Cr3, grepout("du", colnames(Cr3)), "investDuration")
+setnames(Cr3, grepout("8.*othe.*g", colnames(Cr3)), "investSame")
+setnames(Cr3, grepout("9.how.*", colnames(Cr3)), "investSameNum")
+setnames(Cr3, grepout("0.*any.*g", colnames(Cr3)), "investSameExper")
+setnames(Cr3, grepout("1.how.*", colnames(Cr3)), "investSameExperNum")
+setnames(Cr3, grepout("2.*still", colnames(Cr3)), "investSameStill")
+Cr2 <- Cr2[!is.na(hhid), ]
+Cr3 <- Cr3[!is.na(hhid), ]
+lapply(list(Cr2, Cr3), colnames)
+setwd(pathsave)
+write.tablev(Cr2, "credit_use_rd_2.prn")
+write.tablev(Cr3, "credit_use_rd_2.prn")
+@
+
+Intended use of credit, mostly livestock (cows).
+<<echo = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Stated use of credit in rd 2", fig.lp = 'Figure'>>=
+tb <- table(Cr2[, grep("use1", colnames(Cr2)), with = F])
+tb <- data.table(tb)
+setnames(tb, colnames(tb), c("use", "freq"))
+tb <- tb[use != "", ]
+library(ggplot2)
+ggplot(data = tb, aes(x = use, y = freq)) +
+	geom_bar(stat= "identity", fill = "blue") +
+#	 coord_flip() +
+	ylab("Frequency") + xlab("Stated use of credit") +
+	scale_fill_manual(values = "white", labels = "control") +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0))
+@
+It is interesting to note that the majority of our subjects choose livestock for an investment. 
+
+Work hours.
+<<echo = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Work hours", fig.lp = 'Figure'>>=
+tb <- table(Cr2[, grep("word_h", colnames(Cr2)), with = F])
+tb <- data.table(tb)
+setnames(tb, colnames(tb), c("hours", "freq"))
+tb <- tb[hours != "", ]
+library(ggplot2)
+ggplot(data = tb, aes(x = hours, y = freq)) +
+	geom_bar(stat= "identity", fill = "blue") +
+#	 coord_flip() +
+	ylab("Frequency") + xlab("Changes in own work hours since receiving a loan") +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 0, hjust = .5),
+		axis.text.y = element_text(size = rel(.5), angle = 0))
+@
+
+\section{New loans}
+
+Loans in rds 1, 2, and 3.
+<<>>=
+(fn20c <- grepout("2/s.*20c|3/s.*19c", fn))
+(fn19.1 <- grepout("d/s.*19", fn))
+bo1 = copy(X[[which(fn %in% fn19.1)]])
+bo1 <- bo1[!is.na(s19_1_1), ]
+bo1 <- bo1[!duplicated(hhid), ]
+lendersin1 <- c("other", "relative", "moneylender")
+setnames(bo1, paste0("s19_", repseq(1:3, 5), "_", rep(1:5, 3)),
+	paste0(c("ask", "askAmount", "cashAmount", "interest", "usage"), ".", 
+	repseq(lendersin1, 5)))
+bo1l <- reshape(bo1, direction = "long", idvar = "hhid",
+	varying = grepout("\\.", colnames(bo1)))
+setnames(bo1l, "time", "lender")
+setkey(bo1l, hhid, lender)
+bo1l[, totalSum := sum(cashAmount, na.rm = T), by = hhid]
+bo1l[grepl("oth", lender), lender := "other NGO/MFI"]
+bo1l[grepl("rel", lender), lender := "friends, relatives"]
+bo1l[grepl("mo", lender), lender := "money lenders"]
+Bo1 <- cbind(rd = 1, bo1l)
+@
+In rd 1, there are only 14 subjects who have borrowed from \textsf{other NGO/MFI} in the last 12 months. Most of the loans are taken from \textsf{friends, relatives} and \textsf{money lenders}, for about 9\%, 13\% of subjects, respectively.
+<<>>=
+bor1 <- by(bo1l[, cashAmount], bo1l[, lender], destat)
+bor1des <- data.frame(rbindlist(lapply(bor1, function(x) data.table(t(matrix(x))))))
+dimnames(bor1des) <- list(names(bor1), colnames(bor1[[1]]))
+bor1des
+@
+
+<<>>=
+Bo = copy(X[fn %in% fn20c])
+Bo <- lapply(Bo, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+invisible(lapply(Bo, setkey, hhid))
+Bo <- rbindlist(list(data.table(rd = 2, Bo[[1]]), data.table(rd = 3, Bo[[2]])))
+Bo <- Bo[!is.na(hhid), ]
+Bo[, bo := 1:.N, by = c("hhid", "rd")]
+setkey(Bo, hhid, rd, bo)
+Bo[, inkindAmount := (in_kind_amount_4_1) * (in_kind_price_4_1)]
+Bo[is.na(inkindAmount), inkindAmount := 0]
+Bo[is.na(cash_tk_4_1), cash_tk_4_1 := 0]
+Bo[, cashAmount := cash_tk_4_1]
+Bo[, totalSum := sum(cashAmount+inkindAmount), by = c("hhid", "rd")]
+Bo[, purpose := pur_loan_4_1]
+Bo[grepl("other", purpose), purpose := purpose_of_the_loan_specify_4_1]
+Bo[grepl("cow|COW|cuw|cou ?bu|cow ?bu|cwo|gow|cokw|coe|coy|ci=ow", purpose), 
+	purpose := "buying cows"]
+Bo[grepl("goa?t|goad|goot", purpose), purpose := "buying goats"]
+Bo[grepl("shee|shepp", purpose), purpose := "buying sheep"]
+Bo[grepl("boa?t|boad|ship", purpose), purpose := "buying a boat"]
+Bo[grepl("land|lond|lnad", purpose), purpose := "buy/leasing in land"]
+Bo[grepl("house", purpose), purpose := "buying a house"]
+Bo[grepl("eremny|dowry", purpose), purpose := "ceremony, dowry"]
+Bo[grepl("mach", purpose), purpose := "buying machines"]
+Bo[grepl("buss?inn?es|trade", purpose), purpose := "business investment"]
+table0(Bo[, loan_taken_from_4_1])
+Bo[, lender := tolower(loan_taken_from_4_1)]
+Bo[grepl("rela", lender), lender := "friends, relatives"]
+Bo[grepl("mo", lender), lender := "money lenders"]
+Bo[grepl("0", lender), lender := ""]
+Bo[lender == "", lender := NA]
+Bo[grepl("sho|tr", lender), lender := "shop owners, traders"]
+Bo[grepl("gra|other|co-|ban", lender) | grepl("bra", loan_taken_from_specify_4_1), 
+	lender := "other NGO/MFI"]
+Bo[grepl("GUK|guk|ugk", loan_taken_from_specify_4_1), lender := "GUK"]
+table0(Bo[, lender])
+table0(Bo[grepl("other", lender), loan_taken_from_specify_4_1])
+table0(Bo[grepl("other", lender), cashAmount])
+@
+Append rd 1.
+<<>>=
+setkey(Bo, hhid, rd); setkey(Bo1, hhid, rd)
+Bo13 <- rbind(Bo1, Bo, fill = T)
+setkey(Bo13, hhid, rd, lender)
+@
+Merge treatment info.
+<<>>=
+tr0l <- reshape(tr0, direction = "long", 
+	idvar = c("gid", "hhid", "memstatus", "assignment", "arm"),
+	varying = grepout("\\.\\d", colnames(tr0)))
+setnames(tr0l, "time", "rd")
+setkey(Bo13, hhid, rd); setkey(tr0l, hhid, rd)
+Bot <- tr0l[Bo13]
+by(Bot[grepl("other|G", lender), cashAmount], Bot[grepl("other|G", lender), rd], destat)
+Bot[, combined.lender := lender]
+Bot[grepl("oth|GU", lender), combined.lender := "NGO/MFI"]
+Bot[grepl("shop", lender), combined.lender := "money lenders"]
+setwd(pathsave)
+write.tablev(Bot, "borrowing_rd_1-3.prn")
+@
+Plot new loans in each rd. I will combine \textsf{shop owners/traders} with \textsf{money lenders}. I will also combine \textsf{GUK} and \textsf{other NGO/MFI} to \textsf{NGO/MFI}. We also omit zero borrowing from the histogram for clarity.
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "New loans", fig.lp = 'Figure'>>=
+#Bot[, totalSum0 := totalSum]
+#Bot[totalSum == 0, totalSum0 := NA]
+library(ggplot2)
+ggplot(data = subset(Bot, cashAmount > 0), aes(x = cashAmount, fill = combined.lender)) +
+	geom_histogram(bins = 20) + 
+	scale_x_continuous(limits = c(0, 30000)) +
+	scale_y_continuous(limits = c(0, 1000)) +
+	ylab("Frequency") + xlab("Borrowing (Tk)") + labs(fill = "lenders") +
+	facet_wrap(~ rd) + 
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+One can see that, in rd 1, there is virtually no borrowing from NGO/MFI among our subjects. This indicates that our study areas are relatively free from other non-indiginous financial intermediaries which allows us to estimate the impacts of our loans without much concerns of treatment contamination. In rd 2, borrowing from NGO/MFI increased rapidly as a result of our intervention. In rds 2 and 3, some individuals report smaller amount, which correspond to our traditional loan arm. It is hard to say that the loans from \textsf{friends, relatives} or \textsf{money lenders} have decreased after our intervetion between rd 1 and rd 2.
+
+
+\section{Assets}
+
+
+Read files.
+<<>>=
+(fn.asset <- grepout("d/s.*14a|d/s.*14b|2/s.*15|3/s.*13", fn))
+setwd(pathsource.mar)
+As = copy(X[fn %in% fn.asset])
+As <- lapply(As, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+As <- lapply(As, function(x) x[!duplicated(x), ])
+As <- lapply(As, function(x) x[!is.na(hhid), ])
+invisible(lapply(As, setkey, hhid))
+invisible(lapply(As[1:2], setkey, hhid, mid))
+@
+Separate into rds for rd-specfic operations (to be merged back later).
+<<>>=
+As01 <- As[[2]][As[[1]]]
+As02 <- As[3:4]
+As03 <- As[5:6]
+@
+Rd 1.
+<<>>=
+As11 <- As01[, grepout("hhid|s14a", colnames(As01)), with = F]
+setnames(As11, colnames(As11), 
+	gsub("s14a_(\\d)_1$", "item.\\1", colnames(As11)))
+setnames(As11, colnames(As11), 
+	gsub("s14a_(\\d)_2$", "own.\\1", colnames(As11)))
+setnames(As11, colnames(As11), 
+	gsub("s14a_(\\d)_3$", "value.\\1", colnames(As11)))
+summary(As11[duplicated(As11), ])
+As11[grepl("8207|8220|9416|212016", hhid) & item.1 != "", ]
+As11[grepl(8207, hhid), item.2 := .SD[.N, item.1]]
+As11[grepl(8207, hhid), own.2 := .SD[.N, own.1]]
+As11[grepl(8207, hhid), value.2 := .SD[.N, value.1]]
+As11[grepl(8220, hhid), item.2 := .SD[.N, item.1]]
+As11[grepl(8220, hhid), own.2 := .SD[.N, own.1]]
+As11[grepl(8220, hhid), value.2 := .SD[.N, value.1]]
+As11 <- As11[!duplicated(As11[, hhid]), ]
+As12 <- As01[, grepout("hhid|s14b", colnames(As01)), with = F]
+setnames(As12, colnames(As12), 
+	gsub("s14b_(\\d)_1$", "item.\\1", colnames(As12)))
+setnames(As12, colnames(As12), 
+	gsub("s14b_(\\d)_2$", "own.\\1", colnames(As12)))
+setnames(As12, colnames(As12), 
+	gsub("s14b_(\\d)_4$", "value.\\1", colnames(As12)))
+setnames(As12, colnames(As12), 
+	gsub("s14b_(\\d)_3$", "ownership.\\1", colnames(As12)))
+setnames(As12, colnames(As12), 
+	gsub("s14b_(\\d)_5$", "rental.\\1", colnames(As12)))
+summary(As12[duplicated(As12), ])
+As12[grepl(8207, hhid), item.2 := .SD[.N, item.1]]
+As12[grepl(8207, hhid), own.2 := .SD[.N, own.1]]
+As12[grepl(8207, hhid), ownership.2 := .SD[.N, ownership.1]]
+As12[grepl(8207, hhid), value.2 := .SD[.N, value.1]]
+As12[grepl(8220, hhid), item.2 := .SD[.N, item.1]]
+As12[grepl(8220, hhid), own.2 := .SD[.N, own.1]]
+As12[grepl(8220, hhid), ownership.2 := .SD[.N, ownership.1]]
+As12[grepl(8220, hhid), value.2 := .SD[.N, value.1]]
+As12[grepl(8220, hhid), item.3 := .SD[.N, item.2]]
+As12[grepl(8220, hhid), own.3 := .SD[.N, own.2]]
+As12[grepl(8220, hhid), ownership.3 := .SD[.N, ownership.2]]
+As12[grepl(8220, hhid), value.3 := .SD[.N, value.2]]
+As12 <- As12[!duplicated(As12[, hhid]), ]
+setnames(As11, colnames(As11), gsub("\\.(\\w)", ".1\\1", colnames(As11)))
+setnames(As12, colnames(As12), gsub("\\.(\\w)", ".2\\1", colnames(As12)))
+As11 <- reshape(As11, direction = "long", idvar = "hhid",
+	varying = grepout("\\.\\d", colnames(As11)))
+As12 <- reshape(As12, direction = "long", idvar = "hhid",
+	varying = grepout("\\.\\d", colnames(As12)))
+As1 <- rbind(As11, As12, fill = T)
+As1[, time := NULL]
+As1 <- As1[!(is.na(item) | item == ""), ]
+As1[, assetNumber := 1:.N, by = hhid]
+setkey(As1, hhid, assetNumber)
+As1[, totalSum := sum(value, na.rm = T), by = hhid]
+@
+Rd 2.
+<<>>=
+As21 <- As02[[1]]
+setnames(As21, colnames(As21), 
+	gsub("sec21_item.*$", "item.1", colnames(As21)))
+setnames(As21, colnames(As21), 
+	gsub("sec21_oth.*$", "specify.1", colnames(As21)))
+setnames(As21, colnames(As21), 
+	gsub("cu.*$", "currentStatus.1", colnames(As21)))
+setnames(As21, colnames(As21), 
+	gsub("dec.*$", "amount.1", colnames(As21)))
+setnames(As21, colnames(As21), 
+	gsub("^ta.*$", "value.1", colnames(As21)))
+setnames(As21, colnames(As21), 
+	gsub("^pu.*$", "lastYear.1", colnames(As21)))
+summary(As21[duplicated(As21), ])
+As22 = As02[[2]]
+setnames(As22, colnames(As22), 
+	gsub("sec22_co.*$", "item.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub("sec22_oth.*$", "specify.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub("^cu.*$", "currentStatus.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub("^how.*$", "amount.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub(".*po.*$", "ownership.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub(".*taka.*$", "value.2", colnames(As22)))
+setnames(As22, colnames(As22), 
+	gsub(".*rented.*$", "rental.2", colnames(As22)))
+summary(As22[duplicated(As22), ])
+As21 <- reshape(As21, direction = "long", idvar = "hhid",
+	varying = grepout("\\.\\d", colnames(As21)))
+As22 <- reshape(As22, direction = "long", idvar = "hhid",
+	varying = grepout("\\.\\d", colnames(As22)))
+As2 <- rbind(As21, As22, fill = T)
+As2[, time := NULL]
+As2 <- As2[!(is.na(item) | item == ""), ]
+As2[, assetNumber := 1:.N, by = hhid]
+setkey(As2, hhid, assetNumber)
+As2[, totalSum := sum(value, na.rm = T), by = hhid]
+@
+Rd 3.
+<<>>=
+lapply(As03, colnames)
+invisible(lapply(As03, function(x) setnames(x, grepout("code", colnames(x)), "item")))
+invisible(lapply(As03, function(x) setnames(x, grepout("spec", colnames(x)), "specify")))
+invisible(lapply(As03, function(x) setnames(x, grepout("curr", colnames(x)), "currentStatus")))
+invisible(lapply(As03, function(x) setnames(x, grepout("taka", colnames(x)), "value")))
+invisible(lapply(As03, function(x) setnames(x, grepout("deci|many", colnames(x)), "amount")))
+setnames(As03[[1]], "purchased_in_last_one_year", "lastYear")
+setnames(As03[[2]], c("sec22_portion_owned", "sec22_rented_amount_in_tk"), 
+	c("ownership", "rental"))
+As3 <- rbindlist(As[5:6], fill = T)
+As3 <- As3[!(is.na(item) | item == ""), ]
+As3[, assetNumber := 1:.N, by = hhid]
+setkey(As3, hhid, assetNumber)
+As3[, totalSum := sum(value, na.rm = T), by = hhid]
+@
+Bind all 3 rds together.
+<<>>=
+Aslist <- list(cbind(rd = 1, As1), cbind(rd = 2, As2), cbind(rd = 3, As3))
+(As <- rbindlist(Aslist, fill = T))
+setwd(pathsave)
+write.tablev(As, "asset_holding_rd_1-3.prn")
+@
+<<>>=
+Asset <- copy(As[!(rd > 1 & grepl("n", lastYear)), ])
+Asset[, assetNumber := 1:.N, by = c("hhid", "rd")]
+Asset[, numberOfAssets := .N, by = c("hhid", "rd")]
+Asset[, totalSum := sum(value, na.rm = T), by = c("hhid", "rd")]
+as0 <- unique(Asset[, .(hhid, rd, totalSum)])
+setkey(as0, hhid, rd)
+as0[, rd := rd + 1]
+as0 <- as0[rd < 4, ]
+as1 <- copy(as0)
+as1[, rd := rd + 1]
+as1 <- as1[rd < 4, ]
+setnames(as0, "totalSum", "prevSum.1")
+setnames(as1, "totalSum", "prevSum.2")
+as0[, prevassetNPV.1 := prevSum.1 * .95]
+as1[, prevassetNPV.2 := prevSum.2 * .95^(2)]
+setkey(as0, hhid, rd); setkey(as1, hhid, rd)
+as01 <- as1[as0]
+as01[is.na(prevassetNPV.2), prevassetNPV.2 := 0]
+as01[, prevassetNPV := prevassetNPV.1 + prevassetNPV.2]
+setkey(as01, hhid, rd); setkey(Asset, hhid, rd)
+Asset01 <- merge(Asset, as01, by = c("hhid", "rd"), all = T)
+Asset01[is.na(prevassetNPV), prevassetNPV := 0]
+Asset01[, assetNPV := totalSum + prevassetNPV]
+# merge with treatment info
+setkey(Asset01, hhid, rd); setkey(tr0l, hhid, rd)
+Asset01t <- tr0l[Asset01]
+@
+Drop rd 2 and 3 assets that were not bought in the \textsf{lastYear} to avoid double counting.
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Assets by eventual treatmemt status", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(receivedCredit))
+asset.cross <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, receivedCredit=asset.ss$receivedCredit), median)
+asset.cross2 <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, receivedCredit=asset.ss$receivedCredit), mean)
+vline.dat <- data.frame(rd = rep(1:3, 2), receivedCredit = repseq(c(F, T), 3))
+vline.dat <- cbind(vline.dat, median = c(asset.cross), mean = c(asset.cross2))
+library(ggplot2)
+ggplot(data = subset(asset, assetNPV > 0 & !is.na(receivedCredit)), 
+	aes(x = assetNPV, fill = arm)) +
+	geom_histogram(bins = 20) + 
+	scale_x_continuous(limits = c(0, 15000)) +
+	#scale_y_continuous(limits = c(0, 1000)) +
+	geom_vline(aes(xintercept = median), 
+		colour="#990000", linetype="dashed", size = .2, data=vline.dat) +
+	geom_vline(aes(xintercept = mean), 
+		colour="#000099", linetype="dashed", size = .2, data=vline.dat) +
+	ylab("Frequency") + xlab("Asset NPV (Tk)") + labs(fill = "arm") +
+	facet_grid(receivedCredit ~ rd, scales = "free_y") + 
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+The histogram is created by imputing the NPV of household assets by assuming an annual 5\% depreciation rate. We see that, at rd 1, there is no difference in mean of asset holding, while the medians are different. Interestingly, the median difference is preserved in the later rounds. In the meantime, means are not different in rd 1 yet they come to differ in later rounds. The subjects who actually received credits have higher mean asset holding. Given that the median diffrences are unchanged, this indicates that the upper half of the treated asset holders are getting better than the control.
+
+To align dates of receiving credits for the subjects who did not, we use the median \textsf{daysFromStart}. 
+<<>>=
+setkey(Asset01t, gid, hhid)
+# surround with as.double becuse median function returns various types ....
+# see SO: https://stackoverflow.com/questions/12125364/why-does-median-trip-up-data-table-integer-versus-double
+Asset01t[, medianElapsedDaysOfGroup := 
+	as.double(median(elapsed, na.rm = T)), by = gid]
+Asset01t[, meanElapsedDaysOfGroup := mean(elapsed, na.rm = T), by = gid]
+Asset01t[, elaspsedGroupMedian := "early"]
+Asset01t[medianElapsedDaysOfGroup - 
+	median(medianElapsedDaysOfGroup, na.rm = T) <= 0, 
+	elaspsedGroupMedian := "late"]
+Asset01t[, elaspsedGroupMean := "early"]
+Asset01t[meanElapsedDaysOfGroup - 
+	mean(meanElapsedDaysOfGroup, na.rm = T) <= 0, 
+	elaspsedGroupMean := "late"]
+Asset01t[, elaspsedGroupMedian := factor(elaspsedGroupMedian)]
+Asset01t[, elaspsedGroupMean := factor(elaspsedGroupMean)]
+@
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Assets by disbursement status", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(gid) & !is.na(disbursed))
+asset.cross <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, disbursed=asset.ss$disbursed), median)
+asset.cross2 <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, disbursed=asset.ss$disbursed), mean)
+vline.dat <- data.frame(rd = rep(1:3, 2), disbursed = repseq(c(F, T), 3))
+vline.dat <- cbind(vline.dat, median = c(asset.cross), mean = c(asset.cross2))
+library(ggplot2)
+ggplot(data = asset.ss, 
+	aes(x = assetNPV, fill = arm)) +
+	geom_histogram(bins = 20) + 
+	scale_x_continuous(limits = c(0, 15000)) +
+	geom_vline(aes(xintercept = median), 
+		colour="#990000", linetype="dashed", size = .2, data=vline.dat) +
+	geom_vline(aes(xintercept = mean), 
+		colour="#000099", linetype="dashed", size = .2, data=vline.dat) +
+	ylab("Frequency") + xlab("Asset NPV (Tk)") + labs(fill = "arm") +
+	facet_grid(disbursed ~ rd, scales = "free_y") + 
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+In this figure, we dropped observations without \textsf{gid} and \textsf{disbursed}. When \textsf{intDate} is NA (not interviewed), we cannot define disbursement for that round. We know disbursement took place before rd 3, so all \textsf{assignment} = treated have \textsf{disbursed} = T in rd 3.
+
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Assets by elapsed days from disbursement, ATT", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(gid) & !is.na(elapsed) & receivedCredit)
+asset.cross <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, elaspsedGroupMedian = asset.ss$elaspsedGroupMedian), median)
+asset.cross2 <- tapply(asset.ss$assetNPV, 
+	list(rd = asset.ss$rd, elaspsedGroupMedian = asset.ss$elaspsedGroupMedian), mean)
+vline.dat <- data.frame(rd = rep(1:3, 2), elaspsedGroupMedian = repseq(c("early", "late"), 3))
+vline.dat <- cbind(vline.dat, median = c(asset.cross), mean = c(asset.cross2))
+library(ggplot2)
+ggplot(data = asset.ss, 
+	aes(x = assetNPV, fill = arm)) +
+	geom_histogram(bins = 20) + 
+	scale_x_continuous(limits = c(0, 15000)) +
+	geom_vline(aes(xintercept = median), 
+		colour="#990000", linetype="dashed", size = .2, data=vline.dat) +
+	geom_vline(aes(xintercept = mean), 
+		colour="#000099", linetype="dashed", size = .2, data=vline.dat) +
+	ylab("Frequency") + xlab("Asset NPV (Tk)") + labs(fill = "arm") +
+	facet_grid(elaspsedGroupMedian ~ rd, scales = "free_y") + 
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 3, fig.width = 3, fig.cap = "Assets by elapsed days from disbursement, ATT scatter plot", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(gid) & !is.na(elapsed) & receivedCredit)
+library(ggplot2)
+ggplot(data = asset.ss, aes(x = elapsed, y = assetNPV)) +
+	#geom_jitter(aes(colour = arm, shape = arm), size = .05, width = .1) + 
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) +
+	#scale_y_continuous(limits = c(0, 25000)) + 
+	scale_y_log10() +
+	xlab("elapsed day grouping") + ylab("Asset NPV (Tk)") + labs(fill = "arm") +
+	facet_grid(arm ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+In this scatter and loess plots, we put asset values against the treatment exposure, facetted by treatment arms. This aims to mimic ATT under a continuous treatment. The treatment exposure is defined by the elapsed days since receiving a credit. Since the treatment exposure is randomised, this is a statisically valid procedure to observe the treatment response without major comfounding.
+
+This plotting exercise leads one to consider the statisical model underlying the graphs. For an individual $i$'s outcome $y_{i}$, the treatment assignment $D_{i}=0,1$ may have an impact on the outcome. The standard Rubin causal model deals with a binary indicator variable for $D_{i}$. In our design, we vary the dates of intervention among the subjects. So what we randomly vary is the duration under treatment, or dose exposure, denoted with $D_{i}(t)$ where $t$ is the calendar date of intervention. On average, there is about 1 year difference in $t$ within a cluster of 20 subjects. Given that we randomise the calendar dates of starting the intevention, we can assume actual duration $t\in[t_{0}, t_{1}]$ is orthogonal to potential treatment response $y(t)$ for all $t$. Under the simplest setting, we follow \citet{Imbens2000, HiranoImbens2004, ImaiVanDyk2004, Egger2013} assume the following conditional orthogonality in the continuous case. Denoting $T$ as a random variable with its realisation written as $t$, we assume:
+\[
+y(t)\perp T|\bfx.
+\]
+\citet{HiranoImbens2004} shows that this is equivalent to
+\[
+\bfx\perp 1\{T=t\}|g(t,\bfx)
+\]
+where $g(t,\bfx)$ is a generalised propesity score that gives the density of treatment at $t$ given $\bfx$. This shows that one can estimate continuous treatment effect by first, estimating GPS $g$, second, estimate the conditional expectation of outcome as a function of $g$ and $\bfx$:
+\[
+\beta(t, g)=\E[y|T=t, G=g(t,\bfx)],
+\]
+and then average over $g$ for a given $t$ to obtain the dose-response function
+\[
+\beta(t)=\E[\beta(t, g)|\bfx].
+\]
+The approach is preceded by applied works related job training duration \citep{Kluveetal2012}. 
+
+We compare the effects of treatment exposure differences within the same group.
+<<echo = F, warning = F, results = 'markup', fig.align='center', fig.height = 3, fig.width = 3, fig.cap = "Assets by elapsed days from disbursement, within a group", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(gid) & !is.na(elapsed))
+asset.ss[grepl("tr", assignment), 
+	avgElapsed1 := mean(elapsed, na.rm = T), by = c("rd", "gid")]
+asset.ss[grepl("tr", assignment), 
+	avgNPV1 := mean(assetNPV, na.rm = T), by = c("rd", "gid")]
+asset.ss[grepl("co", assignment), 
+	avgElapsed0 := mean(elapsed, na.rm = T), by = c("rd", "gid")]
+asset.ss[grepl("co", assignment), 
+	avgNPV0 := mean(assetNPV, na.rm = T), by = c("rd", "gid")]
+asset.ss[, avgDiffElapsed := avgElapsed1 - avgElapsed0]
+asset.ss[, avgDiffNPV := avgNPV1 - avgNPV0]
+library(ggplot2)
+ggplot(data = asset.ss, aes(x = avgDiffElapsed, y = avgDiffNPV)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) +
+	xlab("difference in elapsed days") + ylab("difference in mean asset NPV (Tk)") + 
+	labs(fill = "arm") + facet_grid(arm ~ rd, scale = "free_y") + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+
+
+\section{livestock}
+
+<<>>=
+(fn.lvstk <- grepout("d/s08|2/s.*9_|3/s.*_8", fn))
+setwd(pathsource.mar)
+Ls = copy(X[fn %in% fn.lvstk])
+Ls <- lapply(Ls, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+Ls <- lapply(Ls, function(x) 
+	x[!apply(is.na(x[, -grep("hh|mid|u_id", colnames(x)), with = F]) |
+		x[, -grep("hh|mid|u_id", colnames(x)), with = F] == "", 1, all), ])
+@
+
+
+\section{livestock}
+
+<<echo = F, warning = F>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("add|ori|^\\.$|1$", foldername)]
+fn <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+X = lapply(fn, fread, integer64 = "double")
+<<>>=
+(fn.lvstk <- grepout("d/s08|2/s.*9_|3/s.*_8", fn))
+setwd(pathsource.mar)
+Ls = copy(X[fn %in% fn.lvstk])
+Ls <- lapply(Ls, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+Ls <- lapply(Ls, function(x) 
+	x[!apply(is.na(x[, -grep("hh|mid|u_id", colnames(x)), with = F]) |
+		x[, -grep("hh|mid|u_id", colnames(x)), with = F] == "" |
+		x[, -grep("hh|mid|u_id", colnames(x)), with = F] == "No", 1, all), ])
+Ls <- lapply(Ls, a2b, a = NA, b = 0)
+Ls <- lapply(Ls, a2b, a = "", b = 0)
+Ls[1:2] <- lapply(Ls[1:2], setkey, hhid, mid)
+Ls[-(1:2)] <- lapply(Ls[-(1:2)], setkey, hhid)
+@
+Rd 1.
+<<>>=
+Ls1 <- merge(Ls[[1]], Ls[[2]], by = c("hhid", "mid"), all = T)
+Ls2 <- merge(Ls[[3]], Ls[[4]], by = "hhid", all = T)
+Ls2 <- merge(Ls2, Ls[[5]], by = "hhid", all = T)
+Ls3 <- merge(Ls[[6]], Ls[[7]], by = "hhid", all = T)
+Ls3 <- merge(Ls3, Ls[[8]], by = "hhid", all = T)
+# M: managing, L: leased in
+Ls1[, ushiM := s8a_a_2 + s8a_a_3]
+Ls1[, calfM := s8a_a_4]
+Ls1[, yagiM := s8a_a_5 + s8a_a_6]
+Ls1[, ushiL := s8a_b_8 + s8a_b_9]
+Ls1[, calfL := s8a_b_10]
+Ls1[, yagiL := s8a_b_11]
+Ls1 <- a2b(Ls1, NA, 0)
+destat(Ls1[, .(ushiM, calfM, yagiM, ushiL, calfL)])
+cpr <- destat(Ls1[s8a_b_15 > 0, s8a_b_15])
+cpr2 <- rbind(c(destat(Ls1[s8a_b_15 > 0, s8a_b_15])),
+c(destat(Ls1[s8a_b_16 > 0, s8a_b_16])),
+c(destat(Ls1[s8a_b_17 > 0, s8a_b_17])))
+dimnames(cpr2) <- list(c("female calf", "male calf", "ox"),
+	colnames(cpr))
+@
+Price: female calf, male calf, ox.
+<<>>=
+cpr2
+@
+Let the price to be used as median price, and cow price is 15000. Lease share is 50\%.
+<<>>=
+destat(Ls1[, s8a_b_7])
+destat(Ls1[s8a_b_18 > 0, s8a_b_18])
+destat(Ls1[s8a_b_24 > 0, s8a_b_24])
+destat(Ls2[grepl("a", s17a_code) & s17a_4 > 0, s17a_4])
+destat(Ls3[grepl("cow", s17a_code) & s17a_4 > 0, s17a_4])
+Ls1[, cowValue := ushiM * 15000]
+Ls1[, calfValue := calfM * 10000]
+Ls1[, cowLValue := ushiL * 15000 * .5]
+Ls1[, calfLValue := calfL * 10000 * .5]
+@
+Goats: Take prices from late rounds. 1900.
+<<>>=
+destat(Ls2[grepl("c", s17a_code) & s17a_4 > 0, s17a_4])
+destat(Ls3[grepl("goa", s17a_code) & s17a_4 > 0, s17a_4])
+Ls1[, yagiValue := yagiM * 1900]
+Ls1[, yagiLValue := yagiL * 1900 * .5]
+@
+Total livestock value.
+<<>>=
+Ls1[, totalLivestockValue := cowValue + calfValue + yagiValue + 
+	cowLValue + calfLValue + yagiLValue]
+@
+Rd2.
+<<>>=
+Ls2 <- a2b(Ls2, NA, 0)
+Ls2[, livestockValue := s17a_3 * s17a_4]
+Ls2[grepl("sh", s17a_2), livestockValue := livestockValue * .5]
+Ls2[grepl("0", s17a_2), livestockValue := 0]
+Ls2[, livestockSoldValue := s17a_9]
+Ls2[, livestockDCValue := (s17a_6 + s17a_7) * s17a_4]
+Ls2[, totalLivestockValue := livestockValue + livestockSoldValue + livestockDCValue]
+#Ls2[grepl("a", s17a_code) & s17a_8 > 0, .(s17a_8, s17a_9)]
+@
+Rd3.
+<<>>=
+Ls3 <- a2b(Ls3, NA, 0)
+Ls3[, livestockValue := s17a_3 * s17a_4]
+Ls3[grepl("sh", s17a_2), livestockValue := livestockValue * .5]
+Ls3[grepl("0", s17a_2), livestockValue := 0]
+Ls3[, livestockSoldValue := s17a_9]
+Ls3[, livestockDCValue := (s17a_6 + s17a_7) * s17a_4]
+Ls3[, totalLivestockValue := livestockValue + livestockSoldValue + livestockDCValue]
+@
+Merge.
+<<>>=
+ls <- rbind(cbind(rd = 1, Ls1[, .(hhid, totalLivestockValue)]),
+	cbind(rd = 2, Ls2[, .(hhid, totalLivestockValue)]),
+	cbind(rd = 3, Ls3[, .(hhid, totalLivestockValue)]))
+setkey(ls, hhid, rd); setkey(tr1l, hhid, rd)
+lst <- tr0l[ls]
+@
+We compare the effects of treatment exposure differences within the same group.
+<<echo = T, warning = F, fig.align='center', fig.height = 1.5, fig.width = 3, fig.cap = "Assets by elapsed days from disbursement within a group", fig.lp = 'Figure'>>=
+asset <- Asset01t[assetNumber == 1, ]
+asset.ss <- subset(asset, assetNPV > 0 & !is.na(gid) & !is.na(elapsed))
+setkey(asset.ss, rd, gid, asssignment)
+asset.ss[, avgElapsed := mean(elapsed, na.rm = T), by = c("rd", "gid", "assignment")]
+asset.ss[, avgElapsed0 := avgElapsed[1], by = c("rd", "gid")]
+asset.ss[, avgElapsed1 := avgElapsed[.N], by = c("rd", "gid")]
+asset.ss[gid == 70650 & grepl("co", assignment), ]
+asset.ss[gid == 70204& rd == 1, .(rd, gid, assignment, avgElapsed, avgElapsed0, avgElapsed1) ]
+asset.ss[, avgNPV := mean(assetNPV/1000, na.rm = T), 
+	by = c("rd", "gid", "assignment")]
+asset.ss[, avgNPV0 := avgNPV[1], by = c("rd", "gid")]
+asset.ss[, avgNPV1 := avgNPV[.N], by = c("rd", "gid")]
+asset.ss[, avgDiffElapsed := avgElapsed1 - avgElapsed0]
+asset.ss[, avgDiffNPV := avgNPV1 - avgNPV0]
+setkey(asset.ss, rd, gid, assignment)
+dim(asset.sss <- asset.ss[!duplicated(asset.ss[, .(rd, gid, assignment)]), ])
+library(ggplot2)
+ggplot(data = asset.sss, aes(x = avgDiffElapsed, y = avgDiffNPV)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) +
+	xlab("difference in elapsed days") + ylab("difference in mean asset NPV (Tk '000)") + 
+	labs(fill = "arm") + facet_grid( ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+<<echo = T, warning = F, fig.align='center', fig.height = 3, fig.width = 3, fig.cap = "Assets by elapsed days from disbursement, within a group", fig.lp = 'Figure'>>=
+library(ggplot2)
+ggplot(data = asset.sss, aes(x = avgDiffElapsed, y = avgDiffNPV)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) +
+	xlab("difference in elapsed days") + ylab("difference in mean asset NPV (Tk '000)") + 
+	labs(fill = "arm") + facet_grid(arm ~ rd, scale = "free_y") + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+
+
+\section{livestock}
+
+<<echo = F, warning = F>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("add|ori|^\\.$|1$", foldername)]
+fn <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+X = lapply(fn, fread, integer64 = "double")
+<<>>=
+(fn.lvstk <- grepout("d/s08|2/s.*9_|3/s.*_8", fn))
+setwd(pathsource.mar)
+Ls = copy(X[fn %in% fn.lvstk])
+Ls <- lapply(Ls, function(x) if (any(grepl("^id$", colnames(x)))) 
+	setnames(x, "id", "hhid") else x)
+Ls <- lapply(Ls, function(x) 
+	x[!apply(is.na(x[, -grep("hh|mid|u_id", colnames(x)), with = F]) |
+		x[, -grep("hh|mid|u_id", colnames(x)), with = F] == "" |
+		x[, -grep("hh|mid|u_id", colnames(x)), with = F] == "No", 1, all), ])
+Ls <- lapply(Ls, a2b, a = NA, b = 0)
+Ls <- lapply(Ls, a2b, a = "", b = 0)
+Ls[1:2] <- lapply(Ls[1:2], setkey, hhid, mid)
+Ls[-(1:2)] <- lapply(Ls[-(1:2)], setkey, hhid)
+Ls1 <- merge(Ls[[1]], Ls[[2]], by = c("hhid", "mid"), all = T)
+Ls2 <- merge(Ls[[3]], Ls[[4]], by = "hhid", all = T)
+Ls2 <- merge(Ls2, Ls[[5]], by = "hhid", all = T)
+Ls2 <- Ls2[!duplicated(Ls2[, .(hhid, s17a_code)]), ]
+Ls3 <- merge(Ls[[6]], Ls[[7]], by = "hhid", all = T)
+Ls3 <- merge(Ls3, Ls[[8]], by = "hhid", all = T)
+Ls3 <- Ls3[!duplicated(Ls3[, .(hhid, s17a_code)]), ]
+@
+Rd 1.
+<<>>=
+# M: managing, L: leased in
+Ls1[, ushiM := s8a_a_2 + s8a_a_3]
+Ls1[, calfM := s8a_a_4]
+Ls1[, yagiM := s8a_a_5 + s8a_a_6]
+Ls1[, ushiL := s8a_b_8 + s8a_b_9]
+Ls1[, calfL := s8a_b_10]
+Ls1[, yagiL := s8a_b_11]
+Ls1 <- a2b(Ls1, NA, 0)
+destat(Ls1[, .(ushiM, calfM, yagiM, ushiL, calfL)])
+cpr <- destat(Ls1[s8a_b_15 > 0, s8a_b_15])
+cpr2 <- rbind(c(destat(Ls1[s8a_b_15 > 0, s8a_b_15])),
+c(destat(Ls1[s8a_b_16 > 0, s8a_b_16])),
+c(destat(Ls1[s8a_b_17 > 0, s8a_b_17])))
+dimnames(cpr2) <- list(c("female calf", "male calf", "ox"),
+	colnames(cpr))
+@
+Price: female calf, male calf, ox.
+<<>>=
+cpr2
+@
+Let the price to be used as median price, and cow price is 15000. Lease share is 50\%.
+<<>>=
+destat(Ls1[s8a_b_18 > 0, s8a_b_18])
+destat(Ls1[s8a_b_24 > 0, s8a_b_24])
+destat(Ls2[grepl("a", s17a_code) & s17a_4 > 0, s17a_4])
+destat(Ls3[grepl("cow", s17a_code) & s17a_4 > 0, s17a_4])
+Ls1[, cowValue := ushiM * 15000]
+Ls1[, calfValue := calfM * 10000]
+Ls1[, cowLValue := ushiL * 15000 * .5]
+Ls1[, calfLValue := calfL * 10000 * .5]
+@
+Goats: Take prices from late rounds. 1900.
+<<>>=
+destat(Ls2[grepl("c", s17a_code) & s17a_4 > 0, s17a_4])
+destat(Ls3[grepl("goa", s17a_code) & s17a_4 > 0, s17a_4])
+Ls1[, yagiValue := yagiM * 1900]
+Ls1[, yagiLValue := yagiL * 1900 * .5]
+@
+Total livestock value.
+<<>>=
+Ls1[, totalLivestockValue := cowValue + calfValue + yagiValue + 
+	cowLValue + calfLValue + yagiLValue]
+setkey(Ls1, hhid)
+@
+Rd2.
+<<>>=
+Ls2 <- a2b(Ls2, NA, 0)
+Ls2[, livestockValue := s17a_3 * s17a_4]
+Ls2[grepl("sh", s17a_2), livestockValue := livestockValue * .5]
+Ls2[grepl("0", s17a_2), livestockValue := 0]
+Ls2[, livestockValue := sum(livestockValue, na.rm = T), by = hhid]
+Ls2[, livestockSoldValue := s17a_9]
+Ls2[, livestockSoldValue := sum(livestockSoldValue, na.rm = T), 
+	by = hhid]
+Ls2[, livestockDCValue := (s17a_6 + s17a_7) * s17a_4]
+Ls2[, livestockDCValue := sum(livestockDCValue, na.rm = T), 
+	by = hhid]
+Ls2[, totalLivestockValue := sum(livestockValue + livestockSoldValue + livestockDCValue), by = hhid]
+Ls2 <- Ls2[!duplicated(Ls2[, hhid]), ]
+#Ls2[grepl("a", s17a_code) & s17a_8 > 0, .(s17a_8, s17a_9)]
+@
+Rd3.
+<<>>=
+Ls3 <- a2b(Ls3, NA, 0)
+Ls3[, livestockValue := s17a_3 * s17a_4]
+Ls3[grepl("sh", s17a_2), livestockValue := livestockValue * .5]
+Ls3[grepl("0", s17a_2), livestockValue := 0]
+Ls3[, livestockValue := sum(livestockValue, na.rm = T), by = hhid]
+Ls3[, livestockSoldValue := s17a_9]
+Ls3[, livestockSoldValue := sum(livestockSoldValue, na.rm = T), 
+	by = hhid]
+Ls3[, livestockDCValue := (s17a_6 + s17a_7) * s17a_4]
+Ls3[, livestockDCValue := sum(livestockDCValue, na.rm = T), 
+	by = hhid]
+Ls3[, totalLivestockValue := sum(livestockValue + livestockSoldValue + livestockDCValue), by = hhid]
+Ls3 <- Ls3[!duplicated(Ls3[, hhid]), ]
+@
+Merge.
+<<>>=
+ls <- rbind(cbind(rd = 1, Ls1[, .(hhid, totalLivestockValue)]),
+	cbind(rd = 2, Ls2[, .(hhid, totalLivestockValue)]),
+	cbind(rd = 3, Ls3[, .(hhid, totalLivestockValue)]))
+ls <- ls[!duplicated(ls), ]
+ls[, totalLivestockValue := totalLivestockValue/1000]
+setkey(ls, hhid, rd); setkey(tr1l, hhid, rd)
+lst <- tr0l[ls]
+<<>>=
+lstk.ss <- subset(lst, !is.na(gid) & !is.na(elapsed))
+setkey(lstk.ss, rd, gid, assignment)
+lstk.ss[, avgElapsed := mean(elapsed, na.rm = T), by = c("rd", "gid", "assignment")]
+lstk.ss[, avgElapsed0 := avgElapsed[1], by = c("rd", "gid")]
+lstk.ss[, avgElapsed1 := avgElapsed[.N], by = c("rd", "gid")]
+lstk.ss[, avgLstkValue := mean(totalLivestockValue, na.rm = T), 
+	by = c("rd", "gid", "assignment")]
+lstk.ss[, avgLstkValue0 := avgLstkValue[1], by = c("rd", "gid")]
+lstk.ss[, avgLstkValue1 := avgLstkValue[.N], by = c("rd", "gid")]
+lstk.ss[gid == 70204& rd == 1, .(rd, gid, assignment, avgElapsed, 
+	avgElapsed0, avgElapsed1, avgLstkValue, avgLstkValue0, avgLstkValue1) ]
+lstk.ss[, avgDiffElapsed := avgElapsed1 - avgElapsed0]
+lstk.ss[, avgDiffLstkValue := avgLstkValue1 - avgLstkValue0]
+setkey(lstk.ss, rd, gid, assignment)
+dim(lstk.sss <- lstk.ss[!duplicated(lstk.ss[, .(rd, gid, assignment)]), ])
+@
+We compare the effects of treatment exposure differences within the same group.
+<<echo = T, warning = F, fig.align='center', fig.height = 1.5, fig.width = 3, fig.cap = "Livestock by elapsed days from disbursement within a group", fig.lp = 'Figure'>>=
+library(ggplot2)
+ggplot(data = lstk.sss, aes(x = avgDiffElapsed, y = avgDiffLstkValue)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) + scale_y_continuous() + 
+	xlab("difference in elapsed days") + ylab("difference in mean livestock value (Tk '000)") + 
+	labs(fill = "arm") + facet_grid( ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+<<echo = T, warning = F, fig.align='center', fig.height = 3, fig.width = 3, fig.cap = "Livestock by elapsed days from disbursement, within a group", fig.lp = 'Figure'>>=
+library(ggplot2)
+ggplot(data = lstk.sss, aes(x = avgDiffElapsed, y = avgDiffLstkValue)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) + 
+	xlab("difference in elapsed days") + ylab("difference in mean livestock value (Tk '000)") + 
+	labs(fill = "arm") + facet_grid(arm ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+Add assets and livestock.
+<<>>=
+al.ss <- merge(asset.ss, lstk.ss, 
+	by = c("rd", "gid", "hhid", "assignment", "arm", "elapsed"), all = T)
+al.ss[is.na(assetNPV), assetNPV := 0]
+al.ss[is.na(totalLivestockValue), totalLivestockValue := 0]
+al.ss[, val := (assetNPV/1000 + totalLivestockValue)]
+setkey(al.ss, rd, gid, assignment)
+al.ss[, avgElapsed := mean(elapsed, na.rm = T), by = c("rd", "gid", "assignment")]
+al.ss[, avgElapsed0 := avgElapsed[1], by = c("rd", "gid")]
+al.ss[, avgElapsed1 := avgElapsed[.N], by = c("rd", "gid")]
+al.ss[, avgVal := mean(val, na.rm = T), by = c("rd", "gid", "assignment")]
+al.ss[, avgVal0 := avgVal[1], by = c("rd", "gid")]
+al.ss[, avgVal1 := avgVal[.N], by = c("rd", "gid")]
+unique(al.ss[gid == 70101 & rd == 1, .(avgElapsed0, avgElapsed1)])
+al.ss[, avgDiffElapsed := avgElapsed1 - avgElapsed0]
+al.ss[, avgDiffVal := avgVal1 - avgVal0]
+dim(al.sss <- al.ss[!duplicated(al.ss[, .(rd, gid, assignment)]), ])
+<<echo = T, warning = F, fig.align='center', fig.height = 1.5, fig.width = 3, fig.cap = "Total assets by elapsed days from disbursement within a group", fig.lp = 'Figure'>>=
+library(ggplot2)
+ggplot(data = al.sss, aes(x = avgDiffElapsed, y = avgDiffVal)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) + 
+	xlab("difference in elapsed days") + ylab("difference in mean value (Tk '000)") + 
+	labs(fill = "arm") + facet_grid(. ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+<<echo = T, warning = F, fig.align='center', fig.height = 3, fig.width = 3, fig.cap = "Total assets by elapsed days from disbursement, within a group", fig.lp = 'Figure'>>=
+library(ggplot2)
+ggplot(data = al.sss, aes(x = avgDiffElapsed, y = avgDiffVal)) +
+	geom_point(aes(colour = arm, shape = arm), size = .05) + 
+	scale_shape(solid = F) + 
+	xlab("difference in elapsed days") + ylab("difference in mean value (Tk 1000)") + 
+	labs(fill = "arm") + facet_grid(arm ~ rd) + 
+#	stat_smooth(method = "loess", size = .2, n = 150) +
+	geom_smooth(method = "loess", size = .2) +
+	geom_hline(aes(yintercept = 0), colour="#990000", linetype="dashed", size = .2) +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 30, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		legend.title = element_text(size = rel(.25)),
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.5)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm")))
+@
+Regressions. First, get roster files to obtain hh background.
+<<>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[grepl("add|ori", foldername)]
+fn1 <- unique(list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T))
+fn.ros <- grepout("s1.p1|Se.*01", fn1)
+Ro = lapply(fn.ros, fread, integer64 = "double")
+ro1 <- rbindlist(Ro, fill = T, use.names = T)
+ro1 <- ro1[!duplicated(ro1[, .(hhid, mid, memname)]), ]
+ro1[, numAdults := sum(age_1 > 15 & age_1 <= 60, na.rm = T), by = hhid]
+ro1[, numChildren := sum(age_1 <= 15, na.rm = T), by = hhid]
+ro1[, numElderly := sum(age_1 > 60, na.rm = T), by = hhid]
+ro1[, numDisabled := sum(grepl("Y|1", disability)), by = hhid]
+ro1[, numMale := sum(grepl("M|1", sex)), by = hhid]
+ro1[, numLiterate := sum(grepl("Can.*and", literacy) | grepl("4", lliteracy)), by = hhid]
+ro1[, headLiterate := 
+	(grepl("Can.*and", literacy)  | grepl("4", lliteracy)) & grepl("He|1", rel_hhh), 
+	by = hhid]
+ro1[, numLiterateMale := 
+	sum((grepl("Can.*and", literacy)  | grepl("4", lliteracy)) & grepl("M|1", sex)), 
+	by = hhid]
+ro <- ro1[, .(hhid, numAdults, numChildren, numElderly, 
+	numDisabled, numMale, numLiterate, numLiterateMale, headLiterate)]
+ro <- ro[!duplicated(ro), ]
+setwd(pathsave)
+write.tablev(ro, "rd1_roster_summary.prn")
+@
+Summarise at cluster level.
+<<>>=
+tr3 <- tr[, .(gid, hhid)]
+setkey(ro1, hhid); setkey(tr3, hhid); 
+ros <- tr3[ro1]
+ros[, size := .N, by = gid]
+ros[, ratioAdults := sum(age_1 > 15 & age_1 <= 60, na.rm = T)/size, by = gid]
+ros[, ratioChildren := sum(age_1 <= 15, na.rm = T)/size, by = gid]
+ros[, ratioElderly := sum(age_1 > 60, na.rm = T)/size, by = gid]
+ros[, ratioDisabled := sum(grepl("Y|1", disability))/size, by = gid]
+ros[, ratioMale := sum(grepl("M|1", sex))/size, by = gid]
+ros[, ratioLiterate := sum(grepl("Can.*and", literacy) | grepl("4", lliteracy))/size, by = gid]
+ros[, ratioHeadLiterate := 
+	sum((grepl("Can.*and", literacy)  | grepl("4", lliteracy)) & 
+	grepl("He|1", rel_hhh))/size, by = gid]
+ros[, ratioLiterateMale := 
+	sum((grepl("Can.*and", literacy)  | grepl("4", lliteracy)) & grepl("M|1", sex))/size, 
+	by = gid]
+ro2 <- ros[, .(gid, size, ratioAdults, ratioChildren, ratioElderly, 
+	ratioDisabled, ratioMale, ratioLiterate, ratioLiterateMale, ratioHeadLiterate)]
+ro2 <- ro2[!duplicated(ro2[, gid]), ]
+ro2 <- ro2[!is.na(gid), ]
+@
+Merge with asset data.
+<<>>=
+setkey(al.sss, gid, rd); setkey(ro2, gid)
+alr.sss <- ro2[al.sss]	
+dim(alr.sss <- alr.sss[!duplicated(alr.sss[, .(rd, gid)]), ])
+setkey(alr.sss, gid, rd)
+alr.sss[, exist := .N, by = gid]
+dim(alr.sss <- alr.sss[exist == 3, ])
+destat.alr <- destat(alr.sss[, .(elapsed, 
+	size, ratioChildren, ratioAdults, ratioDisabled, ratioMale, ratioLiterate, 
+	ratioLiterateMale, ratioHeadLiterate, avgDiffElapsed,
+	avgDiffVal, avgVal, avgVal1, avgVal0, avgElapsed, avgElapsed1, avgElapsed0)])
+destat.alr <- cbind(rownames(destat.alr), destat.alr)
+setwd(pathsave)
+ltab.alr <- latextab(destat.alr, headercolor = "blue!10", 
+	alternatecolor = "gray90", delimiterline = NULL, 
+	hleft = c("\\footnotesize\\hfill", rep("\\footnotesize\\hfil$", ncol(destat.alr)-1)), 
+	hcenter = c("2", rep("1.0", ncol(destat.alr)-1)), 
+	hright = c("", rep("$", ncol(destat.alr)-1)))
+write.tablev(ltab.alr, "destat_alr_sss.tex", colnamestrue = F)
+dalr.sss1 <- cbind(d.rd = 1, alr.sss[rd==1, .(gid, assignment, arm, elapsed, 
+	size, ratioChildren, ratioAdults, ratioDisabled, ratioMale, ratioLiterate, 
+	ratioLiterateMale, ratioHeadLiterate, avgDiffElapsed)], 
+	alr.sss[rd==2, .(avgDiffVal, avgVal, avgVal1, avgVal0, avgElapsed, avgElapsed1, avgElapsed0)] - 
+	alr.sss[rd==1, .(avgDiffVal, avgVal, avgVal1, avgVal0, avgElapsed, avgElapsed1, avgElapsed0)])
+dalr.sss2 <- cbind(d.rd = 2, alr.sss[rd==1, .(gid, assignment, arm, elapsed, 
+	size, ratioChildren, ratioAdults, ratioDisabled, ratioMale, ratioLiterate, 
+	ratioLiterateMale, ratioHeadLiterate, avgDiffElapsed)], 
+	alr.sss[rd==3, .(avgDiffVal, avgVal, avgVal1, avgVal0, avgElapsed, avgElapsed1, avgElapsed0)] - 
+	alr.sss[rd==2, .(avgDiffVal, avgVal, avgVal1, avgVal0, avgElapsed, avgElapsed1, avgElapsed0)])
+dalr.sss <- rbind(dalr.sss1, dalr.sss2)
+@
+<<>>=
+l1 <- glm(avgDiffVal ~ avgDiffElapsed, data = dalr.sss)
+l2 <- glm(avgDiffVal ~ avgDiffElapsed:arm, data = dalr.sss)
+l3 <- glm(avgDiffVal ~ avgDiffElapsed:arm + 
+	size +ratioChildren +ratioAdults +ratioDisabled +ratioMale, data = dalr.sss)
+l4 <- glm(avgDiffVal ~ avgDiffElapsed:arm + 
+	size +ratioChildren +ratioAdults +ratioDisabled +ratioMale +
+	ratioLiterate + ratioLiterateMale + ratioHeadLiterate, data = dalr.sss)
+linprob <- list(l1, l2, l3, l4)
+linest <- lapply(linprob, clx.regobj, Cluster = "gid")
+linest <- lapply(linest, function(x) x[, -3])
+linest <- tabs2latex(linest)
+R2 <- round(asn(lapply(linprob, 
+	function(x) 1-crossprod(summary(x)$deviance.res)/summary(x)$null.dev)), 3)
+en <- asn(lapply(linprob, function(x) length(x$y)))
+rn <- rownames(linest)
+rn <- gsub("arm|^se.*", "", rn)
+rn <- gsub(":", " * ", rn)
+ltab <- rbind(as.matrix(cbind(rn, linest)), c("$R^{2}$", R2), 
+	c("$n$", en))
+write.tablev(latextab(ltab, delimiterline = NULL, alternatecolor2 = "gray90",
+	hleft = c("\\footnotesize", rep("\\scriptsize\\hfil$", ncol(ltab)-1)),
+	hcenter = c(3.5, rep(1.5, ncol(ltab)-1)), 
+	hright = c("\\hfill", rep("$", ncol(ltab)-1)),
+	adjustlineskip = "-.4ex"), 
+	paste0(pathsave, "asset_regression_alr_sss.tex"), colnamestrue = F)
+@
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{9cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Descriptive statistics of asset regression data\label{destat.alr.sss}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/destat_alr_sss.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}
+%\end{minipage}
+\end{table}
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{9cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: DID estimates of asset impacts\label{FDasset}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/asset_regression_alr_sss.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+
+\vspace{-4ex}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{11.5cm}<{\hfill}}
+Notes:& 1. & Difference-in-differences estimates of asset accumulation against elapsed days. \\[-1ex]
+& 2. & \textsf{large, large grace, cow} are all time invariant and are interacted with a trend term. \\
+& 3. & $*$, $**$, $***$ indicate significance levels at 10\%, 5\%, 1\%, respectively.\\
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+
+{\bibliographystyle{aer}\footnotesize
+\setlength{\baselineskip}{11pt}
+\bibliography{c:/dropbox/docs/notes/seiro}}
+
+\end{document}
+```
+
+```
+## Error: <text>:1:1: unexpected input
+## 1: % path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.nar <- paste0(path0, 
+##     ^
+```
+

@@ -1,0 +1,29 @@
+<<>>=
+setwd(pathsource)
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+fnids <- grepout("\\/id", fn)
+idfiles <- lapply(1:5, function(i) cbind(rd = i-1, Z[fn %in% fnids][[i]]))
+idfiles[[1]][, rd := 1]
+lapply(idfiles, colnames)
+c(unlist(lapply(idfiles, function(x) any("hh_id" %in% colnames(x)))),
+unlist(lapply(idfiles, function(x) any("hhid" %in% colnames(x)))))
+# in 4th round, hhid was named as id
+setnames(idfiles[[1]], c("hhid", "masterhhid", "rname", "tl_name", "zila", 
+	"cell", "treat_status", "treat_type"), 
+	c("hhid_attachedhh", "hhid", "r_name", "s_name", "zilla", 
+	"cell_no", "support_status", "intervention_type"))
+setnames(idfiles[[2]], c("rname", "tl_name", "zila", "cell"), 
+	c("r_name", "s_name", "zilla", "cell_no"))
+setnames(idfiles[[3]], c("types_of_support", "group_identification"), 
+	c("intervention_type", "support_status"))
+setnames(idfiles[[5]], "id", "hhid")
+idfiles[[2]][, hh.id := NA]
+idfiles[[3]][, c("union_code", "village_code	", "zill_code") := NULL]
+<<results = 'hide'>>=
+# need to convert to characters for too long digits
+#lapply(idfiles, function(x) x[, hhid := asc(hhid)])
+lapply(idfiles, function(x) 
+	setnames(x, grepout("\\_", colnames(x)), gsub("\\_", ".", grepout("\\_", colnames(x)))))
+@

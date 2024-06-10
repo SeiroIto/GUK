@@ -1,0 +1,56 @@
+\subsection{Assets+Livestock}
+
+
+
+<<for convenience only merge assets and livestock data, eval = T, cache = F, child='c:/data/GUK/analysis/program/MergeAssetsAndLivestockANCOVA.rnw'>>=
+# source(paste0(pathprogram, "MergeAssetsAndLivestockANCOVA.R"))
+# this is executed in destat subsection (108), kept here only for convenience and not evaluated
+@
+<<AssetLivestock set parameters original HHs>>=
+FileName <- "AssetLivestock"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta")
+listheader <- paste0("al", regsuffixes)
+<<asset livestock regression select covariates original HHs>>=
+source(paste0(pathprogram, "AssetLivestockCovariateSelectionANCOVA2.R"))
+<<get jay from AL covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- rep("AL1", jay)
+DataToUse2 <- rep("AL2", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("TotalValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<display covariates asset and livestock ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<asset livestock regression estimation original HHs>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<Total values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- ggplot(data = subset(ALfig, !is.na(Arm)), aes(group = tee)) + 
+#  geom_point(size = .1, position = position_dodge(width = .5)) +
+#  geom_smooth(span = .5, aes(colour = Arm, group = Arm)) +
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  geom_boxplot(aes(x= tee, y = TotalValue, colour = Arm))+
+  #scale_y_log10(breaks = c(1, 1000, 5000, 10000, 20000, 50000, 100000, 500000)) +
+  scale_y_continuous(breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"), legend.position = "none") +
+  facet_grid(. ~ Arm)
+ggsave(
+  paste0(pathprogram, 
+    "EstimationMemo/figure/TotalAssets.png"),
+  g,
+  width = 10, height = 4, units = "cm",
+  dpi = 300
+ )
+<<>>=
+# dummy chunk
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAAssetLivestockResults.rnw"))}

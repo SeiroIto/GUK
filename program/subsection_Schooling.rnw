@@ -1,0 +1,104 @@
+	ANCOVA is a model that controls for preexisting differences by including initial values of $y$ as a covariate, traditionally for a continuous variable as a nuissance to estimated impacts of a categorical variable (treated/control). In enrollment regressions, initial enrollment is informative only for school age children at the initial period. ANCOVA estimates should be used only to school age children in 2012 who are not old enough that they may naturally stop schooling by the endline.
+
+<<ReadTrimSchoolingFDData2 original HHs, cache = F, eval = F, child='c:/data/GUK/analysis/program/ReadTrimSchoolingOriginalHHsFDData2.rnw'>>=
+#source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+<<ReadTrimSchoolingFDData2 original HHs in R file one, cache = F, warning = F>>=
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
+<<Enrollment pattern in original panel>>=
+table0(s.1x[tee == 1, .(ObPattern, SchPattern)])
+@
+Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
+<<Left panel is before dropping nnn right panel is after original panel>>=
+cbind(table0(s.1x[, .(tee, Arm)]), 
+  table0(s1x[, .(tee, Arm)]))
+@
+\textsf{sch} has \Sexpr{nrow(s.1x)} rows. Drop \Sexpr{nrow(s.1x[grepl("nnn", SchPattern), ])} observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
+%and \Sexpr{nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ])} observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with \Sexpr{nrow(s1x)} rows. 
+<<schooling FD read data original HHs, warning = F>>=
+#s.1 <- s.1[!grepl("1001", EnrollPattern), ]
+s1x[, Enrolled := as.numeric(Enrolled)]
+s1x[, Tee := .N, by = HHMid]
+@
+With OLS,  \Sexpr{table(s1x[tee == 1, Tee])} individuals are repeatedly observed for \Sexpr{names(table(s1x[tee == 1, Tee]))} times, respectively. %With ANCOVA, \textsf{sch} is reduced to rows.
+Number of individuals with NAs in \textsf{Enrolled}: \Sexpr{nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])} obs for \textsf{sch}. 
+%Mostly older children (\Sexpr{round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s.2}) but with a high reported enrollment rate (\Sexpr{round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
+Check missingness in junior or high school level information at baseline.
+<<tab s1x dummyprimary, echo = T>>=
+table0(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum))
+@
+Drop \Sexpr{sum(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum)==0)} obs without school level information.
+<<Drop obs without school level information>>=
+s1x <- s1x[apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum) == 1, ]
+@
+<<ReadTrimSchooling ANCOVA in R file, cache = F, warning = F>>=
+gc()
+source(paste0(pathprogram, "ReadTrimSchoolingANCOVA.R"))
+<<schooling regression set parameters ANCOVA>>=
+FileName <- "Schooling"
+FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("sc", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<schooling select covariates ANCOVA>>=
+source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA2.R"))
+<<get jay from schooling covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- rep("Enrolled", jay)
+DataToUse1 <- DataToUse2 <- rep("s1", jay)
+Addseparatingcols = NULL; Separatingcolwidth = .2
+#Separatingcoltitle = c("Primary", "Secondary")
+<<schooling ANCOVA estimation>>=
+dig.depmean <- 2
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+<<>>=
+#dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingRd14DiffOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNAncovaTop}\\
+& 2. & \Sexpr{TabFNPval}%
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences by attributes\label{tab FD enroll5 attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingRd14DiffAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)}\\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVASchoolingResults.rnw"))}

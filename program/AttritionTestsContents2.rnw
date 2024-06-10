@@ -1,0 +1,877 @@
+Use the `trimmed' sample (has all 800 members) rather than the `initial' sample (has only 776 members after dropping members who received loans only twice). To set to the trimmed sample, set the parameter \textsf{UseTrimmedSample} to T.
+<<UseTrimmedSample TestMedian, echo = T>>=
+UseTrimmedSample <- T
+TestMedian <- F
+<<	read files>>=
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
+ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
+#NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
+NeA1R <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
+if (Only800) ar <- ar[o800 == 1L, ]
+@
+There are 92 members who attrited.
+<<tabulate attrition by BStatus>>=
+addmargins(table0(ar[tee==1 & o800==1 & AttritIn<9, .(BStatus,AttritIn)]))
+#addmargins(table(ar[mid == 1 & Time == 1, .(BStatus, Arm)]), 1:2, sum, T)
+#addmargins(table(ar[mid == 1 & Time == 4, .(BStatus, Arm)]), 1:2, sum, T)
+# "ar" is roster
+# AttritIn is created as below in read_cleaned_data.rnw
+# (465): xid[, AttritIn := 9L]
+# (466): xid[grepl("^En|^2nd and 4", missing_followup), AttritIn := 4L]
+# (467): xid[grepl("^3rd and 4", missing_followup), AttritIn := 3L]
+# (468): xid[grepl("^2.*3.*4", missing_followup), AttritIn := 2L]
+@
+<<Tee is last observed round>>=
+ar[, Tee := max(survey), by = hhid]
+arA[, Tee := max(survey), by = hhid]
+ass[, Tee := max(survey), by = hhid]
+lvo[, Tee := max(survey), by = hhid]
+@
+Correct \textsf{AttritIn} for these \Sexpr{nrow(ar[grepl("tw|dou", TradGroup) & tee == 1, ])} members. Keep only the 1st obs for all members.
+<<correct AttritIn for 24 members>>=
+addmargins(table(ar[tee == 1 & grepl("tw|dou", TradGroup), AttritIn]))
+#ar[Tee == 1 & AttritIn == 9 & grepl("tw|dou", TradGroup), AttritIn := 2L]
+@
+There are \Sexpr{nrow(ar[grepl("tw|dou", TradGroup) & tee == 1, ])} members with TradGroup = twice, double. They were dropped from estimation sample. If \textsf{UseTrimmedSample==T}, attrition is based on all 800 members, if \textsf{F}, attrition is analysed using 786 members.
+<<drop 24 members if UseTrimmedSample is T, eval = F, echo = T>>=
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
+@
+<<define psas and pslv>>=
+# psas: asset data
+psas <- ass[tee == 1, .(hhid, tee, HAssetAmount, PAssetAmount)]
+pslv <- lvo[tee == 1, .(hhid, tee, TotalImputedValue, NumCows)]
+pne <- NeA1R[tee == 1 & if (UseTrimmedSample) !grepl("tw|dou", TradGroup), 
+  .(hhid, tee, NarrowNetValue, NetValue)]
+setkey(pslv, hhid, tee)
+setkey(pne, hhid, tee)
+# pslv: livestock data + net assets data
+pslv <- pne[pslv]
+<<merge ar psas pslv>>=
+source(paste0(pathprogram, "AttritionPermutationTableHeaders.R"))
+armerge <- ar[, c("hhid", "mid", "o800", "TradGroup", "BStatus", "AttritIn", "survey", "tee", "Time", 
+  vartobetested[1:5]), with = F]
+armerge[, En := 1:.N, by = .(hhid, Time)]
+armerge[, Tee := .N, by = .(hhid, mid, Time)]
+armerge <- armerge[En == 1 & Time == 1 & o800 == 1, ]
+as <- merge(armerge, psas, by = c("hhid", "tee"), all.x = T)
+asv <- merge(as, pslv, by = c("hhid", "tee"), all.x = T)
+addmargins(table0(asv[!grepl("tw|dou", TradGroup), .(Arm, AttritIn)]))
+<<Attrited Rejected GRejected IRejected keep 1st obs>>=
+# use tee==4 to define attrition, where tee is survey round in asset and livestock 
+# while tee in roster is meeting number (must rename survey to tee)
+asv[, Attrited := 0L]
+asv[hhid %in% hhid[AttritIn < 9], Attrited := 1L]
+addmargins(table0(asv[!grepl("tw|dou", TradGroup), .(Arm, Attrited)]))
+asv[, c("Rejected", "GRejected", "IRejected") := 0L]
+asv[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+asv[grepl("^i.*rej", BStatus), IRejected := 1L]
+asv[grepl("^g.*rej", BStatus), GRejected := 1L]
+asv[, Survived := 1L]
+asv[Attrited == 1 | Rejected == 1, Survived := 0L]
+@
+Attrition of members who were not affected by floods.
+<<attrition of members who were not affected by floods>>=
+addmargins(table0(asv[!grepl("flo", BStatus) & Rejected == 0, .(Attrited, Arm)]))
+# these are HHs with two disbursements under traditional; read_admin_data.rnw(472)
+# adw[(loanamount1st == 5600 & loanamount2nd == 5600 & loanamount3rd == 5600) |
+#   (!is.na(DisDate1) & !is.na(DisDate2) & !is.na(DisDate3)), 
+#   TradGroup := "planned"]
+# adw[loanamount1st == 5600 & loanamount2nd == 11200, 
+#   TradGroup := "double"]
+# adw[(loanamount1st == 7840 & loanamount2nd == 8960) | 
+#   (!is.na(DisDate1) & !is.na(DisDate2) & is.na(DisDate3)), 
+#   TradGroup := "twice"]
+# adw[, TradGroup := factor(TradGroup, levels = c("planned", "twice", "double"))]
+<<create data sets, warning = F, eval = T>>=
+# data to use in each tests: TradNonTradAttrited, AttritedInTrad, TradNonTradRejected, IRejected, RejectedInTrad, RejectedInNonTrad
+# drop 2 loan receivers
+asv1 <- asv[!grepl("tw|dou", TradGroup), ]
+# drop group rejecters
+asv2 <- asv[!grepl("gr", BStatus), ]
+# drop 2 loan receivers and group rejecters
+asv3 <- asv[!grepl("gr", BStatus) & !grepl("tw|dou", TradGroup), ]
+asvT <- asv[grepl("tra", Arm), ]
+asvNT <- asv[!grepl("tra", Arm), ]
+# data to be used for each tested variable
+datalist <- rep("asv", length(vartobetested))
+datalist1 <- paste0(datalist, 1) # drop 2 loan receivers
+datalist2 <- paste0(datalist, 2) # drop group rejecters
+datalist3 <- paste0(datalist, 3) # drop 2 loan receivers and group rejecters
+datasets <- "asv"
+datasets1 <- paste0(datasets, 1)
+datasets2 <- paste0(datasets, 2)
+datasets3 <- paste0(datasets, 3)
+for (k in 1:3) {
+  addchar <- c("f", "t", "j")[k]
+  Datasets <- get(paste0("datasets", c("", 1, 2)[k]))
+  for (dd in Datasets) {
+    xdd <- get(dd)
+    # all members all arms: attrited vs. nonattrited
+    xa <- xdd
+    assign(paste0(dd, "a", addchar), xa)
+    # all in trad: attrition vs. nonattrition
+    xTa <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Ta", addchar), xTa)
+    # all in nontrad: attrition vs. nonattrition
+    xNTa <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTa", addchar), xNTa)
+    # attrited members in all arms: trad vs. nontrad
+    xTNTa <- xdd[Attrited == 1L, ]
+    xTNTa[, TradArm := 1L]; xTNTa[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTa", addchar), xTNTa)
+    # all members except flood victims: attrited vs. nonattrited
+    xNFa <- xdd[!grepl("floo", BStatus), ]
+    assign(paste0(dd, "NFa", addchar), xNFa)
+    # all except flood victims in trad: attrition vs. nonattrition
+    xNFTa <- xdd[!grepl("floo", BStatus) & grepl("trad", Arm), ]
+    assign(paste0(dd, "NFTa", addchar), xNFTa)
+    # all except flood victims in nontrad: attrition vs. nonattrition
+    xNFNTa <- xdd[!grepl("floo", BStatus) & !grepl("trad", Arm), ]
+    assign(paste0(dd, "NFNTa", addchar), xNFNTa)
+    # attrited members except flood victims in all arms: trad vs. nontrad
+    xNFTNTa <- xdd[!grepl("floo", BStatus) & Attrited == 1L, ]
+    xNFTNTa[, TradArm := 1L]; xNFTNTa[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "NFTNTa", addchar), xNFTNTa)
+    # attrited members except flood victims in all arms: cow vs. noncow
+    xNFCNCa <- xdd[!grepl("floo", BStatus) & Attrited == 1L, ]
+    xNFCNCa[, CowArm := 1L]; xNFCNCa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "NFCNCa", addchar), xNFCNCa)
+    # attrited members except flood victims: cow vs. large grace
+    xNFCGa <- xdd[!grepl("floo", BStatus) & grepl("cow|gr", Arm) & Attrited == 1L, ]
+    xNFCGa[, CowArm := 1L]; xNFCGa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "NFCGa", addchar), xNFCGa)
+    # surviving (neither attrited nor rejected) members except flood victims 
+    # (these people are considered not fit for the offered program)
+    # survival in all arms
+    xs <- xdd
+    assign(paste0(dd, "s", addchar), xs)
+    # survival in trad: attrition vs. nonattrition
+    xTs <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Ts", addchar), xTs)
+    # survival in nontrad: attrition vs. nonattrition
+    xNTs <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTs", addchar), xNTs)
+    # survived members in all arms: trad vs. nontrad
+    xTNTs <- xdd[Survived == 1L, ]
+    xTNTs[, TradArm := 1L]; xTNTs[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTs", addchar), xTNTs)
+    # survived members: cow vs. noncow
+    xCNCs <- xdd[!grepl("floo", BStatus) & Survived == 1L, ]
+    xCNCs[, CowArm := 1L]; xCNCs[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCs", addchar), xCNCs)
+    # survived members: cow vs. lsge grace
+    xCGs <- xdd[!grepl("floo", BStatus) & grepl("cow|gr", Arm) & Survived == 1L, ]
+    xCGs[, CowArm := 1L]; xCGs[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CGs", addchar), xCGs)
+    # all rejection all arms: rejected vs. nonrejected
+    xr <- xdd
+    assign(paste0(dd, "r", addchar), xr)
+    # all rejection in trad: rejected vs. nonrejected
+    xTr <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Tr", addchar), xTr)
+    # all rejection in nontrad: rejected vs. nonrejected
+    xNTr <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTr", addchar), xNTr)
+    # all rejection: trad rejecetd vs. nontrad rejected
+    xTNTr <- xdd[Rejected == 1L, ]
+    xTNTr[, TradArm := 1L]; xTNTr[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTr", addchar), xTNTr)
+    # all rejection: cow rejecetd vs. noncow rejected
+    xCNCr <- xdd[Rejected == 1L, ]
+    xCNCr[, CowArm := 1L]; xCNCr[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCr", addchar), xCNCr)
+    # all rejection: cow rejecetd vs. large grace rejected
+    xCLGr <- xdd[grepl("cow|gr", Arm) & Rejected == 1L, ]
+    xCLGr[, CowArm := 1L]; xCLGr[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CLGr", addchar), xCLGr)
+    # all acceptance: cow accepted vs. noncow accepted
+    xCNCa <- xdd[Rejected == 0L, ]
+    xCNCa[, CowArm := 1L]; xCNCa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCa", addchar), xCNCa)
+    # all acceptance: cow accepted vs. large grace accepted
+    xCLGa <- xdd[grepl("cow|gr", Arm) & Rejected == 0L, ]
+    xCLGa[, CowArm := 1L]; xCLGa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CLGa", addchar), xCLGa)
+    # group rejection in all arms: rejected vs. nonrejected
+    xgr <- xdd
+    assign(paste0(dd, "gr", addchar), xgr)
+    # group rejection in trad: rejecters vs. nonrejecters
+    xTgr <- xdd[grepl("tra", Arm), ]
+    assign(paste0(dd, "Tgr", addchar), xTgr)
+    # group rejection in nontrad: rejecters vs. nonrejecters
+    xNTgr <- xdd[!grepl("tra", Arm), ]
+    assign(paste0(dd, "NTgr", addchar), xNTgr)
+    # group rejection: trad rejecters vs. nontrad rejecters
+    xTNTgr <- xdd[GRejected == 1L, ]
+    xTNTgr[, TradArm := 1L]; xTNTgr[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTgr", addchar), xTNTgr)
+    # individual rejection in all arms: rejected vs. nonrejected
+    # individual rejecters vs. all except group rejecters
+    # group rejecters are excluded because they preceded indiv rejection
+    xir <- xdd[!grepl("gr", BStatus), ]
+    assign(paste0(dd, "ir", addchar), xir)
+    # individual rejection in trad: rejecters vs. nonrejecters
+    xTir <- xdd[grepl("tra", Arm) & !grepl("gr", BStatus), ]
+    assign(paste0(dd, "Tir", addchar), xTir)
+    # individual rejection in nontrad: rejecters vs. nonrejecters
+    xNTir <- xdd[!grepl("tra", Arm) & !grepl("gr", BStatus), ]
+    assign(paste0(dd, "NTir", addchar), xNTir)
+    # individual rejection: trad rejecters vs. nontrad rejecters
+    xTNTir <- xdd[!grepl("gr", BStatus) & Rejected == 1L, ]
+    xTNTir[, TradArm := 1L]; xTNTir[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTir", addchar), xTNTir)
+    # trad group rejecters vs. nontrad participants
+    xTNTgrp <- xdd[(grepl("gr", BStatus) & grepl("trad", Arm) & Rejected == 1L) |
+      (grepl("bo", BStatus) & !grepl("trad", Arm)), ]
+    xTNTgrp[, TradArm := 1L]; xTNTgrp[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTgrp", addchar), xTNTgrp)
+    # trad group vs. nontrad group
+    xTNTrandom <- xdd
+    xTNTrandom[, TradArm := 1L]; xTNTrandom[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTrandom", addchar), xTNTrandom)
+  }
+}
+<<permutation tests, warning = F, eval = T>>=
+# data names: ..af, ..rf  (full), ..at, ..rt (drop 2 loan receivers), ..aj, ..rj (drop group rejeceters)
+# data to use: datalist (full), datalist1 (drop 2 loan receivers), datalist2 (drop group rejeceters)
+library(coin)
+PM <- vector(mode = "list", length = 3)
+for (k in 1:3) {
+  addchar <- c("f", "t", "j")[k]
+  dataList <- eval(parse(text=paste0("datalist", c("", 1:2))[k]))
+  if (addchar == "j") M <- 9 else M <- length(selection.criteria)
+  Pm <- vector(mode = "list", length = M)
+  for (m in 1:M) {
+    set.seed(100+m)
+    if (grepl("^Attrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("a", addchar), dataList) else
+    if (grepl("^AttritedInTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Ta", addchar), dataList) else
+    if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTa", addchar), dataList) else
+    if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else
+    if (grepl("^NonFloodAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedInTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedInNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else
+    if (grepl("^NonFloodTradNonTradAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedCowL", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else
+    if (grepl("^Survived$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("s", addchar), dataList) else
+    if (grepl("^SurvivedInTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Ts", addchar), dataList) else
+    if (grepl("^SurvivedInNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTs", addchar), dataList) else
+    if (grepl("^SurvivingTradNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else
+    if (grepl("^SurvivingCowN", addtofilename[m]))
+      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else
+    if (grepl("^SurvivingCowL", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CGs", addchar), dataList) else
+    if (grepl("^Random", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else
+    if (grepl("^Rejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("r", addchar), dataList) else
+    if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tr", addchar), dataList) else
+    if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTr", addchar), dataList) else
+    if (grepl("^TradNonTradR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else
+    if (grepl("^GRejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("gr", addchar), dataList) else
+    if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else
+    if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else
+    if (grepl("^TradNonTradGR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else
+    if (grepl("^IRejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("ir", addchar), dataList) else
+    if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tir", addchar), dataList) else
+    if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTir", addchar), dataList) else
+    if (grepl("^TradNonTradIR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else
+    if (grepl("^GRejectedTradPar", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else
+    if (grepl("^RejectedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else
+    if (grepl("^RejectedCowLa", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else
+    if (grepl("^AcceptedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else
+    if (grepl("^AcceptedCowLa", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else
+      DataList <- gsub("$", addchar, dataList)
+    pmresults <- permmedian <- vector(mode = "list", length(vartobetested))
+    for (i in 1:length(vartobetested)) {
+      # if specific arm is selected, Arm is not compared in permutation
+      if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+        vartobetested[i] == "Arm") next
+      pmdata <- get(DataList[i])
+      # drop NAs in vartobetested[i]
+      pmdata <- pmdata[!is.na(eval(parse(text=vartobetested[i]))), ]
+      # NULL if vartobetested[i] has uniform values (otherwise returns an error)
+      if (length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1) 
+        pmresults[[i]] <- NULL else
+        pmresults[[i]] <- independence_test(eval(parse(text=
+          paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")")
+          )), 
+          data = pmdata, 
+          distribution = approximate(nresample=PermRepTimes))
+      if (!TestMedian) next
+      if (vartobetested[i] == "Arm" | length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1) 
+        permmedian[[i]] <- NULL else 
+        permmedian[[i]] <- median_test(eval(parse(text=
+          paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+          data = pmdata,
+          mid.score = "0.5",
+          distribution = approximate(nresample=PermRepTimes))
+    }
+    #pmresults[[1]]@statistic@teststatistic
+    Pmtresults <- NULL
+    for (i in 1:length(vartobetested)) 
+    {
+      if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+        vartobetested[i] == "Arm") next
+      z <- get(DataList[i])
+      z <- z[!is.na(eval(parse(text=vartobetested[i]))), ]
+      if (vartobetested[i] == "Arm") {
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+              vartobetested[i], with = F])))/
+              nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+            sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+              vartobetested[i], with = F])))/
+              nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]])))
+      } else if (length(unique(unlist(z[, vartobetested[i], with = F]))) == 1) 
+      {
+        # if both groups have no different values, 
+        # use 0 for all zero entries or 1 for unique nonzero entries
+        if (allzerovalues <- unique(unlist(z[, vartobetested[i], with = F])) == 0)
+          Pmtresults <- rbind(Pmtresults, 
+            c(vartobetested[i], 0, 0, rep(NA, 3))) else
+          Pmtresults <- rbind(Pmtresults, 
+            c(vartobetested[i], 1, 1, rep(NA, 3)))
+      } else {
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+              vartobetested[i], with = F]), na.rm = T),
+            mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+              vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]])))
+        if (TestMedian)
+          Pmtresults <- rbind(Pmtresults, 
+            c("", 
+              median(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+                vartobetested[i], with = F]), na.rm = T),
+              median(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+                vartobetested[i], with = F]), na.rm = T),
+              midpvalue(permmedian[[i]]), 
+              pvalue_interval(permmedian[[i]]) 
+            ))
+       }
+    }
+    Pmtresults <- data.table(Pmtresults)
+    setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.mid", "p-value.lower", "p-value.upper"))
+    Pmtresults[grepl("Impute", variables), 
+      variables := gsub("To.*", "LivestockValue", variables)]
+    cols <- grepout("p|er|ttr|eje|TradArm|CowA|Surv", colnames(Pmtresults))
+    Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+    Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+    cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+    Pmtresults[grepl("Ass|Liv|NetV", variables),  
+      (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+      .SDcols = cols]
+    setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.lower", "p-value.mid", "p-value.upper"))
+    obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+    obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+    nobs <- t(c(NA, obs0L, obs1L, NA, obs1L/(obs0L+obs1L), NA))
+    Pmtresults[, variables := paste0("\\makebox[2.5cm]{\\hfill ", variables, "}")]
+    Pmtresults0 <- rbind(Pmtresults, nobs, use.names = F)
+    Pmtresults0[nrow(Pmtresults0), variables := "\\makebox[2.5cm]{\\hfill n}"]
+    Pm[[m]] <- Pmtresults0
+    if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+      Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = "\\scriptsize\\hfil$", 
+      hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90")
+    pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+        paste(c("\\makebox[2.5cm]{\\hfill n}", 
+         obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+         formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+         collapse = " & "),
+        pmt[nrow(pmt), , drop = F] 
+      )
+    write.tablev(pmt,  
+      paste0(pathsaveHere, addtofilename[m], 
+        c("Full", "", "DropGroupRejecters")[k], "PermutationTestResultso800.tex")
+    , colnamestrue = F)
+  }
+  names(Pm) <- addtofilename[1:M]
+  PM[[k]] <- Pm
+}
+names(PM) <- c("Full", "Drop2LoanReceivers", "DropGroupRejecters")
+saveRDS(PM, paste0(pathsaveHere, "AllPermutationTestResults.rds"))
+PM <- readRDS(paste0(pathsaveHere, "AllPermutationTestResults.rds"))
+# indiv rejecters
+Irej <- c("IRejectedInTrad", "IRejectedInNonTrad", "^IRejected$")
+ir12 <-  cbind(
+    PM[[2]][[grep(Irej[1], addtofilename)]][, c(1:3, 5)],
+    PM[[2]][[grep(Irej[2], addtofilename)]][, c(2:3, 5)])
+setnames(ir12, c("variables", 1:(ncol(ir12)-1)))
+ir3 <- PM[[2]][[grep(Irej[3], addtofilename)]][, c(1:3, 5)]
+setnames(ir3, c("variables", 10+1:(ncol(ir3)-1)))
+ir3rows <- data.table(variables = ir3[, variables])
+setkey(ir12, variables)
+setkey(ir3, variables)
+ir123 <- ir12[ir3]
+ir123 <- ir123[ir3rows]
+setnames(ir123, c("variables", paste0("v", 1:(ncol(ir123)-1))))
+for (i in paste0("v", c(3, 6, 9))) 
+  ir123[nrow(ir123), (i) := 
+    paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
+#cnm <- t(c("\\makebox[3cm]{\\hfil variables}", 
+#  paste0("\\makebox[1.5cm]{\\hfil ", rep(c("Yes", "No", "$p$ value"), 3), "}")))
+cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+  paste0("\\makebox[1.2cm]{(", 1:(ncol(ir123)-1), ")}")))
+irj <- as.matrix(rbind(cnm, ir123, use.names = F))
+irj[is.na(irj)] <- ""
+colnames(irj) <- c("variables", rep(c("Not rejected", "Rejected", "$p$ value"), 3))
+irj <- latextab(irj, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(2.5, rep(1.2, ncol(Pmtresults)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = c(3, 6), 
+  separatingcolwidth = rep(.1, 2),
+  separatingcoltitle = c("\\textsf{Traditional} arm", "non-\\textsf{Traditional} arms", "All arms"),
+  addsubcoltitlehere = T
+  )
+write.tablev(irj,  
+  paste0(pathsaveHere, "IndividualRejectionTestResults.tex")
+, colnamestrue = F)
+# survivors
+Suv <- c("Ac.*NonCow", "Sur.*NonCow")
+sv12 <-  cbind(
+    PM[[2]][[grep(Suv[1], addtofilename)]][, c(1, 3, 2, 5)],
+    PM[[2]][[grep(Suv[2], addtofilename)]][, c(3, 2, 5)])
+setnames(sv12, c("variables", paste0("v", 1:(ncol(sv12)-1))))
+for (i in paste0("v", c(3, 6))) 
+  sv12[nrow(sv12), (i) := 
+    paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
+cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+  paste0("\\makebox[1.2cm]{(", 1:(ncol(sv12)-1), ")}")))
+suv <- as.matrix(rbind(cnm, sv12, use.names = F))
+colnames(suv) <- c("variables", rep(c("Cattle arm", "Other arms", "$p$ value"), 2))
+suv <- latextab(suv, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(2.5, rep(1.2, ncol(suv)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 3, 
+  separatingcolwidth = .1, 
+  separatingcoltitle = c("Borrowers", "Non-attriting borrowers"),
+  addsubcoltitlehere = T
+  )
+write.tablev(suv,  
+  paste0(pathsaveHere, "CowVsNonCowTestResults.tex")
+, colnamestrue = F)
+@
+
+<<permutation tests full sample, warning = F, eval = F>>=
+# data names: ..af, ..rf 
+# data to use: datalist
+library(coin)
+for (m in 1:length(selection.criteria)) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "af", datalist) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Taf", datalist) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTaf", datalist) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTaf", datalist) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomf", datalist) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rf", datalist) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trf", datalist) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrf", datalist) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrf", datalist) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grf", datalist) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrf", datalist) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrf", datalist) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrf", datalist) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irf", datalist) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirf", datalist) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirf", datalist) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirf", datalist) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpf", datalist) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCaf", datalist) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGaf", datalist) else
+    DataList <- gsub("$", "f", datalist)
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "FullPermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+@
+
+<<permutation tests dropping group rejecters, warning = F, eval = F>>=
+# data names: ..aj, ..rj
+# data to use: datalist2
+library(coin)
+for (m in 1:7) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "aj", datalist2) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Taj", datalist2) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTaj", datalist) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTaj", datalist2) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomj", datalist2) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rj", datalist2) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trj", datalist2) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrj", datalist2) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrj", datalist2) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grj", datalist2) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrj", datalist2) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrj", datalist2) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrj", datalist2) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irj", datalist2) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirj", datalist2) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirj", datalist2) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirj", datalist2) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpj", datalist2) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCaj", datalist2) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGaj", datalist2) else
+    DataList <- datalist2
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "DropGroupRejectersPermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+@
+
+<<permutation tests dropping 24 twice double TradGroup members, warning = F, eval = F>>=
+# data names: ..at, ..rt
+# data to use: datalist1
+library(coin)
+for (m in 1:length(selection.criteria)) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "at", datalist1) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Tat", datalist1) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTat", datalist1) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTat", datalist) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomt", datalist1) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rt", datalist1) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trt", datalist1) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrt", datalist1) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrt", datalist1) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grt", datalist1) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrt", datalist1) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrt", datalist1) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrt", datalist1) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irt", datalist1) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirt", datalist1) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirt", datalist1) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirt", datalist1) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpt", datalist1) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCat", datalist1) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGat", datalist1) else
+    DataList <- datalist1
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "PermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+@
+

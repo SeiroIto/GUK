@@ -1,0 +1,233 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ReadRiskPreferences/"); library(knitr); knit("ReadRiskPreferences.rnw", "ReadRiskPreferences.tex"); system("platex ReadRiskPreferences"); system("dvipdfmx ReadRiskPreferences")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+<<all chunks0, eval = F, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimation_OptionSetting.rnw'>>=
+<<all chunks02, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
+<<echo = F, warning = F>>=
+dir.create(paste0(pathprogram, "/ReadRiskPreferences/"))
+opts_chunk$set(fig.path='ReadRiskPreferences/figure', cache.path='ReadRiskPreferences/cache', cache = F, echo = T, results = 'markup', message = T)
+@
+
+\hfil Read risk preference data of rd 2\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+%\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+Risk preference:
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	A: 1000 BDT  vs. B: Low 1000 BDT, High 1500 BDT
+\item	A: 1000 BDT  vs. B: Low 875 BDT, High 1500 BDT
+\item	A: 1000 BDT  vs. B: Low 750 BDT, High 1500 BDT
+\item	A: 1000 BDT  vs. B: Low 625 BDT, High 1500 BDT
+\item	A: 1000 BDT  vs. B: Low 500 BDT, High 1500 BDT
+\end{enumerate}
+Time preference 1:
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	A: 1000 BDT tomorrow vs. B: 1000 BDT in 3 months
+\item	A: 1000 BDT tomorrow vs. B: 1100 BDT in 3 months
+\item	A: 1000 BDT tomorrow vs. B: 1200 BDT in 3 months   
+\item	A: 1000 BDT tomorrow vs. B: 1400 BDT in 3 months
+\item	A: 1000 BDT tomorrow vs. B: 1600 BDT in 3 months   
+\item	A: 1000 BDT tomorrow vs. B: 2000 BDT in 3 months  
+\end{enumerate}
+Time preference 2:
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	A: 1000 BDT in a year (12 months) vs. B: 1000 BDT in 1 year and 3 months (15 months)
+\item	A: 1000 BDT in a year (12 months) vs. B: 1200 BDT in 1 year and 3 months (15 months)   
+\item	A: 1000 BDT in a year (12 months) vs. B: 1400 BDT in 1 year and 3 months (15 months)
+\item	A: 1000 BDT in a year (12 months) vs. B: 1600 BDT in 1 year and 3 months (15 months)
+\item	A: 1000 BDT in a year (12 months) vs. B: 2000 BDT in 1 year and 3 months (15 months)
+\end{enumerate}
+
+<<read stata format data, warning = F, cache = F>>=
+library(readstata13)
+rk <- read.dta13(paste0(path234, "only_2/Risk pref_Section 13.dta")
+  , generate.factors = T, nonint.factors = T)
+rk <- data.table(rk)
+ToFacCols <- colnames(rk)[-c(1, ncol(rk))]
+rk[, (ToFacCols) := lapply(.SD, factor), .SDcols = ToFacCols]
+summary(rk)
+# add o800 variable
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+ar00 <- unique(ar[o800 == 1L, .(hhid, o800)])
+setnames(rk, "id", "hhid")
+setkey(rk, hhid); setkey(ar00, hhid)
+rk <- ar00[rk]
+rk <- rk[!is.na(hhid)]
+rk[is.na(o800), o800 := 0L]
+table(rk[, .(n = 1:.N, o800), by = hhid][n==1, o800])
+# reshape to get the switching point
+setnames(rk, 
+  grepout("rp", colnames(rk))
+  , paste0("rp.", 1:5))
+setnames(rk, 
+  grepout("tp_1", colnames(rk))
+  , paste0("tp1.", 1:6))
+setnames(rk, 
+  grepout("tp_2", colnames(rk))
+  , paste0("tp2.", 1:5))
+rk[, c("rp.6", "tp2.6") := NA]
+# drop duplicates (keep 1st appearance)
+rk[, n := 1:.N, by = hhid]
+rk <- rk[n==1, ]
+rk[, n := NULL]
+# find switching points
+rkL <- reshape(rk, direction = "long", idvar = c("hhid", "respondent_mid", "o800"),
+  varying = grepout("\\.\\d$", colnames(rk)))
+setnames(rkL, "time", "q")
+setkey(rkL, hhid, q)
+# expect: b => a (2 => 1) at some point or never, not a => b (1 => 2)
+rkL[, rp := factor(rp, levels = c("a", "b", NA))]
+rkL[, tp1 := factor(tp1, levels = c("a", "b", NA))]
+rkL[, tp2 := factor(tp2, levels = c("a", "b", NA))]
+rkL[, rp := as.numeric(rp)]
+rkL[, tp1 := as.numeric(tp1)]
+rkL[, tp2 := as.numeric(tp2)]
+rkL[, Drp := c(NA, diff(rp)), by = hhid]
+rkL[, Dtp1 := c(NA, diff(tp1)), by = hhid]
+rkL[, Dtp2 := c(NA, diff(tp2)), by = hhid]
+# check if there is only 1 switch
+rkL[, Num.rp := sum(!is.na(Drp) & Drp != 0), by = hhid]
+rkL[, Num.tp1 := sum(!is.na(Dtp1) & Dtp1 != 0), by = hhid]
+rkL[, Num.tp2 := sum(!is.na(Dtp2) & Dtp2 != 0), by = hhid]
+table(rkL[, .(n = 1:.N, Num.rp, o800), by = hhid][o800 == 1L & n == 1L, Num.rp])
+table(rkL[, .(n = 1:.N, Num.tp1, o800), by = hhid][o800 == 1L & n == 1L, Num.tp1])
+table(rkL[, .(n = 1:.N, Num.tp2, o800), by = hhid][o800 == 1L & n == 1L, Num.tp2])
+# Change.rp for non-switcher or single switcher
+  # single switcher b => a (rp), a => b (tp1, tp2)
+rkL[Num.rp == 1, Change.rp := (1:.N)[Num.rp == 1 & !is.na(Drp) & Drp == -1], by = hhid]
+rkL[Num.tp1 == 1, Change.tp1 := (1:.N)[Num.tp1 == 1 & !is.na(Dtp1) & Dtp1 == 1], by = hhid]
+rkL[Num.tp2 == 1, Change.tp2 := (1:.N)[Num.tp2 == 1 & !is.na(Dtp2) & Dtp2 == 1], by = hhid]
+  # non switcher (always a or b)
+rkL[hhid %in% hhid[Num.rp == 0], Change.rp := rp]
+rkL[hhid %in% hhid[Num.tp1 == 0], Change.tp1 := tp1]
+rkL[hhid %in% hhid[Num.tp2 == 0], Change.tp2 := tp2]
+  # multiple switcher (irrational)
+rkL[Num.rp > 1, Change.rp := -1, by = hhid]
+rkL[Num.tp1 > 1, Change.tp1 := -1, by = hhid]
+rkL[Num.tp2 > 1, Change.tp2 := -1, by = hhid]
+  # single a => b (rp, irrational), b => a (tp1, tp2, irrational)
+rkL[hhid %in% hhid[Num.rp == 1 & !is.na(Drp) & Drp == 1], Change.rp := -2]
+rkL[hhid %in% hhid[Num.tp1 == 1 & !is.na(Dtp1) & Dtp1 == -1], Change.tp1 := -2]
+rkL[hhid %in% hhid[Num.tp2 == 1 & !is.na(Dtp2) & Dtp2 == -1], Change.tp2 := -2]
+rkL[, Change.rp := factor(as.integer(Change.rp))]
+rkL[, Change.tp1 := factor(as.integer(Change.tp1))]
+rkL[, Change.tp2 := factor(as.integer(Change.tp2))]
+# Quantify the difference in switch point 
+# To do so, compare expected value differences in each option
+# E.g., if a=1000, b=c(1000, 1500)*1/2, 1250-1000=250
+rkL[, c("RiskPrefVal", "TimePref1Val", "TimePref2Val") := as.numeric(NA)]
+rkL[Change.rp == 2, RiskPrefVal := (1500+875)/2-1000]
+rkL[Change.rp == 3, RiskPrefVal := (1500+750)/2-1000]
+rkL[Change.rp == 4, RiskPrefVal := (1500+625)/2-1000]
+rkL[Change.rp == 5, RiskPrefVal := (1500+500)/2-1000]
+rkL[Change.tp1 == 2, TimePref1Val := 100]
+rkL[Change.tp1 == 3, TimePref1Val := 200]
+rkL[Change.tp1 == 4, TimePref1Val := 400]
+rkL[Change.tp1 == 5, TimePref1Val := 600]
+rkL[Change.tp1 == 6, TimePref1Val := 1000]
+rkL[Change.tp2 == 2, TimePref2Val := 200]
+rkL[Change.tp2 == 3, TimePref2Val := 400]
+rkL[Change.tp2 == 4, TimePref2Val := 600]
+rkL[Change.tp2 == 5, TimePref2Val := 1000]
+summary(rkL[q==1 & o800 == 1L, ])
+rkL <- rkL[q==1, ]
+rsk <- rkL[, c("hhid", "respondent_mid", grepout("Ch|Val", colnames(rkL))), with = F]
+setnames(rsk, c("respondent_mid", grepout("Ch", colnames(rsk))), 
+  c("rskmid", gsub("Change.", "", grepout("Ch", colnames(rsk)))))
+ToNum <- grepout("^.p", colnames(rsk))
+rsk[, (ToNum) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = ToNum]
+setnames(rsk, ToNum, c("RiskPrefIndex", "TimePref1Index", "TimePref2Index"))
+rsk[, PresentBias := 0L]
+rsk[TimePref1Index > TimePref2Index, PresentBias := 1L]
+## keep only rational respondents of risk preferences
+#rsk <- rsk[RiskPrefIndex >= 0, ]
+saveRDS(rkL, 
+  paste0(pathsaveHere, "RiskPreferencesRawData.rds")
+)
+saveRDS(rsk, 
+  paste0(pathsaveHere, "RiskPreferences.rds")
+)
+@
+For \textsf{Change.rp}:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[2-5]	Single switch point from b to a.
+\item[0]	No switch.
+\item[-1]	Multiple switch (irrational).
+\item[-2]	Single switch from a to b (irrational).
+\end{description}
+For \textsf{Change.tp1, Change.tp2}:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[2-6]	Single switch point from a to b.
+\item[0]	No switch.
+\item[-1]	Multiple switch (irrational).
+\item[-2]	Single switch from b to a (irrational).
+\end{description}
+
+
+
+
+\end{document}

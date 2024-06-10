@@ -1,0 +1,259 @@
+<<echo = F>>=
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values\label{tab ANCOVA livestock}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[1], "ANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}%
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. 
+$P$ values in parenthesises. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values by attributes\label{tab ANCOVA livestock attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values, ultra vs. moderately poor\label{tab ANCOVA livestock poor}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[2], "ANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNArm)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values by attributes and period\label{tab ANCOVA livestock timevarying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockTimeVaryingAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes, TabFNRound234)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values using annual prices\label{tab ANCOVA livestock annual price}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockAnnualPrice", FileNameHeader[1], "ANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}%
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. 
+$P$ values in parenthesises. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values using annual prices by attributes\label{tab ANCOVA livestock  annual price attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockAnnualPriceAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values using annual prices, ultra vs. moderately poor\label{tab ANCOVA livestock  annual price poor}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockAnnualPrice", FileNameHeader[2], "ANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNArm)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding values using annual prices by attributes and period\label{tab ANCOVA livestock  annual price timevarying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "LivestockAnnualPriceTimeVaryingAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes, TabFNRound234)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding \label{tab ANCOVA livestock holding}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes\label{tab ANCOVA livestock holding attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding, ultra vs. moderately poor\label{tab ANCOVA livestock holding poor}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCows", FileNameHeader[2], "ANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNArm)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by time\label{tab ANCOVA livestock holding time varying}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsTimeVaryingANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes, TabFNRound234)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by timeand attributes\label{tab ANCOVA livestock holding time varying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsTimeVaryingAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes, TabFNRound234)} Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+

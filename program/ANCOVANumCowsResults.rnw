@@ -1,0 +1,76 @@
+<<echo = F>>=
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding by attributes\label{tab ANCOVA cow attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding, ultra vs. moderately poor\label{tab ANCOVA NumCows poor}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsPovertyStatusANCOVAEstimationResults.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNUP)} Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding by arm and period\label{tab ANCOVA cow time varying}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsTimeVaryingANCOVAEstimationResults.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNRound234)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding by attributes and period\label{tab ANCOVA cow time varying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumCowsTimeVaryingAttributesANCOVAEstimationResults.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes, TabFNRound234)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}

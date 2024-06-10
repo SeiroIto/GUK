@@ -1,0 +1,165 @@
+\tikzstyle{attritionbox} = 
+[rectangle, rounded corners, text width = 2cm, minimum height=1cm, text centered, fill=blue!10,
+ drop shadow={opacity=.5, shadow scale=1.05}]
+\tikzstyle{dummybox} = 
+[draw = none, fill = {\BGColour}, text width = 0cm, drop shadow={opacity=1, fill = {\BGColour}, shadow scale=1.01}]
+\begin{tikzpicture}[
+    every node/.style={
+        font=\sffamily,
+        drop shadow,
+        fill=red!10,
+        text width=5cm,
+        align=center},
+        >=latex, %Make the arrow tips latex
+        myline/.style={ultra thick, black!50},
+        shorter/.style={shorten <=1mm, shorten >=0.5mm}]
+% start node [for some reasons, I cannot place a node by writing (5, 0)]
+%\node[fill = white, text width = 0cm, drop shadow={fill=white, opacity=1, shadow scale=1.01}] (L0) at (0, 0) {};
+\node (startnode) {\mpage{5cm}{\hfil Pre-acceptance ($g=80$, $n=800$)\\\\[-1ex]\mpage{5cm}{\footnotesize\hfill moderately poor (240)\\\hfill utra poor (560)\SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+\node[below = .75cm of startnode] (baseline) {Baseline survey};
+\node[below = .75cm of baseline] (random) {Cluster randomisation};
+
+% randomisaion
+\node[below = 2.5cm of random, dummybox] (dummy) {};
+\node[left = 4.75cm of dummy, text width = 3cm] 
+  (trad) {\mpage{3cm}{\hfil T1 Traditional\\\hfil ($n=176$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (105)\\
+  \hfill group rejection ($40$)\\
+  \hfill individual rejection ($31$)%\\
+  %\hfill two disbursements ($24$)
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+\node[right = 1cm of trad, text width = 3cm] 
+  (large) {\mpage{3cm}{\hfil T2 Large\\\hfil ($n=200$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (171)\\
+  \hfill group rejection ($20$)\\
+  \hfill individual rejection ($9$)%\\
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+\node[right = 1cm of large, text width = 3cm] 
+  (grace) {\mpage{3cm}{\hfil T3 Large grace\\\hfil ($n=200$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (177)\\
+  \hfill group rejection ($10$)\\
+  \hfill individual rejection ($13$)%\\
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+\node[right = 1cm of grace, text width = 3cm] 
+  (cattle) {\mpage{3cm}{\hfil T4 Cattle\\\hfil ($n=200$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (163)\\
+  \hfill group rejection ($0$)\\
+  \hfill individual rejection ($37$)%\\
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+% add arrows from start to each arms
+\draw[myline, ->, shorter] (startnode) -- (baseline);
+\draw[myline, ->, shorter] (baseline) -- (random);
+\draw[myline, ->, shorter, draw = none] 
+  (random) -- (trad.north) node[midway, dummybox, yshift = .25cm] (rthalf) {};
+\draw[myline, ->, shorter] (random) -- (large.north);
+\draw[myline, ->, shorter] (random) -- (grace.north);
+\draw[myline, ->, shorter] (random) -- (cattle.north);
+% draw an invisible horizontal line at rthalf 
+\draw[name path=tradArrow, myline, ->, shorter, draw = none] (random) -- (trad.north);
+\draw[name path=invisH, draw = none] (rthalf -| trad.west) -- (rthalf -| cattle.west);
+% find an intersection of invisH and tradArrow
+\path [name intersections={of=invisH and tradArrow, by={tradMidArrow}}];
+\draw[myline, ->, shorter] ([xshift = .1cm] tradMidArrow) -- ($(tradMidArrow) + (-2.5, 0)$) 
+  node[attritionbox, anchor = east] (DoubleTrad) 
+  {\mpage{2cm}{\hfil 2 loans\\\hfil ($n=24$)\SetLengthSkip{10pt}}};
+\draw[myline, ->, shorter] (random) -- (trad.north);
+
+% trad to attriters
+\node[below = 1cm of trad.south west, xshift = 1.5cm, anchor = west, attritionbox]  
+  (tradFlood) {\mpage{2cm}{\hfil flood victims\\\hfil ($n=20$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of tradFlood, attritionbox]  
+  (tradAttrit2) {\mpage{2cm}{\hfil attrited in 2\\\hfil ($n=6$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of tradAttrit2, attritionbox]  
+  (tradAttrit3) {\mpage{2cm}{\hfil attrited in 3\\\hfil ($n=4$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of tradAttrit3, attritionbox]  
+  (tradAttrit4) {\mpage{2cm}{\hfil attrited in 4\\\hfil ($n=2$)\SetLengthSkip{10pt}}};
+\node[below = 6cm of trad, text width = 3cm]
+  (tradLast) {\mpage{3cm}{\hfil Traditional\\\hfil ($n=144$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (83)\\
+  \hfill group rejection ($36$)\\
+  \hfill individual rejection ($25$)
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+  % draw kinked arrows
+	\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) |- (tradFlood.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) |- (tradAttrit2.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) |- (tradAttrit3.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) |- (tradAttrit4.west);
+	%\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) --++ (0, -5cm);
+	\draw[myline, shorter, ->] ([xshift = 1cm] trad.south west) -- ([xshift = 1cm] tradLast.north west);
+% large to attriters
+\node[right = 2cm of tradAttrit2, attritionbox]  
+  (largeAttrit2) {\mpage{2cm}{\hfil attrited in 2\\\hfil ($n=5$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of largeAttrit2, attritionbox]  
+  (largeAttrit3) {\mpage{2cm}{\hfil attrited in 3\\\hfil ($n=2$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of largeAttrit3, attritionbox]  
+  (largeAttrit4) {\mpage{2cm}{\hfil attrited in 4\\\hfil ($n=1$)\SetLengthSkip{10pt}}};
+\node[below = 6cm of large, text width = 3cm]  
+  (largeLast) {\mpage{3cm}{\hfil Large\\\hfil ($n=192$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (164)\\
+  \hfill group rejection ($19$)\\
+  \hfill individual rejection ($9$)
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+  % draw kinked arrows
+%	\draw[myline, shorter, ->] ([xshift = 1cm] large.south west) |- (largeFlood.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] large.south west) |- (largeAttrit2.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] large.south west) |- (largeAttrit3.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] large.south west) |- (largeAttrit4.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] large.south west) -- ([xshift = 1cm] largeLast.north west);
+% grace to attriters
+\node[below = 1cm of grace.south west, xshift = 1.5cm, anchor = west, attritionbox]  
+  (graceFlood) {\mpage{2cm}{\hfil flood victims\\\hfil ($n=10$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of graceFlood, attritionbox]  
+  (graceAttrit2) {\mpage{2cm}{\hfil attrited in 2\\\hfil ($n=13$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of graceAttrit2, attritionbox]  
+  (graceAttrit3) {\mpage{2cm}{\hfil attrited in 3\\\hfil ($n=3$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of graceAttrit3, attritionbox]  
+  (graceAttrit4) {\mpage{2cm}{\hfil attrited in 4\\\hfil ($n=3$)\SetLengthSkip{10pt}}};
+\node[below = 6cm of grace, text width = 3cm]  
+  (graceLast) {\mpage{3cm}{\hfil Large grace\\\hfil ($n=171$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (160)\\
+  \hfill group rejection ($0$)\\
+  \hfill individual rejection ($11$)
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+  % draw kinked arrows
+	\draw[myline, shorter, ->] ([xshift = 1cm] grace.south west) |- (graceFlood.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] grace.south west) |- (graceAttrit2.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] grace.south west) |- (graceAttrit3.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] grace.south west) |- (graceAttrit4.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] grace.south west) -- ([xshift = 1cm] graceLast.north west);
+% cattle to attriters
+\node[below = 1cm of cattle.south west, xshift = 1.5cm, anchor = west, attritionbox]  
+  (cattleFlood) {\mpage{2cm}{\hfil flood victims\\\hfil ($n=10$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of cattleFlood, attritionbox]  
+  (cattleAttrit2) {\mpage{2cm}{\hfil attrited in 2\\\hfil ($n=5$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of cattleAttrit2, attritionbox]  
+  (cattleAttrit3) {\mpage{2cm}{\hfil attrited in 3\\\hfil ($n=5$)\SetLengthSkip{10pt}}};
+\node[below = .25cm of cattleAttrit3, attritionbox]  
+  (cattleAttrit4) {\mpage{2cm}{\hfil attrited in 4\\\hfil ($n=3$)\SetLengthSkip{10pt}}};
+\node[below = 6cm of cattle, text width = 3cm]  
+  (cattleLast) {\mpage{3cm}{\hfil Cattle\\\hfil ($n=177$)\\
+  \mpage{3cm}{\footnotesize\hfill accepted (147)\\
+  \hfill group rejection ($0$)\\
+  \hfill individual rejection ($30$)
+  \SetLengthSkip{10pt}}\SetLengthSkip{10pt}}};
+  % draw kinked arrows
+	\draw[myline, shorter, ->] ([xshift = 1cm] cattle.south west) |- (cattleFlood.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] cattle.south west) |- (cattleAttrit2.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] cattle.south west) |- (cattleAttrit3.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] cattle.south west) |- (cattleAttrit4.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] cattle.south west) -- ([xshift = 1cm] cattleLast.north west);
+
+% Draw the background
+% \begin{pgfonlayer}{background}
+% \path (tradLast.west |- startnode.north)+(-.5cm, .5cm) 
+% 	node (topleft1) {};
+% \path (cattleLast.south east)+(1cm, -.5cm) 
+% 	node (bottomright1) {};
+% \path[fill = {\BGColour}, rounded corners]
+% 	(topleft1) rectangle (bottomright1);
+% \end{pgfonlayer}
+
+\begin{pgfonlayer}{background}
+\node [fill={\BGColour}, fit=(trad) (startnode) (cattleAttrit4) (cattleLast)] {};
+\end{pgfonlayer}
+
+\end{tikzpicture}

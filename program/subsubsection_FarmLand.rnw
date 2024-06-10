@@ -1,0 +1,46 @@
+<<farm land holding check>>=
+ass0 <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+if (Only800) ass0 <- ass0[o800 == 1L, ]
+ass0[, grepout("Loan|Forced|^Time$|\\.before|\\.after", colnames(ass0)) := NULL]
+ass0 <- ass0[!(hhid == 7043715 & NLHAssetAmount == 0), ]
+ass0[, Tee := .N, by = hhid]
+setkey(ass0, Arm, survey)
+addmargins(table0(ass0[OwnedArea>0, .(survey, Arm)]), 2)
+<<farm land holding histogram, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Land holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- ass0[OwnedArea > 0 & o800==1, ]
+assL[, quantile(OwnedArea, probs=seq(0, 1, .25))]
+assL[, LandClass := as.integer(cut(OwnedArea, 
+  unique(quantile(OwnedArea, probs=seq(0, 1, .25))), include.lowest=TRUE))]
+g <- ggplot(data = subset(assL, BStatus == "borrower"), 
+#g <- ggplot(data = subset(assL, Year != 2012), 
+  aes(LandClass)) + 
+  geom_histogram(breaks = 1:4) + 
+  scale_y_continuous(breaks = seq(0, 8, 2))+ 
+  scale_x_continuous(label = 
+    as.integer(assL[, quantile(OwnedArea, probs=seq(0, 1, .25))])[-1],
+    breaks = 1:4, name = "land holding quartiles") +
+  theme(axis.text.x = element_text(size = 6, angle = 90, vjust = .5, hjust = 1), 
+   strip.text = element_text(size = 6, colour = "blue"))+
+  facet_grid(survey ~ Arm)
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "FarmLandClassesByRound.png")
+    , g,
+    width = 13, height = 8, units = "cm", dpi = 300
+ )
+@
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Farm land holding of loan recipients\label{fig FarmLandClass}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/FarmLandClassesByRound.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of farm land holding are displayed on horizontal axises. Deciles are defined for the farm land values pooled over all survey rounds. Loan recipients only.\\[1ex]
+\end{tabular}
+}
+
+Farm land holding distributions is owned too infrequent to estimate. It shows that farm land holding had shrunk in all arms (\textsc{\small Figure \ref{fig FarmLandClass}}). This is more so among the small holders in all arms.
+

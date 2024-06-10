@@ -1,0 +1,63 @@
+<<echo = F>>=
+FileNameHeader <- c("", "PovertyStatus", "Attributes", 
+  "TimeVarying", "TimeVaryingAttributes")
+@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of assets, loan recipients vs. pure control\label{tab ANCOVA assets pure control time varying}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetRobustnessANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & ANCOVA estimates. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of assets, loan recipients vs. pure control by attributes \label{tab ANCOVA assets pure control attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetRobustnessAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & ANCOVA estimates. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of assets, loan recipients vs. pure control\label{tab ANCOVA assets pure control time varying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetRobustnessTimeVaryingAttributesANCOVAEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & ANCOVA estimates. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}

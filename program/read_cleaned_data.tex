@@ -1,0 +1,3280 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("read_cleaned_data.rnw", "read_cleaned_data.tex"); system("platex read_cleaned_data"); system("dvipdfmx read_cleaned_data")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/read_cleaned_data/"); library(knitr); knit("read_cleaned_data.rnw", "read_cleaned_data.tex"); system("platex read_cleaned_data"); system("dvipdfmx read_cleaned_data")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\makeatother
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+
+
+
+\hfil Read cleaned GUK files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+I have renamed columns, corrected typo's, and set all original column names to lower cases. All variables that I create begin with an upper case letter. All variables beginning with a lower case letter are original variables.
+
+\textcolor{red}{Texts in red} indicate relatively major issues in data cleaning. \textcolor{green}{Texts in green} show responses to the problem. \textcolor{red}{A Variable Name in red} indicates a useful variable that I created.
+
+Several issues discussed with Abu-san on Nov 16, 2017.
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Promissing avenues for impact evaluations: Asset incomes (e.g., milk), schooling (catch up process of large amount arms). There are a few ways to define a treatment status (assignment, elapsed time).
+\item	Saving and repayment info needs to be supplemented with admin data.
+\item	Papers to be written:
+	\begin{enumerate}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Impact evaluation (+ weekly saving and revenue data).
+	\item	Financial returns.
+	\item	Relocation impacts.
+	\item	Repayment pattern and investment choices (Abu-san takes a lead?).
+	\end{enumerate}
+\item	File maintainer: Abu-san. Anyone who revises the data file should submit to Abu-san and he will update folder in the cloud.
+\end{itemize}
+
+\section{Read files}
+
+	ID file, other section files, and roster files are saved in different folders. Correct roster. Check panel structure of each section. Then we examine panel recording status (attrition, membership status, treatment assignment), and attach this to each section files.
+
+	List and read files in following folders: \textsf{\footnotesize ./clean\_panel\_data\_by\_section/}. 
+	
+	Asset codes are different between rounds, so one cannot use \textsf{generate.factors = T} option of \textsf{read.dta13} command. I will manually subsitute asset item contents to asset codes. \gobblepars
+
+
+
+\textsf{\footnotesize ./only\_panel\_2\_3\_4/}, \gobblepars
+
+
+\textsf{\footnotesize ./raw\_source\_files/P1\_Check\_20170513, ./raw\_source\_files/P2\_Check\_20170513, ./raw\_source\_files/P3\_Check\_20170513, ./raw\_source\_files/P4\_Check\_20170513}.
+
+Add the roster to the list of 1-2-3-4 panel data files (\textsf{Z}) as an element. (Note: At this moment, the list element \textsf{roster} is also a list, not a data.table.) \gobblepars
+
+Save all files. \textsf{Z} uses files from \textsf{panel1234} and roster, \textsf{Z2} uses files from \textsf{panel234}.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_AssetsCodeOnly.rds"))
+saveRDS(Z2, paste0(path1234, "data_read_in_a_list_234.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+
+\section{Id}
+
+
+\subsection{Membership status}
+
+Check individual panel status: \textsf{gid} is borrower group's unique id, and \textsf{hhid} = \textsf{gid+membership ID number}. \gobblepars
+
+
+\textsf{member\_mid} is missing for some but \textsf{memname} is nonNA for all.
+\begin{Schunk}
+\begin{Soutput}
+         memberNA
+memnameNA FALSE TRUE
+    FALSE  4093 4296
+\end{Soutput}
+\end{Schunk}
+
+In below, I create several variables to show membership-attrition patterns.
+
+Define \textsf{Mpasted}: Tabulate membership pattern across rounds. It is \textsf{cccc} if \textsf{membership==continued} for 4 rds, \textsf{d} if dropped out after rd 1 while \textsf{dd} if observed in rd 1 but dropped out in rd 2 or 3. It does not give timing of attrition. Note: Original \textsf{membership} is defined at each observed rounds. 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[c]	continuing members (original members, agreed to participate)
+\item[d]	dropped out members (original members, dropped out by flood, individual rejection, group rejection)
+\item[n]	new members (members of newly added group)
+\item[r]	replacing members for dropped out members (additional members, replacing dropped out members in the original group)
+\end{description}
+Survey team tried to track an idividual who dropped out at rd 1, so such a person is observed or is lost all the way to the final round. 
+\begin{Schunk}
+\begin{Soutput}
+
+   c   cc  ccc cccc    d   dd  ddd dddd    n   nn  nnn nnnn    r   rr  rrr rrrr 
+  25   30   84 4612   68   30  201  916    5    4   39 1760    2    4   33  576 
+\end{Soutput}
+\end{Schunk}
+Create survey round pattern: \textsf{Spasted}.
+\begin{Schunk}
+\begin{Soutput}
+      Spasted
+survey    1   12  123 1234  124   13  134
+     1  100   28   82 1966    1    6   36
+     2    0   28   82 1966    1    0    0
+     3    0    0   82 1966    0    6   36
+     4    0    0    0 1966    1    0   36
+\end{Soutput}
+\end{Schunk}
+%Some entries have \textsf{Spasted}==1134. A typo (corrected here).
+
+
+
+Create \textcolor{red}{\textsf{Mpattern}} which shows membership and attrition information.
+\begin{Schunk}
+\begin{Sinput}
+xid[, Mpattern := Mpasted]
+# if Spasted == 1, observed only in rd1, so Xaaa (a for attrition)
+xid[Spasted == 1, Mpattern := paste0(Mpasted, "aaa")]
+xid[Spasted == 12, Mpattern := paste0(Mpasted, "aa")]
+xid[Spasted == 13, Mpattern := paste0(substr(Mpasted, 1, 1), "a", 
+	substr(Mpasted, 2, 2), "a")]
+xid[Spasted == 123, Mpattern := paste0(Mpasted, "a")]
+xid[Spasted == 124, Mpattern := paste0(substr(Mpasted, 1, 2), "a", 
+	substr(Mpasted, 3, 3))]
+xid[Spasted == 134, Mpattern := paste0(substr(Mpasted, 1, 1), "a", 
+	substr(Mpasted, 2, 3))]
+\end{Sinput}
+\end{Schunk}
+Tabulate membership-attrition patten:
+\begin{Schunk}
+\begin{Soutput}
+
+caaa caca cacc ccaa ccac ccca cccc daaa dada dadd ddaa ddda dddd naaa nann nnaa 
+  25    8   42   22    3   39 4612   68    2   39   28  162  916    5   12    4 
+nnna nnnn raaa rara rarr rraa rrra rrrr 
+  27 1760    2    2   15    2   18  576 
+\end{Soutput}
+\end{Schunk}
+(Note above number must be adjusted in the following way: Since \textsf{ccaa} is observed only in 2 rds, number of individuals is 22/2 = 11.)
+
+
+
+\subsection{Treatment assignment}
+
+Tabulate \textsf{Mpattern} against reason for current membership status (\textsf{membership\_status}).
+\begin{Schunk}
+\begin{Soutput}
+        Mstatus
+Mpattern gErosion gRejection iRejection iReplacement newGroup oldMember
+    caaa        0          0          0            0        0        25
+    caca        0          0          0            0        0         8
+    cacc        0          0          0            0        0        42
+    ccaa        0          0          0            0        0        22
+    ccac        0          0          0            0        0         3
+    ccca        0          0          0            0        0        39
+    cccc        0          0          3            0        0      4609
+    daaa       24         22         22            0        0         0
+    dada        2          0          0            0        0         0
+    dadd        0          0         39            0        0         0
+    ddaa        4          8         14            0        0         2
+    ddda      159          0          3            0        0         0
+    dddd        0        342        574            0        0         0
+    naaa        0          0          0            0        5         0
+    nann        0          0          0            0       12         0
+    nnaa        0          0          0            0        4         0
+    nnna        0          0          0            0       27         0
+    nnnn        0          0          0            0     1760         0
+    raaa        0          0          0            2        0         0
+    rara        0          0          0            2        0         0
+    rarr        0          0          0           15        0         0
+    rraa        0          0          0            2        0         0
+    rrra        0          0          0           18        0         0
+    rrrr        0          0          0          576        0         0
+\end{Soutput}
+\end{Schunk}
+Below is original members.
+\begin{Schunk}
+\begin{Sinput}
+table0(xid[survey == 1 & !grepl("new|Rep", Mstatus), Mstatus])
+\end{Sinput}
+\begin{Soutput}
+
+  gErosion gRejection iRejection  oldMember 
+        80        140        159       1221 
+\end{Soutput}
+\end{Schunk}
+Create \textcolor{red}{\textsf{Mgroup}} which identifies continued, newly added group (after flood?), or members replacing rejecters. 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[gErosion] Forced drop outs.
+\item[gRejection, iRejection] Voluntary drop outs.
+\end{description}
+\gobblepars
+
+There is an anomaly in \textsf{membership\_status}: Given that \textsf{gid}==71372 does not reject loans by group, this must be a drop out due to individual rejection rather than Old member that \textsf{membership\_status} reports. Correct \textsf{Mgroup} and \textsf{Mstatus} accordingly (but keep original \textsf{membership\_status} unchanged).
+\begin{Schunk}
+\begin{Sinput}
+xid[grepl("Dr", membership) & grepl("Old", membership_status), 
+	.(gid, hhid, year, Mgroup, Mpattern, Mstatus, membership, membership_status, 
+	creditstatus, missing_followup)]
+\end{Sinput}
+\begin{Soutput}
+     gid    hhid year    Mgroup Mpattern   Mstatus      membership
+1: 71372 7137219 2012 continued     ddaa oldMember Drop-out member
+2: 71372 7137219 2014 continued     ddaa oldMember Drop-out member
+   membership_status creditstatus          missing_followup
+1:        Old Member           No 3rd and 4th round missing
+2:        Old Member           No 3rd and 4th round missing
+\end{Soutput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Sinput}
+xid[grepl("Dr", membership) & grepl("Old", membership_status), 
+	c("Mgroup", "Mstatus") := list("drop outs", "iRejection")]
+\end{Sinput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Soutput}
+              Mgroup
+Mstatus        continued drop outs forced drop outs new group replacements
+  gErosion             0         0              189         0            0
+  gRejection           0       372                0         0            0
+  iRejection           3       654                0         0            0
+  iReplacement         0         0                0         0          615
+  newGroup             0         0                0      1808            0
+  oldMember         4748         0                0         0            0
+\end{Soutput}
+\end{Schunk}
+Create \textcolor{red}{\textsf{Assign}} which shows realised assignment (as opposed to original assignment \textsf{randomization}) and drop out status (\textsf{Mstatus}).
+\begin{Schunk}
+\begin{Sinput}
+xid[, AssignOriginal := randomization]
+xid[, AssignOriginal := gsub("^con.*", "traditional", AssignOriginal)]
+xid[, AssignOriginal := gsub("L.*t$", "large", AssignOriginal)]
+xid[, AssignOriginal := gsub("L.*d.$", "large grace", AssignOriginal)]
+xid[, AssignOriginal := gsub("^p.*", "cow", AssignOriginal)]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+xid[, Assign := AssignOriginal]
+xid[grepl("^dr", Mgroup), Assign := "drop outs"]
+xid[grepl("^fo", Mgroup), Assign := "forced drop outs"]
+\end{Sinput}
+\end{Schunk}
+Tabulate \textsf{AssignOriginal} in the first round. (Note: 220 NAs will be dealt with in the impact estimation file using village level info.)
+\begin{Schunk}
+\begin{Soutput}
+
+        cow       large large grace traditional        <NA> 
+        512         472         482         533         220 
+\end{Soutput}
+\begin{Soutput}
+              Mgroup
+AssignOriginal continued drop outs forced drop outs new group replacements
+   cow               308        72                0        60           72
+   large             348        12                0       100           12
+   large grace       338        22                0       100           22
+   traditional       227        53                0       200           53
+   <NA>                0       140               80         0            0
+\end{Soutput}
+\begin{Soutput}
+              Mstatus
+AssignOriginal gErosion gRejection iRejection iReplacement newGroup oldMember
+   cow                0          0         72           72       60       308
+   large              0          0         12           12      100       348
+   large grace        0          0         22           22      100       338
+   traditional        0          0         54           53      200       226
+   <NA>              80        140          0            0        0         0
+\end{Soutput}
+\end{Schunk}
+
+Tabulate \textsf{Mpattern} against assignment status (\textsf{Assign}).
+\begin{Schunk}
+\begin{Soutput}
+        Assign
+Mpattern traditional large large grace  cow drop outs forced drop outs
+    caaa           2    10           4    9         0                0
+    caca           0     4           0    4         0                0
+    cacc           3     6          21   12         0                0
+    ccaa           2     4           6   10         0                0
+    ccac           0     0           3    0         0                0
+    ccca           3     6          18   12         0                0
+    cccc         888  1320        1268 1136         0                0
+    daaa           0     0           0    0        44               24
+    dada           0     0           0    0         0                2
+    dadd           0     0           0    0        39                0
+    ddaa           0     0           0    0        24                4
+    ddda           0     0           0    0         3              159
+    dddd           0     0           0    0       916                0
+    naaa           2     1           2    0         0                0
+    nann           3     3           3    3         0                0
+    nnaa           0     2           2    0         0                0
+    nnna          27     0           0    0         0                0
+    nnnn         752   388         384  236         0                0
+    raaa           0     1           0    1         0                0
+    rara           0     0           0    2         0                0
+    rarr           0     0           0   15         0                0
+    rraa           0     0           0    2         0                0
+    rrra           6     0           0   12         0                0
+    rrrr         204    44          88  240         0                0
+\end{Soutput}
+\end{Schunk}
+% Tabulate \textsf{Mgroup} against assignment status (\textsf{randomization}).
+
+Tabulate \textsf{Mstatus} against realiased assignment status (\textsf{Assign}).
+\begin{Schunk}
+\begin{Soutput}
+              Assign
+Mstatus        traditional large large grace  cow drop outs forced drop outs
+  gErosion               0     0           0    0         0              189
+  gRejection             0     0           0    0       372                0
+  iRejection             3     0           0    0       654                0
+  iReplacement         210    45          88  272         0                0
+  newGroup             784   394         391  239         0                0
+  oldMember            895  1350        1320 1183         0                0
+\end{Soutput}
+\end{Schunk}
+%Tabulate membership pattern (\textsf{Mpattern}) against membership status (\textsf{Mstatus}).
+
+%There are length(unique(xid[grepl("^iRej", Mstatus) & is.na(Assign), hhid])) cases with \textsf{iRejection} and \textsf{Assign} is NA. Individual rejection must come after treatment assignment. These started as \textsf{gRejection} but changed to \textsf{iRejection} in rd4. This is a typo and will correct it.
+
+Missingness was reported with errors but corrected with updated file of 2017-10-18. Tabulate \textsf{Mpattern} against attrition information (\textsf{missing\_followup}).
+\begin{Schunk}
+\begin{Soutput}
+                                Mpattern
+missing_followup                 caaa caca cacc ccaa ccac ccca cccc daaa dada
+  First follow-up missing           0    0   42    0    0    0    0    0    0
+  Second follow-up missing          0    0    0    0    3    0    0    0    0
+  Endline missing                   0    0    0    0    0   39    0    0    0
+  2nd and 4th round missing         0    8    0    0    0    0    0    0    2
+  3rd and 4th round missing         0    0    0   22    0    0    0    0    0
+  2nd, 3rd and 4th round missing   25    0    0    0    0    0    0   68    0
+  None missing                      0    0    0    0    0    0 4612    0    0
+                                Mpattern
+missing_followup                 dadd ddaa ddda dddd naaa nann nnaa nnna nnnn
+  First follow-up missing          39    0    0    0    0   12    0    0    0
+  Second follow-up missing          0    0    0    0    0    0    0    0    0
+  Endline missing                   0    0  162    0    0    0    0   27    0
+  2nd and 4th round missing         0    0    0    0    0    0    0    0    0
+  3rd and 4th round missing         0   28    0    0    0    0    4    0    0
+  2nd, 3rd and 4th round missing    0    0    0    0    5    0    0    0    0
+  None missing                      0    0    0  916    0    0    0    0 1760
+                                Mpattern
+missing_followup                 raaa rara rarr rraa rrra rrrr
+  First follow-up missing           0    0   15    0    0    0
+  Second follow-up missing          0    0    0    0    0    0
+  Endline missing                   0    0    0    0   18    0
+  2nd and 4th round missing         0    2    0    0    0    0
+  3rd and 4th round missing         0    0    0    2    0    0
+  2nd, 3rd and 4th round missing    2    0    0    0    0    0
+  None missing                      0    0    0    0    0  576
+\end{Soutput}
+\end{Schunk}
+%[As a reference, older file: Errors in coding.]
+
+
+%Read individual identification files in \textsf{\footnotesize#gsub("_", "\\\\_", fnids)}.
+
+
+Timing of disbursement. 
+
+Create \textsf{DistDateX} to show the timing of intervention in terms of survey. There are 3 disbursements for traditional loans, so \textsf{DistDate2}, \textsf{DistDate3} are defined only for them.  \gobblepars
+
+When \textsf{DistDateX}==NA and \textsf{PurDateX}$!$=NA, use \textsf{PurDateX} to fill NAs in \textsf{DistDateX}. \gobblepars
+\begin{Schunk}
+\begin{Sinput}
+xid[is.na(DistDate1) & !is.na(PurDate1), DistDate1 := PurDate1]
+xid[is.na(DistDate2) & !is.na(PurDate2), DistDate2 := PurDate2]
+\end{Sinput}
+\end{Schunk}
+
+Define \textsf{DisbursedX}: T if interview date is after the X-th disbuersement date, F otherwise. 
+\begin{Schunk}
+\begin{Sinput}
+xid[DistDate1 > IntDate, Disbursed1 := F]
+xid[DistDate1 <= IntDate, Disbursed1 := T]
+xid[DistDate2 > IntDate, Disbursed2 := F]
+xid[DistDate2 <= IntDate, Disbursed2 := T]
+xid[DistDate3 > IntDate, Disbursed3 := F]
+xid[DistDate3 <= IntDate, Disbursed3 := T]
+\end{Sinput}
+\end{Schunk}
+If \textsf{DistDate1}==NA and \textsf{creditstatus}==No, set \textsf{Disbursed1}=F (except for drop outs). Given that it is only the traditional loan takers which match this pattern, set also \textsf{Disbursed2}, \textsf{Disbursed3} to F. \gobblepars
+\begin{Schunk}
+\begin{Sinput}
+xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & 
+	!grepl("dr", Mgroup) & grepl("N", creditstatus), 
+	c("Disbursed1", "Disbursed2", "Disbursed3") := F]
+\end{Sinput}
+\end{Schunk}
+If \textsf{DistDate1}==NA  and \textsf{Mgroup}==drop outs or \textsf{Mstatus}==\{iRejection, gErosion, gRejection\}, set \textsf{DisbursedX}==F. 
+\begin{Schunk}
+\begin{Sinput}
+xid[is.na(DistDate1) & (grepl("dr", Mgroup) | grepl("R|E", Mstatus)), Disbursed1 := F]
+\end{Sinput}
+\end{Schunk}
+If \textsf{DistDate1}$!$=NA and \textsf{IntDate}==NA, set subsequent (than \textsf{DistDate1}) rd (\textsf{survey}) of \textsf{Disbursed1} to T. 
+\begin{Schunk}
+\begin{Sinput}
+xid[!is.na(DistDate1) & is.na(IntDate), Disbursed1 := F]
+xid[!is.na(DistDate1) & is.na(IntDate), DisRd := survey]
+xid[!is.na(DistDate1) & is.na(IntDate) & survey > DisRd, Disbursed1 := T]
+xid[, DisRd := NULL]
+\end{Sinput}
+\end{Schunk}
+
+\textcolor{red}{Who are these who did not receive loans but \textsf{Mgroup} is classified as a continuing member?}
+\begin{Schunk}
+\begin{Soutput}
+    year DistDate1       Mgroup      Assign Mpattern      Mstatus
+ 1: 2012      <NA>    continued traditional     cccc    oldMember
+ 2: 2014      <NA>    continued traditional     cccc    oldMember
+ 3: 2015      <NA>    continued traditional     cccc    oldMember
+ 4: 2017      <NA>    continued traditional     cccc    oldMember
+ 5: 2013      <NA> replacements traditional     rrrr iReplacement
+ 6: 2014      <NA> replacements traditional     rrrr iReplacement
+ 7: 2015      <NA> replacements traditional     rrrr iReplacement
+ 8: 2017      <NA> replacements traditional     rrrr iReplacement
+ 9: 2013      <NA>    new group traditional     nnnn     newGroup
+10: 2014      <NA>    new group traditional     nnnn     newGroup
+11: 2015      <NA>    new group traditional     nnnn     newGroup
+12: 2017      <NA>    new group traditional     nnnn     newGroup
+13: 2013      <NA>    new group traditional     nnna     newGroup
+14: 2014      <NA>    new group traditional     nnna     newGroup
+15: 2015      <NA>    new group traditional     nnna     newGroup
+         membership      membership_status creditstatus Count
+ 1:       Continued             Old Member           No    26
+ 2:       Continued             Old Member           No    26
+ 3:       Continued             Old Member           No    26
+ 4:       Continued             Old Member           No    26
+ 5: Replaced member Individual Replacement           No     3
+ 6: Replaced member Individual Replacement           No     3
+ 7: Replaced member Individual Replacement           No     3
+ 8: Replaced member Individual Replacement           No     3
+ 9:      New member              New Group           No    18
+10:      New member              New Group           No    18
+11:      New member              New Group           No    18
+12:      New member              New Group           No    18
+13:      New member              New Group           No     2
+14:      New member              New Group           No     2
+15:      New member              New Group           No     2
+\end{Soutput}
+\end{Schunk}
+\textsf{hhid}s of the above.
+\begin{Schunk}
+\begin{Soutput}
+ [1]     7042505     7042507     7042512     7042513     7042518     7065004
+ [7]     7065007     7065017     7086111     7086113     7086115     7086116
+[13]     7086117     7086118     7086119     7116614     7116615     7137201
+[19]     7137209     7137212     8169303     8169305     8169306     8169316
+[25]     8169317     8169320  9807065005  9807065009  9807065015  9907065112
+[31]  9907065113 99070310710 99070310715 99070311401 99070311404 99070311406
+[37] 99070311409 99070311410 99070311413 99070311414 99070311417 99070311418
+[43] 99070311420 99070311503 99070311504 99070311506 99070311510 99070311518
+[49] 99070311519
+\end{Soutput}
+\end{Schunk}
+\textcolor{green}{[2017-11-14 Abu email] These individuals are loan rejecters yet stay as a member. $\rightarrow$ Mark as rejecters by creating a variale \textsf{BorrowerStatus}=\{borrower, pure save\}.}
+\begin{Schunk}
+\begin{Sinput}
+xid[, BorrowerStatus := "borrower"]
+xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & !grepl("dr", Mgroup), 
+	BorrowerStatus := "pure saver"]
+\end{Sinput}
+\end{Schunk}
+\textsf{ObPattern}.
+\begin{Schunk}
+\begin{Soutput}
+
+0111 1000 1010 1011 1100 1110 1111  Sum 
+  36  100    6    1   28   82 1966 2219 
+\end{Soutput}
+\end{Schunk}
+\textsf{AttritIn}.
+\begin{Schunk}
+\begin{Soutput}
+     AttritIn
+Tee      2    3    4    9  Sum
+  1    100    0    0    0  100
+  2      0   56    0    0   56
+  3      0    0  258    0  258
+  4      0    0    0 7975 7975
+  Sum  100   56  258 7975 8389
+\end{Soutput}
+\end{Schunk}
+Save \textsf{xid}. 
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(xid, paste0(path1234, "ID.rds"))
+\end{Sinput}
+\end{Schunk}
+Traditional loans are disbursed 3 times.
+\begin{Schunk}
+\begin{Soutput}
+   DistDate1                     DistDate2                  
+ Min.   :2013-04-16 00:00:00   Min.   :2014-03-23 00:00:00  
+ 1st Qu.:2013-04-22 00:00:00   1st Qu.:2014-03-23 00:00:00  
+ Median :2013-05-05 00:00:00   Median :2014-03-23 00:00:00  
+ Mean   :2013-06-30 03:25:18   Mean   :2014-05-29 01:09:23  
+ 3rd Qu.:2013-09-29 00:00:00   3rd Qu.:2014-09-14 00:00:00  
+ Max.   :2013-11-18 00:00:00   Max.   :2014-09-14 00:00:00  
+   DistDate3                                Assign   
+ Min.   :2015-02-11 00:00:00   traditional     :498  
+ 1st Qu.:2015-02-11 00:00:00   large           :  0  
+ Median :2015-02-11 00:00:00   large grace     :  0  
+ Mean   :2015-04-21 18:30:21   cow             :  0  
+ 3rd Qu.:2015-08-11 00:00:00   drop outs       :  0  
+ Max.   :2015-08-11 00:00:00   forced drop outs:  0  
+\end{Soutput}
+\end{Schunk}
+Drop outs did not receive loans.
+\begin{Schunk}
+\begin{Soutput}
+      gid          survey       DistDate1      DistDate2      DistDate3   
+ 70319  : 80   Min.   :1.00   Min.   :NA     Min.   :NA     Min.   :NA    
+ 70858  : 80   1st Qu.:1.00   1st Qu.:NA     1st Qu.:NA     1st Qu.:NA    
+ 81483  : 80   Median :2.00   Median :NA     Median :NA     Median :NA    
+ 70317  : 78   Mean   :2.33   Mean   :NA     Mean   :NA     Mean   :NA    
+ 81697  : 77   3rd Qu.:3.00   3rd Qu.:NA     3rd Qu.:NA     3rd Qu.:NA    
+ 70539  : 71   Max.   :4.00   Max.   :NA     Max.   :NA     Max.   :NA    
+ (Other):749                  NA's   :1215   NA's   :1215   NA's   :1215  
+              Assign              creditstatus
+ traditional     :   0   Yes            :  0  
+ large           :   0   No             :540  
+ large grace     :   0   Replaced Member:  0  
+ cow             :   0   NA's           :675  
+ drop outs       :1026                        
+ forced drop outs: 189                        
+                                              
+\end{Soutput}
+\end{Schunk}
+
+Plot disbursement timing after excluding rejecters and drop-out members (\textsf{\small Figure \ref{Figure disbursement timing}}). Note that continuing members are the original members. \gobblepars
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_timing-1} 
+
+}
+
+\caption[Disbursement timing]{Disbursement timing}\label{Figure disbursement timing}
+\end{figure}
+\end{Schunk}
+%Plot disbursement timing for original members (excluding new members, replacing members) (\textsf{\small Figure \ref{Figure disbursement timing of original members}}). \gobblepars
+
+Plot disbursement status against interview dates (\textsf{\small Figure \ref{Figure disbursement progress against interview dates}}) and disbursement dates (\textsf{\small Figure \ref{Figure disbursement progress against disbursment dates}}). (After correcting some typos before date conversion.) %\textcolor{black}{\textbf{Found:} Some dates are erroneously entered. 21 cass of missing interview dates. }
+We plot first loan disbursment against against disbursement dates (\textsf{\small Figure \ref{Figure disbursement progress of first loans against disbursement dates}}), and calendar year (\textsf{\small Figure \ref{Figure disbursement progress against calendar year}}).
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_progress_against_interview_dates-1} 
+
+}
+
+\caption[Disbursement progress of first loans against interview dates]{Disbursement progress of first loans against interview dates}\label{Figure disbursement progress against interview dates}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_progress_against_calendar_year-1} 
+
+}
+
+\caption[Disbursement progress of first loans against calendar year]{Disbursement progress of first loans against calendar year}\label{Figure disbursement progress against calendar year}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+         Assign       Mgroup      Mstatus Count
+ 1:       large replacements iReplacement     4
+ 2: traditional replacements iReplacement    14
+ 3: traditional replacements iReplacement    12
+ 4:         cow replacements iReplacement    15
+ 5:         cow replacements iReplacement    14
+ 6:         cow replacements iReplacement    13
+ 7: large grace replacements iReplacement    11
+ 8: traditional    new group     newGroup    34
+ 9: traditional    new group     newGroup    31
+10:       large    new group     newGroup     4
+11:         cow    new group     newGroup    10
+12: large grace    new group     newGroup     4
+13: large grace    new group     newGroup     3
+\end{Soutput}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_progress_against_calendar_year_after_dropping_obs_without_baseline-1} 
+
+}
+
+\caption[Disbursement progress of first loans against calendar year after dropping obs without baseline]{Disbursement progress of first loans against calendar year after dropping obs without baseline}\label{Figure disbursement progress against calendar year after dropping obs without baseline}
+\end{figure}
+\end{Schunk}
+There are 44 cases which received treatment at the first round of survey among \textsf{Mgroup}==replacements, and 52 cases for \textsf{Mgroup}==new group. \textcolor{red}{These do not have baseline and needs to be dropped from analysis. The progress is shown in \textsf{\small Figure \ref{Figure disbursement progress against calendar year after dropping obs without baseline}}. }
+
+\textcolor{green}{[2017-11-17 Abu discussion] These disbursement dates are wrong and need to be replaced with information in administrative records. $\rightarrow$ Abu will send the admin files. Not received as of 2019 Feb.}
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_progress_against_disbursment_dates-1} 
+
+}
+
+\caption[Disbursement progress of first loans against disbursement dates]{Disbursement progress of first loans against disbursement dates}\label{Figure disbursement progress against disbursment dates}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datadisbursement_progress_of_first_loans_against_disbursement_dates-1} 
+
+}
+
+\caption[Disbursement progress of first loans by membership status]{Disbursement progress of first loans by membership status}\label{Figure disbursement progress of first loans against disbursement dates}
+\end{figure}
+\end{Schunk}
+
+%\textsf{creditstatus} gives the current treatment status. 
+
+
+
+
+\section{Correct sections}
+
+
+All files are corrected. Only \textsf{roster} is merged with \textsf{xid} at this point. All the other files are merged with \textsf{xid} in the next section.
+
+
+
+\subsection{Roster (xid merged)}
+
+
+\begin{Schunk}
+\begin{Sinput}
+Z3 <- Z[[grep("roster", names(Z))]]
+NAhhid <- lapply(Z3, function(x) nrow(x[is.na(hhid), ]))
+\end{Sinput}
+\end{Schunk}
+NAs in \textsf{hhid} in roster. Folder {\footnotesize s1.1}, number of NAs 5. (Note: At this moment, \textsf{roster} is saved as a list, not a data.table.)  \gobblepars
+
+NAs in \textsf{mid} in roster. Folder {\footnotesize s1\_2\_p2, section\_1\_houdehold\_composition\_2, s1.2}, number of NAs 1773, 1843, 1966. These look like redundant entries so we can drop with \textsf{mid}==NA. \gobblepars
+
+
+Membership information \textsf{current} is not recorded in 2012, however, most but 10 cases are reportedly \textsf{stay}ing in HH. So I create \textsf{current} in 2012 by using \textsf{stay}. Other corrections include: Drop duplicates: hhid==7010112 \& mid==5 and hhid==7053905 \& mid==3 \& current == 3, correct mid: hhid==7020605 \& mid == 3 \& year == 2015: mid 3$\rightarrow$4. Filled in NAs in \textsf{sex} if other rds are available. Not sure where Shaha Alom came from in HH 98081710316 in 2017. (Jahanara?)
+
+\begin{Schunk}
+\begin{Sinput}
+Z3new[is.na(current) & year == 2012 & grepl("y", stay), current := "member"]
+Z3new[is.na(current) & year == 2012 & grepl("n", stay), current := "not-member"]
+table0(Z3new[, .(year, current)])
+\end{Sinput}
+\begin{Soutput}
+      current
+year      1    2    3 member new member not-member <NA>
+  2012    0    0    0   9264          0         10    0
+  2014    0    0    0   8318        348        352    0
+  2015 8364  347  281      0          0          0    1
+  2017    2    0   38   8204          0         70    0
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+       hhid mid year memname      rel_hhh                      edu stay current
+ 1: 7010112   1 2012   bablu         head     never been to school  yes  member
+ 2: 7010112   1 2014   bablu         head                       99  yes  member
+ 3: 7010112   1 2015   bablu         head                       99  yes       1
+ 4: 7010112   1 2017   bablu         head                       99  yes  member
+ 5: 7010112   2 2012  farida       spouse     never been to school  yes  member
+ 6: 7010112   2 2014  farija husband/wife                       99  yes  member
+ 7: 7010112   2 2015  farida husband/wife                       99  yes       1
+ 8: 7010112   2 2017  farida husband/wife                       99  yes  member
+ 9: 7010112   3 2012  dulifa son/daughter class 2/finished class 2  yes  member
+10: 7010112   3 2014  julufa son/daughter                        3  yes  member
+11: 7010112   3 2015  julufa son/daughter                        4  yes       1
+12: 7010112   3 2017  julufa son/daughter                        6  yes  member
+13: 7010112   4 2012   afika son/daughter class 1/finished class 1  yes  member
+14: 7010112   4 2014   afika son/daughter                        2  yes  member
+15: 7010112   4 2015   afika son/daughter                        3  yes       1
+16: 7010112   4 2017   afika son/daughter                        5  yes  member
+17: 7010112   5 2015   arifa son/daughter                        1  yes       2
+      marital
+ 1:   married
+ 2:         2
+ 3:         2
+ 4:   married
+ 5:   married
+ 6:         2
+ 7:         2
+ 8:   married
+ 9: unmarried
+10:         1
+11:         1
+12: unmarried
+13: unmarried
+14:         1
+15:         1
+16: unmarried
+17: unmarried
+\end{Soutput}
+\begin{Soutput}
+       hhid mid year     memname      rel_hhh                  edu stay
+ 1: 7020605   1 2012      aminul         head never been to school  yes
+ 2: 7020605   1 2014      aminul         head                   99  yes
+ 3: 7020605   1 2015      aminul         head                   99   no
+ 4: 7020605   1 2017      aminul         head                   99  yes
+ 5: 7020605   2 2012 sona khatun       spouse never been to school  yes
+ 6: 7020605   2 2014 sona khatun husband/wife                   99  yes
+ 7: 7020605   2 2015 sona khatun husband/wife                   99  yes
+ 8: 7020605   2 2017 sona khatun husband/wife                   99  yes
+ 9: 7020605   3 2012    sona mia son/daughter pre-school going age  yes
+10: 7020605   3 2014     sonamia son/daughter                 <NA> <NA>
+11: 7020605   3 2015  amir hamza son/daughter                   68  yes
+12: 7020605   4 2017  amir hamza son/daughter                   68  yes
+       current   marital
+ 1:     member   married
+ 2:     member         2
+ 3:          1         2
+ 4:     member   married
+ 5:     member   married
+ 6:     member         2
+ 7:          1         2
+ 8:     member   married
+ 9:     member unmarried
+10: not-member      <NA>
+11:          3 unmarried
+12:          1 unmarried
+\end{Soutput}
+\begin{Soutput}
+           hhid mid     memname age_1 year stay current   marital
+ 1: 98081710316   1 pero mondol    85 2012  yes  member   widowed
+ 2: 98081710316   1  pirumondol    NA 2015  yes       1         3
+ 3: 98081710316   1  pirumondol    NA 2017  yes  member   widowed
+ 4: 98081710316   2      safura    50 2012  yes  member   married
+ 5: 98081710316   2      sofura    NA 2015 <NA>       2      <NA>
+ 6: 98081710316   3    jahanara    45 2012  yes  member   married
+ 7: 98081710316   3    jahanara    NA 2015  yes       1         2
+ 8: 98081710316   4      afroza     7 2012  yes  member unmarried
+ 9: 98081710316   4      afruja    NA 2015  yes       1         2
+10: 98081710316   4      afruja    NA 2017  yes  member   married
+11: 98081710316   5        siam    NA 2017  yes       3 unmarried
+12: 98081710316   6  shaha alom    NA 2017  yes       1   married
+\end{Soutput}
+\begin{Soutput}
+, , year = 2012
+
+      current
+stay   member new member not-member <NA>
+  no        0          0         10    0
+  yes    9264          0          0    0
+  <NA>      0          0          0    0
+
+, , year = 2014
+
+      current
+stay   member new member not-member <NA>
+  no       43          3          0    0
+  yes    8275        345          1    0
+  <NA>      0          0        351    0
+
+, , year = 2015
+
+      current
+stay   member new member not-member <NA>
+  no        0          0          0   52
+  yes       0          0          0 8593
+  <NA>      0          0          0  345
+
+, , year = 2017
+
+      current
+stay   member new member not-member <NA>
+  no       27          0          0    0
+  yes    8179          0          0   38
+  <NA>      0          0         70    0
+\end{Soutput}
+\end{Schunk}
+Add \textsf{survey} using ID (\textsf{xid}) file. %(This is created later but I already have it at this point because I ran that part of file.) 
+\gobblepars
+\begin{Schunk}
+\begin{Sinput}
+xid <- readRDS(paste0(path1234, "ID.rds"))
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, memname, 
+	creditstatus, Mpattern, Mgroup, Mstatus, Assign, AssignRegression, 
+	ObPattern, AttritIn,
+	IntDate, DistDate1, DistDate2, DistDate3, Disbursed1, Disbursed2, Disbursed3)])
+xid3 <- unique(xid2[, .(hhid, year, survey)])
+setnames(xid3, "year", "YearFromIdFile")
+setkey(xid3, hhid, survey)
+setkey(Z3new, hhid, survey)
+Z3new2 <- xid3[Z3new]
+setkey(Z3new2, hhid, mid, YearFromIdFile, year, survey)
+Z3new2[, .(hhid, mid, YearFromIdFile, year, survey, age)]
+\end{Sinput}
+\begin{Soutput}
+              hhid mid YearFromIdFile year survey age
+    1:     7010101   1           2012 2012      1  40
+    2:     7010101   1           2014 2014      2  NA
+    3:     7010101   1           2015 2015      3  NA
+    4:     7010101   1           2017 2017      4  NA
+    5:     7010101   2           2012 2012      1  35
+   ---                                               
+35592: 99081912420   3           2017 2017      4  NA
+35593: 99081912420   4           2013 2012      1   7
+35594: 99081912420   4           2014 2014      2  NA
+35595: 99081912420   4           2015 2015      3  NA
+35596: 99081912420   4           2017 2017      4  NA
+\end{Soutput}
+\begin{Sinput}
+Z3new2[, year := YearFromIdFile]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+[1] 8 duplicated entries.
+\end{Soutput}
+\end{Schunk}
+3 of duplicated entries in roster are errors (new borns), others are use of attrited member mid (e.g., mid = 2 left HH and mid = 3 uses mid 2 from that time on). There may be other cases of nonunique assignment of mid, but most of the times it will be picked up by an ID duplication check.
+\begin{Schunk}
+\begin{Sinput}
+dupZ3[duplicated.num == 3 | duplicated.num == 4 | duplicated.num == 7, ]
+\end{Sinput}
+\begin{Soutput}
+   duplicated not.duplicated duplicated.num    hhid mid year AgeComputed
+1:      FALSE          FALSE              3 7042213   6 2017          NA
+2:      FALSE          FALSE              3 7042213   6 2017          NA
+3:      FALSE          FALSE              4 7042417   5 2015          NA
+4:      FALSE          FALSE              4 7042417   5 2015          NA
+5:      FALSE          FALSE              7 7096319   5 2017          NA
+6:      FALSE          FALSE              7 7096319   5 2017          NA
+   memname      rel_hhh   marital             literacy edu primary secondary
+1:   sathi son/daughter unmarried can't read and write  99   child      <NA>
+2:   sathi son/daughter unmarried can't read and write  99   child      <NA>
+3: ibrahim son/daughter         1 can't read and write  68   child      <NA>
+4: ibrahim son/daughter unmarried can't read and write  68   child      <NA>
+5:   munni son/daughter unmarried can't read and write  68   child      <NA>
+6:   munni son/daughter unmarried can't read and write  68   child      <NA>
+         uid age month current          reasons reason FirstObs FirstObs2
+1:        NA  NA    NA  member             <NA>   <NA>        0         0
+2:        NA   2     1    <NA> new born/adopted   <NA>        0         0
+3: 704241705  NA    NA    <NA>             <NA>   <NA>        0         0
+4: 704241705   1     6    <NA>                1  flood        0         0
+5:        NA  NA    NA  member             <NA>   <NA>        1         1
+6:        NA   0     9    <NA> new born/adopted   <NA>        0         0
+\end{Soutput}
+\end{Schunk}
+Drop the onew with \textsf{age}==NA.
+\begin{Schunk}
+\begin{Sinput}
+Z3new2 <- Z3new2[
+	!(hhid == 7042213 & mid == 6 & year == 2017 & is.na(age)) & 
+	!(hhid == 7042417 & mid == 5 & year == 2015 & is.na(age)) &
+	!(hhid == 7096319 & mid == 5 & year == 2017 & is.na(age)), ]
+Z3new2[hhid == 7010112, .(hhid, mid, memname, year, AgeComputed, age)]
+\end{Sinput}
+\begin{Soutput}
+       hhid mid memname year AgeComputed age
+ 1: 7010112   1   bablu 2012          45  45
+ 2: 7010112   1   bablu 2014          47  NA
+ 3: 7010112   1   bablu 2015          48  NA
+ 4: 7010112   1   bablu 2017          50  NA
+ 5: 7010112   2  farida 2012          32  32
+ 6: 7010112   2  farija 2014          34  NA
+ 7: 7010112   2  farida 2015          35  NA
+ 8: 7010112   2  farida 2017          37  NA
+ 9: 7010112   3  dulifa 2012          10  10
+10: 7010112   3  julufa 2014          12  NA
+11: 7010112   3  julufa 2017          15  NA
+12: 7010112   4   afika 2012           5   8
+13: 7010112   4   afika 2014           7  NA
+14: 7010112   4  julufa 2015           8  NA
+15: 7010112   4   afika 2015           8  NA
+16: 7010112   4   afika 2017          10  NA
+\end{Soutput}
+\begin{Sinput}
+Z3new2[hhid == 7010112 & year == 2015 & grepl("jul", memname), mid := 3]
+Z3new2[hhid == 7020811, .(hhid, mid, memname, year, AgeComputed, age)]
+\end{Sinput}
+\begin{Soutput}
+       hhid mid  memname year AgeComputed age
+ 1: 7020811   1   mounal 2012          35  35
+ 2: 7020811   1   moynal 2014          37  NA
+ 3: 7020811   1   mounal 2015          38  NA
+ 4: 7020811   1   mounal 2017          40  NA
+ 5: 7020811   2   riaton 2012          30  30
+ 6: 7020811   2   riaton 2014          32  NA
+ 7: 7020811   2   riaton 2015          33  NA
+ 8: 7020811   2   riaton 2017          35  NA
+ 9: 7020811   3  monuara 2012          12  12
+10: 7020811   3  monoara 2014          14  NA
+11: 7020811   3 monowara 2015          15  NA
+12: 7020811   4    iasin 2012           8   8
+13: 7020811   4    iasin 2014          10  NA
+14: 7020811   4   eyasin 2015          11  NA
+15: 7020811   4   eyasin 2017          13  NA
+16: 7020811   5   masuma 2014          NA   0
+17: 7020811   5   masuma 2015          NA  NA
+18: 7020811   5     runa 2015          NA   0
+19: 7020811   6     runa 2017          NA  NA
+\end{Soutput}
+\begin{Sinput}
+Z3new2[hhid == 7020811 & year == 2015 & grepl("run", memname), mid := 6]
+Z3new2[hhid == 7054105, .(hhid, mid, memname, year, AgeComputed, age)]
+\end{Sinput}
+\begin{Soutput}
+       hhid mid memname year AgeComputed age
+ 1: 7054105   1  samsul 2012          60  60
+ 2: 7054105   1  samsul 2014          62  NA
+ 3: 7054105   1  rahima 2015          63  NA
+ 4: 7054105   2  rahima 2012          50  50
+ 5: 7054105   2  rahima 2014          52  NA
+ 6: 7054105   2    modu 2015          53  NA
+ 7: 7054105   2  rahima 2017          55  NA
+ 8: 7054105   3    modu 2012           7   7
+ 9: 7054105   3    modu 2014           9  NA
+10: 7054105   3  rahman 2014           9  38
+11: 7054105   3  rahman 2015          10  NA
+12: 7054105   3    modu 2017          12  NA
+13: 7054105   4  jorina 2014          NA  30
+14: 7054105   4  jorina 2015          NA  NA
+15: 7054105   4  rahman 2017          NA  NA
+16: 7054105   5  soneka 2014          NA   9
+17: 7054105   5  soneka 2015          NA  NA
+18: 7054105   5  jorina 2017          NA  NA
+19: 7054105   6  jesmin 2014          NA   7
+20: 7054105   6  jesmin 2015          NA  NA
+21: 7054105   6  soneka 2017          NA  NA
+22: 7054105   7  jesmin 2017          NA  NA
+       hhid mid memname year AgeComputed age
+\end{Soutput}
+\begin{Sinput}
+Z3new2[hhid == 7054105 & grepl("rahima", memname), mid := 2]
+Z3new2[hhid == 7054105 & grepl("modu$", memname), mid := 3]
+Z3new2[hhid == 7054105 & grepl("rahman$", memname), mid := 4]
+Z3new2[hhid == 7054105 & grepl("jorina$", memname), mid := 5]
+Z3new2[hhid == 7054105 & grepl("soneka$", memname), mid := 6]
+Z3new2[hhid == 7054105 & grepl("jesmin$", memname), mid := 7]
+Z3new2[hhid == 7096319, .(hhid, mid, memname, year, AgeComputed, age)]
+\end{Sinput}
+\begin{Soutput}
+       hhid mid memname year AgeComputed age
+ 1: 7096319   1 morjina 2012          50  50
+ 2: 7096319   1 morjina 2014          52  NA
+ 3: 7096319   1 morjina 2015          53  NA
+ 4: 7096319   1 morjina 2017          55  NA
+ 5: 7096319   2   mojid 2015          NA  35
+ 6: 7096319   2   mojid 2017          NA  NA
+ 7: 7096319   3   sujon 2015          NA   8
+ 8: 7096319   3  sondha 2015          NA  30
+ 9: 7096319   3   sujon 2017          NA  NA
+10: 7096319   4   munni 2015          NA   4
+11: 7096319   4  sondha 2017          NA  NA
+12: 7096319   5   munni 2017          NA   0
+\end{Soutput}
+\begin{Sinput}
+Z3new2[hhid == 7096319 & grepl("sujon", memname), mid := 3]
+Z3new2[hhid == 7096319 & grepl("sondha", memname), mid := 4]
+Z3new2[hhid == 7096319 & grepl("munni", memname), mid := 5]
+Z3new2[hhid == 7116604, .(hhid, mid, memname, year, AgeComputed, age)]
+\end{Sinput}
+\begin{Soutput}
+      hhid mid memname year AgeComputed age
+1: 7116604   1   achan 2012          50  50
+2: 7116604   1   achan 2014          52  NA
+3: 7116604   1   aqhan 2015          53  NA
+4: 7116604   2   sukni 2012          45  45
+5: 7116604   2   sukni 2014          47  NA
+6: 7116604   2   sukni 2015          48  NA
+7: 7116604   2   sukne 2017          50  NA
+8: 7116604   2  jesmin 2017          50  NA
+\end{Soutput}
+\begin{Sinput}
+Z3new2[hhid == 7116604 & grepl("jesm", memname), mid := 3]
+dupZ3 <- duplicated.rows(Z3new2, index = c("hhid", "mid", "year", "AgeComputed"), 
+	returnOnlyDuplicated = T,returnOnlyDistinctCols = T)
+\end{Sinput}
+\begin{Soutput}
+[1] No duplicated entry.
+\end{Soutput}
+\end{Schunk}
+Recalculate age. %Drop \textsf{Age\_1, AgeComputed} first. 
+Use all available age information to fill NAs. First, identify newborns who only has months recorded. \gobblepars
+
+For the below, there is no clue. 
+\begin{Schunk}
+\begin{Soutput}
+      hhid mid memname year en Age age age_1 age_2
+1: 7020910   5  sirina 2017  1  NA  NA    NA    NA
+2: 7042710   5  afrina 2017  1  NA  NA    NA    NA
+3: 7065019   4   panna 2014  1  NA  NA    NA    NA
+4: 7065019   4   panna 2015  2  NA  NA    NA    NA
+5: 7065019   4   panna 2017  3  NA  NA    NA    NA
+6: 7096320   7 mominul 2017  1  NA  NA    NA    NA
+7: 7116604   3  jesmin 2017  1  NA  NA    NA    NA
+8: 7137316   4  shihab 2017  1  NA  NA    NA    NA
+\end{Soutput}
+\end{Schunk}
+For others, copy \textsf{age} from first observed rd to other rds. There are 671 substitution can be made. 
+\begin{Schunk}
+\begin{Soutput}
+        AgeComputedNonNA
+agenonNA FALSE TRUE
+   FALSE     5    1
+   TRUE    671 9255
+\end{Soutput}
+\begin{Soutput}
+      hhid mid memname year en age AgeComputed
+1: 7020910   5  sirina 2017  1  NA          NA
+2: 7042710   5  afrina 2017  1  NA          NA
+3: 7065019   4   panna 2014  1  NA          NA
+4: 7065019   4   panna 2015  2  NA          NA
+5: 7065019   4   panna 2017  3  NA          NA
+6: 7096320   7 mominul 2017  1  NA          NA
+7: 7137316   4  shihab 2017  1  NA          NA
+\end{Soutput}
+\end{Schunk}
+There are 7 cases of \textsf{Age}==NA remaining. Created several head level variables. \gobblepars
+
+\begin{Schunk}
+\begin{Sinput}
+Z3new2[grepl("^he", rel_hhh) & grepl("can r.*te", literacy), HeadLiteracy := T]
+Z3new2[, c("HeadLiteracy", "HeadAge") := 
+	list(HeadLiteracy[grepl("head", rel_hhh)][1], Age[grepl("head", rel_hhh)][1]), 
+	by = hhid]
+Z3new2[, HHsize := .N, by = list(hhid, year)]
+\end{Sinput}
+\end{Schunk}
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("roster", names(Z))]] <- Z3new2
+# reorder
+Z <- Z[c("roster", names(Z)[!grepl("ros", names(Z))])]
+fnd <- c("s1 (roster)", fnd)
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Incomes}
+
+
+\subsubsection{Farm incomes}
+
+
+
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("farm", names(Z))]] <- xf
+Z[[grep("inp", names(Z))]] <- xio
+\end{Sinput}
+\end{Schunk}
+
+\subsubsection{Labour incomes}
+
+
+There is a decrease in cases reporting no labour income at 2014. This is due to omission of non-working members in rd 2 onwards.
+\begin{Schunk}
+\begin{Soutput}
+                      year
+positive.labour.income 2012 2013 2014 2015 2017
+                 FALSE 4928 1885  247  222  190
+                 TRUE  1797  652 2259 2352 2272
+\end{Soutput}
+\end{Schunk}
+\textsf{HH-mid}s reporting no income in rd1 are not reporting anything in later rounds. (Show only first 2 HHs.)
+\begin{Schunk}
+\begin{Soutput}
+       hhid mid year          code_1 totalincome
+ 1: 7010102   1 2012 Agri Wage Labor       26000
+ 2: 7010102   1 2014 Agri Wage Labor       42000
+ 3: 7010102   1 2015 Agri Wage Labor       48600
+ 4: 7010102   1 2017 Agri Wage Labor       41200
+ 5: 7010102   2 2012            <NA>           0
+ 6: 7010102   3 2012 Agri Wage Labor       50000
+ 7: 7010102   3 2014 Agri Wage Labor       12000
+ 8: 7010102   3 2015 Agri Wage Labor       69250
+ 9: 7010102   3 2017 Agri Wage Labor       41800
+10: 7010102   4 2012            <NA>           0
+11: 7010102   5 2012            <NA>           0
+12: 7010103   1 2012 Agri Wage Labor       48000
+13: 7010103   2 2012            <NA>           0
+14: 7010103   3 2012            <NA>           0
+15: 7010103   4 2012            <NA>           0
+\end{Soutput}
+\end{Schunk}
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("labo", names(Z))]] <- xl2
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Assets}
+
+\textsf{HH assets} has item coverage that varies across rounds. Importantly, land holding is not covered in round 1. Using \textsf{purchased\_in\_last\_1\_year} in \textsf{HH assets}, we recreate round 1 holding information and create variables \textsf{AmountFilled} which includes imputed land holding of round 1, and an imputation indicator \textsf{Added}. We find there is little variation across rounds. 
+
+Land holding is also stored in \textsf{contract and ownership} (in all rounds). There are very few records of land that are leased in or out, so \textsf{contract and ownership} has little information on land. 
+
+Coverage of other household asset items differ by rounds. We define \textsf{NLHAssetAmount} which is based only on non-livestock assets that are observed in all rounds. \textsf{NLBroadHAssetAmount} is based on all non-livestock asset items. 
+\[
+\begin{aligned}
+\mbox{\textsf{AssetAmount}}
+&=\mbox{\textsf{NLHAssetAmount}}&&+\mbox{\textsf{TotalImputedValue}}+\mbox{\textsf{PAssetAmount}},\\
+\mbox{\textsf{BroadAssetAmount}}
+&=\mbox{\textsf{NLBroadHAssetAmount}}&&+\mbox{\textsf{TotalImputedValue}}+\mbox{\textsf{PAssetAmount}}.
+\end{aligned}
+\]
+\textsf{TotalImputedValue} is livestock holding values. Median unit values are used as prices for imputation.
+
+Coding changes by round so one cannot apply the same code-contents correspondence to all rounds (which read.dta13 function does that caused erroneous reading in asset holding. Corrected). Varying code-contents correspondence also applies to \textsf{productive assets}. 
+
+\subsubsection{Household assets}
+
+
+Household asset contents.
+\begin{Schunk}
+\begin{Soutput}
+    survey                  type medianAmount meanAmount  num
+ 1:      2     agricultural land        19000  39961.482  110
+ 2:      3     agricultural land        44000  66907.974  117
+ 3:      4     agricultural land        66000 105671.642   67
+ 4:      2       almirah/cabinet         1000   1183.194  536
+ 5:      3       almirah/cabinet         1600   1900.733 1481
+ 6:      4       almirah/cabinet         1800   2086.175 1856
+ 7:      1               bicycle         2100   2172.308   65
+ 8:      2               bicycle         3000   3052.439   82
+ 9:      3               bicycle         2000   2612.229  131
+10:      4               bicycle         2000   1978.105  153
+11:      1       cassette player          350    350.000    2
+12:      2       cassette player         2400   2400.000    2
+13:      3       cassette player         2600   8733.333    3
+14:      4       cassette player         2200   2200.000    2
+15:      1          electric fan         1500   1500.000    1
+16:      2          electric fan          800    914.545   22
+17:      3          electric fan         1000   1171.190   42
+18:      4          electric fan         1000   1190.244   41
+19:      2 fallow/submerged land         2000   9991.176   34
+20:      3 fallow/submerged land         8000  33673.913   23
+21:      4 fallow/submerged land        33000  53470.588   34
+22:      2               jewelry         1000   1105.556   18
+23:      3               jewelry         1200   2676.611  776
+24:      4               jewelry         1000   2241.718 1036
+25:      1          mobile phone         1000   1285.556   90
+26:      2          mobile phone         1200   1172.810  805
+27:      3          mobile phone         1000   1018.080 1324
+28:      4          mobile phone          800    940.007 1375
+29:      2    motorcycle/scooter         2000  38960.000    5
+30:      3    motorcycle/scooter        35000  45966.667    6
+31:      4    motorcycle/scooter        45000  68333.333    3
+32:      2                others         1600   1600.000    2
+33:      3                others         2000   6517.647   34
+34:      4                others         1100   1266.667    6
+35:      1              radio/tv          500   1509.091   11
+36:      2              radio/tv         3000   3697.368   38
+37:      3              radio/tv         2500   3112.195   41
+38:      4              radio/tv         2000   2953.846   39
+39:      2      residential land         6000  11783.677  922
+40:      3      residential land        16000  25277.937  979
+41:      4      residential land        20000  28825.970  928
+42:      1          rickshaw/van         3750   3725.000   20
+43:      2          rickshaw/van         5000   5633.333   18
+44:      3          rickshaw/van         4000   8361.765   34
+45:      4          rickshaw/van         5000   8260.938   32
+46:      1        sewing machine         1200   1710.526   19
+47:      2        sewing machine         2000   2578.261   23
+48:      3        sewing machine         3900   3812.500   16
+49:      4        sewing machine         3500   2863.636   11
+50:      1                 solar         8000  11333.333    3
+51:      2                 solar         4900   4900.000    2
+52:      3                 solar        16000  16375.000    8
+53:      4                 solar        17000  16960.000   25
+54:      1              tubewell         1200   1313.898 1180
+55:      2              tubewell         1400   1473.455 1567
+56:      3              tubewell         1200   1264.724 1831
+57:      4              tubewell         1000   1085.163 1838
+58:      2               vcr/vcp         2000   2000.000    1
+59:      3               vcr/vcp         2450 133583.333    6
+60:      4               vcr/vcp         1200   1200.000    1
+61:      1            wall clock          200    176.667    9
+62:      2            wall clock          300    616.667   21
+63:      3            wall clock          200    567.000   10
+64:      4            wall clock           90    157.727   22
+65:      1           wrist watch          200    608.000   15
+66:      2           wrist watch          300    760.312   32
+67:      3           wrist watch          200   1104.762   21
+68:      4           wrist watch          150    421.176   17
+    survey                  type medianAmount meanAmount  num
+\end{Soutput}
+\end{Schunk}
+
+Mean assets for household assets.
+\begin{Schunk}
+\begin{Soutput}
+   survey meanNLHA medianNLHA  stdNLHA medianNumNLHA medianNumNetNLHA
+1:      1  1397.75       1200   857.66             1                1
+2:      2 15716.41       7000 43601.22             3                3
+3:      3 28556.84      13400 48482.55             4                3
+4:      4 29830.02      15150 50389.58             4                0
+\end{Soutput}
+\end{Schunk}
+%Define \textsf{NarrowNLHAssetAmount} that are observed in all rounds. 
+Some items (agricultural land, almirah/cabinet, fallow/submerged land, jewelry, motorcycle/scooter, others, residential land, vcr/vcp are not recorded in baseline) are observed from round 2. 
+\begin{Schunk}
+\begin{Soutput}
+      type
+survey agricultural land almirah/cabinet bicycle cassette player electric fan
+     1                 0               0      14               0            0
+     2                37             187      26               0            5
+     3                37             525      46               0           16
+     4                22             662      46               1           15
+      type
+survey fallow/submerged land jewelry mobile phone motorcycle/scooter others
+     1                     0       0           36                  0      0
+     2                    15       7          258                  2      1
+     3                    11     287          443                  0     14
+     4                    14     364          455                  1      2
+      type
+survey radio/tv residential land rickshaw/van sewing machine solar tubewell
+     1        5                0           11             10     1      358
+     2       14              330           10              8     0      566
+     3       16              345           20              8     3      641
+     4       13              323           19              6    12      640
+      type
+survey vcr/vcp wall clock wrist watch
+     1       0          5          10
+     2       0          7           8
+     3       1          3           7
+     4       0          5           2
+\end{Soutput}
+\end{Schunk}
+Items observed in all rounds are below:
+\begin{Schunk}
+\begin{Soutput}
+ [1] "tubewell"        "mobile phone"    "bicycle"         "wrist watch"    
+ [5] "sewing machine"  "rickshaw/van"    "wall clock"      "radio/tv"       
+ [9] "solar"           "electric fan"    "cassette player"
+\end{Soutput}
+\end{Schunk}
+Number of households with anomalous asset entries (decrease in non-land household asset values greater than 25000):
+\begin{Schunk}
+\begin{Soutput}
+          hhid year             type amount NLHAssetAmount
+ 1:    7096217 2012          bicycle   1000           1000
+ 2:    7096217 2014     mobile phone   2400           6900
+ 3:    7096217 2014          bicycle   2500           6900
+ 4:    7096217 2014         tubewell   2000           6900
+ 5:    7096217 2015         tubewell  15000          39000
+ 6:    7096217 2015          jewelry   1000          39000
+ 7:    7096217 2015  cassette player  22000          39000
+ 8:    7096217 2015     mobile phone   2000          39000
+ 9:    7096217 2017          jewelry   4000           3200
+10:    7096217 2017  almirah/cabinet   2000           3200
+11:    7096217 2017         tubewell   1200           3200
+12:    7096217 2017     mobile phone   2000           3200
+13:    8169717 2012         tubewell   1500           1500
+14:    8169717 2014         tubewell   1600           1600
+15:    8169717 2014 residential land   6000           1600
+16:    8169717 2015         tubewell   1200          82600
+17:    8169717 2015  almirah/cabinet   2600          82600
+18:    8169717 2015          jewelry    400          82600
+19:    8169717 2015     mobile phone   1400          82600
+20:    8169717 2015 residential land  36000          82600
+21:    8169717 2015     rickshaw/van  80000          82600
+22:    8169717 2017         tubewell    400           3300
+23:    8169717 2017  almirah/cabinet   2500           3300
+24:    8169717 2017          jewelry    600           3300
+25:    8169717 2017 residential land  40000           3300
+26:    8169717 2017          bicycle   2500           3300
+27:    8169717 2017     mobile phone    400           3300
+28: 9908147515 2013          bicycle   3000           3000
+29: 9908147515 2014         tubewell   1400           6800
+30: 9908147515 2014     mobile phone    900           6800
+31: 9908147515 2014 residential land   5000           6800
+32: 9908147515 2014          bicycle   4500           6800
+33: 9908147515 2015     mobile phone    900          44302
+34: 9908147515 2015         tubewell   1400          44302
+35: 9908147515 2015 residential land  25000          44302
+36: 9908147515 2015          jewelry   1200          44302
+37: 9908147515 2015          bicycle  42002          44302
+38: 9908147515 2015  almirah/cabinet   1000          44302
+39: 9908147515 2017 residential land  30000           4900
+40: 9908147515 2017         tubewell   1000           4900
+41: 9908147515 2017          bicycle   3200           4900
+42: 9908147515 2017     mobile phone    700           4900
+43: 9908147515 2017  almirah/cabinet    800           4900
+44: 9908147515 2017          jewelry    800           4900
+          hhid year             type amount NLHAssetAmount
+\end{Soutput}
+\end{Schunk}
+For 9908147515, the anomalous decrease is due to bicycle bought at 42002 in 2015, which may be 4200. Correct it. All other HHs are cassette player and rickshaw/ban, which may be possible that they sold off.
+
+
+Define:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+%\item[NarrowNLHAssets]	NarrowCNLHAsset
+\item[NLHAssets]	tubewell, mobile phone, bicycle, wrist watch, sewing machine, rickshaw/van, wall clock, radio/tv, solar, electric fan, cassette player
+\item[BroadNLHAssets]	Use all household asset entries.
+\end{description} 
+\begin{Schunk}
+\begin{Soutput}
+   survey      HA     BHA  nHA nBHA
+1:      1 1313.20  1313.2  450  450
+2:      2 2545.14 16013.8 1443 1480
+3:      3 2973.93 27621.5 2374 2423
+4:      4 2781.11 27736.6 2553 2602
+\end{Soutput}
+\end{Schunk}
+
+
+Check HHs with anomalous asset values (changes in naorrow net asset values $<-50000$). There are members who report sharp decline in net assets. 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[da50K]	Diff in HH assets greater than 50K. This is mostly due to radio and casette player entries. There are 1 households among \textsf{o800==1L} whose changes in net total asset $< -50000$ and have assets of values greater than 50000.
+%\item[dna10K]	Diff in narrow HH assets greater than 10K. When radios and casset players are excluded from total, there are length(dna10K) households among \textsf{o800==1L} whose changes in net total asset $< -10000$ and have assets of values greater than 10000. Note that residential land is only included in BroadNLHAssetAmount.
+\end{description}
+This is rickshaw/van.
+\begin{Schunk}
+\begin{Soutput}
+      hhid survey         type amount     H     BH
+1: 8169717      3 rickshaw/van  80000 82600 121600
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+for (h in da50K)
+  print(xha[hhid == h, .(hhid, t=survey, type, amount, 
+    #NH=NarrowNLHAssetAmount, 
+    H=NLHAssetAmount, BH=BroadNLHAssetAmount)])
+\end{Sinput}
+\begin{Soutput}
+       hhid t             type amount     H     BH
+ 1: 8169717 1         tubewell   1500  1500   1500
+ 2: 8169717 2         tubewell   1600  1600   7600
+ 3: 8169717 2 residential land   6000  1600   7600
+ 4: 8169717 3         tubewell   1200 82600 121600
+ 5: 8169717 3  almirah/cabinet   2600 82600 121600
+ 6: 8169717 3          jewelry    400 82600 121600
+ 7: 8169717 3     mobile phone   1400 82600 121600
+ 8: 8169717 3 residential land  36000 82600 121600
+ 9: 8169717 3     rickshaw/van  80000 82600 121600
+10: 8169717 4         tubewell    400  3300  46400
+11: 8169717 4  almirah/cabinet   2500  3300  46400
+12: 8169717 4          jewelry    600  3300  46400
+13: 8169717 4 residential land  40000  3300  46400
+14: 8169717 4          bicycle   2500  3300  46400
+15: 8169717 4     mobile phone    400  3300  46400
+\end{Soutput}
+\begin{Sinput}
+#for (h in dna10K[!(dna10K %in% da50K)])
+#  print(xha[hhid == h, .(hhid, t=survey, type, amount, 
+#    NH=NarrowNLHAssetAmount, H=NLHAssetAmount, BH=BroadNLHAssetAmount)])
+\end{Sinput}
+\end{Schunk}
+%We winsorise %bicycle values at 2000, 
+%radio and cassette players at 20000. Compare before and after:
+
+%We see that winsorisation does not affect \textsf{NarrowNLHAssetAmount} but affects \textsf{NLHAssetAmount} and \textsf{BroadNLHAssetAmount}. This suggests we should mainly look out for the effects of winsorisation in the comparison of \textsf{NLHAssetAmount} and \textsf{RNLHAssetAmount}. 
+
+\begin{Schunk}
+\begin{Sinput}
+for (h in rda50K)
+  print(xha[hhid == h, .(hhid, t=survey, type, amount, RevAmount,
+    RNH=RNarrowNLHAssetAmount, RH=RNLHAssetAmount, BH=RBroadNLHAssetAmount)])
+for (h in rdna10K[!(rdna10K %in% rda50K)])
+  print(xha[hhid == h, .(hhid, t=survey, type, amount, RevAmount, 
+    RNH=RNarrowNLHAssetAmount, NH=NarrowNLHAssetAmount, 
+    RH=RNLHAssetAmount, H=NLHAssetAmount)])
+\end{Sinput}
+\end{Schunk}
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("h.*ass", names(Z))]] <- xha
+saveRDS(xha, paste0(path1234, "HHAssetsCleaned.rds"))
+saveRDS(completeAsset, paste0(path1234, "ListOfCompleteAssetsInAllRounds.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+\subsubsection{Productive assets}
+
+
+
+Productive asset contents. \gobblepars
+\begin{Schunk}
+\begin{Sinput}
+# substitute contents to code
+pcodecon <- read.table(text="rd contents code
+1 'tractor' 401
+1 'thresher' 402
+1 'power tiller' 403
+1 'power pump' 404
+1 'deep and shallow tube-well' 405
+1 'treddle pump' 406
+1 'done/swing basket' 407
+1 'plough and yoke' 408
+1 'spray' 409
+1 'husking machine' 410
+1 'ginning machine' 411
+1 'country boat' 412
+1 'engine boat' 413
+1 'fishing net' 414
+1 'cage incubator' 415
+1 'brooder' 416
+1 'bees-box' 417
+1 'weeder' 418
+1 'ladder (moi)' 419
+1 'sickle/dao/axe/spade' 420
+1 'gola (grain storage)' 421
+1 'saw' 422
+1 'dheki' 423
+1 'jata' 424
+1 'rickshaw' 425
+1 'other, specify' 426
+2 'tractor' 401
+2 'thresher' 402
+2 'power tiller' 403
+2 'power pump' 404
+2 'hand pump' 405
+2 'deep tube-well' 406
+2 'shallow tube-well' 407
+2 'treddle pump' 408
+2 'rower pump' 409
+2 'done/swing basket' 410
+2 'plough and yoke' 411
+2 'spray' 412
+2 'husking machine' 413
+2 'ginning machine' 414
+2 'country boat' 415
+2 'engine boat' 416
+2 'fishing net' 417
+2 'cage incubator' 418
+2 'brooder' 419
+2 'bees-box' 420
+2 'weeder' 421
+2 'ladder (moi)' 422
+2 'sickle/dao/axe/spade' 423
+2 'gola (grain storage)' 424
+2 'dheki' 425
+2 'jata' 426
+2 'sewing machine' 427
+2 'other, specify' 428"
+, header = T)
+pcodecon <- data.table(pcodecon)
+pcodecon1 <- pcodecon[rd == 1, ]
+pcodecon2 <- pcodecon[rd == 2, ]
+xpa[, pa2code := pa2]
+xpa[, pa3code := pa3]
+xpa[, pa2 := as.character(pa2)]
+xpa[, pa3 := as.character(pa3)]
+xpa[, pa4 := tolower(as.character(pa4))]
+for (ll in pcodecon1[, code])
+  xpa[grepl(ll, pa2code) & survey == 1, pa2 := pcodecon1[code==ll, contents]]
+for (ll in pcodecon2[, code])
+  xpa[grepl(ll, pa2code) & survey >= 2, pa2 := pcodecon2[code==ll, contents]]
+for (ll in pcodecon1[, code])
+  xpa[grepl(ll, pa3code) & survey == 1, pa3 := pcodecon1[code==ll, contents]]
+for (ll in pcodecon2[, code])
+  xpa[grepl(ll, pa3code) & survey >= 2, pa3 := pcodecon2[code==ll, contents]]
+xpa[, pa1 := tolower(pa1)]
+# There are HHs in survey == 1 who report code 427 (sewing machine), 428 (other) 
+# which do not exist in the questionniare. Possibly an error in data entry. Use pcodecon2 for these.
+for (ll in c(427, 428))
+  xpa[grepl(ll, pa2code) & survey == 1, pa2 := pcodecon2[code==ll, contents]]
+for (ll in c(427, 428))
+  xpa[grepl(ll, pa3code) & survey == 1, pa3 := pcodecon2[code==ll, contents]]
+# pa4 has typos
+xpa[grepl("ladde", pa4), pa4 := "ladder(moi)"]
+xpa[grepl("ladde", pa2), pa2 := "ladder(moi)"]
+xpa[grepl("swing", pa4), pa4 := "sewing machine"]
+xpa[grepl("other", pa4), pa4 := "other, specify"]
+\end{Sinput}
+\end{Schunk}
+
+Productive asset records \textsf{xpa} is not an exhaustive list, and HHs with no productive asset are omitted in the file. \gobblepars
+
+Mean assets for household and productive assets.
+\begin{Schunk}
+\begin{Soutput}
+   survey   meanPA meanNarrowPA medianPA medianNarrowPA   stdPA
+1:      1 1244.203      927.511      600            400 4651.05
+2:      2 1267.192      965.669      400            380 6496.36
+3:      3 1269.333     1050.763      430            420 5700.13
+4:      4  840.997      773.076      400            400 4131.01
+\end{Soutput}
+\end{Schunk}
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("pr.*ass", names(Z))]] <- xpa
+saveRDS(xpa, paste0(path1234, "ProdAssetsCleaned.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+\subsubsection{Land holding in contract and ownership file}
+
+\begin{Schunk}
+\begin{Sinput}
+lnd <- Z[[grep("contr", names(Z))]]
+# Change NA to zero
+for (i in 1:3)
+  lnd[eval(parse(text = paste0("is.na(area_", i, ")"))), paste0("area_", i) := 0]
+# OwnedArea = area_1[own_con_1=="Own"]
+#  +area_2[own_con_2=="Own"]+area_3[own_con_3=="Own"]
+lnd[, OwnedArea := 0]
+for (i in 1:3) 
+  lnd[grepl("^Own$", eval(parse(text = paste0("own_con_", i)))), 
+    OwnedArea := OwnedArea + eval(parse(text = paste0("area_", i)))]
+# OperatedArea = OwnedArea 
+#  + area_1[own_con_1=="rent|share|awne"]
+#  + area_2[own_con_2=="rent|share|awne"]
+#  + area_3[own_con_3=="rent|share|awne"]
+lnd[, OperatedArea := OwnedArea]
+for (i in 1:3) 
+  lnd[grepl("rent|share|awne", eval(parse(text = paste0("own_con_", i)))), 
+    OperatedArea := OperatedArea + eval(parse(text = paste0("area_", i)))]
+destat(lnd[OwnedArea > 0 | OperatedArea > 0, .(year, survey, OwnedArea, OperatedArea)])
+\end{Sinput}
+\begin{Soutput}
+              min 25\\% median 75\\%  max   mean  std  0s NAs   n
+year         2012  2014   2015  2015 2017 2014.9  1.2   0   0 753
+survey          1     2      3     3    4    2.7  0.8   0   0 753
+OwnedArea       0     0      0     2  748    9.9 42.0 425   0 753
+OperatedArea    1     1      3    32 1155   24.0 78.4   0   0 753
+\end{Soutput}
+\begin{Sinput}
+round(lnd[, .(
+  meanOwA = mean(OwnedArea), 
+  medOwA = median(as.numeric(OwnedArea)), 
+  NZeroOwA = sum(OwnedArea>0),
+  stdOwA = var(OwnedArea)^(.5), 
+  meanOpA = mean(OperatedArea), 
+  medOpA = median(as.numeric(OperatedArea)), 
+  NZeroOpA = sum(OperatedArea>0),
+  stdOpA = var(OperatedArea)^(.5)), 
+  by = survey][order(survey)], 3)
+\end{Sinput}
+\begin{Soutput}
+   survey meanOwA medOwA NZeroOwA stdOwA meanOpA medOpA NZeroOpA stdOpA
+1:      1   0.240      0       11  3.858   0.659      0       35  6.063
+2:      2   1.799      0      120 23.551   4.214      0      266 43.730
+3:      3   1.151      0      131  8.765   2.694      0      307 19.270
+4:      4   0.336      0       66  3.156   0.978      0      145  6.228
+\end{Soutput}
+\end{Schunk}
+Land holding in ownership\_and\_contract file does not have most of round 1 information. Coverage is also limited to agricultural land. 
+\begin{Schunk}
+\begin{Soutput}
+            year
+OperatedLand 2012 2014 2015 2017  Sum
+       FALSE  778  680  668  662 2788
+       TRUE    18   79   91   46  234
+       Sum    796  759  759  708 3022
+\end{Soutput}
+\begin{Soutput}
+         year
+OwnedLand 2012 2014 2015 2017  Sum
+    FALSE  790  724  715  686 2915
+    TRUE     6   35   44   22  107
+    Sum    796  759  759  708 3022
+\end{Soutput}
+\end{Schunk}
+Save back in data.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("contr", names(Z))]] <- lnd
+\end{Sinput}
+\end{Schunk}
+
+\subsubsection{Agricultural and residential land in HH Asset file}
+
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[May 22, 2020]	Land holding information has many missing values. Almost 1/2 of respondents do not reply. One should not rely too much on the estimated results because we do not know much about the sample selection. It is possible that NAs indicate zero's, because most of the char residents have little land holding.
+\item[Abu-san's email on Jan 30, 2020]	I checked the questionnaire and found that from round 2, landholding information has been included in the asset information, which made the asset data inflated from round 2. Since landholding is something that is time-invariant for the ultra-poor households, either we can add the landholding information in round 1 or create an asset holding information deleting the landholding information from round 2 onwards, to make the valid comparison. 
+\end{description}
+
+Land holding values do not vary much across survey rounds. %When tabulating asset items against the rounds, one finds some items lack round 1 information and \textsf{purchased\_in\_last\_1\_year} does not seem to be consistent with reported values (for cassette players: even all households report that the asset was not purchased in last 1 year, the median value increases by 4 times in 2017). This makes it difficult to use aggregated values of household assets. We will only use residential land values. 
+Use \textsf{purchase\_in\_last\_1\_year} to reconstruct rd 1 residential land holding. For the households who report to have purchased land in last 1 year, assume baseline land holding to be zero.
+
+
+There are 3 types of land reported. Use only aggregated total value. To do so, one needs to keep only the first type of land holding. In the file, all 3 types are stored so one needs to drop redundant entries whenever necessary.
+\begin{Schunk}
+\begin{Sinput}
+# If purchased in last 1 year, assume that all value is acquired in last 1 year 
+# and set baseline amount to zero
+hasL[Added & year <= 2013, amount := 0, by = hhid]
+# Get total of: agricultural, residential, fallow/submerged land
+hasL[, AmountFilled := sum(amount, na.rm = T), by = .(hhid, year)]
+hasL[, EarliestAmount := AmountFilled[!is.na(AmountFilled)][1], by = hhid]
+# EachAmountFilled is land values of various types
+setnames(hasL, "amount", "EachAmountFilled")
+# Multiple land holding entries because multiple land types. For total, keep only one type.
+saveRDS(hasL, paste0(pathsaveHere, "LandNAFilled.rds"))
+\end{Sinput}
+\end{Schunk}
+Land holding of original 776 HHs. Only 458 households responded. We assume all other households to have zero land holding. This is possible if their residential land is rented.
+\begin{Schunk}
+\begin{Soutput}
+        year
+HaveLand 2012 2013 2014 2015 2017  Sum
+   FALSE   35   35   21    5    1   97
+   TRUE   423  423  437  453  457 2193
+   Sum    458  458  458  458  458 2290
+\end{Soutput}
+\end{Schunk}
+
+\subsubsection{Merge HH and productive assets and land holding information in lnd}
+
+I merge household assets (\textsf{%NarrowNLHAssetAmount, 
+NLHAssetAmount, BroadNLHAssetAmount,
+%RNarrowNLHAssetAmount, RNLHAssetAmount, RBroadNLHAssetAmount,
+ NLHAssetAmountOneYear, %NarowNLHAssetNum, 
+ NLHAssetNum, BroadNLHAssetNum}) with productive assets (\textsf{PAssetAmount, PAssetEarning}) together (merged data is called \textsf{xas}).
+\begin{Schunk}
+\begin{Sinput}
+xha <- readRDS(paste0(path1234, "HHAssetsCleaned.rds"))
+xpa <- readRDS(paste0(path1234, "ProdAssetsCleaned.rds"))
+xpa[is.na(PAssetAmount), PAssetAmount := 0]
+xpa[is.na(PAssetEarning), PAssetEarning := 0]
+dit2 <- unique(xha[, .(hhid, year, survey, 
+  #NarrowNLHAssetAmount, 
+  NLHAssetAmount, BroadNLHAssetAmount,
+  #RNarrowNLHAssetAmount, RNLHAssetAmount, RBroadNLHAssetAmount,
+  NLHAssetAmountOneYear, 
+  #NarrowNLHAssetNum, 
+  NLHAssetNum, BroadNLHAssetNum
+  )])
+xas <- merge(dit2, xpa, by = c("hhid", "year", "survey"), all = T)
+\end{Sinput}
+\end{Schunk}
+
+%In 2012 and 2017, some asset information is not reported. 2017:
+
+Tabulate number of households who report newly acquired household assets.
+\begin{Schunk}
+\begin{Soutput}
+      bought.last1year
+year   FALSE TRUE <NA>
+  2012     0    0 1486
+  2013     0    0  618
+  2014  1698  168  205
+  2015  1178  862   49
+  2017  1240  755    9
+\end{Soutput}
+\begin{Soutput}
+   survey meanNLHA medianNLHA stdNLHA meanNumNLHA medianNumNLHA
+1:      1  1397.75       1200  857.66     1.00000             1
+2:      2  2077.45       1800 1667.68     1.39871             1
+3:      3  2292.26       1800 2921.89     1.69657             2
+4:      4  2249.91       1700 2774.64     1.78195             2
+\end{Soutput}
+\end{Schunk}
+Productive asset items (total of all rounds, excluding livestock hence NL assets).
+\begin{Schunk}
+\begin{Soutput}
+
+            bees-box              brooder       cage incubator 
+                6276                   75                  903 
+        country boat       deep tube well                dheki 
+                  17                   17                 1221 
+   done/swing basket          engine boat          fishing net 
+                   8                   11                  453 
+     ginning machine gola (grain storage)            hand pump 
+                1550                   25                  786 
+     husking machine                 jata          ladder(moi) 
+                  62                   51                   32 
+      other, specify      plough and yoke           power pump 
+                   8                    4                   13 
+        power tiller             rickshaw           rower pump 
+                  12                   25                    7 
+                 saw       sewing machine    shallow tube well 
+                  24                   10                    1 
+sickle/dao/axe/spade                spray             thresher 
+                 918                   26                    2 
+             tractor         treddle pump               weeder 
+                   5                   66                   30 
+                <NA> 
+               20434 
+\end{Soutput}
+\end{Schunk}
+
+
+Merge land holding data with asset data. 
+\begin{Schunk}
+\begin{Sinput}
+hasL <- readRDS(paste0(pathsaveHere, "LandNAFilled.rds"))
+# keep only one row per hhid
+hasL[, max := 1:.N, by = .(hhid, year)]
+hasL <- hasL[max == 1, .(hhid, year, AmountFilled, Added)]
+hasL[, max := NULL]
+\end{Sinput}
+\begin{Soutput}
+Warning in `[.data.table`(hasL, , `:=`(max, NULL)): Column 'max' does not exist to remove
+\end{Soutput}
+\begin{Sinput}
+#lnd <- Z[[grep("contr", names(Z))]]
+#lnd0 <- lnd[OwnedArea > 0 | OperatedArea > 0, ]
+commoncols <- intersect(colnames(hasL), colnames(xas))
+xas2 <- merge(xas, hasL, by = commoncols, all.x = T)
+#xas3 <- merge(xas, hasL, by = c("hhid", "year"), all.x = T)
+\end{Sinput}
+\end{Schunk}
+Save data.
+\begin{Schunk}
+\begin{Sinput}
+Z$MergedAssets <- xas2
+fnd <- c(fnd, "MergedAssets")
+saveRDS(xas3, paste0(path1234, "MergedAssetsCleaned.rds"))
+\end{Sinput}
+\end{Schunk}
+
+\subsubsection{Livestock}
+
+
+There are 3 entries with \textsf{type} == NA. For hhid 7126814, 7127105, they are cows. For 7043316, it sold calf, so fill cow/ox.
+\begin{Schunk}
+\begin{Soutput}
+      hhid survey year type ownership own_share number_owned mrkt_value
+1: 7043316      2 2014            Yes       own            1      10000
+2: 7126814      3 2015            Yes       own            1      17000
+3: 7127105      4 2017            Yes       own            1      28000
+   sold_value sale_amount sold dead born base nowned_cow nowned_ox nowned_goat
+1:      15000          NA    1   NA   NA   NA         NA        NA          NA
+2:      12000          NA    1   NA   NA   NA         NA        NA          NA
+3:      51000          NA    1   NA   NA   NA         NA        NA          NA
+   u_id mid s8b_1 nowned_chicken nowned_sheep sales_cow sales_ox sales_sheep
+1:   NA  NA    NA             NA           NA        NA       NA          NA
+2:   NA  NA    NA             NA           NA        NA       NA          NA
+3:   NA  NA    NA             NA           NA        NA       NA          NA
+   _merge eaten labor_hired labor_hired_day labor_payment total_cost dup
+1:   <NA>    NA          NA              NA            NA       2000   0
+2:   <NA>    NA          NA              NA            NA       2000   0
+3:   <NA>    NA          NA              NA            NA       2000   0
+   counttime
+1:         4
+2:         4
+3:         4
+\end{Soutput}
+\end{Schunk}
+Number owned by hhid 7096201 in survey == 3 is 24000 while its market value is 1. Switch these entries.
+
+
+In round 1, \textsf{nowned\_X} is used for X = cow, ox, goat, sheep, chicken, and \textsf{type}, \textsf{number\_owned} are used. For \textsf{type==Goat/Sheep}, only \textsf{nowned\_goat} is copied to \textsf{number\_owned} and \textsf{nowned\_sheep} is not included. 
+\begin{Schunk}
+\begin{Soutput}
+            hhid survey       type nowned_cow nowned_goat nowned_sheep
+  1:     7010102      1 Goat/Sheep          0           2            4
+  2:     7010102      2 Goat/Sheep         NA          NA           NA
+  3:     7010107      1 Goat/Sheep          0           1            3
+  4:     7010108      1 Goat/Sheep          0           1            3
+  5:     7010114      1 Goat/Sheep          0           1            3
+ ---                                                                  
+201: 99070712709      4 Goat/Sheep         NA          NA           NA
+202: 99070712714      4 Goat/Sheep         NA          NA           NA
+203: 99081412504      1 Goat/Sheep          0           1            5
+204: 99081711215      4 Goat/Sheep         NA          NA           NA
+205: 99081912103      1 Goat/Sheep          0           1            1
+     number_owned
+  1:            2
+  2:            1
+  3:            1
+  4:            1
+  5:            1
+ ---             
+201:            4
+202:            3
+203:            1
+204:            4
+205:            1
+\end{Soutput}
+\end{Schunk}
+I will add sheep to \textsf{number\_owned}. For cows and oxen, there is no mismatch in numbers reported between \textsf{nowned\_cow+nowned\_ox} and \textsf{number\_owend} with \textsf{type==cow/ox}.
+
+From round 2 onwards, only \textsf{type}, \textsf{number\_owned} are used. Use the latter way to show information. To do so, reshape to long and reshape back. Other information \textsf{mrkt\_value, sold\_amount, labor\_X, total\_cost} are almost all NAs, so drop them.
+\begin{Schunk}
+\begin{Soutput}
+      number_owned
+survey   0   1   2   3   4   5   6   8   9 Sum
+     1   0  22  40   4  16   6  10   1   1 100
+     2  39   0   0   0   0   0   0   0   0  39
+     3  26   0   0   0   0   0   0   0   0  26
+     4  40   0   0   0   0   0   0   0   0  40
+\end{Soutput}
+\begin{Soutput}
+            hhid survey       type nowned_cow nowned_goat nowned_sheep
+  1:     7010102      1 Goat/Sheep          0           2            4
+  2:     7010102      2 Goat/Sheep         NA          NA           NA
+  3:     7010107      1 Goat/Sheep          0           1            3
+  4:     7010108      1 Goat/Sheep          0           1            3
+  5:     7010114      1 Goat/Sheep          0           1            3
+ ---                                                                  
+201: 99070712709      4 Goat/Sheep         NA          NA           NA
+202: 99070712714      4 Goat/Sheep         NA          NA           NA
+203: 99081412504      1 Goat/Sheep          0           1            5
+204: 99081711215      4 Goat/Sheep         NA          NA           NA
+205: 99081912103      1 Goat/Sheep          0           1            1
+     number_owned
+  1:            6
+  2:            0
+  3:            4
+  4:            4
+  5:            4
+ ---             
+201:            0
+202:            0
+203:            6
+204:            0
+205:            2
+\end{Soutput}
+\begin{Soutput}
+      type
+survey      Chicken/duck cow/ox Goat/Sheep  Sum
+     1  727          837    553        100 2217
+     2  257          413   1370         39 2079
+     3   64          224   1803         26 2117
+     4   82          229   1653         40 2004
+\end{Soutput}
+\begin{Soutput}
+            hhid survey   type number_owned sold dead born base nowned_cow
+  1:     7010119      1 cow/ox            1    0    0    0    1          1
+  2:     7010120      1 cow/ox            1    0    0    0    1          1
+  3:     7020301      1 cow/ox            1    0    2    0    1          1
+  4:     7020302      1 cow/ox            1    0    3    0    1          1
+  5:     7020306      1 cow/ox            1    0    3    0    1          1
+ ---                                                                      
+549: 99081912414      1 cow/ox            1    0    0    0    2          1
+550: 99081912415      1 cow/ox            1    0    0    0    2          0
+551: 99081912416      1 cow/ox            1    0    0    0    2          1
+552: 99081912419      1 cow/ox            1    0    0    0    2          0
+553: 99081912420      1 cow/ox            1    0    5    0    2          1
+     nowned_ox nowned_goat nowned_sheep nowned_chicken
+  1:         0           0            0              0
+  2:         0           0            0              0
+  3:         0           0            0              4
+  4:         0           3            3              4
+  5:         0           3            3             10
+ ---                                                  
+549:         0           0            0              3
+550:         1           0            0              5
+551:         0           0            0              4
+552:         1           0            0              5
+553:         0           0            0              7
+\end{Soutput}
+\begin{Soutput}
+Warning in `[.data.table`(xlo1L, , `:=`(LVcode, type)): Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+\end{Soutput}
+\begin{Soutput}
+      LVcode
+survey chickenduck cowox goatsheep  Sum
+   1          2217  2217      2217 6651
+   Sum        2217  2217      2217 6651
+\end{Soutput}
+\end{Schunk}
+Livestock holding of 800 HHs at round 1:
+\begin{Schunk}
+\begin{Soutput}
+             number_owned
+LVcode           0    1    2    3    4    5    6    7    8    9   10   11   12
+  chickenduck  405   34  111   71   57   57   17    5   10    5   11    2    5
+  cowox        654  102   31    6    2    1    0    0    0    0    0    0    0
+  goatsheep    656   39   44   14   33    3    6    1    0    0    0    0    0
+  Sum         1715  175  186   91   92   61   23    6   10    5   11    2    5
+             number_owned
+LVcode          13   15   22  Sum
+  chickenduck    2    3    1  796
+  cowox          0    0    0  796
+  goatsheep      0    0    0  796
+  Sum            2    3    1 2388
+\end{Soutput}
+\end{Schunk}
+
+Livestock reported to be owned with zero self-evaluated market value. Need to impute values for these livestock. \gobblepars
+
+Median sales price of a cow/ox is 20000, %an ox is 20000 (equal prices justifies the joint categorisation), 
+a goat is 2533.333333. Use these to impute values \textsf{ImputedValue}. Cow prices vary a lot by years, so use annual prices for cows and call the imputed values as \textsf{Imputed2Value}.
+\begin{Schunk}
+\begin{Sinput}
+xloL[, ImputedValue := cowprice * number_owned]
+#xlo[grepl("ox", LVcode), ImputedValue := oxprice * number_owned]
+xloL[grepl("oa", LVcode), ImputedValue := goatprice * number_owned]
+xloL[grepl("duck", LVcode), ImputedValue := chickduckprice * number_owned]
+xloL[!grepl("co|ox|oa", LVcode), ImputedValue := mrkt_value]
+xloL[!grepl("co|ox|oa", LVcode), ImputedValue := mrkt_value]
+
+for (yr in cowpriceByYear[, year]) 
+  xloL[year == yr, Imputed2Value := cowpriceByYear[year == yr, medprice] * number_owned]
+for (yr in unique(xloL[, year])[!unique(xloL[, year]) %in% cowpriceByYear[, year]]) 
+  xloL[year == yr, Imputed2Value := cowprice * number_owned]
+xloL[grepl("oa", LVcode), Imputed2Value := goatprice * number_owned]
+xloL[!grepl("co|ox|oa", LVcode), Imputed2Value := mrkt_value]
+\end{Sinput}
+\end{Schunk}
+\textsf{TotalImputedValues}:
+\begin{Schunk}
+\begin{Sinput}
+# Livestock assets.
+setkey(xloL, hhid, year, survey)
+xloL[, TotalImputedValue := sum(ImputedValue, na.rm = T), by = list(hhid, year)]
+xloL[, TotalImputed2Value := sum(Imputed2Value, na.rm = T), by = list(hhid, year)]
+xloL[, TotalSelfEvaluatedValue := sum(mrkt_value, na.rm = T), by = list(hhid, year)]
+destat(xloL[, .(TotalImputedValue, TotalImputed2Value)])
+\end{Sinput}
+\begin{Soutput}
+                   min 25\\% median 75\\%    max    mean     std   0s NAs     n
+TotalImputedValue    0   200  20000 40000 300000 21805.3 22017.9 5028   0 24042
+TotalImputed2Value   0   200  25000 40000 395000 30491.0 33842.4 5028   0 24042
+\end{Soutput}
+\end{Schunk}
+Livestock values at baseline among 800 HHs:
+\begin{Schunk}
+\begin{Soutput}
+                           number_owned
+PositiveLivestockAtBaseline    0    1    2    3    4    5    6    7    8    9
+                      FALSE  539   17   61   46   41   30   11    2    9    3
+                      TRUE   242  141  111   42   49   31   12    4    1    2
+                      Sum    781  158  172   88   90   61   23    6   10    5
+                           number_owned
+PositiveLivestockAtBaseline   10   11   12   13   15   22  Sum
+                      FALSE    4    2    2    1    1    1  770
+                      TRUE     7    0    3    1    2    0  648
+                      Sum     11    2    5    2    3    1 1418
+\end{Soutput}
+\end{Schunk}
+Cows owned at the baseline (\textsf{dummyHadCows}).
+\begin{Schunk}
+\begin{Soutput}
+      dummyHadCows
+survey    0    1  Sum
+     1 6099  552 6651
+     2 5466    0 5466
+     3 6159    0 6159
+     4 5766    0 5766
+\end{Soutput}
+\begin{Soutput}
+          dummyHadCows
+NoBaseline     0     1  <NA>   Sum
+         0 17565  6144     0 23709
+         1     0     0   333   333
+\end{Soutput}
+\begin{Soutput}
+      dummyHadCows
+survey    0    1 <NA>  Sum
+     1 4995 1656    0 6651
+     2 3903 1482   81 5466
+     3 4455 1542  162 6159
+     4 4212 1464   90 5766
+\end{Soutput}
+\begin{Soutput}
+      LVcode
+survey chickenduck cowox goatsheep  Sum
+     1        2217  2217      2217 6651
+     2        1822  1822      1822 5466
+     3        2053  2053      2053 6159
+     4        1922  1922      1922 5766
+\end{Soutput}
+\end{Schunk}
+The number of cows owned:
+\begin{Schunk}
+\begin{Soutput}
+      NumCows
+survey    0    1    2    3    4    5    6    7    8    9   10   12   15 <NA>
+     1 1664  385  139   21    4    2    1    0    0    0    0    0    0    1
+     2   11  688  396  125   36   15    4    1    2    2    0    0    1  541
+     3   11 1011  506  134   50   10    6    4    4    0    0    1    0  316
+     4   17  745  664  157   37   12    7    1    2    1    3    0    0  276
+      NumCows
+survey  Sum
+     1 2217
+     2 1822
+     3 2053
+     4 1922
+\end{Soutput}
+\end{Schunk}
+Number of observations per round and livestock.
+\begin{Schunk}
+\begin{Soutput}
+      LVcode
+survey chickenduck cowox goatsheep  Sum
+     1        2217  2217      2217 6651
+     2        1822  1822      1822 5466
+     3        2053  2053      2053 6159
+     4        1922  1922      1922 5766
+\end{Soutput}
+\end{Schunk}
+Reshape back livestock data to wide. Format like: ID, number.Cow, number.Goat, etc. (code not shown)
+\begin{Schunk}
+\begin{Soutput}
+ [1] "hhid"                     "u_id"                    
+ [3] "mid"                      "survey"                  
+ [5] "year"                     "Imputed2Value"           
+ [7] "TotalImputedValue"        "TotalImputed2Value"      
+ [9] "TotalSelfEvaluatedValue"  "dummyHadCows"            
+[11] "NoBaseline"               "NumCowsOwnedAtRd1"       
+[13] "NumCows"                  "NumOwned.cowox"          
+[15] "Ownership.cowox"          "OwnShare.cowox"          
+[17] "MktValue.cowox"           "SoldValue.cowox"         
+[19] "Sold.cowox"               "Dead.cowox"              
+[21] "Born.cowox"               "Eaten.cowox"             
+[23] "TotalCosts.cowox"         "ImputedValue.cowox"      
+[25] "NumOwned.chickenduck"     "Ownership.chickenduck"   
+[27] "OwnShare.chickenduck"     "MktValue.chickenduck"    
+[29] "SoldValue.chickenduck"    "Sold.chickenduck"        
+[31] "Dead.chickenduck"         "Born.chickenduck"        
+[33] "Eaten.chickenduck"        "TotalCosts.chickenduck"  
+[35] "ImputedValue.chickenduck" "NumOwned.goatsheep"      
+[37] "Ownership.goatsheep"      "OwnShare.goatsheep"      
+[39] "MktValue.goatsheep"       "SoldValue.goatsheep"     
+[41] "Sold.goatsheep"           "Dead.goatsheep"          
+[43] "Born.goatsheep"           "Eaten.goatsheep"         
+[45] "TotalCosts.goatsheep"     "ImputedValue.goatsheep"  
+\end{Soutput}
+\end{Schunk}
+
+In 2012, 2013, price is not unit price but actually the total sales. Sales prices of livestock produce are recorded as in \textsf{\small Figure \ref{Figure produce raw price}}, by correcting errors in egg and milk prices in 2014, we get \textsf{\small Figure \ref{Figure imputed produce price}}. 
+
+Create a variable \textsf{ImputedPrice}: \textsf{total\_sold\_tk} for 2012, 2013, \textsf{total\_sold\_tk/\textsf{total\_sold}} for 2014, 2015, 2017. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+       UnitPrice
+produce    8    9   10   30   40   50 <NA>  Sum
+   egg    20    1  270    0    0    0  329  620
+   milk    0    0    0    7   32   98  483  620
+   Sum    20    1  270    7   32   98  812 1240
+\end{Soutput}
+\end{Schunk}
+Correct produce prices: For milk prices above 200, we use median price of below 200. Same for egg prices with a threshold of 15. 
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataproduce_raw_price-1} 
+
+}
+
+\caption[Produce sales raw prices]{Produce sales raw prices}\label{Figure produce raw price}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataimputed_produce_price-1} 
+
+}
+
+\caption[Produce sales corrected prices]{Produce sales corrected prices}\label{Figure imputed produce price}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataimputed_produce_sales-1} 
+
+}
+
+\caption[Imputed produce sales using corrected prices]{Imputed produce sales using corrected prices}\label{Figure imputed produce sales}
+\end{figure}
+\end{Schunk}
+Save in the original list.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("liv.*ow", names(Z))]] <- xloW
+Z[[grep("liv.*pr", names(Z))]] <- xlp2
+Z$LivestockLong <- xloL
+fnd <- c(fnd, "LivestockLong")
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Poverty}
+
+\subsubsection{Monga}
+
+
+Correct some typos in \textsf{monga\_meals} (not shown). \gobblepars
+
+Visualise monga period meals per day (\textsf{\small Figure \ref{Figure meals per day}}).
+Save in the original list.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("mong", names(Z))]] <- xm
+\end{Sinput}
+\end{Schunk}
+
+
+\subsubsection{Saving}
+
+
+Saving is given in \textsf{\small Figure \ref{Figure saving}}.
+
+
+\subsection{Other}
+
+
+Superfluous entries in \textsf{farm\_production, ownership\_and\_contract, poverty\_updated, poverty}. There are 7709, 0, 107, 133 rows with all NAs, respectively.  Drop them (or otherwise this will cause many HHs without records in ID files while entries in section files). (These will cause nomber of rows to be small as indicated in \textsc{\small Table \ref{filestab}}.)
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("pov", names(Z))[1]]] <- Z[[grep("pov", names(Z))[1]]][!is.na(year), ]
+Z[[grep("pov", names(Z))[2]]] <- Z[[grep("pov", names(Z))[2]]][!is.na(year), ]
+fa <- Z[[grepout("far", names(Z))]]
+ii <- apply(is.na(fa[, 
+	grep("area_1", colnames(fa)):grep("pri.*nit\\_3", colnames(fa)), with = F]), 1, all)
+Z[[grepout("far", names(Z))]] <- fa[!ii, ]
+cont <- Z[[grepout("contr", names(Z))]]
+cont <- a2b.data.table(cont, "", NA)
+cont <- a2b.data.table(cont, "\\.", NA)
+ii <- apply(is.na(cont[, 
+	grep("area_1", colnames(cont)):grep("sh.*ge\\_3", colnames(cont)), with = F]), 1, all)
+Z[[grepout("contr", names(Z))]] <- cont[!ii, ]
+\end{Sinput}
+\end{Schunk}
+Correct errors in survey numbering.
+\begin{Schunk}
+\begin{Sinput}
+Z[[grep("credit", names(Z))]] <- Z[[grep("credit", names(Z))]][year == 2017, survey := 4]
+Z[[grep("labo", names(Z))]] <- Z[[grep("labo", names(Z))]][year == 2013, survey := 1]
+\end{Sinput}
+\end{Schunk}
+Convert empty space or dot to NA.
+\begin{Schunk}
+\begin{Sinput}
+cr <- Z[[grepout("borr", names(Z))]]
+cr <- a2b.data.table(cr, "", NA)
+Z[[grepout("borr", names(Z))]] <- cr
+xla <- Z[[grepout("lab", names(Z))]]
+setkey(xla, hhid, year)
+xla <- a2b.data.table(xla, "", NA)
+Z[[grepout("lab", names(Z))]] <- xla
+\end{Sinput}
+\end{Schunk}
+
+
+Save all data.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_2.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+
+
+\section{Attach treatment information to all files}
+
+
+Attach \textsf{xid} to all files other than roster.
+
+\begin{Schunk}
+\begin{Sinput}
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_2.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+\end{Sinput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Sinput}
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, 
+	ObPattern, AttritIn,
+	membership, Mstatus, Mpattern, Mgroup, Assign, Hhidyear,
+   randomization, AssignOriginal, AssignRegression, 
+   IntDate, DistDate1, DistDate2, DistDate3, 
+   Disbursed1, Disbursed2, Disbursed3)])
+\end{Sinput}
+\end{Schunk}
+
+Attach treatment info in admin-roster to each files. For education file, also attach roster. 
+\begin{Schunk}
+\begin{Sinput}
+for (i in c(2, 1, 3:length(Z))) {
+# this flip order in 1, 2 makes merge operation of edu with roster easier
+	if (any(which(grepl("id\\_", names(Z))) %in% i)) next
+	x1 <- Z[[i]]
+	#\textsf{lonely.hhid}: Found in ID but not in `section' page (here, labour income).
+	table(lonely.hhid <- unique(x1[, hhid]) %in% xid[, hhid])
+	lonely.hhid <- unique(x1[, hhid])[!lonely.hhid]
+	x2 = copy(x1[!(hhid %in% lonely.hhid), ])
+	if (any(grepl("yearRoster", colnames(x2)))) setnames(x2, "yearRoster", "year")
+	if (any(grepl("survey", colnames(x2)))) 
+		setkey(x2, hhid, year, survey) else 
+		setkey(x2, hhid, year)
+	x3 <- xid2[x2]
+	Z[[i]] <- x3
+	# for education, attach entire roster file
+	if (any(which(grepl("edu", names(Z))) %in% i)) {
+		x1 <- Z[[i]]
+		ros <- Z[[grep("ros", names(Z))]]
+		lonely.hhid <- unique(x1[, hhid]) %in% ros[, hhid]
+		lonely.hhid <- unique(x1[, hhid])[!lonely.hhid]
+		x2 = copy(x1[!(hhid %in% lonely.hhid), ])
+		if (any(grepl("hhidy", colnames(ros)))) 
+			ros[, grepout("hhidy", colnames(ros)) := NULL]
+		# need to merge with key = survey (not year) 
+		# because ros has only 2012 or survey == 1
+		setnames(ros, "year", "yearRoster")
+		setkey(ros, hhid, mid, survey)
+		setkey(x2, hhid, mid, survey)
+		x3 <- ros[x2]
+		firstcols <- c("gid", "hhid", "mid", "survey", "year", "yearRoster",
+			colnames(x2)[!grepl("hhid$|mid|gid|survey|^i?.?year$", colnames(x2))])
+		setcolorder(x3, c(firstcols, colnames(ros)[!(colnames(ros)%in%firstcols)]))
+		setkey(x3, hhid, mid, year, survey)
+		Z[[i]] <- x3
+	}
+}
+\end{Sinput}
+\end{Schunk}
+Save all data.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+\section{Attrition}
+
+
+I define attrition as attriting in any rds 2, 3, 4 other than rejection or erosion. 
+\begin{Schunk}
+\begin{Sinput}
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+ros <- Z[[grep("rost", names(Z))]]  # roster
+xas2 <- readRDS(paste0(path1234, "MergedAssetsCleaned.rds"))
+xid1 <- unique(xid[, .(hhid, AssignOriginal)])
+\end{Sinput}
+\end{Schunk}
+
+
+There are 78 cases of attrition out of 2022 non-dropout HHs in sample. Plot characteristics of attrited HHs in \textsf{\small Figure \ref{Figure HH attrition pattern}}. As can be seen, nothing seems to differ across arms for attrited HHs. 
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataHH_attrition_pattern-1} 
+
+}
+
+\caption[Characteristics of attrited HHs between arms]{Characteristics of attrited HHs between arms}\label{Figure HH attrition pattern}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataHH_nonattrition_pattern-1} 
+
+}
+
+\caption[Characteristics of non-attrited HHs between arms]{Characteristics of non-attrited HHs between arms}\label{Figure HH nonattrition pattern}
+\end{figure}
+\end{Schunk}
+
+
+
+\begin{table}
+\hfil\begin{minipage}[t]{\linewidth}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Attrition selection\label{EstAttritionSelection}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_cleaned_data/AttritionSelectionEstimationResults.tex}};
+%\input{c:/data/agri_census/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.5cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Compiled from survey data, rounds 1 - 4.}\\[-1ex]
+Notes:& 1. & \textsf{group fixed-effects} are dummy variables for borrowing groups. \\[-1ex]
+& 2. & $p$ values are shown in parenthesises. $*$, $**$, $***$ indicate $p$ values of 10\%, 5\%, 1\%, respectively. Standard errors are clustered at the group level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+Probit regression using all sampled HHs reveals attrition is random, not systematic, for arm assignment (\textsc{\footnotesize Table \ref{EstAttritionSelection}}). Covariates are \textsf{HeadAge, HHsize, HAssetAmount, PAssetAmount, OwnedArea, OperatedArea, AssignOriginal}. Not surprisingly, larger \textsf{Owned area} reduces attrition as the wealthier individuals live in a better condition and is less likely to be affected by flood or economic shocks. \gobblepars
+
+%Out of nrow(attrit.coeff) covariates, \textsf{rownames(attrit.coeff)[attrit.coeff[,4] < .1]} are statistically significant at 10\% level, only \textsf{rownames(attrit.coeff)[attrit.coeff[,4] < .05]} at 5\% level. 
+
+
+\section{Further correction using merged information}
+
+\begin{Schunk}
+\begin{Sinput}
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+
+\subsection{Schooling}
+
+
+
+
+Below tabulation shows the number of times an individual is observed. Since we have 4 rounds, \textcolor{red}{there are 6 duplicated entries which are dropped for now but are in need of correction.}
+\begin{Schunk}
+\begin{Soutput}
+
+   1    2    3    4    5 
+5795  669  728 2075    6 
+\end{Soutput}
+\end{Schunk}
+Here are the duplicated entries.
+\begin{Schunk}
+\begin{Soutput}
+          hhid mid  memname En en year Age                primary
+ 1:    7031803   4  anrwara  1  1 2012  11                     94
+ 2:    7031803   4  anowara  2  2 2014  NA             unemployed
+ 3:    7031803   4  anowara  3  3 2015  NA             unemployed
+ 4:    7031803   4  anowara  4  3 2015  NA             unemployed
+ 5:    7031803   4  anowara  5  4 2017  NA             unemployed
+ 6:    7042220   4  rufikul  1  1 2012   4                     92
+ 7:    7042220   4  rofikul  2  2 2014  NA                  child
+ 8:    7042220   4  rofikul  3  2 2014  NA                  child
+ 9:    7042220   4  rofikul  4  3 2015  NA                student
+10:    7042220   4  rofikul  5  4 2017  NA                student
+11:    7054202   5    rubel  1  1 2012   4                     92
+12:    7054202   5    rubel  2  2 2014  NA                  child
+13:    7054202   5    rubel  3  3 2015  NA                student
+14:    7054202   5    rubel  4  3 2015  NA                student
+15:    7054202   5    rubel  5  4 2017  NA                student
+16:    7065315   6   robina  1  1 2012   5                     92
+17:    7065315   6   robina  2  2 2014  NA                student
+18:    7065315   6   robina  3  2 2014  NA                student
+19:    7065315   6   robena  4  3 2015  NA                student
+20:    7065315   6   robina  5  4 2017  NA                student
+21:    8169511   5 ayeguddi  1  1 2012  14                     94
+22:    8169511   5  ayguddi  2  2 2014  NA             unemployed
+23:    8169511   5  ayguddi  3  2 2014  NA             unemployed
+24:    8169511   5  ayguddi  4  3 2015  NA agriculture wage labor
+25:    8169511   5  ayguddi  5  4 2017  NA agriculture wage labor
+26: 9807065208   5    parul  1  1 2013  10                     93
+27: 9807065208   5    parul  2  2 2014  NA                student
+28: 9807065208   5    parul  3  3 2015  NA                student
+29: 9807065208   5    parul  4  3 2015  NA                student
+30: 9807065208   5    parul  5  4 2017  NA                student
+          hhid mid  memname En en year Age                primary
+\end{Soutput}
+\end{Schunk}
+Drop these.
+\begin{Schunk}
+\begin{Sinput}
+xe <- xe[N < 5, ]
+\end{Sinput}
+\end{Schunk}
+Check for further duplication when \textsf{gid, hhid, mid, year, AgeComputed} are used as an index.
+\begin{Schunk}
+\begin{Soutput}
+[1] 7 duplicated entries.
+\end{Soutput}
+\begin{Soutput}
+    duplicated.num        hhid mid memname year AgeComputed currently_enrolled
+ 1:              1     7042417   5 ibrahim 2015           1                 No
+ 2:              1     7042417   5 ibrahim 2015           1                 No
+ 3:              4     7065006   4 somaiya 2017           7                Yes
+ 4:              4     7065006   4 somaiya 2017           7                Yes
+ 5:              6     7137302   3   kalam 2014          17                Yes
+ 6:              6     7137302   3   kalam 2014          17                Yes
+ 7:              7     8159115   4    sumi 2017           6                Yes
+ 8:              7     8159115   4    sumi 2017           6                Yes
+ 9:              5  9907065112   3   sajib 2014          13                Yes
+10:              5  9907065112   3   sajib 2014          13                Yes
+11:              2 99070511006   2  sohida 2013          42               <NA>
+12:              2 99070511006   2  sohida 2013          42               <NA>
+13:              3 99070511006   3     jui 2013           0                 No
+14:              3 99070511006   3     jui 2013           0               <NA>
+[1] Dropped 7 duplicated obs in edu file.
+\end{Soutput}
+\end{Schunk}
+NAs in \textsf{age}. Use any \textsf{age\_1} info to fill NAs in age (process not shown).
+
+
+NAs in \textsf{sex}: 9 individuals remain after copying whenever possible from other rounds. \textcolor{red}{These individuals are dropped for now but are in need of correction for sex, age information.} \\
+\textcolor{green}{[2017-11-14 Abu email]: A correction file is received. $\rightarrow$ (Yet to be applied.)}
+\gobblepars
+\begin{Schunk}
+\begin{Soutput}
+          hhid mid memname  sex age year
+1:     7010112   5    <NA> <NA>  NA 2015
+2:     7042614  NA    <NA> <NA>  NA 2017
+3:     7043309  NA    <NA> <NA>  NA 2015
+4:     7054310  NA    <NA> <NA>  NA 2015
+5:     8169814   5    <NA> <NA>  NA 2012
+6:  9807054106   3    <NA> <NA>  NA 2017
+7:  9807054319   5    <NA> <NA>  NA 2013
+8:  9807106517  NA    <NA> <NA>  NA 2015
+9: 99070712714   5    <NA> <NA>  NA 2013
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+xe <- xe[!is.na(sex), ]
+\end{Sinput}
+\end{Schunk}
+
+
+NAs in \textsf{currently\_enrolled}. Below tabulation shows the primary occupation of these observations.
+\begin{Schunk}
+\begin{Soutput}
+[1] 92 93 96 94 4  11 55
+107 Levels:  advocate / moktar  house repairing (fixing) 1 11 13 16 17 18 ... wage labor in transport
+\end{Soutput}
+\end{Schunk}
+Set \textsf{currently\_enrolled} to ``No'' either if: \textsf{primary} == housewife, \textsf{rel\_hhh} == spouse, \textsf{edu} == {\footnotesize \{never been to school, pre-school going age, pre-school, pre-madrasa\}}. 	\\
+\textcolor{green}{[2017-11-14 Abu email]: A correction file is received. $\rightarrow$ Corrected.}
+\gobblepars
+
+Correction:
+
+Having done so, below remains as NAs because these provide no clue on enrollment status. \textcolor{red}{Need to be supplemented with new information on \textsf{currently\_enrolled}.} Drop these individuals for entire period for now. 
+\begin{Schunk}
+\begin{Soutput}
+       hhid mid year AgeComputed                       edu primary
+1:  7021316   4 2012          16  class 5/finished class 5      96
+2:  7042016   4 2012          18  class 5/finished class 5      96
+3: 81710106   4 2012          18       finished ssc/dakhil      93
+4: 81710516   6 2012          10 class 3/finished class 3       93
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+xe <- xe[!(Hhidmid %in% 
+	xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled), Hhidmid]), ]
+\end{Sinput}
+\end{Schunk}
+Define \textcolor{red}{\textsf{Enrolled}}: 1 if \textsf{currently\_enrolled} is yes, 0 otherwise. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+        year
+Enrolled 2012 2013 2014 2015 2017
+       0  710  172  355  216  114
+       1 1388  634 1927 1808 1683
+\end{Soutput}
+\end{Schunk}
+Why are there so many observations in 2012 and 2013 combined? Attrition in \textsf{oldmember}: 156 out of 355 reduction in obs is explained by iRejection, gErosion, gRejection. 
+\begin{Schunk}
+\begin{Soutput}
+      Mstatus
+year   gErosion gRejection iRejection iReplacement newGroup oldMember <NA>
+  2012      100        187        176            0        0      1630    5
+  2013        0          0          0          184      622         0    0
+  2014       56        121        130          164      536      1275    0
+  2015       53        103        115          140      480      1133    0
+  2017        0          0        208          120      438      1031    0
+\end{Soutput}
+\end{Schunk}
+
+Plot characteristics of attrited members in \textsf{\small Figure \ref{Figure attrition pattern}}.
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataattrition_pattern-1} 
+
+}
+
+\caption[Characteristics of attrited members between arms]{Characteristics of attrited members between arms}\label{Figure attrition pattern}
+\end{figure}
+\end{Schunk}
+
+
+
+
+Define \textsf{Schooling} according to \textsf{AgeComputed}. This variable is time-variant. \gobblepars
+
+Enrollment by age at first observation (years 2012, 2013) is tabulated in below. We defined such that \textsf{Enrolled}==\textsf{currently\_enrolled} for ages 5-18.
+\begin{Schunk}
+\begin{Soutput}
+                  Age_1
+currently_enrolled   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
+              No     2   5   3   8   8 264 164  95  64  22  61  16  78  33  34
+              Yes    0   0   1   2   4  12  52 262 305 153 390 121 238 131 116
+              <NA> 167 166 210 234 263   0   0   0   0   0   0   0   0   0   0
+                  Age_1
+currently_enrolled  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29
+              No   102  91  29  93   3   1   0   0   0   1   0   0   0   0   0
+              Yes  129  58  28  39   1   1   0   0   0   0   3   0   0   1   0
+              <NA>   0   0   0   0 108 227  41 156  72  80 388 106  78 276  47
+\end{Soutput}
+\begin{Soutput}
+        Age_1
+Enrolled   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16
+       0 169 171 213 242 271 264 164  95  64  22  61  16  78  33  34 102  91
+       1   0   0   1   2   4  12  52 262 305 153 390 121 238 131 116 129  58
+        Age_1
+Enrolled  17  18  19  20  21  22  23  24  25  26  27  28  29
+       0  29  93 111 228  41 156  72  81 388 106  78 276  47
+       1  28  39   1   1   0   0   0   0   3   0   0   1   0
+\end{Soutput}
+\end{Schunk}
+Enrollment rates for ages 5 - 18 (\textsf{\small Figure \ref{Figure enrollment}}). Note that females can marry out which may be a reason for the general upward trend in female schooling.
+
+Save schooling data.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(xe, paste0(path1234, "schooling.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+Use augmented panel to keep the denominator as the number of people in the first round, assuming that attrited females are not going to schools (need to check with roster updates). Without it, enrollment rates for females is inflated through time. This requires to generate NAs in missing rounds. 
+\begin{dinglist}{43}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Use \textsf{data.table:::dcast} to reshape to wide format which fills in NA for attrited members.
+\end{dinglist}
+\gobblepars
+\begin{Schunk}
+\begin{Soutput}
+[1] 17585    88
+\end{Soutput}
+\begin{Soutput}
+       AgeComp
+Age1    FALSE  TRUE
+  FALSE 17296     0
+  TRUE      0   289
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+[1] 9007   14
+\end{Soutput}
+\begin{Soutput}
+
+   1    2    3    4 
+ 515  337  390 1662 
+\end{Soutput}
+\end{Schunk}
+
+To a wide format and compute age using other years.
+\begin{Schunk}
+\begin{Sinput}
+Xw2 <- dcast(Xw, ... ~ year, value.var = 
+	grepout("En|Age|^en$|^curr|edu", colnames(Xw)), sep = ".")
+\end{Sinput}
+\end{Schunk}
+There are 806 individuals with \textsf{AgeComputed}==NA. All of these individuals have age information in other years.
+\begin{Schunk}
+\begin{Soutput}
+             AgeComputed.2012
+Enrolled.2013   6   7   8   9  10  11  12  13  14  15  16  17  18 <NA>
+         0      0   0   0   0   0   0   0   0   0   0   0   0   0  172
+         1      0   0   0   0   0   0   0   0   0   0   0   0   0  634
+         <NA> 168 264 279 114 333  77 237 109 104 173 103  43  94    2
+\end{Soutput}
+\begin{Soutput}
+         AgeNAOtherYear
+AgeNA2012 FALSE TRUE
+    FALSE  1665  433
+    TRUE    808    0
+\end{Soutput}
+\end{Schunk}
+There are 808 individuals whose age can be imputed from other rds. Impute (process not shown).
+
+Reshape back to long. \gobblepars
+\begin{Schunk}
+\begin{Sinput}
+for (i in colnames(Xw2[, -c("hhid", "mid"), with = F]))
+  Xw2[hhid == 9808148220, (i) := eval(parse(text = 
+    paste0(i, "[!is.na(", i, ")][1]")
+    )), by = .(hhid, mid)]
+Xw2 <- Xw2[!duplicated(Xw2), ]
+# reshaping to long to fill in ages and GradeYear
+X2 <- reshape(Xw2, direction = "long", idvar = c("hhid", "mid"),
+	varying = grepout("\\.20", colnames(Xw2)))
+setnames(X2, "time", "year")
+setkey(X2, gid, hhid, mid, year)
+X2[, tee := 1:.N, by = .(hhid, mid)]
+\end{Sinput}
+\begin{Soutput}
+Warning in `[.data.table`(X2, , `:=`(tee, 1:.N), by = .(hhid, mid)): Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+\end{Soutput}
+\begin{Sinput}
+X2[AgeComputed >= 5 & AgeComputed <= 12, Schooling := "primary0512"]
+X2[AgeComputed >= 13 & AgeComputed <= 15, Schooling := "junior1315"]
+X2[AgeComputed >= 16 & AgeComputed <= 18, Schooling := "high1618"]
+X2[, Schooling := factor(Schooling, levels = 
+	c("primary0512", "junior1315", "high1618"))]
+\end{Sinput}
+\end{Schunk}
+Define \textsf{GradeYear}: Class grade in numerics.
+\begin{Schunk}
+\begin{Soutput}
+       0   1   2   3   4   5   6   7   8  9 10 11 <NA> NonNATotal Total
+2012 725 339 277 212 172 151  66  43  30 25 37 21  806       2098  2904
+2013 102  97 109  80  79  73  48  29  27 15 21  0 2224        680  2904
+2014   0 329 357 372 259 216 126 111  67 34 18  0 1015       1889  2904
+2015   0 124 350 350 317 244 151 109  95 63 30  0 1071       1833  2904
+2017   0  26  61 195 340 304 275 165 124 83 90  0 1241       1663  2904
+\end{Soutput}
+\end{Schunk}
+Enrollment in comlete panel data:
+\begin{Schunk}
+\begin{Soutput}
+      2012 2013 2014 2015 2017 total    1    2    3    4 total
+0      710  172  355  216  114  1567  882  376  218   91  1567
+1     1388  634 1927 1808 1683  7440 2022 2013 1834 1571  7440
+total 2098  806 2282 2024 1797  9007 2904 2389 2052 1662  9007
+\end{Soutput}
+\end{Schunk}
+Enrollment in augmented data: See unenrolled obs are added.
+\begin{Schunk}
+\begin{Soutput}
+      2012 2013 2014 2015 2017 total    1    2    3    4    5 total
+0     1516 2270  977 1096 1221  7080 1516 2270  977 1096 1221  7080
+1     1388  634 1927 1808 1683  7440 1388  634 1927 1808 1683  7440
+total 2904 2904 2904 2904 2904 14520 2904 2904 2904 2904 2904 14520
+\end{Soutput}
+\end{Schunk}
+Define \textsf{Year} in augmented schooling panel: year 2013 $\rightarrow$ 2012.
+\begin{Schunk}
+\begin{Soutput}
+        Year
+Enrolled 2012 2014 2015 2017
+       0 3786  977 1096 1221
+       1 2022 1927 1808 1683
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# forced dropouts
+X2[Year == 2017 & grepl("for", AssignRegression), Enrolled := NA]
+X2[, NumEnrollment := sum(Enrolled), by = list(AssignRegression, Schooling, sex, Year)]
+X2[, NumberObs := .N, by = list(AssignRegression, Schooling, sex, Year)]
+X2[, BaseNumber := NumberObs[1], by = list(AssignRegression, Schooling, sex)]
+setkey(X2, hhid, mid, year)
+X2[, tee := 1:.N, by = .(hhid, mid)]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+      2012 2013 2014 2015 2017 total    1    2    3    4    5 total
+0     1516 2270  977 1096 1121  6980 1516 2270  977 1096 1121  6980
+1     1388  634 1927 1808 1683  7440 1388  634 1927 1808 1683  7440
+<NA>     0    0    0    0  100   100    0    0    0    0  100   100
+total 2904 2904 2904 2904 2904 14520 2904 2904 2904 2904 2904 14520
+\end{Soutput}
+\end{Schunk}
+Save X1. Save attrition-augmented panel schooling data X2.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(X1, paste0(path1234, "schooling_Age6-18InRd1.rds"))
+saveRDS(X2, paste0(path1234, "schooling_augmented_panel.rds"))
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Missing ID file entries}
+
+
+\begin{Schunk}
+\begin{Soutput}
+     gid    hhid povertystatus year survey ObPattern AttritIn      membership
+1: 70314 7031401          <NA> 2012      1      1000        2 Drop-out member
+2:  <NA> 7031401          <NA> 2014      2      <NA>       NA            <NA>
+      Mstatus Mpattern    Mgroup    Assign randomization AssignOriginal
+1: gRejection     daaa drop outs drop outs          <NA>           <NA>
+2:       <NA>     <NA>      <NA>      <NA>          <NA>           <NA>
+   AssignRegression IntDate DistDate1 DistDate2 DistDate3 Disbursed1 Disbursed2
+1:         dropOuts    <NA>      <NA>      <NA>      <NA>      FALSE         NA
+2:             <NA>    <NA>      <NA>      <NA>      <NA>         NA         NA
+   Disbursed3 base                         code_1 assist_1 cash_1 rice_kg_1
+1:         NA    1                           <NA>       No     NA        NA
+2:         NA   NA Remittance from family Members      Yes     NA        10
+   tk_kg_1 wheat_flour_kg_1 wheat_flour_tk_kg_1 livestock_type_1 livestock_no_1
+1:      NA               NA                  NA               NA             NA
+2:      30               NA                  NA               NA             NA
+   livestock_value_1 other_food_1 other_in_kind_1 compare_1
+1:                NA           NA              NA      <NA>
+2:                NA           NA              NA      <NA>
+                                  code_2 assist_2 cash_2 rice_kg_2 tk_kg_2
+1:                                  <NA>     <NA>     NA        NA      NA
+2: Govt Scholarship for Primary Students      Yes   1200        NA      NA
+   wheat_flour_kg_2 wheat_flour_tk_kg_2 livestock_type_2 livestock_no_2
+1:               NA                  NA               NA             NA
+2:               NA                  NA               NA             NA
+   livestock_value_2 other_food_2 other_in_kind_2 compare_2 code_3 assist_3
+1:                NA           NA              NA      <NA>   <NA>     <NA>
+2:                NA           NA              NA      <NA>   <NA>     <NA>
+   cash_3 rice_kg_3 tk_kg_3 wheat_flour_kg_3 wheat_flour_tk_kg_3
+1:     NA        NA      NA               NA                  NA
+2:     NA        NA      NA               NA                  NA
+   livestock_type_3 livestock_no_3 livestock_value_3 other_food_3
+1:               NA             NA                NA           NA
+2:               NA             NA                NA           NA
+   other_in_kind_3 compare_3 code_4 assist_4 cash_4 rice_kg_4 tk_kg_4
+1:              NA      <NA>   <NA>     <NA>     NA        NA      NA
+2:              NA      <NA>   <NA>     <NA>     NA        NA      NA
+   wheat_flour_kg_4 wheat_flour_tk_kg_4 livestock_type_4 livestock_no_4
+1:               NA                  NA               NA             NA
+2:               NA                  NA               NA             NA
+   livestock_value_4 other_food_4 other_in_kind_4 compare_4 dup pay_1 pay_2
+1:                NA           NA              NA      <NA>   0    NA    NA
+2:                NA           NA              NA      <NA>  NA    NA    NA
+   pay_3 pay_4 counttime     Hhidyear
+1:    NA    NA         2 7031401-2012
+2:    NA    NA         2 7031401-2014
+\end{Soutput}
+\begin{Soutput}
+     gid    hhid povertystatus year survey    Mstatus Mpattern    Mgroup
+1: 70314 7031401          <NA> 2012      1 gRejection     daaa drop outs
+        membership    Assign     Hhidyear AssignRegression IntDate DistDate1
+1: Drop-out member drop outs 7031401-2012         dropOuts    <NA>      <NA>
+   DistDate2 DistDate3 Disbursed1 Disbursed2 Disbursed3
+1:      <NA>      <NA>      FALSE         NA         NA
+\end{Soutput}
+\end{Schunk}
+Some HHs have different years recorded in section files than ID file. For example, \textsf{hhid}==7137219 has 2012, 2014 in ID but 2015 in \textsf{credit\_and\_borrowing, farm\_production}. 
+\begin{Schunk}
+\begin{Soutput}
+      hhid year    Mgroup    Assign      membership AssignOriginal Mpattern
+1: 7137219 2012 drop outs drop outs Drop-out member    traditional     ddaa
+2: 7137219 2014 drop outs drop outs Drop-out member    traditional     ddaa
+\end{Soutput}
+\begin{Soutput}
+      hhid year survey               filename
+1: 7137219 2015      3        farm_production
+2: 7137219 2015      3 ownership_and_contract
+\end{Soutput}
+\end{Schunk}
+Below is the list of \textsf{hhid} and \textsf{year} that are missing in ID files. \textcolor{red}{Why are these entries missing in ID file?} Below gives the \textsf{hhid}s.
+\begin{Schunk}
+\begin{Soutput}
+  [1] 7020312-2014     7020412-2014     7021218-2014     7021220-2015    
+  [5] 7021320-2014     7031401-2014     7031401-2015     7031402-2014    
+  [9] 7031402-2015     7031403-2014     7031403-2015     7031404-2014    
+ [13] 7031404-2015     7031405-2014     7031405-2015     7031406-2014    
+ [17] 7031406-2015     7031407-2014     7031407-2015     7031408-2014    
+ [21] 7031408-2015     7031409-2014     7031409-2015     7031410-2014    
+ [25] 7031410-2015     7031411-2014     7031411-2015     7031412-2014    
+ [29] 7031412-2015     7031413-2014     7031413-2015     7031414-2014    
+ [33] 7031414-2015     7031415-2014     7031415-2015     7031416-2015    
+ [37] 7031417-2015     7031418-2015     7031419-2015     7031420-2015    
+ [41] 7031608-2015     7031708-2015     7031815-2014     7042007-2015    
+ [45] 7042120-2014     7042515-2015     7042710-2014     7043108-2014    
+ [49] 7043120-2014     7043407-2015     7043618-2015     7053903-2015    
+ [53] 7053907-2015     7053916-2015     7054116-2015     7054119-2015    
+ [57] 7054207-2015     7054316-2014     7054319-2014     7054403-2015    
+ [61] 7054503-2014     7054504-2014     7054516-2015     7054520-2014    
+ [65] 7064602-2014     7064617-2014     7065006-2014     7065202-2015    
+ [69] 7065205-2015     7065215-2014     7065302-2015     7065312-2015    
+ [73] 7065318-2014     7085904-2015     7096216-2014     7096308-2015    
+ [77] 7096310-2015     7096315-2015     7096316-2015     7106402-2015    
+ [81] 7126920-2014     7127116-2014     7133004-2014     7133510-2015    
+ [85] 7133513-2014     7133515-2015     7137218-2015     7137219-2015    
+ [89] 7137317-2014     7137317-2017     8148207-2015     8148220-2015    
+ [93] 8159216-2014     8169515-2014     81710112-2014    81710203-2014   
+ [97] 81710504-2014    81710513-2014    81710517-2014    9807031614-2015 
+[101] 9807042103-2014  9807043618-2014  9807054316-2014  9807065212-2015 
+[105] 9807133512-2014  9808148207-2012  9808148220-2012  98081710316-2014
+[109] 98081710317-2014 99070212018-2014 99070511013-2015 99070911620-2014
+[113] 99071010814-2014 9908148515-2015  99081711213-2015 99081912406-2014
+\end{Soutput}
+\end{Schunk}
+\textcolor{green}{[2017-11-14 Abu email]: 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	(T)hese 26 households are errors from double entry process. Please drop these IDs from these sections. The ID file is correct. $\rightarrow$ Not dealt with.
+\item	There are two shamitee with the same gid=70314. After the baseline we followed only the group starting with 99. Thus we changed the gid to 9970314 (manually). Please kindly convert all the gid 70314 with 9970314. $\rightarrow$ Corrected.
+\end{itemize}
+} Note: When I asked previously it was 26 HH-years but now 116 HH-years after corrections in other parts.
+\begin{Schunk}
+\begin{Sinput}
+xid2[, gid := as.numeric(gid)]
+xid2[gid == 70314, c("gid", "hhid") := list(9970314, as.integer(paste0(99, hhid)))]
+xid2[, gid := factor(gid)]
+\end{Sinput}
+\end{Schunk}
+
+A direct consequence of not having matching ID file is lacking treatment assignment information. As a patch, copy treatment assignment and group information across rounds in section files (but keep ID file uncorrected, as we expect its update later).
+\begin{Schunk}
+\begin{Sinput}
+Z[-grep("id", names(Z))] <- lapply(Z[-grep("id", names(Z))], 
+	function(x) if (any(is.na(x[, Mgroup]))) 
+	x[hhid %in% x[is.na(Mgroup), hhid], 
+	Mgroup := Mgroup[!is.na(Mgroup)][1], by = hhid] else x)
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Missing baseline}
+
+
+%There are \textsf{hhid}s that are missing in ID file (but appearing in other section files). There are nrow(missingFiles) such entries.
+%Below shows \textsf{hhid}s present in more than 2 section files but missing in ID file. \textsf{missingHHinID} is a list of \textsf{hhid-year} combinations that are missing in ID file and found only in section files. \textsf{missingFiles} is a table of \textsf{hhid, year} that indicate missing hhids in ID file but present in section files. 
+
+Drop these 116 individuals by dropping entries with \textsf{Mgroup}==NA. Below gives the number of rows being dropped, number of variables with all-NAs and not all-NAs (which indicate how much information is thrown away by this). Thanks to copying of \textsf{Mgroup} and other group information, the number of rows dropped is small.
+\begin{Schunk}
+\begin{Soutput}
+                        filenames rowsDropped allNAcols not.allNAcols
+ 1:                        roster           0        58             0
+ 2:                     education           0        82             0
+ 3:        contacts_with_mainland           0        66             0
+ 4:          credit_and_borrowing           0        96             0
+ 5:                  input_output           0       137             0
+ 6:               farm_production           3        24            17
+ 7:     flood_related_information           0        59             0
+ 8:                      hh_asset           0        41             0
+ 9:                hh_consumption           1        62            58
+10:  id_updated_received_from_abu           0         0             0
+11:                old_id_updated           0         0             0
+12:                  labor_income           0        88             0
+13: abu_livestockownershipupdated           2        48            18
+14:          livestock_production           0        35             0
+15:                         monga           0        48             0
+16:        ownership_and_contract           0        55             0
+17:               poverty_updated           1        23            30
+18:                       poverty           1        21            22
+19:             productive_assets           0        59             0
+20:                    relocation           0        55             0
+21:                    assistance           0        82             0
+22:           savings_and_lending           0        47             0
+23:                        shocks           0        74             0
+24:             women_empowerment           0        53             0
+25:                  MergedAssets           0        68             0
+26:                 LivestockLong           6        26            19
+                        filenames rowsDropped allNAcols not.allNAcols
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+Z <- lapply(Z, function(x) 
+	if (any(grepl("Mg", colnames(x)))) x[!is.na(Mgroup),] else x)
+\end{Sinput}
+\end{Schunk}
+
+HHs with no baseline: HHs whose disbursement was prior to their first interview.
+\begin{Schunk}
+\begin{Sinput}
+HHnobaseline <- unique(xid2[survey == 1 & Disbursed1, hhid])
+# xid3 is ID list of individuals with baseline info, xid2 includes individuals without baseline
+xid3 <- xid2[!(hhid %in% HHnobaseline), ]
+\end{Sinput}
+\end{Schunk}
+If we drop individuals without baseline, it further reduces sample size by 93, and its breakdown of \textsf{Mgroup, year} is given in the below. They are all new group or replacing members. 
+\begin{Schunk}
+\begin{Soutput}
+      Mgroup
+year   new group replacements
+  2013        52           44
+  2014        51           43
+  2015        52           43
+  2017        49           40
+\end{Soutput}
+\end{Schunk}
+Below is the data list object we use in impact estimation.
+\begin{Schunk}
+\begin{Sinput}
+ZB <- lapply(Z, function(x) x[!(hhid %in% HHnobaseline), ])
+\end{Sinput}
+\end{Schunk}
+Save files. \textcolor{blue}{This is going to be used in the data preparation section of impact evaluation file.}
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_with_treatment_patched.rds"))
+saveRDS(ZB, paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+\end{Sinput}
+\end{Schunk}
+In what follows, all analysis is based on the sample with baseline.
+
+
+\subsection{Panel structure by page}
+
+
+Names of sections in \textsf{\footnotesize ./clean\_panel\_data\_by\_section/}: \textsf{\footnotesize roster, education, contacts\_with\_mainland, credit\_and\_borrowing, input\_output, farm\_production, flood\_related\_information, hh\_asset, hh\_consumption, id\_updated\_received\_from\_abu, old\_id\_updated, labor\_income, abu\_livestockownershipupdated, livestock\_production, monga, ownership\_and\_contract, poverty\_updated, poverty, productive\_assets, relocation, assistance, savings\_and\_lending, shocks, women\_empowerment, MergedAssets, LivestockLong}
+
+Names of sections in \textsf{\footnotesize ./only\_panel\_2\_3\_4/}: \textsf{\footnotesize risk\_pref\_13, donations, 15, 21\_2\_income\_generating\_activities, 23\_1, 23\_2, 23\_3, 23\_4, 23\_5, 24, behavioural\_changes, s18\_satisfaction\_and\_product\_use, s19\_q1\_network\_and\_group\_coordination, s19\_q2\_network\_and\_group\_coordination, s19\_q3\_network\_and\_group\_coordination, s19\_q4\_network\_and\_group\_coordination, s19\_q5\_network\_and\_group\_coordination, s19\_q6\_network\_and\_group\_coordination, s21a\_project\_cycle, s21aprojectcycle, s21b\_project\_cycle, s21bprojectcycle, s22\_q1-9\_group\_norms\_and\_leader, s22\_q10-13\_group\_norms\_and\_leader, physical\_asset, pre\_caution, borrowing\_2, by\_product, dwelling\_conditions, remittance, satisfaction, self\_employed\_income}
+\begin{Schunk}
+\begin{Sinput}
+Z.2 <- readRDS(paste0(path1234, "data_read_in_a_list_234.rds"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+\end{Sinput}
+\end{Schunk}
+
+
+Names of sections in \textsf{\footnotesize ./raw\_source\_files/P1\_Check\_20170513, ./raw\_source\_files/P2\_Check\_20170513, ./raw\_source\_files/P3\_Check\_20170513, ./raw\_source\_files/P4\_Check\_20170513}: \textsf{\footnotesize s1\_p1\_2012\_13, s1\_1\_p2, s1\_2\_p2, 1\_houdehold\_composition\_2, 1\_household\_composition\_1, s1.1, s1.2}
+\begin{Schunk}
+\begin{Sinput}
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+# define o800
+Z <- lapply(Z, function(x) {
+  x[, o800 := 0L]
+  x[hhid %in% jds[grepl("trea", treat), hhid], o800 := 1L]
+  })
+Z3new <- Z[[grep("roster", names(Z))]]
+\end{Sinput}
+\end{Schunk}
+
+Below tabulation shows many unmatched \textsf{hhid} across rounds in roster. (FALSE indicates no match in other rds.)
+\begin{Schunk}
+\begin{Soutput}
+   year TRUE FALSE
+1: 2012 1506    94
+2: 2013  516     7
+3: 2014 1983     0
+4: 2015 1994     0
+5: 2017 1914     0
+\end{Soutput}
+\end{Schunk}
+Original 800 HHs not found in other rounds of roster files. (FALSE indicates no match in other rds.)
+\begin{Schunk}
+\begin{Soutput}
+   year TRUE FALSE
+1: 2012  759    41
+2: 2013    0     0
+3: 2014  743     0
+4: 2015  745     0
+5: 2017  708     0
+\end{Soutput}
+\end{Schunk}
+101 HHs in 2012/2013 with unmatched hhid in subsequent rds in roster files: {\footnotesize 7010103, 7010104, 7010113, 7020217, 7020219, 7020313, 7020315, 7020501, 7020502, 7020503, 7020504, 7020505, 7020506, 7020507, 7020508, 7020509, 7020510, 7020511, 7020512, 7020513, 7020514, 7020515, 7020516, 7020517, 7020518, 7020519, 7020520, 7021116, 7021210, 7031401, 7031402, 7031403, 7031404, 7031405, 7031406, 7031407, 7031408, 7031409, 7031410, 7031411, 7031412, 7031413, 7031414, 7031415, 7031416, 7031417, 7031418, 7031419, 7031420, 7031502, 7031505, 7031513, 7031602, 7031608, 7031612, 7042013, 7042103, 7043407, 7053909, 7054104, 7054106, 7054408, 7054413, 7054416, 7054419, 7054502, 7054516, 7064603, 7064604, 7065313, 7075702, 7085901, 7096206, 7126813, 7133504, 7133512, 7133514, 7133516, 7133520, 7137304, 7137310, 7137317, 7137320, 8147811, 8147903, 8148013, 8148207, 8148220, 8158816, 8159220, 8169615, 8169719, 8169815, 81710316, 9807031614, 9808169612, 9907031415, 99070211912, 99081412508, 99081412509, 99081711213}. Among which 68 are dropped out HHs. Below tabulation shows there are \textcolor{red}{27 cases of continuing members not being captured after 2012.} Although classified as continuing members, are they drop outs? (Remaining 6 cases?)
+
+\textsf{o800}: 41 HHs in 2012/2013 with unmatched hhid in subsequent rds in roster files: {\footnotesize 7010103, 7010104, 7020313, 7020507, 7020508, 7020509, 7020510, 7020512, 7020513, 7020514, 7020516, 7020519, 7020520, 7031401, 7031402, 7031403, 7031404, 7031406, 7031408, 7031410, 7031411, 7031418, 7031419, 7031502, 7031505, 7031513, 7053909, 7054106, 7054408, 7054413, 7054516, 7065313, 7075702, 7096206, 7133504, 7137310, 8147811, 8148013, 8148207, 8158816, 8169615}. Among which 33 are dropped out HHs. Below tabulation shows there are \textcolor{red}{8 cases of continuing members not being captured after 2012.} Although classified as continuing members, are they drop outs? (Remaining 0 cases?)
+
+
+\textcolor{green}{[2017-11-14 Abu email]: (T)hese households took the loan but have migrated to Dhaka or other places and could not be traced. $\rightarrow$ Create \textsf{RanAway} = T/F.} 
+\begin{Schunk}
+\begin{Soutput}
+                  Mstatus
+Assign             gErosion gRejection iRejection iReplacement newGroup
+  traditional             0          0          0            0        0
+  large                   0          0          0            0        0
+  large grace             0          0          0            0        0
+  cow                     0          0          0            0        0
+  drop outs               0         22         22            0        0
+  forced drop outs       24          0          0            0        0
+                  Mstatus
+Assign             oldMember
+  traditional              2
+  large                   10
+  large grace              4
+  cow                     11
+  drop outs                0
+  forced drop outs         0
+\end{Soutput}
+\begin{Soutput}
+      gid    hhid   memname year   Mstatus      Assign creditstatus
+ 1: 70101 7010103   khoteza 2012 oldMember       large          Yes
+ 2: 70101 7010104    rupali 2012 oldMember       large          Yes
+ 3: 70101 7010113     rotna 2012 oldMember       large          Yes
+ 4: 70202 7020217    suroti 2012 oldMember         cow          Yes
+ 5: 70202 7020219    halima 2012 oldMember         cow          Yes
+ 6: 70203 7020313   morjina 2012 oldMember       large          Yes
+ 7: 70203 7020315    rokeya 2012 oldMember       large          Yes
+ 8: 70211 7021116     rajia 2012 oldMember traditional          Yes
+ 9: 70212 7021210   ronjona 2012 oldMember         cow          Yes
+10: 70315 7031513    rahima 2012 oldMember traditional          Yes
+11: 70316 7031608     omisa 2012 oldMember         cow          Yes
+12: 70420 7042013    sahena 2012 oldMember       large          Yes
+13: 70434 7043407    hajera 2012 oldMember       large          Yes
+14: 70541 7054104   aynaful 2012 oldMember         cow          Yes
+15: 70545 7054516 shahera 2 2012 oldMember large grace          Yes
+16: 70646 7064603    saleha 2012 oldMember large grace          Yes
+17: 70859 7085901     safia 2012 oldMember         cow          Yes
+18: 70962 7096206 sada rani 2012 oldMember       large          Yes
+19: 71268 7126813       nur 2012 oldMember       large          Yes
+20: 71373 7137304   lalbuni 2012 oldMember         cow          Yes
+21: 71373 7137310   shahida 2012 oldMember         cow          Yes
+22: 71373 7137317    afruja 2012 oldMember         cow          Yes
+23: 71373 7137317    afruja 2015 oldMember         cow          Yes
+24: 71373 7137320  monoyara 2012 oldMember         cow          Yes
+25: 81592 8159220    sirina 2012 oldMember large grace          Yes
+26: 81696 8169615    rahela 2012 oldMember       large          Yes
+27: 81698 8169815     azifa 2012 oldMember large grace          Yes
+      gid    hhid   memname year   Mstatus      Assign creditstatus
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+xid2[, RanAway := F]
+xid2[hhid %in% attritedHH & grepl("^old", Mstatus), RanAway := T]
+\end{Sinput}
+\end{Schunk}
+
+
+
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{13cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Files and survey rounds\label{filestab}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.75}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/received/cleaned_by_RA/file_tabulation.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& Compiled from GUK data.\\[-1ex]
+Notes:& 1. Number of rows are displayed.\\[-1ex]
+& 2. 2012 and 2013 are round 1. 2012 and 2013 data were jointly reported for \textsf{s1 (roster)} but separated by using information from \textsf{id} file. \textsf{MergedAssets} is a merged file of \textsf{hh\_asset} and \textsf{productive\_assets}. \\[-1ex]
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{13cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Files and survey rounds for original 800 HHs\label{filestab o800}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.75}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/received/cleaned_by_RA/file_o800_tabulation.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& Compiled from GUK data.\\[-1ex]
+Notes:& 1. Number of rows are displayed.\\[-1ex]
+& 2. 2012 and 2013 are round 1. 2012 and 2013 data were jointly reported for \textsf{s1 (roster)} but separated by using information from \textsf{id} file. \textsf{MergedAssets} is a merged file of \textsf{hh\_asset} and \textsf{productive\_assets}. \\[-1ex]
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{13cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Files and survey rounds for original 800 HHs (continued)\label{filestab o800 continued}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.75}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/received/cleaned_by_RA/file_o800_tabulation2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& Compiled from GUK data.\\[-1ex]
+Notes:& 1. Number of rows are displayed.\\[-1ex]
+& 2. 2012 and 2013 are round 1. 2012 and 2013 data were jointly reported for \textsf{s1 (roster)} but separated by using information from \textsf{id} file. \textsf{MergedAssets} is a merged file of \textsf{hh\_asset} and \textsf{productive\_assets}. \\[-1ex]
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+
+\section{Plots}
+
+\begin{Schunk}
+\begin{Sinput}
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Incomes}
+
+
+
+Revenues are reported partially.
+\begin{Schunk}
+\begin{Soutput}
+      hhid       year                  Mgroup                 Assign   
+ 7020308:  4   2012: 22   continued       :328   traditional     :104  
+ 7020902:  4   2013:  2   drop outs       : 29   large           :177  
+ 7021216:  4   2014:192   forced drop outs:  5   large grace     :119  
+ 7020301:  3   2015:186   new group       :156   cow             : 89  
+ 7020408:  3   2017:123   replacements    :  7   drop outs       : 29  
+ 7020604:  3                                     forced drop outs:  5  
+ (Other):504                                     NA's            :  2  
+  TotalRevenue    Panel  
+ Min.   :   700   1: 24  
+ 1st Qu.: 10400   2:192  
+ Median : 18000   3:186  
+ Mean   : 20961   4:123  
+ 3rd Qu.: 26800          
+ Max.   :399800          
+                         
+\end{Soutput}
+\end{Schunk}
+Costs are reported partially. There are 22, 2, 192, 186, 123 HHs who report revenues for 2012, 2013, 2014, 2015, 2017, only 15, 3, 1 HHs report costs for 2012, 2014, 2015, respectively.
+\begin{Schunk}
+\begin{Soutput}
+      hhid      year     TotalOfCosts  Panel 
+ 7020306: 1   2012:15   Min.   :  70   1:15  
+ 7020308: 1   2014: 3   1st Qu.: 445   2: 3  
+ 7020319: 1   2015: 1   Median : 754   3: 1  
+ 7020902: 1             Mean   : 848         
+ 7021208: 1             3rd Qu.: 995         
+ 7021216: 1             Max.   :2255         
+ (Other):13                                  
+\end{Soutput}
+\end{Schunk}
+
+Plot agricultural revenues (\textsf{\small Figure \ref{Figure farm revenue}}).
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datafarm_revenue-1} 
+
+}
+
+\caption[Farming revenues]{Farming revenues}\label{Figure farm revenue}
+\end{figure}
+\end{Schunk}
+Check trends in HH total labour income (\textsf{\small Figure \ref{Figure labour incomes}, \ref{Figure labour incomes 2}}).
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datalabour_incomes-1} 
+
+}
+
+\caption[Labour incomes]{Labour incomes}\label{Figure labour incomes}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datalabour_incomes_2-1} 
+
+}
+
+\caption[Labour incomes bewteen arms and controls]{Labour incomes bewteen arms and controls}\label{Figure labour incomes 2}
+\end{figure}
+\end{Schunk}
+
+\subsection{Assets}
+
+
+Plot asset values (\textsf{\small Figure \ref{Figure asset value}}), asset earning (\textsf{\small Figure \ref{Figure asset earning}}), and newly purchased asset values asset values (\textsf{\small Figure \ref{Figure newly purchased asset}}).
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataasset_value-1} 
+
+}
+
+\caption[Asset value by arms]{Asset value by arms}\label{Figure asset value}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataasset_earning-1} 
+
+}
+
+\caption[Asset earnings by arms]{Asset earnings by arms}\label{Figure asset earning}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datanewly_purchased_asset-1} 
+
+}
+
+\caption[Asset purchased in last one year by arms]{Asset purchased in last one year by arms}\label{Figure newly purchased asset}
+\end{figure}
+\end{Schunk}
+
+
+Livestock asset values are given in \textsf{\small Figure \ref{Figure livestock asset value}}.
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datalivestock_asset_value-1} 
+
+}
+
+\caption[Livestock asset value by arms]{Livestock asset value by arms}\label{Figure livestock asset value}
+\end{figure}
+\end{Schunk}
+Livestock produce sales using imputed prices are given in \textsf{\small Figure \ref{Figure livestock produce sales}}.
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datalivestock_produce_sales-1} 
+
+}
+
+\caption[Livestock produce sales by arms]{Livestock produce sales by arms}\label{Figure livestock produce sales}
+\end{figure}
+\end{Schunk}
+
+\subsection{Poverty}
+
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datameals_per_day-1} 
+
+}
+
+\caption[Meals per day by arms and controls]{Meals per day by arms and controls}\label{Figure meals per day}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_datasaving-1} 
+
+}
+
+\caption[Saving by arms and controls]{Saving by arms and controls}\label{Figure saving}
+\end{figure}
+\end{Schunk}
+
+\subsection{Schooling}
+
+
+\begin{Schunk}
+\begin{Soutput}
+        AgeComputed
+Enrolled    5    6    7    8    9   10   11   12   13   14   15   16   17   18
+       0  416  347  222  125   72   91   49  133   84  107  173  158  136  158
+       1  113  312  695  843  879 1166  807 1016  791  581  643  325  337  221
+\end{Soutput}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataenrollment-1} 
+
+}
+
+\caption[School enrollment by arms and controls]{School enrollment by arms and controls}\label{Figure enrollment}
+\end{figure}
+\end{Schunk}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	(Voluntary) drop out group has lower enrollment rates.
+\end{itemize}
+
+Plot enrollment (\textsf{\small Figure \ref{Figure enrollment with artificially augmented panel}}).
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/read_cleaned_dataenrollment_with_artificially_augmented_panel-1} 
+
+}
+
+\caption[School enrollment with artificially augmented panel by arms and controls]{School enrollment with artificially augmented panel by arms and controls}\label{Figure enrollment with artificially augmented panel}
+\end{figure}
+\end{Schunk}
+
+\end{document}
+

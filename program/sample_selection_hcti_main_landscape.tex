@@ -1,0 +1,54 @@
+\begin{tikzpicture}[
+    every node/.style={
+        font=\sffamily,
+        drop shadow,
+        fill=blue!10,
+        text width=8cm,
+        align=center},
+        >=latex, %Make the arrow tips latex
+        myline/.style={ultra thick, black!50},
+        shorter/.style={shorten <=1mm, shorten >=0.5mm}]
+
+\node (L0) at (0, 0) {Targeted ($n=4252$)};
+
+\node[below= 1cm of L0] (L1) {Complete and complied ($n=3330$)};
+\node[below=1.2cm of L1.east, anchor = east, text width = 6cm] 
+	(L1e) {Excluded due to NA ($n=19$)};
+	\draw[myline, ->, shorter] (L0) -- (L1);
+	%\draw[myline, ->, shorter] (L1) -- (L1e);
+	\draw[myline, shorter, ->] ([xshift = 1cm] L1.south west) |- (L1e.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] L1.south west) --++ (0, -2cm);
+
+\node[below = 2cm of L1] (L2)  {Trimmed sample ($n=3281$)};
+\node[below = 2.75cm of L2.east, anchor = east, text width = 6cm] 
+	(L2e) {\mpage{6cm}{\footnotesize Excluded due to suspected known-to-oneself HIV positive ($n=120$)\\ \hspace{1em} ``Already on wellness program'': 44\\\hspace{1em} ``Sure about status'' and prevalence positive: 17\\\hspace{1em} ``Sure about status'', prob = 100, and tested before: 59}};
+	\draw[myline, shorter, ->] ([xshift = 1cm] L2.south west) |- (L2e.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] L2.south west) --++ (0, -5cm) -- ++ (7.8cm, 0cm) 
+		--++ (0cm, 9.7cm) --++ (.5cm, 0cm);
+
+\node[right = 1cm of L0] (L3)  {Original sample ($n=3161$)};
+\node[below=1.2cm of L3.east, anchor = east, text width = 6cm] 
+	(L3d) {Dropped control ($n=490$)};
+	\draw[myline, shorter, ->] ([xshift = 1cm] L3.south west) |- (L3d.west);
+	\draw[myline, shorter, ->] ([xshift = 1cm] L3.south west) --++ (0, -2cm);
+\node[below = 2cm of L3] (L3a) {Analysis sample: 2671};
+
+\node[below = .5cm of L3a, xshift = 0cm, text width = 5cm] (L3t) {Test takers: 2253};
+	\draw[myline, ->, shorter] ([xshift = .5cm] L3a.south west) |-  (L3t);
+	\node[below = .25cm of L3t, text width = 3cm] (L3tn) {Negative: 2157};
+	\node[below = .25cm of L3tn, text width = 3cm] (L3tp) {Positive: 96};
+
+\node[below=2.25cm of L3t, text width = 5cm] 
+	(L3n) {Test nontakers: 418};
+	\draw[myline, ->, shorter] ([xshift = .5cm] L3a.south west) |-  (L3n);
+	\node[below=.25cm of L3n, xshift = 1cm, text width = 4.5cm] 
+	(L3nt) {Prevalence takers: 104};
+		\node[below = .25cm of L3nt, text width = 3cm] 
+		(L3ntn) {Negative: 61};
+		\node[below = .25cm of L3ntn, text width = 3cm] 
+		(L3ntp) {Positive: 43};
+	\node[below=2.0cm of L3nt, text width = 4.5cm] 
+	(L3nn) {Prevalence nontakers: 314};
+	\draw[myline, ->, shorter] ([xshift = .5cm] L3n.south west) |-  (L3nt);
+	\draw[myline, shorter, ->] ([xshift = .5cm] L3n.south west) |- (L3nn);
+\end{tikzpicture}

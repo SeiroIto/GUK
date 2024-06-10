@@ -1,0 +1,334 @@
+Further data preparations (trimming, adding shocks, round numbering, creating dummy vectors, interaction terms) for estimation. Produces files: \textsf{\footnotesize \Sexpr{paste0(flnames, "AdminDataUsedForEstimation.prn")}}.
+<<common data preparations, warning = F>>=
+# Name it as sch1, sch2 rather than s1, s2 (as in other files) to display "s1" in TrimmingNumObsTable
+# Following files are created in ImpactEstimatin_body1.rnw using paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds")
+sch1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+flnames <- c("RosterSchooling", "Roster", "AllMeetingsRoster", "Asset", 
+  "Livestock", "LivestockProducts", "LabourIncome", "FarmRevenue", "Consumption")
+dfiles <- c("sch1", "ar", "arA", "ass", "lvo", "lvp", "lab", "far", "con")
+interterms <- c("Time.2", "Time.3", "Time.4")
+Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
+povertystatus <- c("UltraPoor", "ModeratelyPoor")
+Obs <- NULL
+shk <- shk[survey == 1, ]
+shk[, grepout("gid|Dat|Ye|Mo|surv|code", colnames(shk)) := NULL]
+setkey(shk, groupid, hhid)
+# shk[, Month := factor(Month, levels = 
+#   c("January", "February", "March", "April", 
+#   #"May", "June", "July",
+#   "August", "September", "November", "October",   "December"))]
+dimchange <- dimchangeRd1 <- NULL
+for (j in 1:length(dfiles)) {
+#  if (j == 1) print0(paste("old|iRej|^g in Mstatus", "==>", "con|^dro|^rep in Mgroup", "==>", "No tw|dou in TradGroup"))
+  dd <- get(dfiles[j])
+  if (!any(grepl("^tee$", colnames(dd)))) dd[, tee := 1:.N, by = hhid]
+  # show trimming results
+  dimchange <- rbind(dimchange, paste(dfiles[j], ":", nrow(dd), 
+    "==>", 
+    nrow(dd[grepl("old|iRej|^g", Mstatus), ]),
+#    "==>", 
+#    nrow(dd[grepl("old|iRej|^g", Mstatus), ][grepl("con|dro", Mgroup), ]), 
+    "==>", 
+    nrow(dd[grepl("old|iRej|^g", Mstatus), ][!grepl("tw|dou", TradGroup), ])
+    ))
+  dimchangeRd1 <- rbind(dimchangeRd1, paste(dfiles[j], ":", nrow(dd[tee == 1, ]), 
+    "==>", 
+    nrow(dd[tee == 1 & grepl("old|iRej|^g", Mstatus), ]),
+#    "==>", 
+#    nrow(dd[grepl("old|iRej|^g", Mstatus), ][grepl("con|dro", Mgroup), ]), 
+    "==>", 
+    nrow(dd[tee == 1 & grepl("old|iRej|^g", Mstatus), ][!grepl("tw|dou", TradGroup), ])
+    ))
+}
+dmch <- gsub("==>", " & $\\\\Rightarrow$ &", dimchange)
+dmch <- gsub(":", " & ", dmch)
+#dmch <- rbind("file & & old$|$iRej$|$\\^{}g in \\textsf{Mstatus} && con$|$dro in \\textsf{Mgroup} && No tw$|$dou in \\textsf{TradGroup} &", dmch)
+dmch <- rbind("file & & old$|$iRej$|$\\^{}g in \\textsf{Mstatus} && No tw$|$dou in \\textsf{TradGroup} &", 
+  "\\makebox[1.5cm]{\\footnotesize all rounds}&&&&&",
+  dmch)
+dmch <- gsub("$", " \\\\\\\\ ", dmch)
+
+dmchRd1 <- gsub("==>", " & $\\\\Rightarrow$ &", dimchangeRd1)
+dmchRd1 <- gsub(":", " & ", dmchRd1)
+dmchRd1 <- rbind("\\makebox[1.5cm]{\\footnotesize round 1 only}&&&&&",
+  dmchRd1)
+#dmchRd1 <- rbind("file & & old$|$iRej$|$\\^{}g in \\textsf{Mstatus} && No tw$|$dou in \\textsf{TradGroup} &", dmchRd1)
+dmchRd1 <- gsub("$", " \\\\\\\\ ", dmchRd1)
+
+hleft = c("\\sf", c(rbind(rep("\\hfill", 2), rep("\\hfil", 2)), "\\hfill"))
+hcenter = c(1.5, c(rbind(rep(1, 2), rep(1.5, 2)), 1))
+write.tablev(
+  rbind(paste("\\begin{tabular}{", 
+    paste(paste0(">{\\footnotesize ", hleft, "}", "p{", hcenter, "cm}", "<{}"), collapse = ""), "}\\rowcolor{paleblue}"),
+  dmch, 
+  dmchRd1, 
+  "\\end{tabular}"), 
+  paste0(pathsaveHere, "TrimmingNumObsTable.tex"), colnamestrue = F)
+#print0(rbind(paste("(old|iRej|^g in Mstatus)", "==>", "(con|^dro|^rep in Mgroup)", "==>", "(No tw|dou in TradGroup)"), dimchange))
+<<save with AdminDataUsedForEstimation, warning = F>>=
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  setkey(dd, hhid, Year, Month)
+  if (!any(grepl("^tee$", colnames(dd)))) dd[, tee := 1:.N, by = hhid]
+  dd[, Arm := droplevels(Arm)]
+  if (any(grepl("IntDate", colnames(dd))))
+    dd[, Year :=  as.integer(strftime(IntDate, format = "%Y"))] else
+  if (any(grepl("^Date$", colnames(dd))))
+    dd[, Year :=  as.integer(strftime(Date, format = "%Y"))]
+  # 1. Keep only membership = 1 or 4, which corresponds to 
+  # Mstatus old, iRej, gR, gE
+  dd <- dd[grepl("old|iRej|^g", Mstatus), ]
+  # 2. Keep only continuing, dropouts members in Mgroup.
+  #dd <- dd[grepl("con|dro", Mgroup), ]
+  # Rejecters do not receive loans. So I need to relax creditstatus = yes condition.
+  # Remark out the following:
+  # dd <- dd[grepl("Yes", creditstatus), ]
+  #  dd <- dd[as.Date(DisDate1) < as.Date("2015-01-01"), ]
+  dd <- dd[!grepl("tw|dou", TradGroup), ]
+#grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & !grepl("tw|dou", TradGroup)
+  setkey(dd, groupid, hhid)
+  # merge shock module
+  dd <- shk[dd]
+  dd[, c("en") := NULL]
+  dd[, teeyr := 1]
+  dd[Year == 2014, teeyr := 2]
+  dd[Year == 2015, teeyr := 3]
+  dd[Year == 2016, teeyr := 3]
+  dd[Year == 2017, teeyr := 4]
+  dd[, Time := teeyr]
+  setkey(dd, hhid, Year, teeyr)
+  # Replace Arm with RArm
+  dd[, ArmUsedPreviously := Arm]; dd[, Arm := RArm]
+  dd <- data.table(dd, 
+    makeDummyFromFactor(dd[, Arm], reference = NULL))
+  if (any(grepl("dummyLarge grace", colnames(dd)))) 
+    setnames(dd, grepout("dummyLarge grace", colnames(dd)), 
+      gsub("dummyLarge g", "dummyLargeG", 
+        grepout("dummyLarge grace", colnames(dd))))
+  if (any(grepl("dummyNANA", colnames(dd)))) 
+    dd[, dummyNANA := NULL]
+  #dd[, dummyDropOuts := NULL]
+  dd <- data.table(dd, 
+    makeDummyFromFactor(dd[, povertystatus], reference = NULL))
+  setnames(dd, c("dummyUltra Poor", "dummyModerate Poor"),
+    c("dummyUltraPoor", "dummyModeratelyPoor"))
+  dd[, c("Size", "Grace", "Item") := .("SmallSize", "WithoutGrace", "Cash")]
+  dd[!grepl("tra", Arm), Size := "LargeSize"]
+  dd[grepl("gr|cow", Arm), Grace := "WithGrace"]
+  dd[grepl("cow", Arm), Item := "InKind"]
+  dd[, c("Grace", "Size", "Item") := 
+    .(factor(Grace), factor(Size, levels = c("LargeSize", "SmallSize")), 
+      factor(Item))]
+  dd <- data.table(dd, 
+    makeDummyFromFactor(dd[, Size], reference = NULL),
+    makeDummyFromFactor(dd[, Grace], reference = NULL),
+    makeDummyFromFactor(dd[, Item], reference = NULL))
+  # create demeaned dummies
+  tobe.interacted <- c(Arms, povertystatus, 
+    c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace", "Cash", "InKind"))
+  for (k in tobe.interacted)
+    dd[, paste0("DemeanedDummy", k) := 
+      eval(parse(text = 
+        paste0("dummy", k)
+      )) - 
+      mean(
+        eval(parse(text = 
+          paste0("dummy", k)
+        ))
+        , na.rm = T)
+    ]
+  for (i in interterms) {
+    i1 <- unlist(strsplit(i, "\\."))
+    i2 <- i1[2]; i1 <- i1[1]
+    i0 <- gsub("\\.", "", i)
+    dd[, (i) := as.numeric(eval(parse(text=i1)) == i2)]
+    dd[, paste0("Demeaned", i0) := 
+      eval(parse(text=i)) - mean(eval(parse(text=i)), na.rm = T)] 
+    for (k in tobe.interacted)
+      dd[, paste0("dummy", k, ".", i0) := 
+        eval(parse(text=paste0("Demeaned", i0))) * 
+        eval(parse(text=paste0("DemeanedDummy", k)))]
+    # undemeand (UD) interactions
+    for (k in tobe.interacted)
+      dd[, paste0("UDdummy", k, ".", i0) := 
+        eval(parse(text=i)) * 
+        eval(parse(text = paste0("dummy", k)))]
+  }
+  # Only for livestock to create demeand HadCows*Arm, HadCows*Arm*Time interactions 
+  if (grepl("lvo", dfiles[j])) {
+    # demean HadCows
+    dd[, "demeanedHadCows" := dummyHadCows - mean(dummyHadCows)]
+    dd[, paste0("dummyHadCows.", "dummy", levels(dd[, .Arm])) := 0L]
+    dd[, paste0(rep(paste0("dummyHadCows.", "dummy", levels(dd[, .Arm])), 2),  
+      rep(paste0(".Time", 3:4), each = 4)) := 0L]
+    # HadCows * Arm, HadCows * Arm * Time
+    for (a in c(levels(dd[, .Arm]), levels(dd[, Size]), 
+      levels(dd[, Grace]), levels(dd[, Item]))) {
+      dd[, paste0("dummyHadCows.dummy", a) := 
+        eval(parse(text=paste0("DemeanedDummy", a))) * demeanedHadCows]
+      dd[, paste0("dummyHadCows.dummy", a, ".Time", 3:4) := 
+        .(eval(parse(text = paste0("dummyHadCows.dummy", a))) * DemeanedTime3,
+          eval(parse(text = paste0("dummyHadCows.dummy", a))) * DemeanedTime4)]
+    }
+  }
+  dd[, grepout("Demea|demeanedHad|i.group|group.id", colnames(dd)) := NULL]
+  Obs <- rbind(Obs, cbind(dfiles[j], dd[, .(obs = .N), by = .(Arm, tee)]))
+  assign(dfiles[j], dd)
+  saveRDS(dd, paste0(pathsaveHere, flnames[j], "AdminDataUsedForEstimation.rds"))
+  fwrite(dd, paste0(pathsaveHere, flnames[j], "AdminDataUsedForEstimation.prn"), 
+    sep = "\t", quote = F)
+}
+@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Data trimming results\label{tab trim}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "TrimmingNumObsTable.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK survey data.}\\
+Notes: & 1. & Top panel is observations for all rounds. Bottom panel is observations for round 1 only. We aim for ITT estimates and need to retain original sampled individuals. old$|$iRej$|$\^{}g in \textsf{Mstatus} are strings for old members, individual rejecters, group rejecters, group erosion. con$|$\^{}dro$|$\^{}rep in \textsf{Mgroup} indicates continuing, dropouts, replacing members. tw$|$dou in \textsf{TradGroup} are members who received loans twice and double amount in the 2nd loans. They are omitted from analysis because they are under a different treatment arm.\\
+& 2. & 
+\end{tabular}
+\end{minipage}
+
+%Number of observations after trimming: 1. Keep only membership = 1 or 4, which corresponds to Mstatus old, iRej, gR, gE; 2. Keep only continuing, dropouts members in Mgroup.
+<<Number of observations after trimming, results = "hide">>=
+setnames(Obs, "V1", "file")
+Obs[, Arm := factor(Arm, levels = c("traditional", "large", "large grace", "cow"))]
+# from long to wide: Arm1, Arm2, ... with rows in fileX * teeY
+Obs <- reshape(Obs, direction = "wide", idvar = c("file", "tee"),
+  timevar = "Arm", v.names = "obs")
+setnames(Obs, grepout("obs", colnames(Obs)), 
+  gsub("obs.", "", grepout("obs", colnames(Obs))))
+setcolorder(Obs, c("file", "tee", "traditional", "large", "large grace", "cow"))
+setkey(Obs, file, tee)
+Obs
+@
+
+<<tabulation of obs using these files by page, results = "hide">>=
+sch <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ar[, teenum := 1:.N, by = .(hhid, survey)]
+lab[, teenum := 1:.N, by = .(hhid, survey)]
+con[, tee := (1:.N)+1, by = hhid]
+datafiles <- c("sch", "ar", "arA", "ass", "lvo", "lvp", "lab", "far", "con")
+armtabs <- armtabs.o1600 <- NULL
+for (i in 1:length(datafiles[-2])) {
+  dx <- get(datafiles[-2][i])
+  setorder(dx, hhid, survey, Year, Month)
+  if (!any(grepl("^tee$", colnames(dx)))) dx[, tee := 1:.N, by = hhid]
+  dx <- dx[tee < AttritIn, ]
+  if (i != grep("con", datafiles[-2])) {
+    for (j in 1:4) {
+      armtabs <- rbind(armtabs,
+         table0(dx[tee == j, RArm]))
+      armtabs.o1600 <- rbind(armtabs.o1600,
+         table0(dx[tee == j & o1600 == 1L, RArm]))
+     }
+  } else
+    for (j in 2:4) {
+      armtabs <- rbind(armtabs,
+         table0(dx[tee == j & AttritIn != 2, RArm]))
+      armtabs.o1600 <- rbind(armtabs.o1600,
+         table0(dx[tee == j & AttritIn != 2 & o1600 == 1L, RArm]))
+    }
+}
+armtabs <- data.table(armtabs)
+armtabs[, total := rowSums(armtabs)]
+armtabs <- data.table(
+  files = 
+    paste0("\\makebox[1cm]{\\scriptsize ", 
+      c(rep(datafiles[-c(2, grep("con", datafiles))], each = 4), 
+        rep("con", each = 3)),
+      "}")
+  , 
+  rounds = 
+    c(rep(1:4, length(datafiles)-2), 2:4)
+  , armtabs)
+armtabs[-seq(1, nrow(armtabs), 4), files := ""]
+armtabs.o1600 <- data.table(armtabs.o1600)
+armtabs.o1600[, total := rowSums(armtabs.o1600)]
+armtabs.o1600 <- data.table(
+  files = 
+    paste0("\\makebox[1cm]{\\scriptsize ", 
+      c(rep(datafiles[-c(2, grep("con", datafiles))], each = 4), 
+        rep("con", each = 3)),
+      "}")
+  , 
+  rounds = 
+    c(rep(1:4, length(datafiles)-2), 2:4)
+  , armtabs.o1600)
+armtabs.o1600[-seq(1, nrow(armtabs.o1600), 4), files := ""]
+amt <- latextab(as.matrix(armtabs), 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(1, rep(1.5, ncol(armtabs)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.4ex", delimiterline= NULL,
+  alternatecolor = "gray90")
+amt.o1600 <- latextab(as.matrix(armtabs.o1600), 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(1, rep(1.5, ncol(armtabs.o1600)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.4ex", delimiterline= NULL,
+  alternatecolor = "gray90")
+write.tablev(amt,  paste0(pathsaveHere, "NumObsOriginalHHs_all.tex"),
+  colnamestrue = F)
+write.tablev(amt.o1600,  paste0(pathsaveHere, "NumObsOriginalHHs_o1600.tex"),
+  colnamestrue = F)
+@
+
+\hfil\begin{minipage}[t]{12cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations  in each file at round 1 from HHs with single treatment\label{tab NObsOHall}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{10pt}
+\renewcommand{\arraystretch}{.7}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumObsOriginalHHs_all.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Sample is all households: Original 1600 and added households through new groups and individuals replacing opt-out members. All households in traditional arm who received more than one loan are excluded.\\
+& 2. &  
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{12cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 1600 HHs\label{tab NObsOHo1600}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{10pt}
+\renewcommand{\arraystretch}{.7}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "NumObsOriginalHHs_o1600.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Sample is original 1600 households who agree to join the group. This includes households who later dropped out due to flood, group rejections, and individual rejections. All original 1600 households are tracked but some attrit from the sample.\\
+& 2. &  
+\end{tabular}
+\end{minipage}
+

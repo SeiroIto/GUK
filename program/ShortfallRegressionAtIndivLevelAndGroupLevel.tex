@@ -1,0 +1,573 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ShortfallRegressionAtIndivLevelAndGroupLevel/"); library(knitr); knit("ShortfallRegressionAtIndivLevelAndGroupLevel.rnw", "ShortfallRegressionAtIndivLevelAndGroupLevel.tex"); system("platex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("pbibtex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("dvipdfmx ShortfallRegressionAtIndivLevelAndGroupLevel")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Fixed effect estimation of repayment\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+Need: packages \textsf{lmtest, sandwich}.
+
+This is a file whose regression results to be used in read\_admin\_data.rnw.
+
+
+
+
+
+
+
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+\begin{Schunk}
+\begin{Sinput}
+for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
+ !grepl("GroupShortf|LagGroupNetSav", colnames(X)))) {
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = groupid]
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = Date]
+}
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# take only 1st member to form group level data
+X[, gnum := 1:.N, by = .(groupid, Date)]
+X[, c("LargeSize", "WithGrace", "InKind") := 0L]
+X[!grepl("tra", Arm), LargeSize := 1L]
+X[grepl("gr|co", Arm), WithGrace := 1L]
+X[grepl("co", Arm), InKind := 1L]
+X[, Attributes := "traditional"]
+X[!grepl("tra", Arm), Attributes := "LargeSize"]
+X[grepl("gr|co", Arm), Attributes := "LargeSizeAndWithGrace"]
+X[grepl("co", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
+X[, Attributes := factor(Attributes, levels = c("traditional", "LargeSize", 
+  "LargeSizeAndWithGrace", "LargeSizeAndWithGraceAndInKind"))]
+X1 <- X[gnum == 1, ]
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+X[, o800 := 0L]
+# need to use groupid because some hhid in admin record is missing in jds data
+X[groupid %in% jds[grepl("trea", treat), groupid], o800 := 1L]
+X2 <- X[o800 == 1L, ]
+addmargins(table0(X2[, .(TeeInLY = 1:.N), by = .(groupid, LoanYear)][
+  TeeInLY == 1, LoanYear]))
+\end{Sinput}
+\begin{Soutput}
+
+  1   2   3   4 Sum 
+ 69  69  69  69 276 
+\end{Soutput}
+\begin{Sinput}
+# group shortfall regressions
+vfesg1 <- lm(Shortfall  ~ Arm, data = X1)
+vfesg2 <- lm(MeanGroupShortfall  ~ Arm +
+  GRSR + LagMeanGroupShortfall + GRSR:LagMeanGroupShortfall, data = X1)
+vfesg3 <- lm(MeanGroupShortfall ~  
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear, 
+  data = X1)
+vfesg4 <- lm(MeanGroupShortfall ~  
+  LargeSize + WithGrace + InKind + 
+  SecondYear +
+  I(LargeSize*SecondYear) + WithGrace:SecondYear + InKind:SecondYear + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear),
+  data = X1)
+vfesg5 <- lm(MeanGroupShortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear  + Arm:FourthYear + 
+  UltraPoor + UltraPoor:Arm + 
+  UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear  + UltraPoor:Arm:FourthYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+vfesg6 <- lm(MeanGroupShortfall ~ 
+  GRSR + GRSR:LagMeanGroupShortfall + 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(SecondYear*UltraPoor) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(ThirdYear*UltraPoor) +
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(FourthYear*UltraPoor) +
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+# individual shortfall regressions
+vfes1 <- lm(Shortfall  ~ Arm, data = X)
+vfes2 <- lm(Shortfall  ~ Arm +
+  GRSR + LagMeanGroupShortfall + GRSR:LagMeanGroupShortfall
+  + LagShortfall, data = X)
+vfes3 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear, 
+  data = X)
+vfes4 <- lm(MeanGroupShortfall ~  
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear),
+  data = X)
+vfes5 <- lm(Shortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear +
+  UltraPoor:Arm + 
+  UltraPoor:SecondYear + UltraPoor:ThirdYear + UltraPoor:FourthYear +
+  UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear + UltraPoor:Arm:FourthYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+vfes6 <- lm(Shortfall ~ 
+  GRSR + GRSR:LagMeanGroupShortfall + 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(SecondYear*UltraPoor) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(ThirdYear*UltraPoor) +
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(FourthYear*UltraPoor) +
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+# individual shortfall regressions with o800
+vfeso1 <- lm(Shortfall  ~ Arm, data = X2)
+vfeso2 <- lm(Shortfall  ~ 
+   Arm + LagMeanGroupShortfall + 
+  + LagShortfall, data = X2)
+vfeso3 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear
+  + LagShortfall, 
+  data = X2)
+vfeso4 <- lm(MeanGroupShortfall ~  
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear)
+  + LagShortfall, 
+  data = X2)
+vfeso5 <- lm(Shortfall ~ 
+  Arm + 
+  Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear +
+  UltraPoor:Arm + 
+  +I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear)+
+  UltraPoor*Arm*SecondYear + UltraPoor*Arm*ThirdYear + UltraPoor*Arm*FourthYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X2)
+# vfeso5 <- update(vfeso5.0,
+#   . ~ .
+#   +I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear)
+#   - Armtraditional:SecondYear:UltraPoor - Armtraditional:ThirdYear:UltraPoor
+#   - Armtraditional:FourthYear:UltraPoor)
+vfeso6 <- lm(Shortfall ~ 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X2)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|^p\\$.*", "",
+    "I\\((.*?)\\)", "\\1",
+    "traditional:", "",
+    "large g", "LargeG",
+    "large", "Large",
+    "cow", "Cattle",
+    "Attributes.*And", "",
+    "Attributes", "",
+    "LargeSize", "Upfront",
+    "^SecondYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY2",
+    "^ThirdYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY3",
+    "^FourthYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY4",
+    "(.*):SecondYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY2",
+    "(.*):ThirdYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY3",
+    "(.*):FourthYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY4",
+    "(.*) \\* SecondYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY2",
+    "(.*) \\* ThirdYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY3",
+    "(.*) \\* FourthYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY4",
+    "(.*):SecondYear$", "\\1 $\\\\times$ LY2",
+    "(.*):ThirdYear$", "\\1 $\\\\times$ LY3",
+    "(.*):FourthYear$", "\\1 $\\\\times$ LY4",
+    "SecondYear", "LY2",
+    "ThirdYear", "LY3",
+    "FourthYear", "LY4",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    "\\*|:", " $\\\\times$ ",
+    "Lag(.*?)-Lag", "\\1$_{t-1}-$Lag",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "Short", "short",
+    "value.repay", "repayment",
+    #"MeanGroupS.*l\\$", "per member group shortfall$",
+    "MeanGroups.*l\\$", "Group shortfall$", # it is per member, but too long to show
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (BDT1000)$",
+    "value.NetSaving\\$", "Net saving$",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+reglists.header <- c("vfesg", "vfes", "vfeso")
+# Below is defined in EstimationMemo_OptionSetting.rnw
+# ShortfallFileNames<- c("Group", "Individual", "o800")
+datas <- c("X1", "X", "X2")
+for (m in 1:length(reglists.header)) {
+  rlist <- eval(parse(text=paste("list(", paste0(reglists.header[m], 1:6, collapse = ","), ")")))
+  dataX <- get(datas[m])
+  ClusterList <- lapply(rlist, function(x) 
+      if (!is.null(x$na.action)) matrix(dataX[-x$na.action, groupid]) else
+      matrix(dataX[, groupid])
+    )
+  ro <- lapply(1:length(rlist), function(j) 
+     clx(rlist[[j]], cluster = ClusterList[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  ro.estlist <- lapply(ro.estlist, function(x) x[, -3, drop = F])
+  # unify covariate names so default (traditional) is not duplicated in latextab
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Arm", "Attributes", rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Armtraditional:|Attributestraditional:", "", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^SecondYear:UltraPoor$", "I(SecondYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^ThirdYear:UltraPoor$", "I(ThirdYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^FourthYear:UltraPoor$", "I(FourthYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^(.*):(.*)Year$", "I(\\1 * \\2Year)", 
+      rownames(x))
+    x
+    })
+  r.N <- unlist(lapply(ro, "[[", 8))
+  r.M <- unlist(lapply(ro, "[[", 6))
+  r.R <- unlist(lapply(rlist, function(x) round(summary(x)$adj, 3)))
+  r.tab <- tabs2latex3(ro.estlist, digits = 2, use.Pvalue = T, xx.yyy = T)
+  # reorder rows: rn.new #
+  rtab <- r.tab
+  rn <- rownames(r.tab)
+  rn0 <- rn
+  for (i in 1:nrow(subst.table)) 
+    rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+  source(paste0(pathprogram, 
+    "ReorderingOfRowsInEstimatedResultsRepaymentTable.R"))
+  rn <- rn[rn.new]
+  r.tab <- r.tab[rn.new, ]
+  rn <- paste0("\\makebox[5cm]{\\scriptsize\\hfill ", rn, "}")
+  r.tb <- rbind(as.matrix(cbind(covariates = rn, r.tab)), 
+    c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", r.M),
+    c("\\bar{R}^{2}", r.R),
+    c("N", r.N))
+  r.ltxtb <- latextab(r.tb[1:(grep("fill LY3\\}$", rn)-1), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults1.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults1.tex")
+    , colnamestrue = F)
+  r.ltxtb <- latextab(r.tb[grep("fill LY3\\}$", rn):(grep("InK.*U.*4\\}$", rn)+1), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults2.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults2.tex")
+    , colnamestrue = F)
+  r.ltxtb <- latextab(r.tb[
+  #grep("ll Group s.*1\\}\\$\\}$", rn):nrow(r.tb)
+  (grep("InK.*U.*4\\}$", rn)+2):nrow(r.tb)
+  , ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults3.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults3.tex")
+    , colnamestrue = F)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], ".estlist"), ro.estlist)
+  assign(paste0(reglists.header[m], ".N"), r.N)
+  assign(paste0(reglists.header[m], ".M"), r.M)
+  assign(paste0(reglists.header[m], ".R"), r.R)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], "Xlist"), ClusterList)
+}
+\end{Sinput}
+\end{Schunk}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall\label{tab shortfall group}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals\label{tab shortfall indiv}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall\label{tab shortfall indiv o800}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab shortfall group}} shows group level repayment shortfall has a positive autocorrelation hence is persistent. In (1), the coefficient is smaller in groups with high shortfall rates, hinting loan repayment discipline as a group at some intermediate level. In (2) and (3), group level shortfall gets smaller in the third year than in the second year for all arms, indicating stronger efforts in repayment in the final loan year. In (4) and (5), the \textsf{UltraPoor} is found to have no larger repayment shortfall than the moderately poor, except for the \textsf{Large} arm or \textsf{Upfront} attribute in the second loan year. \textsc{\small Table \ref{tab shortfall indiv}} (1), (4) and (5) also show persistence for individuals, although the magnitude is much smaller. In (1), lagged shortfall of others decreases with own shortfall only in high GRSR group. This confirms the group level repayment discipline that is consistent with a steady state short fall rate at an intermediate level as a group.  In (2), shortfall is larger in the second and third year for the arms with a grace period. This reflects that a grace period does not necessarily help the borrowers to prepare repayments, which is against the intention to match the repayment with the cash flow. The ultra poor has smaller shortfall in all arms in year 2 except in the large grace arm in year 3. The results on the ultra poor may indicate the difference with the moderately poor is nominal.
+\end{finding}
+\end{palepinkleftbar}
+
+\end{document}

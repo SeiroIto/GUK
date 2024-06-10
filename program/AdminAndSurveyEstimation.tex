@@ -1,0 +1,313 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("AdminAndSurveyEstimation.rnw", "AdminAndSurveyEstimation.tex"); system("platex AdminAndSurveyEstimation"); system("dvipdfmx AdminAndSurveyEstimation")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/AdminAndSurveyEstimation/"); library(knitr); knit("AdminAndSurveyEstimation.rnw", "AdminAndSurveyEstimation.tex"); system("platex AdminAndSurveyEstimation"); system("dvipdfmx AdminAndSurveyEstimation")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+
+
+
+\hfil Estimating lending impacts with survey and admin data\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+\section{Read files}
+
+
+
+Schooling pattern in X1.
+\begin{Schunk}
+\begin{Soutput}
+
+0000 0001 000n 0011 001n 00nn 0100 0101 010n 0111 011n 01nn 0nnn 1000 1001 100n 
+ 208   36  216  152   33  192   16    4    9  840  105   70  318   64    8   45 
+1011 101n 10nn 1100 1101 110n 1110 1111 111n 11nn 1nnn 
+  56   24   86   48   16   84   28 5172  654  326  199 
+\end{Soutput}
+\end{Schunk}
+Description of data:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ad]	Administrative data: Up to [-24, 48] months after first loan disbursement.
+\item[X1]	Schooling panel with attrition. Aged 6-18 in rd1. \textsf{Enrolled=\{0,1\}} is defined for children aged 6-18 in rd1 by referencing to \textsf{currently\_enrolled} and age information.
+\item[X2]	Schooling panel after augmenting attrited children to \textsf{X1}. Attrited children are augmented by assuming to be out of school. \textsf{AssignRegression} is group classification: Number of observation is \textsf{618, 635, 594, 593, 363, 100} for \textsf{traditional, large, largeGrace, cow, dropOuts, forcedDropOuts}, respectively.
+\item[ros]	 \textsf{roster} to condition the initial status prior to participation.
+\end{description}
+First, merge admin data \textsf{ad} with roster data \textsf{ros} with \textsf{hhid, Year, Month} as keys. Second, merge \textsf{ad+ros} with \textsf{X1} or \textsf{X2}.
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+Year   traditional large large grace cow dropOuts forcedDropOuts
+  2011           0     1           2   6        2              0
+  2012         440   692         663 622      495            151
+  2013         374    25          45  50        2              0
+  2014         633   134         164 173      470            101
+  2015         465   111         120 140      339             60
+  2016         184    18          46  28      120             45
+  2017         600   125         156 165      436              0
+  <NA>           2     0           0   0       43              0
+\end{Soutput}
+\begin{Soutput}
+      Arm
+year   traditional large large grace cow dropOuts forcedDropOuts
+  2014         633   134         164 173      467            101
+  2015         649   129         166 168      462            105
+  2017         600   125         156 165      436              0
+\end{Soutput}
+\end{Schunk}
+Save roster-admin data.
+
+
+Save asset-admin data.
+
+\begin{Schunk}
+\begin{Soutput}
+      NumberOfHHids
+year   1544
+  2012 2100
+  2013  806
+  2014 2282
+  2015 2024
+  2017 1797
+\end{Soutput}
+\begin{Soutput}
+      ObservedRound
+year      1    2    3    4
+  2012 2100    0    0    0
+  2013  806    0    0    0
+  2014    0 2282    0    0
+  2015    0   79 1945    0
+  2017    0   28  107 1662
+\end{Soutput}
+\begin{Soutput}
+      ObservedRound
+year      1    2    3    4    5
+  2012 2903    0    0    0    0
+  2013    0 2903    0    0    0
+  2014    0    0 2903    0    0
+  2015    0    0    0 2903    0
+  2017    0    0    0    0 2903
+\end{Soutput}
+\begin{Soutput}
+      AgeComputed
+year     6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23
+  2012 168 264 279 114 333  77 237 109 104 173 104  43  95   0   0   0   0   0
+  2013  48  93  90  61 118  60  79  55  46  58  46  14  38   0   0   0   0   0
+  2014   0  43 222 317 298 211 346 131 234 121 124 152  62  15   6   0   0   0
+  2015   0   0  42 225 311 291 198 302 118 192 100  93  95  38  11   8   0   0
+  2017   0   0   0   0  40 218 289 279 186 272 110 171  90  64  51  22   4   1
+\end{Soutput}
+\begin{Soutput}
+      AgeComputed
+year     5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22
+  2012  48 261 354 340 232 393 156 291 155 161 219 117  81  95   0   0   0   0
+  2013   0  48 261 354 340 232 393 156 291 155 161 219 117  81  95   0   0   0
+  2014   0   0  48 261 354 340 232 393 156 291 155 161 219 117  81  95   0   0
+  2015   0   0   0  48 261 354 340 232 393 156 291 155 161 219 117  81  95   0
+  2017   0   0   0   0   0  48 261 354 340 232 393 156 291 155 161 219 117  81
+      AgeComputed
+year    23
+  2012   0
+  2013   0
+  2014   0
+  2015   0
+  2017  95
+\end{Soutput}
+\end{Schunk}
+Save roster-admin-schooling data.
+
+
+\section{Estimation}
+
+Based on admin information on repayment and saving, it is no surprise that impacts on incomes were not detected (See the older estimation file). 
+
+\subsection{Schooling}
+
+
+If using \textsf{a1}, retain only the complete portion of panel.
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment\label{tab ols school}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SchoolingOLSEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab ols school}} shows school enrollment is higher for \textsf{X1} than \textsf{X2}, indicating nonattriting members are school goers. \textsf{Cow} in all specifications and \textsf{large grace} in some specification show negative impacts for older children, yet not for girls. This may be due to increased labour demand within a family.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Saving (net of repayment)}
+
+
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 1958 obs due to NA.
+Level covariates:
+ [1] Group            HeadAge          HeadLiteracy     LoanYear        
+ [5] dummyCow         dummyDropOuts    dummyFemale      dummyLarge      
+ [9] dummyLargeGrace  dummyTraditional en               groupid         
+[13] tee             
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net saving\label{tab FD saving}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SavingFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Net saving is taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD saving}} shows net saving decreases, mostly in the later rounds. This reflects the use of saving for repayment. 
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Assets}
+
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+Warning in `[.data.table`(as, , `:=`(c("en", "DistDate1"), NULL)): Adding new column 'en' then assigning NULL (deleting it).
+\end{Soutput}
+\begin{Soutput}
+Dropped 5 obs due to T<2.
+Dropped 1005 obs due to NA.
+Level covariates:
+ [1] LoanYear            dummyCow            dummyDropOuts      
+ [4] dummyForcedDropOuts dummyLarge          dummyLargeGrace    
+ [7] dummyTraditional    en                  groupid            
+[10] hhid                tee                
+\end{Soutput}
+\begin{Soutput}
+Dropped 5 obs due to T<2.
+Level covariates:
+ [1] LoanYear            dummyCow            dummyDropOuts      
+ [4] dummyForcedDropOuts dummyLarge          dummyLargeGrace    
+ [7] dummyTraditional    en                  groupid            
+[10] hhid                tee                
+\end{Soutput}
+\end{Schunk}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets\label{tab FD assets}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/AssetFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD assets}} shows household assets increase after receiving the loans. Total incremant is largest among the large grace, but standard errors are also large. Increments are mostly in the earlier rounds, suggesting substantial purchase after receiving a loan.
+\end{finding}
+\end{palepinkleftbar}
+
+\end{document}

@@ -1,0 +1,1191 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("merge_across_rounds.rnw", "merge_across_rounds.tex"); system("platex merge_across_rounds"); system("dvipdfmx merge_across_rounds")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); system("recycle c:/data/GUK/analysis/program/cache/merge_across_rounds/"); library(knitr); knit("merge_across_rounds.rnw", "merge_across_rounds.tex"); system("platex merge_across_rounds"); system("dvipdfmx merge_across_rounds")
+
+\input{c:/data/knitr_preamble.rnw}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_chunk$set(fig.path='figure/merge_across_rounds', cache.path='cache/merge_across_rounds', cache = F, echo = T, results = 'markup', tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+library(grid)
+library(gridExtra)
+pathsave <- paste0(path, "save/")
+pathreceived.oct <- paste0(path0, "received/oct/")
+skip.in.rd1 <- "^\\.$|^\\.\\/1$|combined"
+@
+
+\hfil Merge GUK files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+Based on data received in March, 2017.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Attrition] Attrition rate who disappeared by rd 3 is 5.8\%. Judging from HH head names, majority of visited households seem to be the same households. Respondent names change that cannot be explained by typo's.
+\item[Treatment assignment] For surviving subjects, treatment assignment given in \textsf{treatment} in loan\_status.dta matches with the original assignment given in \textsf{treat} of treatment assignment instruction file. By rd 2, majority of the control started to receive treatments. It took about 250 days to complete the treatment on the treated, only then the treatment on the control started. There are 29 individuals that attrited due to individual rejection, 26 individuals attrited due to group rejection. Some of the individuals rejected to be treated stay in the sample.
+\item[Arm] Little discrepancy in arm consistency in the identification file.
+\item[Food consumption]	Missing observations match with attrition. No problem found.
+\end{description}
+
+<<echo = F>>=
+setwd(pathsave)
+savedfiles <- gsub("\\_", "\\\\_", 
+	grepout("int.*dates|tre.*nt|idfu|attri", list.files(pattern = ".prn")))
+setwd(pathsource.mar)
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+lstatusfile <- gsub("\\_", "\\\\_", grepout("loan.status", fn))
+@
+I produced following files (all tab-separated text files) after various correctins described in this file: 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[\textsf{\footnotesize \Sexpr{grepout("attr", savedfiles)}}]	An exhaustive list of households and their observation status file.
+\item[\textsf{\footnotesize \Sexpr{grepout("int", savedfiles)}}]	Interview date files in long and wide formats.
+\item[\textsf{\footnotesize \Sexpr{grepout("idf", savedfiles)}}]	Cover page information files.
+\item[\textsf{\footnotesize \Sexpr{grepout("tre", savedfiles)}}]	Treatment assignment information using all the above three files and loan status file \textsf{\footnotesize \Sexpr{lstatusfile}}.
+\end{description}
+
+
+
+\section{read}
+
+List folders and files.
+<<>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl(skip.in.rd1, foldername)]
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+#There will be warnings due to duplicated factor levels in dta which should be a fair warning but suppress them. 
+<<warning = F>>=
+setwd(pathsource.mar)
+Z <- lapply(fn, fread, integer64 = "double")
+<<>>=
+fnids <- grepout("\\/id", fn) # grep(a,b) returns matched string of a in b
+fnids <- fnids[!grepl("rev", fnids)]
+@
+Read individual identification files in \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", fnids)}}.
+<<read indiv identification files, cache = F, child='c:/data/GUK/analysis/program/read_merge_identfication_files.rnw'>>=
+@
+Households are added after immediately after rd 1 original sample. They have hhid headed with 98 or 99. 
+
+
+\section{merge identification files (cover page information)}
+
+\textcolor{black}{\textbf{Found:} Rate of attrition who disappeared by rd 3 is 5.8\%. Judging from HH head names, majority of visited households seem to be the same households. Respondent names change that cannot be explained by typo's.}
+
+
+Bind the files to get a long formated panel data.
+<<>>=
+idf <- do.call("rbind", c(idfiles, fill = T))
+setkey(idf, hhid, rd)
+setnames(idf, c("r.name", "e.name", "s.name"), c("rname", "ename", "sname"))
+@
+
+\subsection{hhid duplication correction}
+
+Number of duplicated entries.
+<<>>=
+table0(!duplicated(idf[, .(rd, hhid)]))
+@
+These 4 duplicated entries are:
+<<>>=
+idf[hhid %in% hhid[duplicated(idf[, .(rd, hhid)])], 
+	.(rd, hhid, gid, village, rname, hhh.name)]
+@
+Duplication is found in \textsf{hhid}. 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{rname} of 99081912418 in rd 2 is zoneka, rezia is 99081912406 whose all rds exist, so drop 99081912418, rezia. 
+\item	7137302, "goleja" is 7137305. 
+\item	7137316, "monoara" is not found in other rounds. Change hhid to 9997137316. 
+\item	7137317, "afruza" is not found in other rounds. Change hhid to 9997137317.
+\end{itemize}
+<<>>=
+idf[hhid == 7137302 & grepl("gole", rname), hhid := 7137305]
+idf <- idf[!(hhid == 99081912418 & grepl("rezi", rname)), ]
+idf[hhid == 7137316 & grepl("monoa", rname), hhid := 9997137316]
+idf[hhid == 7137317 & grepl("afruz", rname), hhid := 9997137317]
+@
+Confirm duplication is gone.
+<<>>=
+table0(!duplicated(idf[, .(rd, hhid)]))
+setkey(idf, hhid, rd)
+idf[, c("hh.id", "village.code", "union.code", "zilla.code") := NULL]
+@
+
+\subsection{hhid typo correction}
+
+Further correct \textsf{hhid}. Changed in \textsf{hhid}: 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	990817 $\rightarrow$ 990819
+\item	98.*544 $\rightarrow$ 98.*545
+\item	Drop 980: From %9808159216
+9808159108, %9808159118, 
+9808159119, 9808159120, 
+9808159202, 9808159212 $\rightarrow$
+8159108, 8159119, 8159120, 8159202, 8159212 
+\item	7044308 $\rightarrow$ 7044608
+\item	98070511 $\rightarrow$ 99070511
+\item	9807*$\rightarrow$9907*: 
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	In village names with {\footnotesize \Sexpr{unique(grepout("kosk|koach", idf[, village]))}} (\verb+kosk|koach+) and \textsf{hhid} with 9807, or {\Sexpr{asc(unique(idf[grepl("kosk|koach", village) & grepl("^98", hhid), hhid]))}}.
+	\item	\scriptsize (Corrected in March cleaning) In village names with {\footnotesize \Sexpr{unique(grepout("^u.*vati|^n.*vati", idf[, village]))}} (\verb+^u.*vati|^n.*vati+), {\Sexpr{asc(unique(idf[grepl("^u.*vati|^n.*vati", village), hhid]))}}.
+	\item	\scriptsize (Corrected in March cleaning) In village names with {\footnotesize \Sexpr{unique(grepout("hasd", idf[, village]))}}  (\verb+hasd+) and \textsf{hhid} with 71010, or \Sexpr{asc(unique(idf[grepl("hasd", village) & grepl("71010", hhid), hhid]))}.
+	\end{itemize}
+\item	\scriptsize (Corrected in March cleaning) 311$\rightarrow$911: In village names with {\footnotesize \Sexpr{unique(grepout("harud", idf[, village]))}} (\verb+harud+) and \textsf{hhid} with 60 or 61, or \Sexpr{asc(unique(idf[grepl("harud", village) & grepl("60|61", hhid), hhid]))}.
+\item	\scriptsize (Corrected in March cleaning) 817$\rightarrow$819: In village names with {\footnotesize \Sexpr{unique(grepout("bill", idf[, village]))}} (\verb+bill+) and \textsf{hhid} with  240 or 241, or \Sexpr{asc(unique(idf[grepl("bill", village) & grepl("240|241", hhid), hhid]))}.
+\end{itemize}
+<<correct hhid, cache = F, child='c:/data/GUK/analysis/program/correct_hhid_in_identfication_files.rnw'>>=
+@
+
+
+Check how many hhids constitutute complete panel. Tabulate number of repeated observations in a panel (1: observed only once, 2: twice, 3: complete panel).
+<<>>=
+table(table0(idf[, hhid]))
+@
+
+\subsection{create some variables for convenience}
+
+Create \textsf{memstatus} for covenience and understandability.
+<<>>=
+idf[, memstatus := tolower(membership.status)]
+idf[grepl("epl", memstatus), memstatus := "replacement"]
+idf[grepl("new", memstatus), memstatus := "new group"]
+idf[grepl("old", memstatus), memstatus := "old"]
+idf[grepl("ero", memstatus), memstatus := "lost to flood"]
+idf[, memstatus := factor(memstatus, levels = 
+	c("old", "replacement", "new group", "individual rejection", 
+	"group rejection", "lost to flood"))]
+@
+Here is how \textsf{membership.status} and \textsf{memstatus} correspond:
+<<>>=
+table0(idf[, .(membership.status, memstatus)])
+@
+Create \textsf{arm} for covenience and understandability.
+<<>>>=
+idf[, arm := tolower(rand.arm)]
+idf[grepl("^L.*t$", rand.arm), arm := "large"]
+idf[grepl("^L.*gr", rand.arm), arm := "large grace"]
+idf[grepl("^p", rand.arm), arm := "cow"]
+idf[grepl("tr", rand.arm), arm := "traditional"]
+# below are not strictly arms...
+idf[grepl("floo", memstatus), arm := "lost to flood"]
+idf[rd == 1, arm := "before intervention"]
+table0(idf[, arm])
+@
+Subjects with no \textsf{arm} information is group rejection. Based on \textsf{Char Randomization\_2012.xlsx}, arms are large grace, large, large, traditional, traditional, traditional, traditional, respectively for \textsf{gid}s \Sexpr{unique(idf[grepl("gr.*rej", memstatus), gid])}. 
+<<>>=
+table0(idfu[grepl("gr.*rej", memstatus), gid])
+(rejgid <- unique(idf[grepl("gr.*rej", memstatus), gid]))
+rejarm <- c("large grace", "large", "large", rep("traditional", 4))
+for (i in 1:length(rejgid)) idf[gid == rejgid[i], arm := rejarm[i]]
+# If I run this (impose before intervention for all rd 1 obs)
+# idf[rd == 1, arm := "before intervention"]
+# then large grace will be overwritten for 70314.
+# Reason: There are 2 groups under 70314, one which rejected and
+# another which was formed after it. 
+idf[, arm := factor(arm)]
+@
+Group rejecters' arms:
+<<>>=
+table0(idf[grepl("gr.*rej", memstatus), arm])
+@
+Note that \textsf{arm} is defined using the information at the time of interview. So in rd 1, everyone is ``before intervention.'' 
+
+\subsection{missingness pattern across rounds}
+
+Check the missingness patterns. I will define the first observaton of additional household which were added to supplement households whose chars were eroded as rd 1. The timing of their visit was later than the first round of original households. Create an exhaustive \textsf{hhid} list, \textsf{iu}, and check existentce in each rd from \textsf{idf}. Create an attrition detector \textsf{exist}.
+<<warning = F>>=
+idunion <- unique(idf[, hhid])
+idunion <- idunion[order(idunion)]
+for (i in 1:3) assign(paste0("i", i), idunion %in% idfiles[[i]][ ,hhid])
+iu <- data.table(idunion, i1, i2, i3)
+iu[, exist := ""]
+iu[i1, exist := 1]
+iu[i2, exist := paste0(exist, 2)]
+iu[i3, exist := paste0(exist, 3)]
+iu[, exist := factor(exist, levels = c(1, 12, 13, 123))]
+setnames(iu, "idunion", "hhid")
+@
+Save hhid list.
+<<>>=
+setwd(pathsave)
+write.tablev(iu, "attrition.prn")
+iu[, c("i1", "i2", "i3") := NULL]
+@
+Merge missingness pattern \textsf{iu} to \textsf{idf}. 
+<<>>=
+setkey(iu, hhid); setkey(idf, hhid, rd)
+idfu <- iu[idf]
+@
+Create last observed rounds of each hhid. 
+<<>>=
+idfu[, last.rd := asn(substr(exist, nchar(asc(exist)), nchar(asc(exist))))]
+table(idfu[rd == last.rd, exist])
+@
+<<echo = F>>=
+tb.last <- table0(idfu[rd == last.rd, .(arm, last.rd)])
+@
+There are \Sexpr{sum(tb.last[, 1])} individuals who were last observed in rd 1. There are also \Sexpr{sum(tb.last[, 2])} who were also last seen in rd 2 who may also be drop outs. All other \Sexpr{sum(tb.last[, 3])} are observed in rd 3 (Note: \Sexpr{sum(tb.last[, 3])} are \textsf{exist} = 13, 23, 123, so it is different from counts of complete panel in \textsf{iu}). If we consider these drop outs as attrition, \textcolor{red}{the attrition rate up to rd 3 is \Sexpr{round((sum(tb.last[, 1:2])/sum(tb.last))*100, 2)}\%. There are \Sexpr{sum(tb.last[, 1:2])} individuals dropped out eventually.} 
+
+\subsection{arms}
+
+%I found ziadanga is east ziadanga in the later rds and is given different prefix numbers for \textsf{hhid}.
+<<echo = F, results = 'hide'>>=
+idfu[grepl("ziad", village) & grepl(4517, hhid), 
+	.(gid, village, hhid, rd, rname, hhh.name, memstatus)]
+#idfu[hhid == 7042407, .(rd, hhid, rname, hhh.name)]
+@
+
+Last observed rd and arms. If \textsf{last.rd} == 1, arm is before intervention, large grace, traditional. 
+<<>>=
+(tb.last <- table0(idfu[rd == last.rd, .(arm, last.rd)]))
+@
+Check these 2 obs in traditional who dropped out in rd 1.
+<<>>=
+idfu[last.rd == 1 & grepl("tra", arm), 
+	.(gid, village, exist, rd, hhid, rname, arm, rand.arm, memstatus, st.day)]
+@
+In rd 1, all subjects are given arms ``before intervention.'' Correct these 2 and confirm correction.
+<<>>=
+idfu[last.rd == 1 & grepl("tra", arm), arm := "before intervention"]
+(tb.last <- table0(idfu[rd == last.rd, .(arm, last.rd)]))
+@
+
+From rd 2 onwards, \textsf{membership.status} gives old member, replaced member, individually rejected member, rejected group's member, lost to flood, and new group. In rd1, eventual membership status is given (confirm this by tabulating at rd 1). 
+<<>>=
+table0(idfu[rd == 1, membership.status])
+@
+Check if \textsf{exist} (missingness pattern) is consistent with \textsf{memstatus}. Most of \textsf{exist} == 1 are rejecters and flood victims, other are attritions (``old'').
+<<>>=
+table0(idfu[rd == last.rd, .(memstatus, exist)])
+@
+
+Check if treatment is consistent across rounds.
+<<>>=
+table0(idfu[, .(rd, arm)])
+#table0(idfu[rd == last.rd, .(memstatus, arm)])
+@
+There are some observations which has \textsf{arm} information in rd 1. They are group rejecters, and a new group in 70314 which was wrongly given the same \textsf{gid} as the old group in the same village. 
+<<>>=
+table(idfu[rd == 1 & !grepl("bef", arm), memstatus])
+@
+Note that there are 40 observations (equal to 2 groups) for 70314.
+<<>>=
+table(idfu[rd == 1 & !grepl("bef", arm) & grepl("gro", memstatus), .(gid, arm)])
+table(idfu[rd == 1 & gid == 70314, .(memstatus, arm)])
+@
+%Need to condition on not being the group rejecters.
+<<echo = F, results = 'hide'>>=
+table0(idfu[!grepl("^gro", memstatus), .(rd, arm)])
+@
+Correct \textsf{arm} for 2nd group (\textsf{memstatu}==new) with \textsf{gid} 70314 (the one formed after the predecessor rejected the treatment) in rd 1 as ``before intervention''. 
+<<>>=
+idfu[rd == 1 & gid == 70314 & grepl("new", memstatus), arm := "before intervention"]
+@
+Tabulation after correction: \label{crosstab.rd.arm.wo.group.rejecters}
+<<>>=
+table0(idfu[!grepl("^gro", memstatus), .(rd, arm)])
+@
+
+Cover page has arm assignment under \textsf{rand\_arm}. I derived \textsf{arm} from it for convenience. First, check if there is a change in arms. To do so, I will check, among non group rejecters which I omit from the consideration, if there is more than one arm recorded for nonNA lines for a given hhid. Since rd 1 is before intervention, there should not be more than 2 types of \textsf{arm}.
+<<>>=
+idfu[, arm.number := length(unique(arm)), by = "hhid"]
+table0(idfu[!grepl("^gro", memstatus) & arm.number < 2, rd])
+@
+These are the observations found only in one rd. Most are observed in rd 1, while other 2 are in rd 3. These 2 obs are \textsf{arm} wth traditional that we saw earlier in this subsection.
+<<>>=
+idfu[!grepl("^gro", memstatus) & arm.number < 2 & rd > 1, 
+	.(gid, village, hhid, rd, exist, rname, arm, memstatus, d.1st)]
+@
+Monoara in rd 3 may be \textsf{hhid} 713720, not \Sexpr{asc(idfu[gid == 71373 & grepl("ara", rname) & rd == 3, hhid])}.
+<<>>=
+idfu[gid == 71373 & grepl("ara|min", rname), 
+	.(gid, village, hhid, rd, exist, rname, arm, memstatus, d.1st)]
+@
+\textbf{Change \Sexpr{asc(idfu[gid == 71373 & grepl("ara", rname) & rd == 3, hhid])} in rd3 to 713720?}
+
+\subsection{membership status}
+
+Check \textsf{memstatus} changes. 
+<<>>=
+idfu[, memstatus.change := F]
+idfu[, memstatus.change := length(unique(memstatus)) > 2, by = "hhid"]
+table0(idfu[, memstatus.change])
+@
+
+\subsection{rejections}
+
+	Some subjects rejected to be treated. Their memberships were replaced with newly recruited members. One sees that \textsf{individual rejection} is replaced with \textsf{replacement} in each group. (And there is at least one rejecter in a group...)
+<<>>=
+idfu[, rejInGroup := any(grepl("in.*rej", memstatus)), by = gid]
+idfu[, rejOfGroup := any(grepl("g.*rej", memstatus)), by = gid]
+table0(idfu[rd == last.rd & rejInGroup, .(memstatus, gid)])
+@
+Check \# of rejection $=$ \# of replacement.
+<<>>=
+setkey(idfu, gid)
+idfu[rd == last.rd, numIndRej := sum(grepl("ind.*rej", memstatus)), by = gid]
+idfu[rd == last.rd, numRepl := sum(grepl("repla", memstatus)), by = gid]
+nrow(idfu[rd == last.rd & numIndRej != numRepl, ])
+@
+Group rejection is given in the below.
+<<>>=
+table0(idfu[rd == last.rd & rejOfGroup, .(arm, gid)])
+@
+\textcolor{red}{\textsf{gid} 70314 has 40 entries.} This is group rejection and new group under the same gid, which should not... As we saw earlier when we corrected arm of 30714 in rd 1 to ``before intervention.'' 
+<<>>=
+table(idfu[gid == 70314 & rejOfGroup & grepl("bef", arm), .(exist, memstatus)])
+@
+According to JDS paper (p.13), group rejection happened only after groups learned their arms. 
+
+Save \textsf{idfu}.
+<<>>=
+setwd(pathsave)
+write.tablev(idfu, "idfu.prn")
+saveRDS(idfu, "idfu.rds")
+@
+\textsf{idfu: idf (cover page) + iu (an exhaustive hhid list)}.
+
+\subsection{validate if names stay the same in the same hhid (suggestive but not defenite to correct hhid) }
+
+	Reshape to see if names differ. I assign 123 if names are same in all rounds, for respondent names and hh head names.
+<<cache = F, warning = F>>=
+iic <- paste0(c("hhid", "exist", "gid", "village", "last.rd", "po.name", "g.name"), collapse = "|")
+idfu2 <- idfu[, grepout("hh|rd|village$|gid|status|name|exist|memst|type|G|arm", 
+	colnames(idfu)), with = F]
+idchk <- reshape(idfu2, direction = "wide", 
+	idvar = c("hhid", "gid", "exist", "last.rd"),
+	timevar = "rd", v.names = colnames(idfu2)[!grepl(paste0(iic, "|rd"), colnames(idfu2))])
+idchk[, rname.chk := 0]
+idchk[grepl(12, exist) & 
+	!is.na(rname.1) & !is.na(rname.2) & rname.1 == rname.2, 
+	rname.chk := 12]
+idchk[grepl(23, exist) & 
+	!is.na(rname.2) & !is.na(rname.3) & rname.2 == rname.3, 
+	rname.chk := 23]
+idchk[grepl(123, exist) & 
+	!is.na(rname.1) & !is.na(rname.2) & !is.na(rname.3) &
+	rname.1 == rname.2 & rname.2 == rname.3,
+	rname.chk := 123]
+idchk[grepl(13, exist) & 
+	!is.na(rname.1) & !is.na(rname.3) & 
+	rname.1 == rname.3,
+	rname.chk := 13]
+idchk[, hname.chk := 0]
+idchk[grepl(12, exist) & 
+	!is.na(hhh.name.1) & !is.na(hhh.name.2) & hhh.name.1 == hhh.name.2, 
+	hname.chk := 12]
+idchk[grepl(23, exist) & 
+	!is.na(hhh.name.2) & !is.na(hhh.name.3) & hhh.name.2 == hhh.name.3, 
+	hname.chk := 23]
+idchk[grepl(123, exist) & 
+	!is.na(hhh.name.1) & !is.na(hhh.name.2) & !is.na(hhh.name.3) &
+	hhh.name.1 == hhh.name.2 & hhh.name.2 == hhh.name.3,
+	hname.chk := 123]
+idchk[grepl(13, exist) & 
+	!is.na(hhh.name.1) & !is.na(hhh.name.3) &
+	hhh.name.1 == hhh.name.3,
+	hname.chk := 13]
+@
+Respondent name consistency across rounds. 0 indicates no same name at all in all 3 rds. The following table shows tabulation of number non-matching cases across 3 rds against their missingness patterns. So there are 49 cases (\textsf{hhid}'s) that have all respondent names different across rounds. Some of these cases are just typo's, but we need to confirm if this is the case. \textsf{rname.1} shows rname in rd 1, \textsf{rname.2} shows rname in rd 2, and so on. The respondent names are pretty different between rd 1 and 2,3. Rds 2-3 show similar names.
+<<>>=
+table0(idchk[, .(rname.chk, exist)])
+idchk[rname.chk == 0 & exist == 123, 
+	grepout("rname\\.\\d", colnames(idchk)), with = F]
+@
+Length of \textsf{rname.chk} should be no shorter than \textsf{exist} if the respondent name matches in all rounds. There are \Sexpr{nrow(idchk[nchar(asc(rname.chk)) < nchar(asc(exist)), ])} cases. The cases that two match are \Sexpr{nrow(idchk[nchar(asc(rname.chk)) == nchar(asc(exist)), ])}. 
+%Typo's in respondent names are not the reason for low numbers in \textsf{rname.chk}. 
+<<>>=
+table0(idchk[, .(rname.chk, exist)])
+@
+HH head name consistency across rounds. 0 indicates no match at all.
+<<>>=
+table0(idchk[, .(hname.chk, exist)])
+@
+
+In the following output, the first row is \textsf{hhid}, followed by reported head names in rds 1, 2, 3, 4.
+<<>>=
+print(idchk[hname.chk == 0  & exist == 123, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 0  & exist == 23, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 0  & exist == 13, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 12  & exist == 12, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 12  & exist == 123, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 13  & exist == 123, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 13  & exist == 13, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 23  & exist == 123, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 23  & exist == 23, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+print(idchk[hname.chk == 123  & exist == 123, 
+	grepout("hh", colnames(idchk)), with = F], nrow = 10)
+@
+Do the non-typo changes in respondent names indicate that different households are given the same \textsf{hhid}? Below looks OK.
+<<>>=
+idchk[grepl("kala chan", hhh.name.1), 
+	grepout("name", colnames(idchk)), with = F]
+@
+\textcolor{red}{We must ask GUK why head names change across rounds. May be change in head?} \textcolor{blue}{I will assume that, after correcting for duplication, \textsf{hhid}s are correct and same households are visisted for the same \textsf{hhid}.} We should have never dropped member names from the cover page.
+
+
+\section{check treatment (lstatus and cover page information)}
+
+
+<<warning = F>>=
+setwd(pathsave)
+idfu <- readRDS("idfu.rds")
+setkey(idfu, hhid)
+@
+
+\subsection{arm}
+
+<<echo = F, results = 'hide'>>=
+table0(idfu[nchar(hhid) > 10, .(rd, memstatus)])
+setwd(pathreceived.oct)
+ta <- list.files(pattern = ".prn$", recursive = T, full.names = T)
+ta <- ta[!grepl("fwd", ta)]
+@
+\textcolor{black}{\textbf{Found:} Little discrepancy in arm consistency in the identification file. For surviving subjects, treatment assignment given in \textsf{treatment} in loan\_status.dta matches with the original assignment given in \textsf{treat} of treatment assignment instruction file \textsf{\footnotesize \Sexpr{gsub("^.*\\/", "", gsub("_", "\\\\_", ta[2]))}}. By rd 2, majority of the control started to receive treatments. It took about 250 days to complete the treatment on the treated, only then the treatment on the control started. %There are \Sexpr{1-1} individuals that attrited due to individual rejection, \Sexpr{1-1} individuals attrited due to group rejection. 
+Some of the individuals rejected to be treated stay in the sample.}
+
+%I have created \textsf{arm} variable earlier by copying and assiging NA to observations with arm inconsistency across rounds. Cross table including group rejecters (tabulation in page \pageref{crosstab.rd.arm.wo.group.rejecters} is without group rejecters):
+<<echo = F, results = 'hide'>>=
+rbind(cbind(rd = 1, t(table(idfu[rd == 1, arm], useNA = "ifany"))),
+	cbind(rd = 2, t(table(idfu[rd == 2, arm], useNA = "ifany"))),
+	cbind(rd = 3, t(table(idfu[rd == 3, arm], useNA = "ifany"))))
+@
+%There are some discrepancy but nothing major. Increased numbers may be due to more control started to receive credits.
+
+
+\subsection{contemporaneous treatment assignment}
+
+
+Contemporaneous (time-varying) treatment assignment, T/C, is stored in a separate file \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", grepout("loan.status", fn))}}. 
+<<>>=
+setwd(pathsource.mar)
+lstatus <- fread(grepout("loan.status", fn), integer64 = "double")
+setnames(lstatus, "groupid", "gid")
+@
+Apply hhid correction of the previous subsection (Not shown here).
+<<echo = F>>=
+lstatus[hhid == 7137302 & grepl("gol", memname), hhid := 7137305]
+lstatus[hhid == 99081912418 & grepl("rezi", memname), hhid := 99081912406]
+lstatus[hhid == 7137316 & grepl("monoa", memname), hhid := 9997137316]
+lstatus[hhid == 7137317 & grepl("afru", memname), hhid := 9997137317]
+@
+Create \textsf{memstts} from the membership status in lstatus file by following the same way as \textsf{memstatus} in cover page files (Not shown here).
+<<echo = F>>=
+lstatus[, memstts := tolower(membershipstatus)]
+lstatus[grepl("epl", memstts), memstts := "replacement"]
+lstatus[grepl("new", memstts), memstts := "new group"]
+lstatus[grepl("continued", memstts), memstts := "old"]
+lstatus[grepl("drop", memstts), memstts := "individual rejection"]
+lstatus[, IGA1 := tolower(IGA1)]; lstatus[, IGA2 := tolower(IGA2)]; lstatus[, IGA3 := tolower(IGA3)]
+lstatus[, purchaseDate := as.POSIXct(purchaseddate, format = "%d/%m/%Y")]
+lstatus[, assignment := factor(treatment, labels = c("control", "treated"))]
+@
+Recode \textsf{rand\_arm} in lstatus in the same way as in cover pages (Not shown here).
+<<echo = F>>=
+lstatus[, arm := rand_arm]
+lstatus[grepl("^La.*t$", arm), arm := "large"]
+lstatus[grepl("^La.*od.$", arm), arm := "large grace"]
+lstatus[grepl("^pa", arm), arm := "cow"]
+lstatus[grepl("^con", arm), arm := "traditional"]
+lstatus[, arm := factor(arm, levels = c("traditional", "large", "large grace", "cow"))]
+<<>>=
+setwd(pathsave)
+attrit <- fread("attrition.prn")
+setnames(attrit, c("i1", "i2", "i3"), paste("inData", 1:3, sep = "."))
+attrit[, c("inData.1", "inData.2", "inData.3") := NULL]
+setkey(attrit, hhid); setkey(lstatus, hhid)
+lsa <- attrit[lstatus]
+@
+\textsf{lsa: attrition (cover) + lstatus}.
+
+All members of \textsf{gid} 817112 are missing in cover page data while included in \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", grepout("loan.status", fn))}}.
+<<>>=
+lsa[is.na(exist), .(gid, hhid, memname, assignment, purchaseDate, memstts)]
+@
+\textcolor{red}{Need to inquire why these members are missing from data.}
+<<echo = F, results = 'hide'>>=
+#lstatus[, assignment := factor(treatment, labels = c("control", "treated"))]
+tb.treat <- table0(lstatus[,.(creditstatus, treatment)])
+@
+\textsf{creditstatus} gives the current treatment status. \textsf{assignment} gives the treatment status assigned at the beginning of rd 2. \Sexpr{sum(tb.treat[2, ])} subjects were eventually treated by rd 3, of which \Sexpr{tb.treat[2, 1]} (\Sexpr{round((sum(tb.treat[2, 1])/sum(tb.treat[2, ]))*100, 2)}\%) are the original control.
+<<>>=
+table0(lstatus[,.(creditstatus, assignment)])
+@ 
+\Sexpr{tb.treat[1, 2]} did not accept the credit even though they were assigned to the original treated. These are individual rejecters. \Sexpr{tb.treat[1, 1]} original controls who stayed as the control are a mix of individual rejecters, new group, old, and replacement. The details will be explored later using \textsf{idt}.
+
+Disaggregate by arms. Use \textsf{lsa} (cover pages \& lstatus) to incorporate attrited subjects.
+<<>>=
+lsa[, creditstatus := asc(creditstatus)]
+lsa[grepl("^1?2?$", exist), creditstatus := "attrited"]
+lsa[, creditstatus := factor(creditstatus, levels = c("attrited", "No", "Yes"))]
+#tb.treat.arm <- table(lstatus[,.(creditstatus, assignment, arm)])
+tb.treat.arm <- table(lsa[,.(creditstatus, assignment, arm)])
+arms <- levels(lsa[, arm])
+tb.treat.arm <- lapply(1:dim(tb.treat.arm)[3], 
+	function(i) data.table(cbind(arm = arms[i], 
+	creditstatus = c("attrited", "no", "yes"), tb.treat.arm[, , i])))
+tb.treat.arm <- rbindlist(tb.treat.arm)
+setnames(tb.treat.arm, colnames(tb.treat.arm), 
+	c("arm", "receivedCredit", "originalControl", "originalTreated"))
+tb.treat.arm <- rbindlist(
+	list(cbind(assignment = "control",
+	tb.treat.arm[, c("arm", "receivedCredit", "originalControl"), with = F]),
+	cbind(assignment = "treated",
+	tb.treat.arm[, c("arm", "receivedCredit", "originalTreated"), with = F])))
+setnames(tb.treat.arm, "originalControl", "value")
+tb.treat.arm[, value := asn(value)]
+tb.treat.arm[, assignment := factor(assignment, levels = c("control", "treated"))]
+tb.treat.arm[, arm := factor(arm, levels = c("traditional", "large", "large grace", "cow"))]
+tb.treat.arm[, receivedCredit := factor(receivedCredit, levels = c("yes", "no", "attrited"))]
+#tb.treat.arm[, receivedCredit := factor(receivedCredit, 
+#	levels = rev(levels(tb.treat.arm$receivedCredit)))]
+@
+(Programming memo: Setting key is neccesary for stacking order of bar plot. Don't know why it is the case, but changing the factor level ordering does not help.)
+<<>>=
+setkey(tb.treat.arm, assignment, arm, receivedCredit)
+<<drawing treatment acceptance, echo = F, fig.align='center', fig.height = 2, fig.width = 3, fig.cap = "Treatment acceptance", fig.lp = 'Figure '>>=
+library(ggplot2)
+p <- ggplot(data = tb.treat.arm, aes(x = assignment, y = value)) +
+ 	geom_bar(aes(group = assignment, fill = receivedCredit), 
+ 		stat = "identity", size = .5) +
+	scale_fill_manual(values = c("#003399", "#FF0033", "#99FF66")) +
+	xlab("assignment") + ylab("frequency") +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 0),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.title = element_text(size=rel(.25)),
+		legend.key = element_rect(size = rel(.01)),
+		legend.key.height = unit(.1, "cm"),
+		legend.key.width = unit(.1, "cm"),
+		legend.key.size = unit(.1, "cm"),
+		legend.text = element_text(size=rel(.25)), 
+		legend.position = "bottom", 
+		#legend.justification = "right", 
+		#legend.position=c(0.25,0.3),
+		strip.text = element_text(size=rel(.35)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm"))) +
+		guides(fill = guide_legend(reverse = T))
+p <- p + facet_wrap(~ arm, nrow = 2) 
+grid.newpage()
+footnote.text <- "Notes: The status is up to round 3 information. Attrition is defined as being not obsrved in round 3."
+g <- arrangeGrob(p, bottom = 
+	textGrob(footnote.text, x = 0, y = unit(.5, "npc"), 
+		hjust = -0.1, vjust= 0, 
+		gp = gpar(fontsize = unit(4, "pt"), col = "black")))
+grid.draw(g)
+
+@ 
+\textsc{\small Figure \ref{Figure drawing treatment acceptance}} shows that \textsf{large} and \textsf{large grace} have smaller rejections. The controls in \textsf{traditional} arm has the highest rejections.
+
+Check the dates of disbursement.
+<<>>=
+lstatus[, disburseDate := as.POSIXct(distributiondate, format = "%d/%m/%Y")]
+lstatus[, purchaseDate := as.POSIXct(purchaseddate, format = "%d/%m/%Y")]
+lstatus[, disburse.y := year(disburseDate)]
+<<echo = F>>=
+tb <- table(lstatus[is.na(disburse.y), .(assignment, creditstatus)])
+@
+\Sexpr{sum(tb[, 1])} NAs in disbursement date are yet-to-be treated subects. 
+<<>>=
+(tb <- table(lstatus[is.na(disburse.y), .(assignment, creditstatus)]))
+@
+\Sexpr{sum(tb[, 2])} anomalies are typo's. Dates are wrongly formated.
+<<>>=
+print(lstatus[is.na(disburse.y) & grepl("Y", creditstatus), distributiondate], quote = F)
+@
+Correct date typo's.
+<<>>=
+lstatus[is.na(disburse.y) & grepl("Y", creditstatus), 
+	distributiondate := gsub("12512", "12/12", distributiondate)]
+lstatus[is.na(disburse.y) & grepl("Y", creditstatus), 
+	distributiondate := gsub("1020", "10/20", distributiondate)]
+<<echo = F>>=
+# recoding dates after typo correction
+lstatus[, disburseDate := as.POSIXct(distributiondate, format = "%d/%m/%Y")]
+lstatus[, disburse.y := year(disburseDate)]
+lstatus[, disburse.q := quarter(disburseDate)]
+lstatus[, disburse.m := month(disburseDate)]
+lstatus[, disburse.w := week(disburseDate)]
+lstatus[, disburse.d := mday(disburseDate)]
+lstatus[, disburse.wd := wday(disburseDate)]
+tb.treat.no.year <- table(lstatus[is.na(disburse.y), .(assignment, creditstatus)])
+@
+After correcting for typo's, \Sexpr{sum(tb.treat.no.year)} cases of no dates are subjects who did not receive a credit. 
+
+Disbursement months and weeks are widely distributed.
+<<>>=
+table0(lstatus[, .(disburse.y, disburse.m)])
+table0(lstatus[, .(disburse.y, disburse.w)])
+#table(lstatus[, .(disburse.y, disburse.m, arm)], useNA = "ifany")
+@
+
+	Compute elapsed treatment days up to Oct 1, 2015 by original treatment assignment. 
+<<>>=
+lstatus[, elapsed := as.POSIXct("10/01/2015", format = "%m/%d/%Y") - disburseDate]
+@
+Summary of elapsed days by \textsf{assignment}.
+<<>>=
+el.by.D <- by(lstatus[, elapsed], lstatus[, assignment], destat, prob = "odd")
+el.by.D2 <- rbindlist(lapply(1:length(el.by.D), 
+	function(i) data.table(cbind(levels(lstatus[, assignment])[i], t(asn(el.by.D[i]))))))
+setnames(el.by.D2, colnames(el.by.D2), c("assignment", colnames(el.by.D[[1]])))
+el.by.D2
+@
+Members were eventually given a treatment in our stepped wedge design. We can plot the rate of the treated against elapsed days in \textsf{Figure \ref{fig: treatment progression 1}, \ref{fig: treatment progression 2}}.
+<<>>=
+lstatus[, daysFromStart := 
+	asn(disburseDate - min(disburseDate, na.rm = T))/(3600*24)]
+# daysFromStart = NA is never-treated subject
+#  cumulative treatment rate by treatment assignment
+setkey(lstatus, assignment, daysFromStart)
+lstatus[, cumTreated := as.double(cumsum(grepl("Y", creditstatus))), by = assignment]
+lstatus[, en := .N, by = assignment]
+lstatus[, cumTreated := cumTreated/en]
+lstatus[, en := NULL]
+#  cumulative treatment rate by treatment assignment and arm
+lstatus[, cumTreatedA := as.double(cumsum(grepl("Y", creditstatus))), 
+	by = c("assignment", "arm")]
+lstatus[, en := .N, by = c("assignment", "arm")]
+lstatus[, cumTreatedA := cumTreatedA/en]
+lstatus[, en := NULL]
+setkey(lstatus, assignment, daysFromStart)
+<<treatment progression 1, warning = F, echo = F, fig.align='center', fig.height = 1.5, fig.width = 2, fig.cap = "Treatment progression", fig.lp = 'fig: '>>=
+cumTrDays <- lstatus[!is.na(daysFromStart), .(assignment, gid, hhid, arm,
+	daysFromStart, cumTreated, cumTreatedA, elapsed, disburseDate, creditstatus)]
+library(ggplot2)
+library(gtable)
+library(grid)
+library(gridExtra)
+p <- ggplot(data = cumTrDays, aes(x = daysFromStart, y = cumTreated*100)) +
+	geom_line(aes(group = assignment, colour = assignment), size = .5) +
+	scale_color_manual(values = c("#003399", "#FF0033")) +
+	xlab("Number of days from start") + ylab("Percentage of treated") +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.25), angle = 0),
+		axis.text.y = element_text(size = rel(.25), angle = 0),
+		legend.text = element_text(size=rel(.25), 
+			margin = margin(.05, 0, .05, 0, "cm")),
+		legend.position = "bottom", 
+		#legend.justification = "right", 
+		#legend.position = c(1, 0), 
+		legend.direction = "horizontal", 
+		legend.title = element_text(size=rel(.25)),
+		legend.key = element_rect(size = rel(.01)),
+		legend.key.height = unit(.1, "cm"),
+		legend.key.width = unit(.1, "cm"),
+		legend.key.size = unit(.1, "cm"),
+		strip.text = element_text(size=rel(.25)),
+		plot.margin = unit(rep(2, 4), "pt"))
+grid.newpage()
+footnote.text <- "Notes: The cumulative total of receiving treatment among the respective original treatment assignment groups defined in \'assignment\'."
+g <- arrangeGrob(p, bottom = 
+	textGrob(footnote.text, x = 0, y = unit(.5, "npc"), 
+		hjust = -0.1, vjust= 0, 
+		gp = gpar(fontsize = 2, col = "black")))
+grid.draw(g)
+<<eval = F, echo = F>>=
+left.foot <- textGrob("Note: Cumulative number of subjects receiving treatments.", 
+	x = 0, y = 0.8, just = c("left", "top"), 
+	gp = gpar(fontsize = 11, col = "black", fontfamily = "TT Arial"))
+labs.foot <- gTree("LabsFoot", children = gList(left.foot))
+gtable_add_grob(p, labs.foot, t=7, l=2, r=4)
+<<treatment progression 2, warning = F, echo = F, fig.align='center', fig.height = 2, fig.width = 4, fig.cap = "Treatment progression by arm", fig.lp = 'fig: '>>=
+ggplot(data = cumTrDays, aes(x = daysFromStart, y = cumTreatedA*100)) +
+	geom_line(aes(group = assignment, colour = assignment), size = .5) +
+	scale_color_manual(values = c("#003399", "#FF0033")) +
+	xlab("Number of days from start") + ylab("Percentage of treated") +
+	theme(axis.title.y = element_text(size = rel(.5), angle = 90), 
+		axis.title.x = element_text(size = rel(.5), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 0),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.5), margin = margin(.25, 0, .25, 0, "cm")), 
+		legend.title = element_text(size=rel(.5)),
+		legend.position = "bottom", 
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.35)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm"))) +
+	facet_wrap(~ arm, nrow = 2)
+@
+
+	Disbursement time lag within the village by the group. In \textsf{Figure \ref{fig: within village disbursement time gap}}, there are 3 villages (81693, 703114, 703115) with no control receiving credits. There are a few villages where the controls precede some of the treated. Probably miscoding in data capture.
+<<>>=
+setkey(lstatus, gid, daysFromStart)
+lstatus[, daysFromStartV := daysFromStart - min(daysFromStart, na.rm = T), by = gid]
+<<within village disbursement time gap, echo = F, fig.align='center', fig.height = 5, fig.width = 4, fig.cap = "Within village disbursement time gap", fig.lp = 'fig: '>>=
+p <- ggplot(data = lstatus, aes(x = daysFromStartV, group = assignment)) +
+	geom_histogram(aes(fill = assignment), size = .5) +
+	scale_x_continuous(breaks=seq(0, 900, 300)) +
+	#scale_x_continuous(breaks=seq(0, 800, 200), limits = c(0, 900)) +
+	scale_fill_manual(values = c("#003399", "#FF0033")) +
+	xlab("Number of days from start in the village") + ylab("Frequency") +
+	theme(axis.title.y = element_text(size = rel(.5), angle = 90), 
+		axis.title.x = element_text(size = rel(.5), angle = 0),
+		axis.text.x = element_text(size = rel(.5), angle = 90, hjust = 1),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.text = element_text(size=rel(.25), margin = margin(.25, 0, .25, 0, "cm")), 
+		legend.title = element_text(size=rel(.25)),
+		#legend.position = "bottom", 
+		legend.justification = "right", 
+		legend.position = c(1, 0), 
+		legend.direction = "horizontal", 
+		legend.key = element_rect(size = rel(.25)),
+		legend.key.size = unit(.15, "cm"),
+		strip.text = element_text(size=rel(.35)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm"))) +
+	facet_wrap(~ gid, nrow = 10)
+grid.newpage()
+footnote.text <- "Notes: Treatment assignment according to the field record. Number of days since the treatment started in a village.\nVillages 81693, 703114, 703115 have missing dates."
+g <- arrangeGrob(p, bottom = 
+	textGrob(footnote.text, x = 0, y = unit(.5, "npc"), 
+		hjust = -0.1, vjust= 0, 
+		gp = gpar(fontsize = 4, col = "black")))
+grid.draw(g)
+@
+Check 3 villages (81693, 703114, 703115). \textcolor{red}{Controls have NAs in \textsf{disburseDate} but membership status is not individual rejecters. Forgot to capture disbursement dates?}
+<<>>=
+table(lstatus[(gid == 81693 | gid == 703114 | gid == 703115) & 
+	grepl("co", assignment), .(memstts, disburseDate)], useNA = "ifany")
+@
+
+
+\section{original vs. contemporaneous treatment assignment (lstatus and randomisation information)}
+
+\subsection{original vs. contemporaneous treatment assignment}
+
+
+<<echo = F, results = 'hide'>>=
+setwd(pathreceived.oct)
+ta <- list.files(pattern = ".prn$", recursive = T, full.names = T)
+ta <- ta[!grepl("fwd", ta)]
+@
+	Check \textsf{assignment} against our instructions on treatment assignment. Read treatment assigment from individual treatment assignment files in randomization folder. Arms by individual are stored in \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", ta[2])}}. Arms by char are stored in \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", ta[1])}}. Merge individual treatmet status to original treatment assignment data to check consistency between the two.
+<<>>=
+setwd(pathreceived.oct)
+ta <- list.files(pattern = ".prn$", recursive = T, full.names = T)
+ta <- ta[!grepl("fwd", ta)]
+Ta <- lapply(ta, fread, integer64 = "double")
+@
+\textsf{treat} is treatment assignment that we instructed to the field team. \textsf{assignment} is the treatment assignment recorded in the field.
+<<>>=
+table0(Ta[[2]][, treat])
+@
+Merge two files.
+<<>>=
+setnames(Ta[[2]], "hh_id", "hhid")
+Ta[[2]][, treat := factor(treat)]
+# as.double is necessary for merge in data.table
+lstatus[, hhid := as.double(hhid)]
+Ta[[2]][, hhid := as.double(hhid)]
+setkey(lstatus, hhid); setkey(Ta[[2]], hhid)
+tl <- Ta[[2]][lstatus]
+@
+\textsf{tl} is derived from \textsf{lstatus} and \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", ta[2])}}.
+\textsf{tl: lstatus + randomisation}.
+
+	Below tabulation shows that our original instruction of treatment assignment is followed strictly for the surviving subjects. There are \Sexpr{nrow(tl[is.na(treat), ])} subjects who were not present at the time of original treatment assignment randomisation. These subjects do not have UP/MP classification. There are NAs in \textsf{treat} because its source (\textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", ta[2])}}) does not contain additional households from new chars \textcolor{red}{(requested to Abu-san to add \textsf{hhid} to the randomization file, 2017 Mar 5).}
+<<>>=
+table(tl[, .(assignment, treat)], useNA = "ifany")
+@
+\textsf{treat} is an indicator variable for everyone in the group. We stratified the subjects into ultra poor (UP) and moderate poor (MP), and assigned 7 out of 14 UPs and 3 out of 6 MPs to treatment. So a half of the subjects are classified as control/treated in \textsf{treat}.
+<<>>=
+table(tl[, .(assignment, treat, poverty.status)], useNA = "ifany")
+@
+
+	The original treated received treatments in 2013. \Sexpr{sum(tl[is.na(disburse.y), grepl("treated", treat)])} opted out not to receive loans despite originally being selected as the treated.
+<<>>=
+table0(tl[, .(disburse.y, treat)])
+table0(tl[, .(creditstatus, treat)])
+@
+
+
+\subsection{cover page and original randomisation arm assignment}
+
+
+<<>>=
+idmem <- idfu[rd == last.rd, .(gid, hhid, exist, memstatus, arm, rejOfGroup, rejInGroup)]
+<<create idt>>=
+setkey(tl, gid, hhid); setkey(idmem, gid, hhid)
+idt <- tl[idmem]
+@
+\textsf{idt: tl (lstatus + randomisation) + idfu (cover page)}. \textsf{idt}'s hhid uses cover page as a base, and there are \Sexpr{nrow(idt[is.na(assignment), ])} subjects who show up in cover page but not in lstatus. Among them, \Sexpr{nrow(idt[is.na(assignment) & grepl("old", memstatus), ])} are old members.
+<<>>=
+idt[is.na(assignment) & grepl("old", memstatus), 
+	.(memstatus, arm, gid, hhid, villagename, exist, assignment)]
+@
+
+Define \textsf{memstatus, receivedCredit}.
+<<>>=
+idt[(rejOfGroup), memstatus := "group rejection"]
+idt[, memstatus := factor(memstatus)]
+idt[grepl("Ul", povertystatus), poverty.status := "up"]
+idt[grepl("Mo", povertystatus), poverty.status := "mp"]
+idt[!is.na(i.arm) & is.na(arm), arm := i.arm]
+idt[, receivedCredit := NA]
+#idt[grepl("^1?2?$", exist), receivedCredit := F]
+idt[grepl("Y", creditstatus), receivedCredit := T]
+idt[grepl("N", creditstatus), receivedCredit := F]
+# not receiving credit if before intervention, lost to flood, group rejection
+idt[is.na(receivedCredit) & grepl("lost", memstatus), receivedCredit := F]
+idt[is.na(receivedCredit) & grepl("gro.*rej", memstatus), receivedCredit := F]
+#idt[is.na(receivedCredit), .(receivedCredit, memstatus, arm, gid, hhid, villagename, exist)]
+@
+
+	Rejections come at a single stage. Despite we randomise at two levels, group and individual, we announced the results after both stages were complete. Groups and individuals rejected after learning the arm and inital treatment assigment status. Create an indicator of accept/reject rather than embedding it in \textsf{arm} or \textsf{memstatus}. 
+<<>>=
+idt[, accept := "yes"]
+idt[grepl("ind.*rej", memstatus), accept := "individual rejection"]
+idt[grepl("gr.*rej", memstatus), accept := "group rejection"]
+@
+
+\textsf{assignment} information is not shown for some subjects.
+<<>>=
+table0(idt[, .(assignment, memstatus)])
+@
+
+%	 Indicate ``quit after randomise". In \textsf{arm}, indicate ``group quit after randomise".
+<<eval = F, echo = F>>=
+idt[is.na(assignment) | assignment == "", 
+	assignment := "quit after randomise"]
+idt[, assignment := factor(assignment, 
+	levels = c("quit after randomise", "control", "treated"))]
+idt[grepl("bef", arm), arm := "group quit after randomise"]
+@
+
+	Some of flooded individuals are under \textsf{arm} ``before intervention''. Need to change to ``lost to flood''.
+<<>>=
+table0(idt[grepl("ye", accept) & grepl("flo", memstatus), .(arm, memstatus)])
+idt[grepl("ye", accept) & grepl("flo", memstatus) & grepl("bef", arm), 
+	arm := "lost to flood"]
+table0(idt[grepl("ye", accept) & grepl("flo", memstatus), .(arm, memstatus)])
+@
+2 cases who accepted but quit. (Same 2 cases who has NA in \textsf{receivedCredit})
+<<>>=
+idt[grepl("ye", accept) & is.na(assignment) & grepl("cow", arm), 
+	.(memstatus, arm, gid, hhid, villagename, exist, receivedCredit, accept)]
+@
+Change them to \textsf{accept} = individual rejection.
+<<>>=
+idt[grepl("ye", accept) & is.na(assignment) & grepl("cow", arm), 
+	accept := "individual rejection"]
+@
+
+We examine the number of rejecters by arm and assignment. (Using \textsf{accept} or \textsf{memstatus} does not make a difference because the former is defined with the latter variable.) Compare with individual or group rejecters after excluding flood:
+<<>>=
+table0(idt[grepl("rej", memstatus) & !grepl("flood", memstatus) & 
+	grepl("tr", assignment), .(assignment, accept)])
+nc1 <- data.table(table0(idt[grepl("rej", memstatus) & grepl("co", assignment), .(gid, arm)]))
+nc2 <- data.table(table0(idt[grepl("rej", memstatus) & grepl("tr", assignment), .(gid, arm)]))
+# if lost to flood, no assignmemt
+nc3 <- data.table(table0(idt[grepl("fl", memstatus), .(gid, arm)]))
+acpt <- rbind(
+	cbind(assignment = "control", flood = F, nc1),
+	cbind(assignment = "treated", flood = F, nc2))
+acpt[, arm := factor(arm, levels = c("traditional", "large", "large grace", "cow"))]
+acpt[, assignment := factor(assignment, levels = c("control", "treated"))]
+<<drawing treatment rejections in a group, echo = F, warning = F, fig.align='center', fig.height = 1.5, fig.width = 2.5, fig.cap = "Treatment rejections in a group", fig.lp = 'fig: '>>=
+library(ggplot2)
+p <- ggplot(data = acpt, aes(x = N, group = arm)) +
+	geom_histogram(aes(fill = arm), size = .5) +
+	scale_x_continuous(breaks = seq(0, 18, 2)) +
+	#scale_fill_manual(values = c("#003399", "#FF0033")) +
+	xlab("Number of subjects in a village who reject to be treated") + ylab("Frequency") +
+	theme(axis.title.y = element_text(size = rel(.25), angle = 90), 
+		axis.title.x = element_text(size = rel(.25), angle = 0),
+		axis.text.x = element_text(size = rel(.25), angle = 0),
+		axis.text.y = element_text(size = rel(.5), angle = 0),
+		legend.position = "none", 
+		strip.text = element_text(size=rel(.35)),
+		strip.text.x = element_text(margin = margin(.05, 0, .05, 0, "cm")),
+		strip.text.y = element_text(margin = margin(.05, 0, .05, 0, "cm"))) +
+	facet_grid(assignment ~ arm)
+grid.newpage()
+footnote.text <- "Notes: The status is up to round 3 information. Number of subjects who chose to stay as the control.\nTop panels are original control, bottom panels are original treated. Observation per village."
+g <- arrangeGrob(p, bottom = 
+	textGrob(footnote.text, x = 0, y = unit(.5, "npc"), 
+		hjust = -0.1, vjust= 0, 
+		gp = gpar(fontsize = unit(3, "pt"), col = "black")))
+grid.draw(g)
+@ 
+\textsc{\small Figure \ref{fig: drawing treatment rejections in a group}} shows that \textsf{traditional} and \textsf{cow} have more treatment rejecters. The controls in \textsf{cow} arm has the highest rejections.
+
+
+\subsection{save treatment related information file}
+
+<<>>=
+newcolnames <- c("district", "upazila", "union", "village", 
+	"gid", "hhid", "mname", "husFatherName", 
+	"povstatus", "memstatus", "receivedCredit", "assignment", "arm", 
+	"accept", "disburseDate", "elapsed", "daysFromStart",
+	"loanAmount", "iga1", "iga2", "iga3", "purchaseDate")
+setnames(idt, c("districtname", "upazila", "unionname", "villagename", 
+	"gid", "hhid", "memname", "husbandfathersname", 
+	"poverty.status", "memstatus", "receivedCredit", "assignment", "arm", 
+	"accept", "disburseDate", "elapsed", "daysFromStart",
+	"loananount", "IGA1", "IGA2", "IGA3", "purchaseDate"),
+	newcolnames)
+<<echo = F>>=
+idt[, povstatus := factor(povstatus)]
+idt[, accept := factor(accept)]
+idt[, iga1 := factor(iga1)]
+idt[, iga2 := factor(iga2)]
+idt[, iga3 := factor(iga3)]
+@
+Note that the observations starting with 980/990 are individual replacement or group replacement. E.g., \Sexpr{asc(idt[grepl("^9.0", hhid), hhid][1])} is replacement for \Sexpr{gsub("^9.0", "", idt[grepl("^9.0", hhid), hhid][1])}.
+<<>>=
+table0(idt[grepl("^9.0", hhid), memstatus])
+table0(idt[hhid %in% gsub("^9.0", "", idt[grepl("^9.0", hhid), hhid]), memstatus])
+summary(idt[, newcolnames, with = F])
+setwd(pathsave)
+tr <- idt[, newcolnames, with = F]
+write.tablev(tr, "treatment_assignment.prn")
+saveRDS(tr, "treatment_assignment.rds")
+@
+\textsf{tr: idt (tl (lstatus + randomisation) + idfu (cover page))} with most consistent arm, assignment.
+
+
+\subsection{interview dates}
+
+\textcolor{black}{\textbf{Found:} Some dates are erroneously entered. 21 cass of missing interview dates. }
+
+Interview dates. (Correct some typos before date conversion.)
+<<>>=
+idfu[rd == 1, intDate := as.POSIXct(asc(st.day.inter), format = "%d-%m-%Y")]
+# correct typo 1
+idfu[rd == 1 & is.na(intDate) & grepl("092", st.day.inter), 
+	st.day.inter := gsub("092", "09/2", st.day.inter)]
+# correct typo 2
+idfu[rd == 1 & is.na(intDate) & grepl(";13", st.day.inter), 
+	st.day.inter := gsub(";", "", st.day.inter)]
+idfu[rd == 1, intDate := as.POSIXct(asc(st.day.inter), format = "%d-%m-%Y")]
+idfu[rd == 1 & is.na(intDate) & grepl("-", st.day.inter), 
+	intDate := as.POSIXct(asc(st.day.inter), format = "%d-%m-%y")]
+idfu[rd == 1 & is.na(intDate) & grepl("\\/", st.day.inter), 
+	intDate := as.POSIXct(asc(st.day.inter), format = "%d/%m/%Y")]
+idfu[rd >= 2, intDate := as.POSIXct(asc(d.1st), format = "%d%m%y")]
+idfu[rd >= 2 & is.na(intDate) & !is.na(st.day) & !is.na(st.month) & !is.na(st.year), 
+	intDate := as.POSIXct(paste0(st.day, "-", st.month, "-", st.year), format = "%d-%m-%y")]
+@
+Incorporate \textsf{disburseDate} to show the timing of intervention in terms of rd.
+<<>>=
+iddates <- idfu[, .(gid, hhid, rd, intDate, memstatus)]
+disdates <- lstatus[, .(gid, hhid, disburseDate, purchaseDate)]
+setkey(iddates, gid, hhid); setkey(disdates, gid, hhid)
+iddates <- disdates[iddates]
+iddates[, disbursed := NA]
+iddates[disburseDate > intDate, disbursed := F]
+iddates[disburseDate <= intDate, disbursed := T]
+@
+In rd 2 onwards, subjects who quit before C/T assignment has disburse = NA. Turn this to disburse = F.
+<<>>=
+iddates[, purchased := NA]
+iddates[purchaseDate > intDate, purchased := F]
+iddates[purchaseDate <= intDate, purchased := T]
+setkey(iddates, hhid, rd)
+iddates[, disbursed1 := shift(disbursed, 1L, type="lag"), by = hhid]
+iddates[, purchased1 := shift(purchased, 1L, type="lag"), by = hhid]
+@
+If disbursed/purchased in previous round, later round is T. 
+<<>>=
+iddates[is.na(disbursed) & !is.na(disbursed1) & disbursed1, 
+	disbursed := disbursed1]
+iddates[is.na(purchased) & !is.na(purchased1) & purchased1, 
+	purchased := purchased1]
+iddates[, c("disbursed1", "purchased1") := NULL]
+@
+For rd 1, group rejection, individual rejection, and lost to flood, there is no disbursement.
+<<>>=
+iddates[rd == 1 | grepl("reje|lost", memstatus), 
+	c("disbursed", "purchased") := list(F, F)]
+@
+Errors in year: not 0011, 0012, 2004, 2005, 2011. Correct them to 2012, 2012, 2014, 2015, 2012, respectively. \textbf{Is revision correct}?
+<<>>=
+print(unique(iddates[year(intDate) <= 2010, year(intDate)]), quote = F)
+iddates[year(intDate) == 11, .(gid, hhid, rd, intDate, disburseDate)]
+@
+There are subjects whose interview dates are missing in rd 1. 
+<<>>=
+table0(iddates[is.na(year(intDate)), .(gid, rd)])
+@
+Mostly the group rejected households.
+<<>>=
+table0(iddates[is.na(year(intDate)), .(rd, memstatus)])
+#<<eval = F>>=
+invisible(iddates[year(intDate) == 2005, 
+	intDate := as.POSIXct(paste("2015", month(intDate), mday(intDate), sep = "-"), 
+	format = "%Y-%m-%d")])
+invisible(iddates[year(intDate) == 2004, 
+	intDate := as.POSIXct(paste("2014", month(intDate), mday(intDate), sep = "-"), 
+	format = "%Y-%m-%d")])
+invisible(iddates[year(intDate) == 11 | year(intDate) == 2011 | year(intDate) == 12, 
+	intDate := as.POSIXct(paste("2012", month(intDate), mday(intDate), sep = "-"), 
+	format = "%Y-%m-%d")])
+@
+Check correction.
+<<>>=
+table0(iddates[, year(intDate)])
+@
+For disbursement, we know that it should be before the first day of rd 3. If \textsf{receivedCredit == T} and rd 3, even \textsf{intDate} is NA, we know that \textsf{disbursed/purchased} == T. To do so, we need treatment information in \textsf{tl}.
+<<>>=
+setwd(pathsave)
+tr <- fread("treatment_assignment.prn", integer64 = "double")
+tr <- tr[, .(hhid, receivedCredit)]
+setkey(tr, hhid)
+<<>>=
+setkey(iddates, hhid)
+ivdates <- iddates[tr]
+ivdates[rd == 3 & receivedCredit & is.na(disbursed), disbursed := T]
+ivdates[rd == 3 & receivedCredit & is.na(purchased), purchased := T]
+ivdates[rd == 3 & !receivedCredit & is.na(disbursed), disbursed := F]
+ivdates[rd == 3 & !receivedCredit & is.na(purchased), purchased := F]
+ivdates[(is.na(disbursed) & !is.na(disburseDate) & !is.na(intDate)) |
+	(is.na(disbursed) & !is.na(disburseDate) & rd == 3) , ]
+table0(ivdates[is.na(disburseDate), .(rd, receivedCredit)])
+@
+Remaining NAs in disburse are 2 obs. %(when we are not 100\% sure if disbursement is finished by the time of interview, because either disbursement date or interview date is missing).
+<<>>=
+ivdates[is.na(disburseDate) & is.na(receivedCredit), ]
+@
+<<>>=
+table(ivdates[is.na(disbursed), .(memstatus, receivedCredit, rd)], useNA = "ifany")
+@
+\textsf{ivdates} only shows the observed rds. Incorporate attrition information in \textsf{iu} to explicitly show the unobserbed rounds.
+<<>>=
+setwd(pathsave)
+attrit <- fread("attrition.prn")
+setnames(attrit, c("i1", "i2", "i3"), paste("inData", 1:3, sep = "."))
+attrit <- reshape(attrit, direction = "long", idvar = "hhid", 
+	varying = paste("inData", 1:3, sep = "."))
+setnames(attrit, "time", "rd")
+setkey(ivdates, hhid, rd)
+setkey(attrit, hhid, rd)
+itvdates <- ivdates[attrit]
+<<warning = F>>=
+setwd(pathsave)
+write.tablev(itvdates, "interview_dates_long.prn")
+saveRDS(itvdates, "interview_dates_long.rds")
+itvdatesw <- reshape(itvdates, direction = "wide", 
+	idvar = c("hhid", "exist"),
+	timevar = "rd", v.names = grepout("ntD|ed$|inD", colnames(iddates)))
+write.tablev(itvdatesw, "interview_dates_wide.prn")
+saveRDS(itvdatesw, "interview_dates_wide.rds")
+@
+
+
+\section{food consumption and vulnerability}
+
+\textcolor{black}{\textbf{Found:} Missing observations match with attrition. No problem found.}
+
+Let us match against Section 3B (Food consumption and vulnerability).
+<<echo = F, results = 'hide'>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl(skip.in.rd1, foldername)]
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+<<>>=
+grepout("sec.*\\_3b", fn)
+setwd(pathsource.mar)
+sec3b <- lapply(grepout("sec.*\\_3b", fn), fread, integer64 = "double")
+idunion3b <- unique(asn(lapply(sec3b, function(x) x[, id])))
+idunion3b <- idunion3b[order(idunion3b)]
+c(length(idunion), length(idunion3b))
+table(idunion %in% idunion3b)
+table(idunion3b %in% idunion)
+for (i in 1:2) assign(paste0("i", i+1), idunion %in% sec3b[[i]][, id])
+iu3b <- data.table(idunion, i1 = idunion %in% idunion3b, i2, i3)
+iu3b[, exist := ""]
+iu3b[(i1), exist := "0"]
+iu3b[(i2), exist := paste0(exist, 2)]
+iu3b[(i3), exist := paste0(exist, 3)]
+iu3b[exist == "", exist := NA]
+iu3b[, c("i1", "i2", "i3") := NULL]
+iu3b[, exist := factor(exist, levels = c("0", "023", NA))]
+setnames(iu3b, "idunion", "hhid")
+@
+\Sexpr{table0(iu3b[, exist])[2]} NA's (almost) match with subjects who are observed up to two rounds (\Sexpr{sum(table(table(idf[, hhid]))[-3])} in total), \Sexpr{table0(iu3b[, exist])["0"]} matches with remainder of attrition last seen in rd 2.
+<<>>=
+table0(iu3b[, exist])
+@
+
+\section{rd1: merge original and additional samples}
+
+List files.
+<<>>=
+setwd(pathsource.mar)
+foldername <- list.dirs(path = "./1", recursive = T, full.names = T)
+foldername <- foldername[!grepl("^\\.\\/1$|combined", foldername)]
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+fn1 <- grepout("ad.*Sec", fn)
+fn1 <- gsub("^.*\\/", "", fn1)
+fn1 <- gsub(".prn", "", fn1)
+print(fn1, quote = F)
+fn1 <- substr(fn1, 2, nchar(fn1))
+fn1 <- gsub("n\\_", "n", fn1); fn0 <- gsub("n\\_", "n", fn)
+fn.0 <- gsub("ection", "s", fn1)
+fn.0 <- gsub("s(\\d)(\\D)?$", "s0\\1\\2", fn.0)
+@
+Read files.
+<<warning = F>>=
+setwd(pathsource.mar)
+R <- lapply(fn, fread, integer64 = "double", header = T)
+@
+Start from 2nd, as there is no \Sexpr{fn1[1]} file in original files.
+<<>>=
+duph <- NULL
+for (i in 2:length(fn1)) {
+	x1 <- R[grep(fn1[i], fn0)]
+	x1 <- lapply(x1, function(x) 
+	if (any(grepl("hh_id", colnames(x)))) setnames(x, "hh_id", "hhid") else x)
+	x1 <- rbindlist(x1, fill = T)
+	x1 <- a2b(x1, ".", NA)
+	x1 <- x1[!duplicated(x1), ]
+	table(tb <- table0(x1[, .(hhid, mid)]))
+	duph <- c(duph, length(duphhid <- rownames(tb[apply(tb > 1, 1, any), ])))
+	setkey(x1, hhid, mid)
+	write.tablev(x1, paste0(pathsource.mar, "1/combined/", fn.0[i], ".prn"))
+}
+@
+Number of duplication in \textsf{hhid} in each file:
+<<>>=
+names(duph) <- fn.0[-1]
+duph
+@
+
+\end{document}

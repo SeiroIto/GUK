@@ -1,0 +1,341 @@
+<<ReadTrimLivestock, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockANCOVA.rnw', warning = F>>=
+@
+%  source(paste0(pathprogram, "ReadTrimLivestockANCOVA.R"))
+<<livestock regression estimation set parameters>>=
+remove(list = ls(pattern = "^incl.?\\d"))
+FileName <- "Livestock"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta")
+listheader <- paste0("lv", regsuffixes)
+<<Livestock ANCOVA covariate selection, cache = F, child='c:/data/GUK/analysis/program/LivestockCovariateSelectionANCOVA2.rnw'>>=
+#  source(paste0(pathprogram, "LivestockCovariateSelectionANCOVA2.R"))
+@
+<<get jay from covariate selection>>=
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+jay
+DataToUse1 <- rep("lvo", jay)
+DataToUse2 <- rep("lvo3", jay)
+tableboxwidth <- 4.5
+Regressands <- rep("TotalImputedValue", jay)
+lvo[, grepout("TotalImputed2", colnames(lvo))  := NULL]
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+<<livestock regression estimation>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+<<TotalImputed2Value as regressand>>=
+FileName <- "LivestockAnnualPrice"
+Regressands <- rep("TotalImputed2Value", jay)
+lvo = copy(lvo.)
+lvo[, grepout("RM", colnames(lvo)) := NULL]
+lvo[, grepout("TotalImputedValue.?", colnames(lvo)) := NULL]
+<<annual price livestock regression estimation>>=
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "LivestockCovariateSelectionANCOVA2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+\subsubsection{Cattle holding}
+
+<<ReadTrimLivestock cattle, cache = F>>=
+source(paste0(pathprogram, "ReadTrimLivestockANCOVA.R"))
+<<cow holding regression>>=
+Regressands <- rep("NumCows", 7)
+DataToUse1 <- rep("lvoN", 7)
+DataToUse2 <- rep("lvo3N", 7)
+lvoN = copy(lvo)
+lvoN[, TotalImputedValue:= NULL]
+lvoN[, grepout("TotalImputed2?Value.?", colnames(lvo)) := NULL]
+FileName <- "NumCows"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta")
+listheader <- paste0("cow", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+dig.depmean <- 2
+if (any(grepl("NumCowsOwnedAtRd1", colnames(lvoN)))) 
+  setnames(lvoN, "NumCowsOwnedAtRd1", "NumCows0")
+<<NumCows regression select covariates original HHs>>=
+source(paste0(pathprogram, "NumCowsCovariateSelectionANCOVA2.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+jay
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+
+<<warning = F>>=
+#lvo <-  readRDS(paste0(pathsaveHere, "LivestockAdminDataUsedForEstimation.rds"))
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+setkey(lvo, Arm, tee)
+lvostat <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, tee)]
+lvostat[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+setkey(lvo, hhid, survey)
+lvo[, HoldingClass := "below 1000"]
+lvo[TotalImputedValue >= 1000 & TotalImputedValue < 30000, 
+  HoldingClass := "1000-29999"]
+lvo[TotalImputedValue >= 30000 & TotalImputedValue < 50000, 
+  HoldingClass := "30000-49999"]
+lvo[TotalImputedValue >= 50000, 
+  HoldingClass := "above 50000"]
+lvo[, HoldingClass := factor(HoldingClass, 
+  levels = c("below 1000", "1000-29999", "30000-49999", "above 50000"))]
+addmargins(table0(lvo[o800==1,.(tee, HoldingClass)]), 2)
+setkey(lvo, Arm, HoldingClass, tee)
+# summary by arm, holding class, and survey round
+lvostat2 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, tee)]
+lvostat2[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+# summary by arm, holding class, and year
+lvostat3 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, Year)]
+lvostat3[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+setkey(lvostat3, Arm, HoldingClass, Year)
+<<Total imputed value histogram original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total imputed value of livestock holding", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvo[TotalImputedValue > 0], aes(TotalImputedValue)) + 
+  geom_histogram(breaks = c(0, seq(10000, 200000, 10000))) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(breaks = seq(0, 200000, 20000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes original HHs, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvostat2, aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes by year original HHs, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes by year", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = subset(lvostat3, Year != 2011 & Year != 2013 & !is.na(Year)), aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(Year ~ Arm)
+<<figure livestock holding at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+setkey(lvo, Arm, tee)
+table0(lvo[o800==1 & tee == 1,.(BStatus, povertystatus)])
+lvostat <- lvo[o800==1 & tee == 1 & !grepl("flo|gr", BStatus),
+  .(mean.IV = mean(TotalImputedValue, na.rm = T), 
+    std.IV = var(TotalImputedValue, na.rm = T)^(.5), 
+    mean.Cattle = mean(NumOwned.cowox, na.rm = T),
+    std.Cattle = var(NumOwned.cowox, na.rm = T)^(.5), 
+    N = sum(!is.na(TotalImputedValue))), by = .(Arm, povertystatus)]
+lvostat[, c("lb.ImputedValue", "ub.ImputedValue", 
+  "lb.Cattle", "ub.Cattle") := list(
+    mean.IV - std.IV * qt(.975, N- 1), 
+    mean.IV + std.IV * qt(.975, N- 1),
+    mean.Cattle - std.Cattle * qt(.975, N- 1), 
+    mean.Cattle + std.Cattle * qt(.975, N- 1))]
+lvostat2 <- reshape(lvostat, direction = "long", idvar = c("Arm", "povertystatus", "N"),
+  varying = grepout("^.b", colnames(lvostat)))
+lvostat2[, mean := mean.Cattle]
+lvostat2[grepl("Im", time), mean := mean.IV]
+lvostat2[, std := std.Cattle]
+lvostat2[grepl("Im", time), std := std.IV]
+lvostat2[, grepout("\\.[CI]", colnames(lvostat2)) := NULL]
+library(ggplot2)
+g <-
+ ggplot(data = lvostat2, 
+  aes(x=Arm, y=mean)) + 
+  geom_pointrange(aes(
+    colour = povertystatus, shape = povertystatus,
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .2)) +
+  scale_colour_manual(values = c("darkblue", "darkred")) +
+  scale_fill_manual(values = c("blue", "red")) +
+  #scale_y_continuous(name = "livestock values (Tk.)")
+  theme(
+   axis.text.x = element_text(size = 5, vjust = 1, hjust = .5), 
+   axis.text.y = element_text(size = 5), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 4, 
+     margin = margin(.5, 0, .5, 0, "cm")),
+   legend.text = element_text(size = 7),
+   legend.title = element_text(size = 9),
+   legend.key = element_rect(fill = "white"),
+   legend.key.size = unit(.5, "cm"),
+   legend.position = "bottom") +
+  facet_wrap( ~ time, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/LivestockValuesAtRd1.png"),
+  g,
+  width = 10, height = 4, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, "figure/EstimationMemo/LivestockValuesAtRd1.eps")
+  , horizontal = F, width = 12/2.54, height = 5/2.54)
+print(g)
+whatever <- dev.off()
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Lvestock holding at baseline\label{fig LivestockBaseline}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/LivestockValuesAtRd1.eps")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& \\[1ex]
+\end{tabular}
+}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{cattle} reports above 20000 holding in rds 2-4 while \textsf{traditional} does not.
+\end{itemize}
+<<>>=
+lvo[,
+  .(MeanImputedVal = mean(TotalImputedValue, na.rm = T), 
+  MeanNumCows = mean(NumOwned.cowox, na.rm = T), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)][order(Arm, survey), ]
+#lvo[,.(N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)]
+<<Number of cattle by year, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Number of cattle by year", "\\\\ {\\footnotesize Means are mean holding among the owners. Totals are total number of cattle owned. Mean and total number of cattle may diverge because the number of owners differ across round.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+# lvo[, LivestockType := LVcode]
+# lvo[grepl("Ox|Cow", LVcode), LivestockType := "Cow/Ox"]
+# lvo[grepl("Goat|She", LVcode), LivestockType := "Goat/Sheep"]
+# lvo[grepl("Duc|Hen", LVcode), LivestockType := "Poultry"]
+# lvo[, LivestockType := factor(LivestockType)]
+lvo[, Arm := factor(Arm, labels = armsC)]
+lvotype <- lvo[o800==1 & grepl("es", creditstatus) & !is.na(Year) & Year > 2011 & Year != 2013, 
+  .(Std = var(NumOwned.cowox, na.rm = T)^(.5), 
+    Mean = mean(NumOwned.cowox, na.rm = T), 
+    Total = sum(NumOwned.cowox, na.rm = T), 
+    N = sum(NumOwned.cowox>0, na.rm = T)), 
+    by = .(Arm,  Year)]
+setnames(lvotype, grepout("^T|N|^S|^M", colnames(lvotype)), 
+  paste0("value.", grepout("^T|N|^S|^M", colnames(lvotype))))
+lvotypel <- reshape(lvotype, direction = "long", 
+  idvar = c("Arm", "Year"),
+  varying = grepout("val", colnames(lvotype)))
+lvotypel <- lvotypel[grepl("Mean|Tot|^N", time), ]
+setkey(lvotypel, Arm, Year)
+lvotypel[, Variable := time]
+lvotypel[grepl("N", time), Variable := "Number of owners"]
+lvotypel[, Variable := factor(Variable, levels = c("Mean", "Total", "Number of owners"))]
+lvotypel[, Variable := factor(Variable, labels = c("Holding per owner", "Total", "Number of owners"))]
+g <- ggplot(data = lvotypel, aes(Year, value)) + 
+  geom_col(data = lvotypel[grepl("Total", Variable), ]) +
+  geom_col(data = lvotypel[grepl("Hol", Variable), ]) +
+  geom_col(data = lvotypel[grepl("N", Variable), ]) +
+  xlab("Year") +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 90, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 5), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 4, 
+     margin = margin(.5, 0, .5, 0, "cm"))) +
+  facet_grid(Variable ~ Arm, scale = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NumberOfCowsByYear.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+<<Number of cows by round, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Number of cows/oxen by survey round", "\\\\ {\\footnotesize Means are mean holding among the owners. Totals are total number of cows/oxen owned. Mean and total number of cows/oxen may diverge because the number of owners differ across round.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+lvotype <- lvo[o800==1 & grepl("es", creditstatus), 
+  .(Std = var(NumOwned.cowox, na.rm = T)^(.5), 
+    Mean = mean(NumOwned.cowox, na.rm = T), 
+    Total = sum(NumOwned.cowox, na.rm = T), 
+    N = sum(NumOwned.cowox>0, na.rm = T)), 
+    by = .(Arm,  survey)]
+setnames(lvotype, grepout("^T|N|^S|^M", colnames(lvotype)), 
+  paste0("value.", grepout("^T|N|^S|^M", colnames(lvotype))))
+lvotypel <- reshape(lvotype, direction = "long", 
+  idvar = c("Arm", "survey"),
+  varying = grepout("val", colnames(lvotype)))
+lvotypel <- lvotypel[grepl("Mean|Tot|^N", time), ]
+setkey(lvotypel, Arm, survey)
+lvotypel[, Variable := time]
+lvotypel[grepl("N", time), Variable := "Number of owners"]
+lvotypel[, Variable := factor(Variable, levels = c("Mean", "Total", "Number of owners"))]
+lvotypel[, Variable := factor(Variable, labels = c("Holding per owner", "Total", "Number of owners"))]
+g <- ggplot(data = lvotypel, aes(survey, value)) + 
+  geom_col(data = lvotypel[grepl("Total", Variable), ]) +
+  geom_col(data = lvotypel[grepl("Hol", Variable), ]) +
+  geom_col(data = lvotypel[grepl("N", Variable), ]) +
+  xlab("survey") +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 90, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 5), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 4, 
+     margin = margin(.5, 0, .5, 0, "cm"))) +
+  facet_grid(Variable ~ Arm, scale = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NumberOfCowsByRound.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Number of cows/oxen by year\label{fig Number of cowsoxen by year}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/NumberOfCowsByYear.png")
+}}\\
+%\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/Number_of_cows_by_year_original_HHs-1.eps")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Number of cows/oxen by survey round\label{fig Number of cowsoxen by survey round}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/NumberOfCowsByRound.png")
+}}\\
+%\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/Number_of_cows_by_year_original_HHs-1.eps")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& \\[1ex]
+\end{tabular}
+}
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVALivestockResults.rnw"))}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{Figure Histogram of livestock holding classes by year original HHs}} shows increasing livestock accumulation in all arms but \textsf{traditional}. 
+\textsc{Figure \ref{fig Number of cowsoxen by year}} shows increasng cow ownership relative to \textsf{traditional} in the bottom panel while the holding per owner is similar across all arms. This is evidence of an acceleration of becoming a large livestock owner for the large sized arms relative to the small size arm. Given that the number of cows per owner remains the similar, it does not provide evidence for accelerated growth of livestock after becoming an owner.
+\end{finding}
+\end{palepinkleftbar}
+
+

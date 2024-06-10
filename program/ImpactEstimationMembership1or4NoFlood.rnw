@@ -1,0 +1,63 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("ImpactEstimationMembership1or4noFlood.rnw", "ImpactEstimationMembership1or4noFlood.tex"); system("platex ImpactEstimationMembership1or4noFlood"); system("dvipdfmx ImpactEstimationMembership1or4noFlood")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ImpactEstimationMembership1or4noFlood/"); library(knitr); knit("ImpactEstimationMembership1or4noFlood.rnw", "ImpactEstimationMembership1or4noFlood.tex"); system("platex ImpactEstimationMembership1or4noFlood"); system("dvipdfmx ImpactEstimationMembership1or4noFlood")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimation_OptionSetting.rnw'>>=
+<<>>=
+# Only change the trimming conditions to switch between "1 or 4" to "NoFlood"
+ThisIsNoFlood <- T
+<<all chunks1, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimation_body1.rnw'>>=
+<<DataTrimmingMembership1or4, cache = F, child='c:/data/GUK/analysis/program/DataTrimmingMembership1or4NoFlood.rnw'>>=
+<<all chunks3, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimation_body3.rnw'>>=
+@
+
+\end{document}

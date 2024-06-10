@@ -1,0 +1,144 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("AttritionTests.rnw", "AttritionTests.tex"); system("platex AttritionTests"); system("dvipdfmx AttritionTests")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/AttritionTests/"); library(knitr); knit("AttritionTests.rnw", "AttritionTests.tex"); system("platex AttritionTests"); system("dvipdfmx AttritionTests")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
+@
+\hfil Permutation tests using \textsf{membership} == 1, 4\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+%\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+<<Attrition Tests contents, cache = F, child='c:/data/GUK/analysis/program/AttritionTestsContents2.rnw'>>=
+@
+There are \Sexpr{nrow(atxr[is.na(AssignOriginal) & is.na(Mstatus), ])} observations added after original 1600 but are classified as group rejecters. There are \Sexpr{nrow(atxr[is.na(AssignOriginal) & is.na(Mstatus) & grepl("gE", MstatusFromRos), ])} whose villages are washd away and \Sexpr{nrow(atxr[is.na(AssignOriginal) & is.na(Mstatus) & grepl("gR", MstatusFromRos), ])} whose rejected the assigned arms which are \Sexpr{names(table0(atxrsa[grepl("gR", MstatusFromRos), Arm]))} rejected by \Sexpr{table0(atxrsa[grepl("gR", MstatusFromRos), Arm])} individuals, respectively. There are \Sexpr{table(atxrsa[grepl("iR", MstatusFromRos), Arm])} individuals who individually rejected \Sexpr{names(table(atxrsa[grepl("iR", MstatusFromRos), Arm]))}, respectively. Among attrited HHs, when were they lost?
+<<>>=
+table(atxrsav[Attrited == 1L & OriginalHH == 1L, Tee])
+@
+Reasons for attrition and relation to flood damage.
+<<>>=
+table0(atxrsav[Attrited == 1L, .(FloodInRd1, Mstatus)])
+table0(atxrsav[Attrited == 1L, .(AssignOriginal, Mstatus)])
+@
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling 9999 times.
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[1], data.criteria[1], "PermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition, original 1600 HHs\label{tab original HHs attrit perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[1], data.criteria[2], "PermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 9999. Number of groups is 72. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{AssignOriginal}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection\label{tab reject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[2], data.criteria[1], "PermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection, original 1600 HHs\label{tab original HHs reject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[2], data.criteria[2], "PermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 9999. Number of groups is 72. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{Rejected} and \textsf{Nonrejected} columns show means of each group. For \textsf{AssignOriginal}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\end{document}

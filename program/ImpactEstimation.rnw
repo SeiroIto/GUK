@@ -1,0 +1,2432 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("ImpactEstimation.rnw", "ImpactEstimation.tex"); system("platex ImpactEstimation"); system("dvipdfmx ImpactEstimation")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ImpactEstimation/"); library(knitr); knit("ImpactEstimation.rnw", "ImpactEstimation.tex"); system("platex ImpactEstimation"); system("dvipdfmx ImpactEstimation")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_knit$set(base.dir = 'c:/data/GUK/analysis/program/')
+opts_chunk$set(fig.path='figure/ImpactEstimation/', cache.path='cache/ImpactEstimation/', 
+cache = F, echo = F, results = 'markup', 
+tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+pathsave <- paste0(path, "save/")
+pathcleaned <- paste0(path0, "/received/cleaned_by_RA/")
+path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
+path234 <- paste0(pathcleaned, "only_panel_2_3_4/")
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+source(paste0(pathprogram, "tabulate_est_for_GUK_data.R"))
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+@
+
+\hfil Estimating lending impacts with survey and admin data (after a meeting on May 10, 2018)\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+<<echo = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+ad0 <- adw2[grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & 
+  !grepl("tw|dou", TradGroup), .(Arm, povertystatus, MonthsElapsed, CumNetSaving, CumRepaid)]
+ad0[, RepaymentRate := CumRepaid / (125*45*3)]
+ad0[, EffectiveRepaymentRate := (CumRepaid + CumNetSaving) / (125*45*3)]
+ad0[grepl("gr|co", Arm), c("RepaymentRate", "EffectiveRepaymentRate") := 
+  .(CumRepaid / (190*45*2), (CumRepaid + CumNetSaving)/ (190*45*2))]
+ad0[, Arm := factor(Arm, levels = c("traditional", "large", "large grace", "cow"))]
+setkey(ad0, Arm)
+meanRR <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate)), by = Arm]
+meanRR2 <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate))]
+meanERR	 <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate)), by = Arm]
+meanERR2 <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate))]
+meanPERR <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = .(Arm, povertystatus)]
+meanPERR2 <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = povertystatus]
+meanPRR	 <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = .(Arm, povertystatus)]
+meanPRR2 <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = povertystatus]
+@
+
+\section{Summary}
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Low repayment rates]	Repayment was poor. Net saving was forfeit for repayment. Mean raw loan recovery rate (counting only repayments) measured at the end of third year was \Sexpr{round(meanRR2, 2)} overall, and was lowest for \textsf{traditional} at \Sexpr{round(meanRR[Arm == "traditional", meanRR], 2)}. Counting also net saving, these numbers change to \Sexpr{round(meanERR2, 2)}, \Sexpr{round(meanERR[Arm == "traditional", meanERR], 2)}, respectively.
+\item[No difference in repayment risk by poverty status] Raw loan recovery rates are \Sexpr{round(meanPRR2[, meanPRR], 2)}, respectively, for ultra poor and moderately poor. Also no statitically meaningful difference is found for cumulative repayment plus cumulative net saving.
+\item[Traditional chose multiple small projects]	IGA is more diversified in the \textsf{traditional} than in other arms. With almost all the members in large-sized loan arms choosing cows, it suggests the presence of a poverty trap induced by a liquidity constraint and convexity in livestock production technology.
+\item[Large-sized or grace period loans resulted in higher repayment rates]	Controlling for the loan size, larger initial lending resulted in larger repayment and net saving. As opposed to GUK's anxiety, lending was relatively less risky with large loans and loans with a grace period.
+\item[Boys' junior high schooling suffered, but not girls']	(Using original panel) Schooling was negatively affected for boys attending a junior high school, but such an effect was mitigated for girls under arms with a grace period.  A weaker but similar pattern is also found for high school aged children. It hints increased labour demand for boys but the mechanism is unclear.
+\item[No concern for entrepreneurship]	No difference in project choices between \textsf{cow} and \textsf{large, large grace}. Members who participated do not seem to show concerns for (lack of) entrepreneurship.
+\item[No difference in household assets]	Household assets increased in rd 1 - 3, then reduced in rd 4 (possibly liquidating for repayment purpose), with the overall impact of increased household asset values yet no statistically significant difference between arms. 
+\item[No difference in labour incomes, per member consumption, marriage rates]	Per member consumption increased in all arms with no difference between arms. Marriage rates do not difffer between arms. A greater swing in labour incomes for \textsf{large}.
+\end{description}
+
+\section{Read files}
+
+<<warning = F>>=
+X1 <- readRDS(paste0(path1234, "schooling_Age6-18InRd1.rds"))
+X2 <- readRDS(paste0(path1234, "schooling_augmented_panel.rds"))
+ZB <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+# roster
+ros <- ZB[[1]]
+# asset (HH and productive
+ass <- ZB[[grep("Mer", names(ZB))]]
+# livestock ownership
+lvo <- ZB[[grep("liv.*own", names(ZB))]]
+# labour income
+lab <- ZB[[grep("la.*come", names(ZB))]]
+# farm income
+far <- ZB[[grep("fa.*ion", names(ZB))]]
+# HH consumption
+con <- ZB[[grep("hh.con", names(ZB))]]
+<<warning = F>>=
+ass <- ass[, .(gid, hhid, Mstatus, AssignRegression, survey, DistDate1, IntDate, HAssetAmount, PAssetAmount, AssetAmount)]
+ros <- ros[, .(AssignRegression, gid, hhid, Mstatus, IntDate, year, survey, 
+  mid, rel_hhh, fmid, mmid, sex, Age_1, AgeComputed, 
+  current, marital, stay, nonstaym, reasons, literacy, edu, 
+  HeadLiteracy, HeadAge, HHsize)]
+X1[, groupid := as.integer(as.numeric(as.character(gid)))]
+X2[, groupid := as.integer(as.numeric(as.character(gid)))]
+ros[, groupid := as.integer(as.numeric(as.character(gid)))]
+ros[grepl("2004", IntDate), IntDate := 
+  strptime(gsub("2004", "2014", as.character(IntDate)), format = "%Y-%m-%d")]
+ros[grepl("2005", IntDate), IntDate := 
+  strptime(gsub("2005", "2015", as.character(IntDate)), format = "%Y-%m-%d")]
+ros[, Year := as.numeric(format(as.Date(IntDate), "%Y"))]
+ros[Year <= 2010, Year := Year + 10]
+ros[, Month := format(as.Date(IntDate), "%B")]
+setorder(ros, gid, hhid, IntDate, -Age_1, mid)
+ros[, ChildAgeOrderAtRd1 := as.integer(NA)]
+ros[grepl("^son", rel_hhh), ChildAgeOrderAtRd1 := 1:.N, by = .(IntDate, hhid)]
+# ChildAgeOrderAtRd1 is complete and no child is left unordered.
+if (any(nrow(ros[is.na(ChildAgeOrderAtRd1) & Age_1 <= 18 & grepl("^son", rel_hhh)]) > 0))
+  ros[is.na(ChildAgeOrderAtRd1) & Age_1 <= 18 & grepl("^son", rel_hhh)]
+ros[, c("EldestSon", "EldestDaughter") := 0L]
+ros[grepl("^son", rel_hhh) & ChildAgeOrderAtRd1 == 1 & sex == "Male", EldestSon := 1L]
+ros[grepl("^son", rel_hhh) & ChildAgeOrderAtRd1 == 1 & sex == "Female", EldestDaughter := 1L]
+ros[, MarriedOff := 
+  any(grepl("marr", .SD[, reasons])) & 
+  !any(grepl("dea|job", .SD[, reasons])), 
+  .SDcols = "reasons", by = .(hhid, mid)]
+# drop head/spouse or adults (age > 18) but keep married off
+ros <- ros[MarriedOff | !(grepl("head|spo", rel_hhh) | Age_1 >18), ]
+# livestock
+lvo <- lvo[, .(gid, hhid, survey, IntDate, 
+  livestock_code, number_owned, mrkt_value, total_cost, 
+  TotalImputedValue, TotalSelfEvaluatedValue)]
+# labour income
+lab <- lab[, .(gid, hhid, survey, IntDate, mid, 
+  code_1, duration_1, income1, code_2, duration_2, income2, 
+  totalincome, TotalHHLabourIncome)]
+# farm income
+far <- far[, .(gid, hhid, survey, IntDate,
+  area_1, crop_code_1, total_production_1, Revenue1, 
+  area_2, crop_code_2, total_production_2, Revenue2, 
+  area_3, crop_code_3, total_production_3, Revenue3, TotalRevenue)]
+# HH consumption
+con = copy(ZB[[grep("hh.con", names(ZB))]])
+con <- a2b.data.table(con, NA, 0)
+setnames(con, "pulse_total", "pulses_total")
+setnames(con, "pgarlic_exp", "garlic_exp")
+setnames(con, "bettel_total", "bettle_total")
+setnames(con, grepout("other_pulse", colnames(con)), 
+  gsub("other\\_pu", "otherpu", grepout("other_pulse", colnames(con))))
+setnames(con, grepout("chew_tob", colnames(con)), 
+  gsub("chew\\_to", "chewto", grepout("chew_tob", colnames(con))))
+items <- unique(unlist(strsplit(grepout("bought", colnames(con)), "_")))
+items <- items[!grepl("bought", items)]
+# items: rice, wheat, maize, potato, pulses, otherpulses, chicken, meat, fish, milk
+#  egg, chili, banana, puffed, onion, garlic, ginger, oil, sugar, salt, tea, bettle, 
+#  biscuit, cig, chewtobacco
+for (i in items) {
+  con[, paste0(i, "_UPrice") := 
+    eval(parse(text = paste0(i, "_exp"))) / eval(parse(text = paste0(i, "_bought")))]
+}
+# Set time unit to annual. All expenditures are annualised values.
+TimeUnitForCon <- rep(7, length(items))
+TimeUnitForCon[grep("oil", items):length(items)] <- 30
+con[, paste0(items[TimeUnitForCon == 7], "_AnnTotal") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 7], "_total"))) * 4.5 * 12]
+con[, paste0(items[TimeUnitForCon == 30], "_AnnTotal") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 30], "_total"))) * 12]
+con[, paste0(items[TimeUnitForCon == 7], "_AnnBought") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 7], "_bought"))) * 4.5 * 12]
+con[, paste0(items[TimeUnitForCon == 30], "_AnnBought") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 30], "_bought"))) * 12]
+# Inf -> NA (so median price to stay finite)
+con <- a2b.data.table(con, Inf, NA)
+for (i in items) {
+  con[, paste0(i, "_MedianUPrice") := 
+    median(eval(parse(text = paste0(i, "_UPrice"))), na.rm = T), by = year]
+  con[, paste0(i, "_ImputedValue") := 
+    eval(parse(text = paste0(i, "_MedianUPrice"))) * 
+      eval(parse(text = paste0(i, "_AnnTotal")))]
+  # errors: total < bought. => use bought as total.
+  con[eval(parse(text = paste0(i, "_AnnTotal"))) < eval(parse(text = paste0(i, "_AnnBought"))), 
+    paste0(i, "_ImputedValue") := 
+      eval(parse(text = paste0(i, "_MedianUPrice"))) * 
+      eval(parse(text = paste0(i, "_AnnBought")))]
+}
+# NA -> 0 (so total becomes nonNA)
+con <- a2b.data.table(con, NA, 0)
+con[, HygieneExpenditure := cloth_exp + soap_exp + haircut_exp + cosmetic_exp]
+con[, SocialExpenditure := fest_exp + mosque_exp + contra_exp + social_exp]
+con[, EnergyExpenditure := fuel_wood_exp + transport_exp + communication_exp + other_exp]
+items <- items[items != "tea"]
+con[, FoodExpenditure := 
+  eval(parse(text = paste(grepout("AnnTotal", colnames(con)), collapse = "+")))]
+con <- con[, .(gid, hhid, IntDate, survey, FoodExpenditure, HygieneExpenditure, 
+  SocialExpenditure, EnergyExpenditure)]
+<<>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+ad0 <- adw2[, 
+  .(Arm, groupid, hhid, TradGroup, creditstatus, Mem, povertystatus,
+  Date, Year, Month, DisDate1, MonthsElapsed, MonthsRepaid, LoanYear,
+  EffectiveRepayment, value.repay, value.NetSaving, value.missw,
+  OtherRepaid, OtherNetSaving, OtherMisses, CumOtherMisses,
+  CumRepaid, CumEffectiveRepayment, CumNetSaving, CumPlannedInstallment,
+  CumOtherRepaid, CumOtherNetSaving, CumMisses, EffectivelyFullyRepaid,
+  CumRepaidRate, CumEffectiveRepaidRate)]
+#table0(ad0[, .(Arm, MonthsElapsedNA = is.na(MonthsElapsed))])
+if (nrow(ad0[is.na(EffectiveRepayment)]) > 0) ad0[is.na(EffectiveRepayment)]
+if (nrow(ad0[CumPlannedInstallment != 0L & is.na(CumEffectiveRepaidRate)]) > 0) 
+  ad0[is.na(CumEffectiveRepaidRate)]
+ad0[,  c("CumRepaidRate", "CumEffectiveRepaidRate") := 
+  .(round(CumRepaid/CumPlannedInstallment, 3), 
+    round(CumEffectiveRepayment/CumPlannedInstallment, 3))]
+ad0[CumPlannedInstallment == 0L, c("CumRepaidRate", "CumEffectiveRepaidRate") := NA]
+ad0[, MeanYearlyCERR := mean(CumEffectiveRepaidRate, na.rm = T), by = .(hhid, LoanYear)]
+# add rolling means
+library(zoo)
+rollvars <- c("value.missw", "value.repay", "value.NetSaving")
+ad0[, (paste0("RM", rollvars)) := lapply(.SD, rollmean, k = 6, na.pad = TRUE), 
+   by = hhid, .SDcols = rollvars]
+  # lag rolling means by 3 months to get previous 6 month averages	
+ad0[, (paste0("RM", rollvars)) := shift(.SD, n=3, type = "lag"), 
+   by = hhid, .SDcols = paste0("RM", rollvars)]
+ad0[, RMvalue.repay := RMvalue.repay/1000]
+ad0[, RMvalue.NetSaving := RMvalue.NetSaving/1000]
+#ad <- ad0[MonthsElapsed == 12 | MonthsElapsed == 24 | MonthsElapsed == 36 | MonthsElapsed == 48]
+ad0[, c("EffectiveRepayment", "value.repay", "value.NetSaving", "value.missw") := NULL] 
+<<create Spattern in X1>>=
+X1[, Spattern := paste(as.character(.SD[, Enrolled]), collapse = ""), 
+  by = .(hhid, mid), .SDcols = "Enrolled"]
+X1[, EnrollPattern := Spattern]
+X1[, Attrit := paste(as.character(.SD[, en]), collapse = ""), 
+  by = .(hhid, mid), .SDcols = "en"]
+X1[Attrit == "123", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "n"), paste0(Spattern, "0"))]
+X1[Attrit == "124", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 2), "n", substr(Spattern, 1, 3)), 
+    paste0(substr(Spattern, 1, 2), "0", substr(Spattern, 1, 3)))]
+X1[Attrit == "12", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "nn"), paste0(Spattern, "00"))]
+X1[Attrit == "13", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 1), "n", substr(Spattern, 2, 2), "n"), 
+    paste0(substr(Spattern, 1, 1), "0", substr(Spattern, 2, 2), "0"))]
+X1[Attrit == "14", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 3), "n"), 
+    paste0(substr(Spattern, 1, 3), "0"))]
+X1[Attrit == "23", c("Spattern", "EnrollPattern") := 
+  .(paste0("n", Spattern, "n"), 
+    paste0("0", Spattern, "0"))]
+X1[Attrit == "24", c("Spattern", "EnrollPattern") := 
+  .(paste0("n", substr(Spattern, 1, 1), "n", substr(Spattern, 2, 2)), 
+    paste0("0", substr(Spattern, 1, 1), "0", substr(Spattern, 2, 2)))]
+X1[Attrit == "1", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "nnn"), 
+    paste0(Spattern, "000"))]
+X1[, Attrit := factor(Attrit)]
+X1[, Spattern := factor(Spattern)]
+X1[, EnrollPattern := factor(EnrollPattern)]
+@
+Description of data:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ad]	Administrative data: Up to [-24, 48] months after first loan disbursement.
+\item[X1]	Schooling panel with attrition. Aged 6-18 in rd1. \textsf{Enrolled=\{0,1\}} is defined for children aged 6-18 in rd1 by referencing to \textsf{currently\_enrolled} and age information.
+\item[X2]	Schooling panel after augmenting attrited children to \textsf{X1}. Attrited children are augmented by assuming to be out of school. \textsf{AssignRegression} is group classification: Number of observation is \textsf{\Sexpr{table(X2[en==1, AssignRegression])}} for \textsf{\Sexpr{names(table(X2[en==1, AssignRegression]))}}, respectively.
+\item[ros]	 \textsf{roster} to condition the initial status prior to participation.
+\item[ass]	 Assets. Household assets (houses, durables) and productive assets (machines, tools). 
+\item[lvo]	Livestock holding. Rd 3 data is not entered yet.
+\item[lab]	Labour incomes.
+\item[far]	Farming revenues (no costs reported).
+\item[con]	Household consumption. Food expenditure asks both bought and consumed volumes and prices. We impute consumption values by using median prices. All quantity is set to annualised quantity.
+\end{description}
+
+How I combined between pages: First, merge admin data \textsf{ad} with roster data \textsf{ros} with \textsf{hhid, Year, Month} as keys. Keep only at dates when survey data match. Second, merge \textsf{ad+ros} with other data \textsf{X1}, \textsf{X2}, \textsf{ass}, ... 
+<<echo = F>>=
+setkey(ros, groupid, hhid, Year, Month)
+setkey(ad0, groupid, hhid, Year, Month)
+ar <- ad0[ros]
+ar[, MemNum := 1:.N, by = .(hhid, Date)]
+ar[, YearMonthOfIntDate := paste0(Year, "-", Month)]
+ar[, YearMonthOfIntDate := factor(YearMonthOfIntDate, 
+  levels = unique(YearMonthOfIntDate[order(IntDate)]), ordered = T)]
+YearMonthMatchTable <- table(ros[, paste0(hhid, "-", Year, "-", Month)] %in% 
+    ad0[, paste0(hhid, "-", Year, "-", Month)])
+@
+There are \Sexpr{YearMonthMatchTable["FALSE"]} non-matching cases if we merge using \textsf{Year, Month} of \textsf{IntDate} in survey data and of \textsf{Date} in admin data. This is inevitable because the admin data starts from \Sexpr{unique(ad0[Date == min(Date), Date])} while survey data starts from \Sexpr{unique(ros[IntDate == min(IntDate, na.rm = T), IntDate])} and rd 1 ends at \Sexpr{unique(ros[IntDate == max(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate])} for \textsf{oldMember}s with the median date \Sexpr{unique(ros[IntDate == median(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate])}. Below gives \textsf{Year, Month} in roster data with no match in admin data.
+<<merge ros with ad0>>=
+setkey(ros, groupid, hhid, Year, Month)
+setkey(ad0, groupid, hhid, Year, Month)
+ar <- ad0[ros]
+ar[, MemNum := 1:.N, by = .(hhid, Date)]
+ar[, YearMonthOfIntDate := paste0(Year, "-", Month)]
+ar[, YearMonthOfIntDate := factor(YearMonthOfIntDate, 
+  levels = unique(YearMonthOfIntDate[order(IntDate)]), ordered = T)]
+table0(ar[is.na(MonthsElapsed) & MemNum == 1, 
+  .(AssignRegression, YearMonthOfIntDate)])
+rbind(YearMonthMatch = table(ros[, paste0(hhid, "-", Year, "-", Month)] %in% 
+    ad0[, paste0(hhid, "-", Year, "-", Month)]), 
+  YearMatch = table(ros[, paste0(hhid, "-", Year)] %in% 
+    ad0[, paste0(hhid, "-", Year)]))
+iiNotInAdminData <- !(ros[, paste0(hhid, "-", Year, "-", Month)] %in% 
+  ad0[, paste0(hhid, "-", Year, "-", Month)])
+iiNotInAdminData <- ros[(iiNotInAdminData), hhid]
+UiiNotInAdminData <- unique(iiNotInAdminData)
+ros[, MemNum := 1:.N, by = .(hhid, IntDate)]
+#table(ros[hhid %in% iiNotInAdminData & MemNum == 1, 
+#  .(survey, AssignRegression)])
+@
+<<eval = F>>=
+# Below is USELESS as admin data does not have any info in earlier dates. 
+# Check additional match if matching with previous months in admin data.
+# shift s months
+ros[, YM := format(as.yearmon(IntDate), "%b-%Y")]
+ad0[, YM := format(as.yearmon(Date), "%b-%Y")]
+#print(length(iiNotInAdminData))
+MatchRecord <- NULL
+for (s in 1:12) {
+  ad0[, YM2 := format(as.yearmon(Date) - s/12, "%b-%Y")]
+  iiMatch <- ros[, paste0(hhid, "-", YM)] %in% ad0[, paste0(hhid, "-", YM2)]
+  NewlyMatchedHHID <- unique(ros[iiMatch, hhid])
+  MatchRecord <- rbind(MatchRecord, 
+    c(paste(s, "months"), sum(iiNotInAdminData %in% NewlyMatchedHHID), 
+    sum(!(iiNotInAdminData %in% NewlyMatchedHHID))))
+  iiNotInAdminData <- iiNotInAdminData[!(iiNotInAdminData %in% NewlyMatchedHHID)]
+}
+MatchRecord <- as.data.table(MatchRecord)
+setnames(MatchRecord, c("by lagging", "newly matched", "remain unmatched"))
+MatchRecord
+@
+%I will use one month lag in admin data as a match with roster data because it retains \Sexpr{MatchRecord[1, 2, with = F]} roster entries. \gobblepars
+<<>>=
+# Try exact Year-Month match
+setkey(ros, groupid, hhid, Year, Month)
+setkey(ad0, groupid, hhid, Year, Month)
+arByYM <- ad0[ros]
+<<eval = F>>=
+ar.exact <- arByYM[!is.na(MonthsElapsed), ]
+# remain unmatched
+ros.remain <- ros[!(paste0(hhid, "-", Year, "-", Month) %in% 
+  ad0[, paste0(hhid, "-", Year, "-", Month)]), ]
+# Match by lagging 1 month
+ad0[, YM := format(as.yearmon(Date) - 1/12, "%b-%Y")]
+setkey(ros.remain, groupid, hhid, YM)
+setkey(ad0, groupid, hhid, YM)
+ar.Lag1 <- ad0[ros.remain]
+ar.Lag1[, c("i.Month", "i.Year", "YM", "YM2") := NULL]
+ar.exact[, c("YM", "YM2") := NULL]
+ar.Lag1[, MonthsLaggedForMatch := 1L]
+ar.exact[, MonthsLaggedForMatch := 0L]
+#ar <- rbindlist(list(ar.exact, ar.Lag1), use.names = T, fill = T)
+<<>>=
+ar <- arByYM
+# copy Arm, groupid, creditstatus, Mem to all rds
+ar[, Arm := Arm[!is.na(Arm)][1], by = hhid]
+ar[is.na(Arm), Arm := AssignRegression]
+ar[grepl("largeG", Arm), Arm := "large grace"]
+ar[, Arm := droplevels(Arm)]
+ar[, groupid := groupid[!is.na(groupid)][1], by = hhid]
+ar[, creditstatus := creditstatus[!is.na(creditstatus)][1], by = hhid]
+ar[, DisDate1 := DisDate1[!is.na(DisDate1)][1], by = hhid]
+ar[, Mem := Mem[!is.na(Mem)][1], by = hhid]
+@
+In \textsf{roster + admin} (base: roster): Tabulate \textsf{hhid} observations by \textsf{survey} round and \textsf{Arm}.
+<<>>=
+table0(ar[MemNum == 1, .(survey, Arm)])
+@
+In \textsf{roster + admin}: Tabulate observations after keeping only observations used in estimation: Keep if \textsf{creditstatuts} = yes, \& \textsf{Mstatus} includes strings old, iRep, newG, \& \textsf{DisDate1} is before 2015-01-01, \& \textsf{TradGroup} does not include strings tw or dou.
+<<>>=
+table0(ar[grepl("Yes", creditstatus) & grepl("old|iRep|newG", Mstatus) 
+  & as.Date(DisDate1) < as.Date("2015-01-01") & !grepl("tw|dou", TradGroup) 
+  & MemNum == 1, .(survey, Arm)])
+# NA in CumRepaid is forcedDropouts, dropOuts
+#table0(ar[is.na(CumEffectiveRepayment) & Year >= 2014, .(year, Arm)])
+@
+In \textsf{roster + admin}: If we keep \textsf{creditstatuts} = yes, \& \textsf{Mstatus} includes strings old, iRep, newG, \& \textsf{TradGroup} does not include strings tw or dou (relaxing  \textsf{DisDate1} is before 2015-01-01). \gobblepars
+<<>>=
+table0(ar[grepl("Yes", creditstatus) & grepl("old|iRep|newG", Mstatus) & 
+  !grepl("tw|dou", TradGroup) & MemNum == 1, .(survey, Arm)])
+ar[, c("BeforeJan2015", "Year2015", "Year2016", "AfterJan2017") :=
+   .(as.Date(DisDate1) < as.Date("2015-01-01"),
+     as.Date(DisDate1) >= as.Date("2015-01-01") & 
+       as.Date(DisDate1) < as.Date("2016-01-01"),
+     as.Date(DisDate1) >= as.Date("2016-01-01") & 
+       as.Date(DisDate1) < as.Date("2017-01-01"),
+    as.Date(DisDate1) >= as.Date("2017-01-01"))]
+ar[, FirstDisPeriod := as.character(NA)]
+ar[as.Date(DisDate1) < as.Date("2015-01-01"), 
+  FirstDisPeriod := "BeforeJan2015"]
+ar[as.Date(DisDate1) >= as.Date("2015-01-01") & 
+    as.Date(DisDate1) < as.Date("2016-01-01"), 
+  FirstDisPeriod := "Year2015"]
+ar[as.Date(DisDate1) >= as.Date("2016-01-01") & 
+    as.Date(DisDate1) < as.Date("2017-01-01"), 
+  FirstDisPeriod := "Year2016"]
+ar[as.Date(DisDate1) >= as.Date("2017-01-01"), 
+  FirstDisPeriod := "After2017"]
+ar[, FirstDisPeriod := factor(FirstDisPeriod, levels = 
+  c("BeforeJan2015", "Year2015", "Year2016", "AfterJan2017", NA))]
+@
+This shows addition is mostly in round 1 for \textsf{traditional} but in all rds for other arms. \textsf{FirstDisPeriod} gives the period of first disbursement, and all credit reeceivers received loans by the end of 2015.
+<<>>=
+table0(ar[is.na(FirstDisPeriod) & MemNum == 1 & survey == 1, .(DisDate1, creditstatus)])
+@
+See the breakdown of first disbursement by Arm at rd 1.
+<<>>=
+table0(ar[grepl("Yes", creditstatus) & grepl("old|iRep|newG", Mstatus) & 
+  !grepl("tw|dou", TradGroup) & survey == 1 & MemNum == 1,
+  .(FirstDisPeriod, Arm)])
+#grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & !grepl("tw|dou", TradGroup)
+@
+Schooling pattern in X1.
+<<>>=
+table(X1[, .(Spattern)])
+@
+Save roster-admin data.
+<<echo = T>>=
+saveRDS(ar, paste0(path1234, "RosterAdminData.rds"))
+fwrite(ar, paste0(path1234, "RosterAdminData.prn"), sep = "\t", quote = F)
+@
+A snippet of \textsf{admin + roster} data:
+<<>>=
+ar <- readRDS(paste0(path1234, "RosterAdminData.rds"))
+setkey(ar, groupid, hhid, mid, IntDate)
+ar[, Tee := 1:.N, by = .(hhid, mid)]
+ar[hhid %in% hhid[Tee > 3], .(Arm, hhid, mid, survey, IntDate, 
+  Date, CumRepaid, AgeComputed)][1:12,]
+setkey(ar, groupid, hhid, mid, sex, AgeComputed, year)
+setkey(X1, groupid, hhid, mid, sex, AgeComputed, year)
+setkey(X2, groupid, hhid, mid, sex, AgeComputed, year)
+x1 <- ar[X1]
+x2 <- ar[X2]
+x1[, Tee := 1:.N, by = .(hhid, mid)]
+x2[, Tee := 1:.N, by = .(hhid, mid)]
+x1[, Year := format(as.yearmon(IntDate), "%Y")]
+@
+In \textsf{X1}: Number of unique \textsf{hhid}s by \textsf{year} (original entry) or \textsf{Year} (extracted from \textsf{IntDate}).
+<<>>=
+table0(x1[, .(NumberOfHHids = length(unique(hhid)), year)])
+table0(x1[, .(NumberOfHHids = length(unique(hhid)), Year)])
+@
+In \textsf{X1}: Number of observations tabulated by \textsf{year} (original entry) and round (\textsf{survey}).
+<<>>=
+table(x1[, .(year, survey)])
+@
+In \textsf{X1}: RoundOrder is 1 if individual is observed for the first time in data, 2 if for the second time, ...
+<<>>=
+table(x1[, .(year, RoundOrder = Tee)])
+@
+In \textsf{X2}: Number of observations tabulated by year and round (\textsf{survey}).
+<<>>=
+table(x2[, .(year, survey)])
+@
+In \textsf{X2}: RoundOrder.
+<<>>=
+table(x2[, .(year, RoundOrder = Tee)])
+@
+In \textsf{X1}: Number of observations tabulated by year and age (\textsf{AgeComputed}).
+<<>>=
+table(x1[, .(year, AgeComputed)])
+@
+In \textsf{X2}: Number of observations tabulated by year and age (\textsf{AgeComputed}).
+<<>>=
+table(x2[, .(year, AgeComputed)])
+# Updating schooling status of attrited members from roster info for x2.
+x2[grepl("study", reasons), Enrolled := 1L]
+<<>>=
+ar <- readRDS(paste0(path1234, "RosterAdminData.rds"))
+ar0 <- ar[, .(groupid, hhid, Arm, TradGroup, Mem, Mstatus, creditstatus, povertystatus,
+  HHsize, HeadAge, HeadLiteracy,
+  survey, IntDate, Date, Year, Month, DisDate1, MonthsElapsed, MonthsRepaid, LoanYear,
+  CumRepaid, CumEffectiveRepayment, CumNetSaving, CumMisses, 
+  OtherRepaid, OtherNetSaving, OtherMisses, MeanYearlyCERR, 
+  CumPlannedInstallment, RMvalue.repay, RMvalue.NetSaving)]
+
+table(ar0[, .(Arm, MonthsElapsedNA = is.na(MonthsElapsed))])
+
+ar0[, num := 1:.N, by = .(hhid, IntDate)]
+ar0 <- ar0[num == 1, ]
+ar0[, num := NULL]
+setkey(ar0, groupid, hhid, survey, Year, Month)
+<<merge various other files with ad0>>=
+dfiles <- c("ass", "lvo", "lab", "far", "con")
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  dd[, groupid := as.integer(as.numeric(as.character(gid)))]
+  dd[, Year :=  as.numeric(format(as.Date(IntDate), "%Y"))]
+  dd[, Month := format(as.Date(IntDate), "%B")]
+  dd[Year <= 2010, Year := Year + 10]
+  dd[, IntDate := NULL]
+  setkey(dd, groupid, hhid, survey, Year, Month)
+  dd <- ar0[dd]
+  assign(dfiles[j], dd)
+}
+@
+Save all data.
+<<>>=
+saveRDS(x1, paste0(path1234, "RosterAdminSchoolingData.rds"))
+saveRDS(x2, paste0(path1234, "RosterAdminSchoolingAugmentedData.rds"))
+saveRDS(ass, paste0(path1234, "AssetAdminData.rds"))
+saveRDS(lvo, paste0(path1234, "LivestockAdminData.rds"))
+saveRDS(lab, paste0(path1234, "LabourIncomeAdminData.rds"))
+saveRDS(far, paste0(path1234, "FarmRevenueAdminData.rds"))
+saveRDS(con, paste0(path1234, "ConsumptionAdminData.rds"))
+<<echo = T>>=
+fwrite(x1, paste0(path1234, "RosterAdminSchoolingData.prn"), sep = "\t", quote = F)
+fwrite(x2, paste0(path1234, "RosterAdminSchoolingAugmentedData.prn"), sep = "\t", quote = F)
+fwrite(ass, paste0(path1234, "AssetAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvo, paste0(path1234, "LivestockAdminData.prn"), sep = "\t", quote = F)
+fwrite(lab, paste0(path1234, "LabourIncomeAdminData.prn"), sep = "\t", quote = F)
+fwrite(far, paste0(path1234, "FarmRevenueAdminData.prn"), sep = "\t", quote = F)
+fwrite(con, paste0(path1234, "ConsumptionAdminData.prn"), sep = "\t", quote = F)
+<<>>=
+flnames <- c("Roster", "Asset", "Livestock", "LabourIncome", "FarmRevenue", "Consumption")
+@
+Further data preparations (trimming, round numbering, creating dummy vectors, interaction terms) for estimation. Produces files: \textsf{\footnotesize \Sexpr{paste0(flnames, "AdminDataUsedForEstimation.prn")}}.
+<<common data preparations, warning = F>>=
+x1 <- readRDS(paste0(path1234, "RosterAdminSchoolingData.rds"))
+x2 <- readRDS(paste0(path1234, "RosterAdminSchoolingAugmentedData.rds"))
+ar <- readRDS(paste0(path1234, "RosterAdminData.rds"))
+ass <- readRDS(paste0(path1234, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(path1234, "LivestockAdminData.rds"))
+lab <- readRDS(paste0(path1234, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(path1234, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(path1234, "ConsumptionAdminData.rds"))
+flnames <- c("RosterSchooling", "RosterAugmentedSchooling", "Roster", 
+  "Asset", "Livestock", "LabourIncome", "FarmRevenue", "Consumption")
+dfiles <- c("x1", "x2", "ar", "ass", "lvo", "lab", "far", "con")
+interterms <- c("LoanYear.2", "LoanYear.3", "LoanYear.4", 
+  "Time.2", "Time.3", "Time.4")
+Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
+povertystatus <- c("UltraPoor", "ModeratelyPoor")
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  setkey(dd, hhid, Year, Month)
+  dd[, Arm := droplevels(Arm)]
+  # trimming
+  dd <- dd[grepl("Yes", creditstatus), ]
+  dd <- dd[grepl("old|iRep|newG", Mstatus), ]
+#  dd <- dd[as.Date(DisDate1) < as.Date("2015-01-01"), ]
+  dd <- dd[!grepl("tw|dou", TradGroup), ]
+#grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & !grepl("tw|dou", TradGroup)
+  setkey(dd, hhid, Year, Month)
+  dd[, c("en") := NULL]
+  dd[, tee := 1]
+  dd[Year == 2014, tee := 2]
+  dd[Year == 2015, tee := 3]
+  dd[Year == 2016, tee := 3]
+  dd[Year == 2017, tee := 4]
+  dd[, Time := tee]
+  setkey(dd, hhid, Year, tee)
+  dd <- data.table(dd, makeDummyFromFactor(dd[, Arm], reference = NULL))
+  setnames(dd, "dummyLarge grace", "dummyLargeGrace")
+  if (any(grepl("dummyNANA", colnames(dd)))) dd[, dummyNANA := NULL]
+  dd[, dummyDropOuts := NULL]
+  dd <- data.table(dd, makeDummyFromFactor(dd[, povertystatus], reference = NULL))
+  setnames(dd, c("dummyUltra Poor", "dummyModerate Poor"),
+    c("dummyUltraPoor", "dummyModeratelyPoor"))
+  dd[, c("Size", "Grace") := .("SmallSize", "WithoutGrace")]
+  dd[!grepl("tra", Arm), Size := "LargeSize"]
+  dd[grepl("gr|cow", Arm), Grace := "WithGrace"]
+  dd[, c("Grace", "Size") := .(factor(Grace), factor(Size, levels = c("SmallSize", "LargeSize")))]
+  dd <- data.table(dd, makeDummyFromFactor(dd[, Size], reference = NULL),
+    makeDummyFromFactor(dd[, Grace], reference = NULL))
+  # create demeaned dummies
+  for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+    dd[, paste0("DemeanedDummy", k) := 
+      eval(parse(text = paste0("dummy", k))) - mean(eval(parse(text = paste0("dummy", k))), na.rm = T)]
+  for (i in interterms) {
+    i1 <- unlist(strsplit(i, "\\."))
+    i2 <- i1[2]; i1 <- i1[1]
+    i0 <- gsub("\\.", "", i)
+    dd[, (i) := as.numeric(eval(parse(text=i1)) == i2)]
+    dd[, paste0("Demeaned", i0) := 
+      eval(parse(text=i)) - mean(eval(parse(text=i)), na.rm = T)] 
+    for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+      dd[, paste0("dummy", k, ".", i0) := 
+        eval(parse(text=paste0("Demeaned", i0))) * 
+        eval(parse(text=paste0("DemeanedDummy", k)))]
+
+#     dd[, paste0("dummyLarge.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyLarge]
+#     dd[, paste0("dummyLargeGrace.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyLargeGrace]
+#     dd[, paste0("dummyCow.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyCow]
+#     # Place traditional at the end so this will be the variable to be omitted in dummy variables
+#     dd[, paste0("dummyTraditional.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyTraditional]
+#     dd[, paste0("dummySmallSize.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummySmallSize]
+#     dd[, paste0("dummyLargeSize.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyLargeSize]
+#     dd[, paste0("dummyWithoutGrace.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyWithoutGrace]
+#     dd[, paste0("dummyWithGrace.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyWithGrace]
+#     dd[, paste0("dummyUltraPoor.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyUltraPoor]
+#     dd[, paste0("dummyModeratelyPoor.", i0) := 
+#       eval(parse(text=paste0("Demeaned", i0))) * DemeanedDummyModeratelyPoor]
+
+    # undemeand (UD) interactions
+    for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+      dd[, paste0("UDdummy", k, ".", i0) := 
+        eval(parse(text=i)) * eval(parse(text = paste0("dummy", k)))]
+
+#     dd[, paste0("UDdummyLarge.", i0) := 
+#       eval(parse(text=i)) * dummyLarge]
+#     dd[, paste0("UDdummyLargeGrace.", i0) := 
+#       eval(parse(text=i)) * dummyLargeGrace]
+#     dd[, paste0("UDdummyCow.", i0) := 
+#       eval(parse(text=i)) * dummyCow]
+#     # Place traditional at the end so this will be the variable to be omitted in UDdummy variables
+#     dd[, paste0("UDdummyTraditional.", i0) := 
+#       eval(parse(text=i)) * dummyTraditional]
+#     dd[, paste0("UDdummySmallSize.", i0) := 
+#       eval(parse(text=i)) * dummySmallSize]
+#     dd[, paste0("UDdummyLargeSize.", i0) := 
+#       eval(parse(text=i)) * dummyLargeSize]
+#     dd[, paste0("UDdummyWithoutGrace.", i0) := 
+#       eval(parse(text=i)) * dummyWithoutGrace]
+#     dd[, paste0("UDdummyWithGrace.", i0) := 
+#       eval(parse(text=i)) * dummyWithGrace]
+  }
+  dd[, grepout("Demea", colnames(dd)) := NULL]
+  assign(dfiles[j], dd)
+  saveRDS(dd, paste0(path1234, flnames[j], "AdminDataUsedForEstimation.rds"))
+  fwrite(dd, paste0(path1234, flnames[j], "AdminDataUsedForEstimation.prn"), 
+    sep = "\t", quote = F)
+}
+@
+
+
+\section{Estimation}
+
+
+\subsection{Schooling}
+
+<<>>=
+x1 <- readRDS(paste0(path1234, "RosterAdminSchoolingData.rds"))
+x2 <- readRDS(paste0(path1234, "RosterAdminSchoolingAugmentedData.rds"))
+x1 <- readRDS(paste0(path1234, "RosterSchoolingAdminDataUsedForEstimation.rds"))
+x2 <- readRDS(paste0(path1234, "RosterAugmentedSchoolingAdminDataUsedForEstimation.rds"))
+@
+If using \textsf{x1}, retain only the complete portion of panel.
+<<sc regressions, warning = F>>=
+x1 <- cbind(x1, makeDummyFromFactor(x1[, sex]))
+x2 <- cbind(x2, makeDummyFromFactor(x2[, sex]))
+x1 <- x1[!grepl("n", Spattern), ]
+x1 <- x1[!grepl("1001", EnrollPattern), ]
+x1[, Enrolled := as.numeric(Enrolled)]
+x2[, Enrolled := as.numeric(Enrolled)]
+x1[, CumEffectiveRepayment := CumEffectiveRepayment/1000]
+x2[, CumEffectiveRepayment := CumEffectiveRepayment/1000]
+# individual level regressions
+sc11 <- lm(Enrolled  ~ -1 + dummyTraditional + 
+  dummyLarge + dummyLargeGrace +
+  dummyCow, data = x1)
+sc12 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc13 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc14 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  MeanYearlyCERR +
+  factor(Year), data = x1)
+sc21 <- lm(Enrolled  ~ -1 + dummyTraditional + 
+  dummyLarge + dummyLargeGrace +
+  dummyCow, data = x2)
+sc22 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+sc23 <- lm(Enrolled  ~ -1 + 
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+sc24 <- lm(Enrolled  ~ -1 +
+  Schooling*dummyLarge + Schooling*dummyLargeGrace +
+  Schooling*dummyCow + 
+  Schooling:dummyFemale +
+  Schooling:dummyLarge:dummyFemale + Schooling:dummyLargeGrace:dummyFemale +
+  Schooling:dummyCow:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  MeanYearlyCERR +
+  factor(Year),  data = x2)
+#x1[, Schooling := factor(Schooling, levels = c("junior1315", "high1618", "primary0512"))]
+#x2[, Schooling := factor(Schooling, levels = c("junior1315", "high1618", "primary0512"))]
+sc31 <- lm(Enrolled  ~ -1 + dummySmallSize + dummyLargeSize, data = x1)
+sc32 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc33 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc36 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+sc37 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyLargeSize + 
+  Schooling:dummyFemale +
+  Schooling:dummyLargeSize:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+sc41 <- lm(Enrolled  ~ -1 + dummyWithoutGrace + 
+  dummyWithGrace, data = x1)
+sc42 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc43 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+sc46 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+sc47 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyWithGrace + 
+  Schooling:dummyFemale +
+  Schooling:dummyWithGrace:dummyFemale +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+
+scp1 <- lm(Enrolled  ~ -1 + dummyUltraPoor + dummyModeratelyPoor, data = x1)
+scp2 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+scp3 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x1)
+scp6 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor +
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+scp7 <- lm(Enrolled  ~ -1 + 
+  Schooling + Schooling:dummyUltraPoor + 
+  Schooling:dummyFemale +
+  Schooling:dummyUltraPoor:dummyFemale + 
+  RMvalue.repay + RMvalue.NetSaving + RMvalue.missw + 
+  factor(Year), data = x2)
+
+scXlist <- list(
+  matrix(x1[-sc12$na.action, groupid]),
+  matrix(x1[-sc13$na.action, groupid]),
+  matrix(x1[-sc14$na.action, groupid]),
+  matrix(x2[-sc22$na.action, groupid]),
+  matrix(x2[-sc23$na.action, groupid]),
+  matrix(x2[-sc24$na.action, groupid]))
+sclist <- list(sc12, sc13, sc14, sc22, sc23, sc24)
+reglists.header <- c("sc")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+#unique(unlist(lapply(sc.estlist, rownames)))
+#sc.tab <- tabs2latex3(sc.estlist, roworder = "^Sch.*[0-9]$|^sexFemale$|^Arm.*[^l][^e]$")
+sc.tab <- tabs2latex3(sc.estlist)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "RMvalue.(.*)", "Previous 6M mean \\1",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(sc.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+sc.tb <- rbind(as.matrix(cbind(covariates = rn, sc.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", sc.M),
+  c("\\bar{R}^{2}", sc.R),
+  c("N", sc.N))
+# omit year effects
+sc.tb <- sc.tb[-(rep(grep("Year2", sc.tb[, "covariates"]), each = 2) + 0:1), ]
+sc.ltxtb <- latextab(sc.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, rep(1.4, ncol(sc.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 3, separatingcolwidth = .2)
+sc.ltxtb <- rbind(sc.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{8}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{3}{c}{\\scriptsize\\hfil x1} & & \\multicolumn{3}{c}{\\scriptsize\\hfil x2 (Augmented data)}\\\\",
+  "\\cline{2-4} \\cline{6-8}\\\\",
+  sc.ltxtb[-(1:2), , drop = F])
+write.tablev(sc.ltxtb, 
+  paste0(pathsave, "SchoolingOLSEstimationResults.tex"), colnamestrue = F)
+sc2Xlist <- list(
+  matrix(x1[-sc32$na.action, groupid]),
+  matrix(x1[-sc33$na.action, groupid]),
+  matrix(x2[-sc36$na.action, groupid]),
+  matrix(x2[-sc37$na.action, groupid]),
+  matrix(x1[-sc42$na.action, groupid]),
+  matrix(x1[-sc43$na.action, groupid]),
+  matrix(x2[-sc46$na.action, groupid]),
+  matrix(x2[-sc47$na.action, groupid]))
+sc2list <- list(sc32, sc33, sc36, sc37, sc42, sc43, sc46, sc47)
+reglists.header <- c("sc2")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+#sc2.tab <- tabs2latex3(sc2.estlist)
+sc2.tab <- tabs2latex3(sc2.estlist, roworder = 
+paste0("^dummyS.*Size$|^dummyL.*Size$|^dummyW.*Grace$|^Sch.*[0-9]$|",
+  "^dummyFemale$|^Sch.*[0-9].dummyFemale$|",
+  "^Sch.*[0-9].dummyLargeSize$|^Sch.*LargeSize.*ale$|^Sch.*ale.*SmallSize$|",
+  "^Sch.*[0-9].dummyWithGrace$|^Sch.*Gr.*ale$|^Sch.*Fem.*ace$"))
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "RMvalue.(.*)", "Previous 6M mean \\1",
+    "LargeSize", "Large",
+    "SmallSize", "Small",
+    "WithGrace", "Grace",
+    "WithoutGrace", "No grace",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(sc2.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+sc2.tb <- rbind(as.matrix(cbind(covariates = rn, sc2.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", sc2.M),
+  c("\\bar{R}^{2}", sc2.R),
+  c("N", sc2.N))
+# omit year effects
+sc2.tb <- sc2.tb[-(rep(grep("Year2", sc2.tb[, "covariates"]), each = 2) + 0:1), ]
+sc2.ltxtb <- latextab(sc2.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, rep(1.10, ncol(sc2.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = c(2, 4, 6), separatingcolwidth = rep(.2, 3))
+sc2.ltxtb <- rbind(sc2.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{12}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{2}{c}{\\scriptsize\\hfil x1} & & \\multicolumn{2}{c}{\\scriptsize\\hfil x2 (Augmented data)} & & \\multicolumn{2}{c}{\\scriptsize\\hfil x1} & & \\multicolumn{2}{c}{\\scriptsize\\hfil x2 (Augmented data)}\\\\",
+  "\\cline{2-3} \\cline{5-6} \\cline{8-9} \\cline{11-12}\\\\",
+  sc2.ltxtb[-(1:2), , drop = F])
+write.tablev(sc2.ltxtb, 
+  paste0(pathsave, "SchoolingOLSEstimationResults2.tex"), colnamestrue = F)
+
+scpXlist <- list(
+  matrix(x1[, groupid]),
+  matrix(x1[-scp2$na.action, groupid]),
+  matrix(x1[-scp3$na.action, groupid]),
+  matrix(x2[-scp6$na.action, groupid]),
+  matrix(x2[-scp7$na.action, groupid]))
+scplist <- list(scp1, scp2, scp3, scp6, scp7)
+reglists.header <- c("scp")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+scp.tab <- tabs2latex3(scp.estlist)
+rn <- rownames(scp.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+scp.tb <- rbind(as.matrix(cbind(covariates = rn, scp.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", scp.M),
+  c("\\bar{R}^{2}", scp.R),
+  c("N", scp.N))
+# omit year effects
+scp.tb <- scp.tb[-(rep(grep("Year2", scp.tb[, "covariates"]), each = 2) + 0:1), ]
+scp.ltxtb <- latextab(scp.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(4, rep(1.10, ncol(scp.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 3, separatingcolwidth = rep(.2, 1))
+scp.ltxtb <- rbind(scp.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{7}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{3}{c}{\\scriptsize\\hfil x1} & & \\multicolumn{2}{c}{\\scriptsize\\hfil x2 (Augmented data)}\\\\",
+  "\\cline{2-4} \\cline{6-7}\\\\",
+  scp.ltxtb[-(1:2), , drop = F])
+write.tablev(scp.ltxtb, 
+  paste0(pathsave, "SchoolingOLSEstimationPovertystatusResults.tex"), colnamestrue = F)
+@
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment\label{tab ols school}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SchoolingOLSEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{x1} is complete portion of panel. \textsf{x2} is a panel data augmenting attrited members in \textsf{x1} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Check number of observations in each cell:
+<<check number of obs in schooling ols>>=
+scDatalist <- list(
+  x1[-sc12$na.action, ],
+  x1[-sc13$na.action, ],
+  x1[-sc14$na.action, ],
+  x2[-sc22$na.action, ],
+  x2[-sc23$na.action, ],
+  x2[-sc24$na.action, ])
+sc2Datalist <- list(
+  x1[-sc32$na.action, ],
+  x1[-sc33$na.action, ],
+  x2[-sc36$na.action, ],
+  x2[-sc37$na.action, ],
+  x1[-sc42$na.action, ],
+  x1[-sc43$na.action, ],
+  x2[-sc46$na.action, ],
+  x2[-sc47$na.action, ])
+<<Interaction between 2 matrices., warning = F>>=
+# Interaction between 2 matrices.
+interactXY <- function(x, y, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrix x and matrix y.
+#  Column names are created by pasting "x sepcharacter y".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (all(grepl("integer", c(sapply(x, class), sapply(y, class))))) {
+    z <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)), as.integer(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        set(z, j = (j1 - 1) * ncol(y) + j2, value = as.integer(x[[j1]] * y[[j2]]))
+  } else {
+    z <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)), as.numeric(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        set(z, j = (j1 - 1) * ncol(y) + j2, value = as.numeric(x[[j1]] * y[[j2]]))
+  }
+  setnames(z, unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))))
+  if (ReturnMatrix) z <- as.matrix(z)
+  return(z)
+}
+z <- interactXY(x, y)
+interactXYZ2 <- function(x, y, z, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrices x, y, z.
+#  Column names are created by pasting "x sepcharacter y sepcharacter z".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (!is.data.table(z)) z <- data.table(z)
+  xy <- interactXY(x, y)
+  xz <- interactXY(x, z)
+  yz <- interactXY(y, z)
+  if (all(grepl("integer", c(sapply(x, class), sapply(y, class), sapply(z, class))))) {
+    xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), as.integer(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        for (j3 in 1:ncol(z)) 
+          set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                          (j2 - 1) * (ncol(z)) + 
+                           j3, 
+            value = as.integer(x[[j1]] * y[[j2]] * z[[j3]]))
+  } else {
+    xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), as.numeric(NA)))
+    for (j1 in 1:ncol(x)) 
+      for (j2 in 1:ncol(y)) 
+        for (j3 in 1:ncol(z)) 
+          set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                          (j2 - 1) * ncol(z) + 
+                          j3, 
+            value = as.numeric(x[[j1]] * y[[j2]] * z[[j3]]))
+  }
+  cn.xyz <- unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))) 
+  cn.xyz <- unlist(lapply(1:length(cn.xyz), function(i) 
+     paste0(cn.xyz[i], sepcharacter, colnames(z)))) 
+  setnames(xyz, cn.xyz)
+  w <- data.table(xy, xz, yz, xyz)
+  if (ReturnMatrix) w <- as.matrix(w)
+  return(w)
+}
+interactXYZ <- function(x, y, z, sepcharacter = "_", ReturnMatrix = F) {
+#  Create an interaction matrix from matrices x, y, z.
+#  Column names are created by pasting "x sepcharacter y sepcharacter z".
+# Returns a data.table or a matrix.
+  if (!is.data.table(x)) x <- data.table(x)
+  if (!is.data.table(y)) y <- data.table(y)
+  if (!is.data.table(z)) z <- data.table(z)
+  xy <- interactXY(x, y)
+  xz <- interactXY(x, z)
+  yz <- interactXY(y, z)
+  xyz <- data.table(array(dim = c(nrow(x), ncol(x)*ncol(y)*ncol(z)), unclass(NA)))
+  for (j1 in 1:ncol(x)) 
+    for (j2 in 1:ncol(y)) 
+      for (j3 in 1:ncol(z)) 
+        set(xyz, j = (j1 - 1) * (ncol(y) * ncol(z)) +
+                        (j2 - 1) * (ncol(z)) + 
+                        j3, 
+          value = x[[j1]] * y[[j2]] * z[[j3]])
+  cn.xyz <- unlist(lapply(1:ncol(x), function(i) 
+     paste0(colnames(x)[i], sepcharacter, colnames(y)))) 
+  cn.xyz <- unlist(lapply(1:length(cn.xyz), function(i) 
+     paste0(cn.xyz[i], sepcharacter, colnames(z)))) 
+  setnames(xyz, cn.xyz)
+  w <- data.table(xy, xz, yz, xyz)
+  if (ReturnMatrix) w <- as.matrix(w)
+  return(w)
+}
+
+eks <- x1[-sc14$na.action, ]
+# x <- matrix(rep(c(1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0), 10000), ncol = 10)
+# y <- matrix(rep(c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0), 50000), ncol = 50)
+# z <- matrix(rep(c(1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1), 20000), ncol = 20)
+# colnames(x) <- paste0("x", 1:10)
+# colnames(y) <- paste0("y", 1:50)
+# colnames(z) <- paste0("z", 1:20)
+# XYZ is faster than XYZ2
+#rbind(system.time(interactXYZ(x, y, z)),
+#  system.time(interactXYZ2(x, y, z)))
+x <- matrix(rep(c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2), 1), ncol = 2)
+y <- matrix(rep(c(1, 0, 1, 0, 1, 0, 2, 0, 2, 0, 2, 0)*2, 1), ncol = 2)
+z <- matrix(rep(c(1, 1, 0, 0, 1, 1, 2, 2, 0, 0, 2, 2)*3, 1), ncol = 2)
+colnames(x) <- paste0("x", 1:2)
+colnames(y) <- paste0("y", 1:2)
+colnames(z) <- paste0("z", 1:2)
+if (!is.data.table(x)) x <- data.table(x)
+if (!is.data.table(y)) y <- data.table(y)
+if (!is.data.table(z)) z <- data.table(z)
+xy <- interactXY(x, y)
+xd <- scDatalist[[1]]
+x <- makeDummyFromFactor(xd[, Arm], NULL) 
+y <- makeDummyFromFactor(xd[, Schooling], NULL)
+z <- makeDummyFromFactor(xd[, sex], NULL)
+x[, grepout("Dr", colnames(x)) := NULL]
+w <- interactXYZ(y, x, z)
+x1 <- x1[, which(unlist(lapply(x1, function(x) !all(is.na(x))))), with=F]
+#nrow(xd[grepl("cow", Arm) & grepl("hi", Schooling) & grepl("F", sex), 
+#  .(hhid, mid, survey, Age_1, Attrit)])
+#lapply(InTerms, function(x)
+#  Reduce(cbind, lapply(1:ncol(x), function(i) 
+#    matrix(as.numeric(unlist(x[, .(sum(x[[i]]), nrow(x))]))))))
+<<tabulating number of obs in schooling ols, warning = F>>=
+InTerms <- lapply(scDatalist, function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Arm], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms <- rbindlist(lapply(InTerms, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms <- InTerms[, which(unlist(lapply(InTerms, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms <- t(InTerms)
+colnames(InTerms) <- paste0("(", 1:ncol(InTerms), ")") 
+InTerms <- InTerms[c(grep("Tra", rownames(InTerms)), 
+  grep("Large[^g]", rownames(InTerms)),
+  grep("Largeg", rownames(InTerms)),
+  grep("Cow", rownames(InTerms)),
+  grep("total", rownames(InTerms))
+  ), ]
+# reorder within a group
+rn.j <- rownames(InTerms)
+newroworder <- NULL
+for (j in c("Tra", "Large[^g]", "Largeg", "Cow"))
+  newroworder <- c(newroworder, 
+    c(grep(paste0(j, ".*ale$"), rn.j), grep(paste0(j, ".*P"), rn.j), 
+      grep(paste0(j, ".*J"), rn.j), grep(paste0(j, ".*H"), rn.j)))
+InTerms <- InTerms[c(newroworder, nrow(InTerms)), ]
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("Traditional|Large|Largegrace|Cow", "", rn0)
+IntT.tb <- as.matrix(cbind(" " = rn, InTerms))
+IntT.ltxtb <- latextab(IntT.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfil$", ncol(IntT.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT.tb) - 1)), hright = "$", 
+  headercolor = "gray90", #adjustlineskip = "-.6ex", 
+  #adjlskiprows = c(1:2, 4, 6, 8, c(1:2, 4, 6, 8)+9, c(1:2, 4, 6, 8)+9*2, c(1:2, 4, 6, 8)+9*3),
+  delimiterline= NULL,
+  addseparatingcols = 3, separatingcolwidth = .2)
+IntTtb <- rbind(IntT.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{8}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize } & \\multicolumn{3}{c}{\\scriptsize\\hfil x1} & & \\multicolumn{3}{c}{\\scriptsize\\hfil x2 (Augmented data)}\\\\",
+  "\\cline{2-4} \\cline{6-8}\\\\",
+  "\\makebox[3cm]{\\scriptsize Traditional\\hfill} & \\multicolumn{7}{c}{}\\\\",
+  IntT.ltxtb[1:max(grep("Tra", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large\\hfill} & \\multicolumn{7}{c}{}\\\\",
+  IntT.ltxtb[min(grep("Large[^g]", rn0)):(min(grep("Largeg", rn0) - 1)) + 2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large grace\\hfill} & \\multicolumn{7}{c}{}\\\\",
+  IntT.ltxtb[min(grep("Largeg", rn0)):(min(grep("Cow", rn0)) - 1) + 2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Cow\\hfill} & \\multicolumn{7}{c}{}\\\\",
+  IntT.ltxtb[(min(grep("Cow", rn0))+2):(nrow(IntT.ltxtb) -2), , drop = F],
+  "\\multicolumn{8}{c}{}\\\\[-.5ex]",
+  IntT.ltxtb[(min(grep("total", rn0))+2):nrow(IntT.ltxtb), , drop = F]
+  )
+write.tablev(IntTtb, 
+  paste0(pathsave, "NumObsSchoolingOLS.tex"), colnamestrue = F)
+@
+<<tabulating number of obs in schooling ols by Size and Grace, warning = F>>=
+# Size and Grace.
+InTerms21 <- lapply(sc2Datalist[1:4], function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Size], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms22 <- lapply(sc2Datalist[-(1:4)], function(x) 
+  interactXYZ(
+    makeDummyFromFactor(x[, Grace], NULL), 
+    makeDummyFromFactor(x[, sex], NULL),
+    makeDummyFromFactor(x[, Schooling], NULL)
+    ))
+InTerms21 <- rbindlist(lapply(InTerms21, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms22 <- rbindlist(lapply(InTerms22, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTerms21 <- InTerms21[, which(unlist(lapply(InTerms21, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms22 <- InTerms22[, which(unlist(lapply(InTerms22, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTerms21 <- t(InTerms21)
+InTerms22 <- t(InTerms22)
+colnames(InTerms21) <- paste0("(", 1:ncol(InTerms21), ")") 
+colnames(InTerms22) <- paste0("(", 1:ncol(InTerms22), ")") 
+InTerms21 <- InTerms21[c(grep("SmallS", rownames(InTerms21)), 
+  grep("LargeS", rownames(InTerms21)),
+  grep("total", rownames(InTerms21))
+  ), ]
+InTerms22 <- InTerms22[c(grep("Witho", rownames(InTerms22)), 
+  grep("WithG", rownames(InTerms22)),
+  grep("total", rownames(InTerms22))
+  ), ]
+# reorder within a group
+rn.j21 <- rownames(InTerms21)
+rn.j22 <- rownames(InTerms22)
+newroworder21 <- newroworder22 <- NULL
+for (j in c("SmallS", "LargeS"))
+  newroworder21 <- c(newroworder21, 
+    c(grep(paste0(j, ".*ale$"), rn.j21), grep(paste0(j, ".*P"), rn.j21), 
+      grep(paste0(j, ".*J"), rn.j21), grep(paste0(j, ".*H"), rn.j21)))
+for (j in c("Witho", "WithG"))
+  newroworder22 <- c(newroworder22, 
+    c(grep(paste0(j, ".*ale$"), rn.j22), grep(paste0(j, ".*P"), rn.j22), 
+      grep(paste0(j, ".*J"), rn.j22), grep(paste0(j, ".*H"), rn.j22)))
+InTerms21 <- InTerms21[c(newroworder21, nrow(InTerms21)), ]
+InTerms22 <- InTerms22[c(newroworder22, nrow(InTerms22)), ]
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms21), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("SmallSize|LargeSize", "", rn0)
+IntT21.tb <- as.matrix(cbind(" " = rn, InTerms21))
+IntT21.ltxtb <- latextab(IntT21.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfill$", ncol(IntT21.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT21.tb) - 1)), hright = "$", 
+  headercolor = "gray90", 
+  delimiterline= NULL)
+IntT21tb <- rbind(IntT21.ltxtb[1:2, , drop = F], 
+  "\\makebox[3cm]{\\scriptsize Small Size\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT21.ltxtb[1:max(grep("SmallS", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Large Size\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT21.ltxtb[(min(grep("LargeS", rn0)) + 2):(nrow(IntT21.ltxtb) -2), , drop = F],
+  "\\multicolumn{5}{c}{}\\\\[-.5ex]",
+  IntT21.ltxtb[(min(grep("total", rn0))+2):nrow(IntT21.ltxtb), , drop = F]
+  )
+rn0 <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(InTerms22), "}")
+rn0 <- gsub("\\_", " $\\\\times$ ", rn0)
+rn <- gsub("WithoutGrace|WithGrace", "", rn0)
+IntT22.tb <- as.matrix(cbind(" " = rn, InTerms22))
+IntT22.ltxtb <- latextab(IntT22.tb, 
+  hleft = c("\\scriptsize$", rep("\\scriptsize\\hfill$", ncol(IntT22.tb) - 1)), 
+  hcenter = c(3, rep(0.8, ncol(IntT22.tb) - 1)), hright = "$", 
+  headercolor = "gray90",
+  delimiterline= NULL)
+IntT22tb <- rbind(IntT22.ltxtb[1:2, , drop = F], 
+  "\\makebox[3cm]{\\scriptsize No Grace\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT22.ltxtb[1:max(grep("Witho", rn0))+2, , drop = F],
+  "\\makebox[3cm]{\\scriptsize Grace\\hfill} & \\multicolumn{4}{c}{}\\\\",
+  IntT22.ltxtb[(min(grep("WithG", rn0) + 2)):(nrow(IntT22.ltxtb) -2), , drop = F],
+  "\\multicolumn{5}{c}{}\\\\[-.5ex]",
+  IntT22.ltxtb[(min(grep("total", rn0))+2):nrow(IntT22.ltxtb), , drop = F]
+  )
+write.tablev(IntT21tb, 
+  paste0(pathsave, "NumObsSchoolingOLS21.tex"), colnamestrue = F)
+write.tablev(IntT22tb, 
+  paste0(pathsave, "NumObsSchoolingOLS22.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each cells of schooling regression in Table \ref{tab ols school}\label{tab num obs ols school}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.45}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/NumObsSchoolingOLS.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK administrative and survey data.}\\
+Notes: & 1. &  \\
+& 2. & %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment, different grouping\label{tab ols school2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SchoolingOLSEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{x1} is complete portion of panel. \textsf{x2} is a panel data augmenting attrited members in \textsf{x1} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \textsf{SmallSize} includes \textsf{Traditional}, \textsf{LargeSize} includes \textsf{Large, Large grace, Cow}. \textsf{WithoutGrace} includes \textsf{Traditional, Large}, \textsf{WithGrace} includes \textsf{Large grace, cow}.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each cells of schooling regression in Table \ref{tab ols school2}\label{tab num obs ols school2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.45}
+\hfil\begin{tikzpicture}
+\node (tbl) {
+\input{c:/data/GUK/analysis/save/NumObsSchoolingOLS21.tex}
+\input{c:/data/GUK/analysis/save/NumObsSchoolingOLS22.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK administrative and survey data.}\\
+Notes: & 1. &  \\
+& 2. & %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: OLS estimation of school enrollment, ultra poor vs. moderately poor\label{tab ols school3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SchoolingOLSEstimationPovertystatusResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Intercept terms are omitted in estimating equations. Year effects are included in estimation (not shown). \textsf{x1} is complete portion of panel. \textsf{x2} is a panel data augmenting attrited members in \textsf{x1} with an assumption that they are out of school unless it is explicitly stated as attending school by family members. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab ols school}} shows school enrollment is higher for \textsf{x1} than \textsf{x2}, indicating nonattriting members are school goers. When using \textsf{x1} data, \textsf{cow} and \textsf{large grace} show negative impacts for older children, yet not for girls in junior high schools. In fact, (1) shows that girles in high school have higher enrollment in \textsf{x1} and both junior and high schools for \textsf{x2} in (4). This may be due to increased labour demand within a family for boys. Similar patterns are found in \textsf{x2} data, yet not statistically significant, probably because data augmentation introduces more school dropouts among older girls. In \textsc{\small Table \ref{tab ols school2}} when using with grace/without grace grouping, the pattern becomes statistically significant for both \textsf{x1} and \textsf{x2}. Large size vs. small size contrast has smaller statistical power that more subtle outcomes cannot be detected. No difference between ultra and moderately poor is found in \textsc{\small Table \ref{tab ols school3}}.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Repayment and net saving}
+
+Note all binary interaction terms are demeaned and then interacted.
+<<prepare data for saving regressions, message = F>>=
+ar <- readRDS(paste0(path1234, "RosterAdminDataUsedForEstimation.rds"))
+ar[, Mid := 1:.N, by = .(hhid, Date)]
+ar <- ar[Mid == 1, ]
+ar[, Mid := NULL]
+ar[, CumSave := CumNetSaving - CumRepaid]
+ar[, CumEffectiveRepayment := CumNetSaving + CumRepaid]
+ar[, Arm := droplevels(Arm)]
+ar[, HeadLiteracy := HeadLiteracy + 0]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+setorder(ar, hhid, IntDate)
+ar[, grepout("LoanY|^Time$", colnames(ar)) := NULL]
+ar[, c("dummyForcedDropOuts") := NULL]
+<<Cumulative net saving, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Cumulative weekly net saving", ""), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(ar[!is.na(Date), .(Arm, hhid, Date, MonthsElapsed, CumNetSaving)], 
+  aes(x = MonthsElapsed, y = CumNetSaving, colour = Arm, group = Arm)) +
+  geom_point(aes(colour = Arm), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(span = .5, aes(colour = Arm, group = Arm)) +
+  theme(legend.position="none", legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous() +
+  scale_x_continuous(limits = c(-12, 48), breaks = seq(-12, 48, 12)) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  facet_grid(. ~ Arm, scales = "free_y")
+<<saving regresions>>=
+ar1 <- ar[, 
+  grepout("groupid|^hhid|tee|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|HeadA|HeadL|OtherN|OtherM|RM", 
+  colnames(ar)), with = F]
+ar1[, grepout("Size|With|UD", colnames(ar1)) := NULL]
+dar <- prepFDData(ar1, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dumm.*[a-z]$|Time|HeadL|HeadA|LoanY", 
+  drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+dard <- dar$diff
+#ar1[, .(hhid, tee, CumSave)]
+#dard[, .(hhid, tee, CumSave)]
+sv11 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|^Hea|RM|Oth|Eff|Fema|Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv12 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|RM|Oth|Eff|Head|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv13 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|Oth|Eff|RM|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv14 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|Eff|RM|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+# EffectiveRepayment = repay + net saving
+sv15 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|^Hea|RM|Oth|CumR|Fema|Tim|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv16 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|RM|Oth|CumR|Eff|Head|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv17 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|Oth|CumR|RM|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv18 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|CumN|CumR|RM|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv21 <- FDestimation(dard, Regressand = "CumNetSaving", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|^Hea|RM|Oth|CumR|CumE|Fema|Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+sv22 <- FDestimation(dard, Regressand = "CumNetSaving", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|CumR|CumE|Eff|Head|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+
+svp11 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|^Hea|RM|Oth|Eff|Fema|Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp12 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|RM|Oth|Eff|Head|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp13 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|Oth|Eff|RM|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp14 <- FDestimation(dard, Regressand = "CumRepaid", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|Eff|RM|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+# EffectiveRepayment = repay + net saving
+svp15 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|^Hea|RM|Oth|CumR|Fema|Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp16 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|RM|Oth|CumR|Eff|Head|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp17 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|Oth|CumR|RM|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp18 <- FDestimation(dard, Regressand = "CumEffectiveRepayment", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|CumN|CumR|RM|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp21 <- FDestimation(dard, Regressand = "CumNetSaving", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|^Hea|RM|Oth|CumR|CumE|Fema|Tim",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+svp22 <- FDestimation(dard, Regressand = "CumNetSaving", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "dummy[TLC]|RM|Oth|CumR|CumE|Eff|Head|Time.?2",
+  intercept = F, return.V = T, return.level.data = F, return.diff.data = F, 
+  print.messages = T)
+
+svlist <- list(sv21, sv22, sv11, sv12, sv14, sv15, sv16, sv18)
+sv.estlist <- lapply(svlist, "[[", "est")
+sv.estlist <- lapply(sv.estlist, function(x) x[, -3, drop = F])
+sv.N <- unlist(lapply(svlist, "[[", "N"))
+sv.T <- cbind(c("T = 2", "T = 3", "T = 4"), matrix(unlist(lapply(svlist, "[[", "Ttable")), byrow = F, nrow = 3))
+sv.R <- unlist(lapply(lapply(lapply(svlist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+#unique(unlist(lapply(sv.estlist, rownames)))
+sv.tab <- tabs2latex3(sv.estlist, digits = 1)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time\\.?2", "round 1 - 2",
+    "Time\\.?3", "round 2 - 3",
+    "Time\\.?4", "round 3 - 4",
+    "\\.", " $\\\\times$ ",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "RM.*Sa.*", "Previous 6M mean net saving",
+    "RM.*rep.*", "Previous 6M mean repayment",
+    "RM.*miss.*", "Previous 6M mean misses",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(sv.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+sv.tb <- rbind(as.matrix(cbind(covariates = rn, sv.tab)), 
+  sv.T,
+  c("\\bar{R}^{2}", round(sv.R, 3)),
+  c("N", sv.N))
+# omit year effects
+sv.ltxtb <- latextab(sv.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.25, rep(1.2, ncol(sv.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90", 
+  addseparatingcols = c(2, 5), separatingcolwidth = rep(.2, 2))
+sv.ltxtb <- rbind(sv.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{11}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{2}{c}{\\scriptsize\\hfil Cumulative net saving} & &\\multicolumn{3}{c}{\\scriptsize\\hfil Cumulative repayment} & & \\multicolumn{3}{c}{\\scriptsize\\hfil Cumulative net saving + cumulative repayment} \\\\",
+  "\\cline{2-3} \\cline{5-7} \\cline{9-11}\\\\",
+  sv.ltxtb[-(1:2), , drop = F])
+write.tablev(sv.ltxtb, 
+  paste0(pathsave, "SavingFDEstimationResults.tex"), colnamestrue = F)
+
+svplist <- list(svp21, svp22, svp11, svp12, svp14, svp15, svp16, svp18)
+svp.estlist <- lapply(svplist, "[[", "est")
+svp.estlist <- lapply(svp.estlist, function(x) x[, -3, drop = F])
+svp.N <- unlist(lapply(svplist, "[[", "N"))
+svp.T <- cbind(c("T = 2", "T = 3", "T = 4"), matrix(unlist(lapply(svplist, "[[", "Ttable")), byrow = F, nrow = 3))
+svp.R <- unlist(lapply(lapply(lapply(svplist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+svp.tab <- tabs2latex3(svp.estlist, digits = 1)
+rn <- rownames(svp.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+svp.tb <- rbind(as.matrix(cbind(covariates = rn, svp.tab)), 
+  svp.T,
+  c("\\bar{R}^{2}", round(svp.R, 3)),
+  c("N", svp.N))
+svp.ltxtb <- latextab(svp.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.0, rep(1.1, ncol(svp.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90", 
+  addseparatingcols = c(2, 5), separatingcolwidth = rep(.2, 2))
+svp.ltxtb <- rbind(svp.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{11}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{2}{c}{\\scriptsize\\hfil Cumulative net saving} & &\\multicolumn{3}{c}{\\scriptsize\\hfil Cumulative repayment} & & \\multicolumn{3}{c}{\\scriptsize\\hfil Cumulative net saving + cumulative repayment} \\\\",
+  "\\cline{2-3} \\cline{5-7} \\cline{9-11}\\\\",
+  svp.ltxtb[-(1:2), , drop = F])
+write.tablev(svp.ltxtb, 
+  paste0(pathsave, "SavingPovertystatusFDEstimationResults.tex"), colnamestrue = F)
+@
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment\label{tab FD saving}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SavingFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. First-differenced regressands are regressed on categorical and time-variant covariates. Net saving is taken from administrative data and merged with survey data at Year-Month of survey interviews. Head age and literacy are from baseline data. Intercept terms are omitted in estimating equations. Net saving is saving - withdrawal. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net cumulative saving and repayment, ultra poor vs. moderately poor\label{tab FD saving2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/SavingPovertystatusFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. First-differenced regressands are regressed on categorical and time-variant covariates. Net saving is taken from administrative data and merged with survey data at Year-Month of survey interviews. Head age and literacy are from baseline data. Intercept terms are omitted in estimating equations. Net saving is saving - withdrawal. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD saving}} shows net saving decreases, mostly in the later rounds. This reflects the use of saving for repayment. Ultra poor had a setback in repayment during rd 2-3 as indicated in \textsc{\small Table \ref{tab FD saving2}}, but the the repayment rates at the end of third year do not differ as we have seen at the beginning of this note.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Assets}
+
+<<read and prepare asset files>>=
+ass <-  readRDS(paste0(path1234, "AssetAdminDataUsedForEstimation.rds"))
+ass[, grepout("Loan|Size|With", colnames(ass)) := NULL]
+as1 <- ass[, grepout("^groupid$|hhid|tee|^dummy.*[a-z]$|Asse|Tim|RM", 
+  colnames(ass)), with = F]
+as2 <- ass[, grepout("^groupid$|hhid|tee|^dummy.*[a-z]$|Asse|Tim|RM", 
+  colnames(ass)), with = F]
+das1 <- prepFDData(as1, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy.*[a-z]$|Time", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+das2 <- prepFDData(as2, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy.*[a-z]$|Time", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+das1d <- das1$diff
+das2d <- das2$diff
+das1d[, Time := NULL]
+das2d[, Time := NULL]
+as11 <- FDestimation(das2d, Regressand = "HAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|Ass|Time",
+  intercept = F, return.V = T, print.messages = T)
+as112 <- FDestimation(das2d, Regressand = "HAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|Ass|Time|^dummyT",
+  intercept = T, return.V = T, print.messages = T)
+as12 <- FDestimation(das2d, Regressand = "^HAssetAmount$", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|Ass|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+as13 <- FDestimation(das1d, Regressand = "HAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Ass|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+as15 <- FDestimation(das2d, Regressand = "PAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|Ass|Time",
+  intercept = F, return.V = T, print.messages = T)
+as16 <- FDestimation(das2d, Regressand = "PAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Oth|Ass|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+as17 <- FDestimation(das1d, Regressand = "PAssetAmount", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Ass|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+aslist <- list(as112, as11, as12, as13, as15, as16, as17)
+as.estlist <- lapply(aslist, "[[", "est")
+as.estlist <- lapply(as.estlist, function(x) x[, -3, drop = F])
+as.N <- unlist(lapply(aslist, "[[", "N"))
+as.T <- cbind(c("T = 2", "T = 3", "T = 4"), matrix(unlist(lapply(aslist, "[[", "Ttable")), byrow = F, nrow = 3))
+as.R <- unlist(lapply(lapply(lapply(aslist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+#unique(unlist(lapply(as.estlist, rownames)))
+as.tab <- tabs2latex3(as.estlist, digits = 1)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time.?2", "round 1 - 2",
+    "Time.?3", "round 2 - 3",
+    "Time.?4", "round 3 - 4",
+    "RM.*Sa.*", "Previous 6M mean net saving",
+    "RM.*rep.*", "Previous 6M mean repayment",
+    "RM.*miss.*", "Previous 6M mean misses",
+    "\\.", " $\\\\times$ ",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(as.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+as.tb <- rbind(as.matrix(cbind(covariates = rn, as.tab)), 
+  as.T,
+  c("\\bar{R}^{2}", round(as.R, 3)),
+  c("N", as.N))
+# omit year effects
+as.ltxtb <- latextab(as.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.25, rep(1.3, ncol(as.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90", 
+  addseparatingcols = 4, separatingcolwidth = .2)
+as.ltxtb <- rbind(as.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{9}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{4}{c}{\\scriptsize\\hfil Household asset amount (Tk)} & & \\multicolumn{3}{c}{\\scriptsize\\hfil Productive asset amount (Tk)} \\\\",
+  "\\cline{2-5} \\cline{7-9}\\\\",
+  as.ltxtb[-(1:2), , drop = F])
+write.tablev(as.ltxtb, 
+  paste0(pathsave, "AssetFDEstimationResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets\label{tab FD assets}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/AssetFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD assets}} shows household assets increase after receiving the loans. Total incremant is largest among the \textsf{large} arm. Increments are positive in rd 1 - 3, suggesting substantial purchase after receiving a loan. Significant decreases in rd 3 - 4 for large loan arms indicate liquidation of assets for repayment.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Livestock}
+
+<<>>=
+lvo <-  readRDS(paste0(path1234, "LivestockAdminDataUsedForEstimation.rds"))
+lvo <- lvo[, grepout("groupid|hhid|tee|^dummy[A-Z]|Tim|RM|ImputedValue", 
+  colnames(lvo)), with = F]
+lvo[, c("dummyForcedDropOuts", "Time") := NULL]
+lvo[, grepout("Loan", colnames(lvo)) := NULL]
+dlvo <- prepFDData(lvo, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Time", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+dlvod <- dlvo$diff
+lv11 <- FDestimation(dlvod, Regressand = "TotalImputedValue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time",
+  intercept = F, return.V = T, print.messages = T)
+lv12 <- FDestimation(dlvod, Regressand = "TotalImputedValue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?4|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+lv13 <- FDestimation(dlvod, Regressand = "TotalImputedValue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Time.?4|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+lvlist <- list(lv11, lv12, lv13)
+lv.estlist <- lapply(lvlist, "[[", "est")
+lv.estlist <- lapply(lv.estlist, function(x) x[, -3, drop = F])
+lv.N <- unlist(lapply(lvlist, "[[", "N"))
+lv.T <- cbind(c("T = 2", "T = 3", "T = 4"), matrix(unlist(lapply(lvlist, "[[", "Ttable")), byrow = F, nrow = 3))
+lv.R <- unlist(lapply(lapply(lapply(lvlist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+#unique(unlist(lapply(lv.estlist, rownames)))
+lv.tab <- tabs2latex3(lv.estlist, digits = 1)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time.?2", "round 1 - 2",
+    "Time.?3", "round 2 - 3",
+    "Time.?4", "round 3 - 4",
+    "\\.", " $\\\\times$ ",
+    "RM.*Sa.*", "Previous 6M mean net saving",
+    "RM.*rep.*", "Previous 6M mean repayment",
+    "RM.*miss.*", "Previous 6M mean misses",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(lv.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+lv.tb <- rbind(as.matrix(cbind(covariates = rn, lv.tab)), 
+  lv.T,
+  c("\\bar{R}^{2}", round(lv.R, 3)),
+  c("N", lv.N))
+# omit year effects
+lv.ltxtb <- latextab(lv.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.25, rep(1.3, ncol(lv.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90")
+write.tablev(lv.ltxtb, 
+  paste0(pathsave, "LivestockFDEstimationResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values\label{tab FD livestock}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/LivestockFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Check quickly if the estimated results make sense.
+<<warning = F>>=
+lvo <-  readRDS(paste0(path1234, "LivestockAdminDataUsedForEstimation.rds"))
+setkey(lvo, Arm, tee)
+lvostat <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, tee)]
+lvostat[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+setkey(lvo, hhid, survey)
+lvo[hhid %in% hhid[TotalImputedValue > 100000],
+  .(hhid, Arm, Year, livestock_code, number_owned, 
+  mrkt_value, TotalImputedValue)]
+lvo[, HoldingClass := "below 1000"]
+lvo[TotalImputedValue >= 1000 & TotalImputedValue < 30000, 
+  HoldingClass := "1000-29999"]
+lvo[TotalImputedValue >= 30000 & TotalImputedValue < 50000, 
+  HoldingClass := "30000-49999"]
+lvo[TotalImputedValue >= 50000, 
+  HoldingClass := "above 50000"]
+lvo[, HoldingClass := factor(HoldingClass, 
+  levels = c("below 1000", "1000-29999", "30000-49999", "above 50000"))]
+setkey(lvo, Arm, HoldingClass, tee)
+lvostat2 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, tee)]
+lvostat2[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+lvostat3 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, Year)]
+lvostat3[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+<<Total imputed value histogram, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total imputed value of livestock holding", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvo[TotalImputedValue > 0], aes(TotalImputedValue)) + 
+  geom_histogram(breaks = c(0, seq(10000, 200000, 10000))) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(breaks = seq(0, 200000, 20000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvostat2, aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes by year, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes by year", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvostat3, aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(Year ~ Arm)
+@
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Why does \textsf{cow} report below 1000 holding in rds 2-4?
+\end{itemize}
+<<>>=
+lvo[, NumberOfCows := 0L]
+lvo[grepl("ow", livestock_code), NumberOfCows := as.integer(number_owned)]
+lvo[,
+  .(MeanImputedVal = mean(TotalImputedValue, na.rm = T), 
+  MeanNumCows = mean(NumberOfCows, na.rm = T), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)]
+#lvo[,.(N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)]
+<<Number of cows by year, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Number of cows/oxen by year", "\\\\ {\\footnotesize Means are mean holding among the owners. Totals are total number of cows/oxen owned. Mean and total number of cows/oxen may diverge because the number of owners differ across round.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+lvo[, LivestockType := livestock_code]
+lvo[grepl("Ox|Cow", livestock_code), LivestockType := "Cow/Ox"]
+lvo[grepl("Goat|She", livestock_code), LivestockType := "Goat/Sheep"]
+lvo[grepl("Duc|Hen", livestock_code), LivestockType := "Poultry"]
+lvo[, LivestockType := factor(LivestockType)]
+lvotype <- lvo[grepl("es", creditstatus), 
+  .(Std = var(number_owned, na.rm = T)^(.5), 
+    Total = sum(number_owned, na.rm = T), 
+    N = sum(!is.na(number_owned))), 
+    by = .(Arm,  LivestockType, Year)]
+lvotype[, Mean := round(Total/N, 1)]
+setnames(lvotype, grepout("^T|N|^S|^M", colnames(lvotype)), 
+  paste0("value.", grepout("^T|N|^S|^M", colnames(lvotype))))
+lvotype[is.na(LivestockType), LivestockType := "Other"]
+lvotypel <- reshape(lvotype, direction = "long", 
+  idvar = c("Arm", "LivestockType", "Year"),
+  varying = grepout("val", colnames(lvotype)))
+lvotypel <- lvotypel[grepl("Cow", LivestockType) & grepl("Mean|Tot|^N", time), ]
+setkey(lvotypel, Arm, Year, LivestockType)
+lvotypel[, Variable := time]
+lvotypel[grepl("N", time), Variable := "Number of owners"]
+lvotypel[, Variable := factor(Variable, levels = c("Mean", "Total", "Number of owners"))]
+ggplot(data = lvotypel, aes(Year, value)) + 
+  geom_col(data = lvotypel[grepl("Total", Variable), ]) +
+  geom_col(data = lvotypel[grepl("Mean", Variable), ]) +
+  geom_col(data = lvotypel[grepl("N", Variable), ]) +
+  xlab("Year") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(Variable ~ Arm, scale = "free_y")
+@
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure Total imputed value histogram}} shows general increase in upper holding classes round 3 and further upper holding classes in round 4. \textsc{\small Figure \ref{Figure Number of cows by year}} shows livestock type is not entered (yet collected) in rd3. At this moment, one needs to omit rd 3. All estimation results by far are subject to this omission.
+\end{finding}
+\end{palepinkleftbar}
+
+\clearpage
+\subsection{Incomes}
+
+<<>>=
+lab <-  readRDS(paste0(path1234, "LabourIncomeAdminDataUsedForEstimation.rds"))
+far <-  readRDS(paste0(path1234, "FarmRevenueAdminDataUsedForEstimation.rds"))
+lab[, num := 1:.N, by = .(hhid, IntDate)]
+lab <- lab[num == 1, ]
+lab <- lab[, grepout("groupid|hhid|tee|^dummy[A-Z]|Tim|RM|T.*H.*L", 
+  colnames(lab)), with = F]
+far <- far[, grepout("groupid|hhid|tee|^dummy[A-Z]|Tim|RM|T.*R", 
+  colnames(far)), with = F]
+lab[, c("dummyForcedDropOuts", "Time") := NULL]
+far[, c("dummyForcedDropOuts", "Time") := NULL]
+lab[, grepout("Loan", colnames(lab)) := NULL]
+far[, grepout("Loan", colnames(far)) := NULL]
+dlab <- prepFDData(lab, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Time", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+dfar <- prepFDData(far, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "RM|^dummy[A-Z]|Time", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+dlabd <- dlab$diff
+dfard <- dfar$diff
+lb11 <- FDestimation(dlabd, Regressand = "TotalHHLabourIncome", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time",
+  intercept = F, return.V = T, print.messages = T)
+lb112 <- FDestimation(dlabd, Regressand = "TotalHHLabourIncome", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time|Trad",
+  intercept = T, return.V = T, print.messages = T)
+lb12 <- FDestimation(dlabd, Regressand = "TotalHHLabourIncome", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+lb13 <- FDestimation(dlabd, Regressand = "TotalHHLabourIncome", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+fa11 <- FDestimation(dfard, Regressand = "TotalRevenue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time",
+  intercept = F, return.V = T, print.messages = T)
+fa12 <- FDestimation(dfard, Regressand = "TotalRevenue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+fa13 <- FDestimation(dfard, Regressand = "TotalRevenue", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Time.?2|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+lblist <- list(lb11, lb112, lb12, lb13, fa11, fa12, fa13)
+lb.estlist <- lapply(lblist, "[[", "est")
+lb.estlist <- lapply(lb.estlist, function(x) x[, -3, drop = F])
+lb.N <- unlist(lapply(lblist, "[[", "N"))
+lb.T <- cbind(c("T = 2", "T = 3", "T = 4"), 
+  matrix(unlist(lapply(lblist[1:4], "[[", "Ttable")), byrow = F, nrow = 3),
+  matrix(unlist(lapply(lblist[5:7], "[[", "Ttable")), byrow = F, nrow = 3))
+lb.R <- unlist(lapply(lapply(lapply(lblist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+#unique(unlist(lapply(lb.estlist, rownames)))
+lb.tab <- tabs2latex3(lb.estlist, digits = 1, roworder = 
+  "Intercep|^dummyT.*[a-z]$|^dummyLarge$|^dummy.*Grace$|^dummyCow$")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time.?2", "round 1 - 2",
+    "Time.?3", "round 2 - 3",
+    "Time.?4", "round 3 - 4",
+    "\\.", " $\\\\times$ ",
+    "RM.*Sa.*", "Previous 6M mean net saving",
+    "RM.*rep.*", "Previous 6M mean repayment",
+    "RM.*miss.*", "Previous 6M mean misses",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(lb.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+lb.tb <- rbind(as.matrix(cbind(covariates = rn, lb.tab)), 
+  lb.T,
+  c("\\bar{R}^{2}", round(lb.R, 3)),
+  c("N", lb.N))
+# omit year effects
+lb.ltxtb <- latextab(lb.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.25, rep(1.3, ncol(lb.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 4, separatingcolwidth = .2)
+lb.ltxtb <- rbind(lb.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{9}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{4}{c}{\\scriptsize\\hfil Labour income (Tk)} & & \\multicolumn{3}{c}{\\scriptsize\\hfil Farm revenue (Tk)}\\\\",
+  "\\cline{2-5} \\cline{7-9}\\\\",
+  lb.ltxtb[-(1:2), , drop = F])
+write.tablev(lb.ltxtb, 
+  paste0(pathsave, "IncomesFDEstimationResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes\label{tab FD incomes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/IncomesFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD incomes}} shows a general decrease in rd 1 - 2 period and a general increase in rd 2 - 4 periods for labour incomes. \textsf{Large} arm saw a greater swing (decrease and increases) which resulted in overall significant mean increase of \Sexpr{round(lb11$est[grepl("rge$", rownames(lb11$est)), "Estimate"], 2)} (at $p$ value of \Sexpr{round(lb11$est[grepl("rge$", rownames(lb11$est)), "Pr(>|t|)"]*100, 2)}\%), yet not statistically different from \textsf{traditional}, while other arms are similar to \textsf{traditional}. Farm revenues do not show any systematic trend.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Consumption}
+
+
+<<>>=
+con <-  readRDS(paste0(path1234, "ConsumptionAdminDataUsedForEstimation.rds"))
+con[, ConsumptionBaseline := 0L]
+con[as.Date(IntDate) < as.Date(DisDate1), ConsumptionBaseline := 1L]
+con[, ConsumptionBaseline := as.integer(any(ConsumptionBaseline == 1L)), 
+  by = hhid]
+@
+Number of HHs with consumption before the loan is disbursed (\textsf{ConsumptionBaseline} == 1) is small.
+<<>>=
+table(con[, .(Arm, ConsumptionBaseline)])
+con <- con[,
+  grepout("groupid|hhid|tee|^dummy[A-Z]|Tim|RM|Expen|Head|HH", 
+  colnames(con)), with = F]
+expcol <- grepout("Exp", colnames(con))
+con[, paste0("PC", expcol) := .SD/HHsize, .SDcols = expcol]
+pcexpcol <- grepout("PC", colnames(con))
+con[, c("PCExpenditure", "TotalExpenditure") := 
+  .(eval(parse(text=paste(pcexpcol, collapse = "+"))), 
+    eval(parse(text=paste(expcol, collapse = "+"))))]
+con[, c("dummyForcedDropOuts", "Time") := NULL]
+con[, grepout("Loan", colnames(con)) := NULL]
+# drop Time 2 (period 1-2) and its iteractions, because data starts from t=2
+con[, grepout("Time2", colnames(con)) := NULL]
+dcon <- prepFDData(con, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Time|Head|HH|IntD", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+dcond <- dcon$diff
+cn11 <- FDestimation(dcond, Regressand = "PCExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time|HH|Head|Exp|IntD",
+  intercept = F, return.V = T, print.messages = T)
+cn12 <- FDestimation(dcond, Regressand = "PCExpenditure",
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?4|HH|Head|Exp|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+cn13 <- FDestimation(dcond, Regressand = "PCExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?4|HH|Exp|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+cn14 <- FDestimation(dcond, Regressand = "PCExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|^Time.?4|HH|Exp|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+cn15 <- FDestimation(dcond, Regressand = "PCFoodExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?4|HH|Head|Exp|IntD",
+  intercept = F, return.V = T, print.messages = T)
+cn16 <- FDestimation(dcond, Regressand = "PCFoodExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|RM|Time.?4|HH|Exp|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+cn17 <- FDestimation(dcond, Regressand = "PCFoodExpenditure", 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+  Exclude = "Poor|Time.?4|HH|Exp|dummyT.*Tim",
+  intercept = F, return.V = T, print.messages = T)
+cnlist <- list(cn11, cn12, cn13, cn14, cn15, cn16, cn17)
+cn.estlist <- lapply(cnlist, "[[", "est")
+cn.estlist <- lapply(cn.estlist, function(x) x[, -3, drop = F])
+cn.N <- unlist(lapply(cnlist, "[[", "N"))
+cn.T <- cbind(c("T = 2", "T = 3"), 
+  matrix(unlist(lapply(cnlist, "[[", "Ttable")), byrow = F, nrow = 2))
+cn.R <- unlist(lapply(lapply(lapply(cnlist, "[[", "nonrobust"), summary), "[[", "adj.r.squared"))
+cn.tab <- tabs2latex3(cn.estlist, digits = 1)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|Schooling|sex|dummy", "",
+    "I\\((.*?)\\)", "\\1",
+    "factor\\((.*?)\\)", "\\1",
+    "Time.?2", "round 1 - 2",
+    "Time.?3", "round 2 - 3",
+    "Time.?4", "round 3 - 4",
+    "\\.", " $\\\\times$ ",
+    "RM.*Sa.*", "Previous 6M mean net saving",
+    "RM.*rep.*", "Previous 6M mean repayment",
+    "RM.*miss.*", "Previous 6M mean misses",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(cn.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+cn.tb <- rbind(as.matrix(cbind(covariates = rn, cn.tab)), 
+  cn.T,
+  c("\\bar{R}^{2}", round(cn.R, 3)),
+  c("N", cn.N))
+# omit year effects
+cn.ltxtb <- latextab(cn.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3.25, rep(1.1, ncol(cn.tb)-1)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 4, separatingcolwidth = .2)
+cn.ltxtb <- rbind(cn.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{9}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{4}{c}{\\scriptsize\\hfil Per capita consumption (Tk)} & & \\multicolumn{3}{c}{\\scriptsize\\hfil Per capita food consumption (Tk)}\\\\",
+  "\\cline{2-5} \\cline{7-9}\\\\",
+  cn.ltxtb[-(1:2), , drop = F])
+write.tablev(cn.ltxtb, 
+  paste0(pathsave, "ConsumptionFDEstimationResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption\label{tab FD consumption}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/consumptionFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab FD consumption}} uses rd 2 - 4 data and shows an increase in per member consumption in rd 2 - 3 period. The estimates are imprecise for all interaction terms. Per member food consumption increases in rd 2- 3 period but decreases in rd 3 - 4 period.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{IGA}
+
+<<warning = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+iga <- adw2[, .(hhid, Arm, Date, iga11st, iga12nd, iga13rd)]
+setnames(iga, c("hhid", "Arm", "Date", paste0("iga", 1:3)))
+#table0(iga[, iga1])
+#table0(iga[, iga2])
+#table0(iga[, iga3])
+setkey(iga, hhid, Date)
+iga[, NumIGA := sum(!is.na(iga1)) + sum(!is.na(iga2)) + sum(!is.na(iga3)), by = .(hhid, Date)]
+#iga[NumIGA == 0 & !is.na(iga1), ]
+setkey(iga, NumIGA, iga1, iga2, iga3)
+iga.unique <- unique(iga[, .(NumIGA, iga1, iga2, iga3)])
+iga.unique <- iga[iga.unique, .N/48, by = .EACHI]
+setnames(iga.unique, "V1", "N")
+setorder(iga.unique, -NumIGA, -N, iga1, iga2, iga3)
+setkey(iga, NumIGA, iga1, Arm)
+igaArm.unique <- unique(iga[, .(NumIGA, iga1, Arm)])
+igaArm.unique <- iga[igaArm.unique, .N/48, by = .EACHI]
+setnames(igaArm.unique, "V1", "N")
+setorder(igaArm.unique, -NumIGA, -N, iga1)
+for (i in 1:3) {
+  iga[, paste0("IGA.", i) := as.character(NA)]
+  iga[grepl("Cow|oxen", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "cow"]
+  iga[grepl("Goa|heep", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "goat sheep"]
+  iga[grepl("small", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "small trade"]
+  iga[grepl("house|land", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "house land"]
+  iga[grepl("machi", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "machinery"]
+  iga[grepl("addy|nut", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "paddy nuts corn"]
+  iga[, paste0("IGA.", i) := factor(eval(parse(text = paste0("IGA.", i))), 
+    levels = c("cow", "goat sheep", "machinery", "small trade", "house land", "paddy nuts corn", NA))]
+}
+setkey(iga, NumIGA, IGA.1, IGA.2, IGA.3, Arm)
+iga.unique3 <- unique(iga[, .(NumIGA, IGA.1, IGA.2, IGA.3, Arm)])
+iga.unique3 <- iga[iga.unique3, .N/48, by = .EACHI]
+setnames(iga.unique3, "V1", "N")
+setorder(iga.unique3, -NumIGA, -N, Arm, IGA.1, IGA.2, IGA.3)
+iga.unique3[, NumIGA := factor(NumIGA, levels = 3:0)]
+<<IGA choices, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Income generatng activity choices", "\\\\ {\\footnotesize The first income generating activity choices are plotted.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = iga.unique3[NumIGA != 0 & !is.na(IGA.1), ], aes(IGA.1, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 30, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(NumIGA ~ Arm, switch = "y")
+<<All IGA choices, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("All income generatng activity choices", "\\\\ {\\footnotesize All of multiple investment choices are summed by arms and the number of IGAs and plotted as bars. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+iga.unique3[, num := 1:.N]
+igaUL <- reshape(iga.unique3, direction = "long", idvar = c("num", "NumIGA", "Arm", "N"),
+  varying = paste0("IGA.", 1:3))
+setnames(igaUL, "time", "rank")
+setkey(igaUL, num, rank)
+library(ggplot2)
+ggplot(data = igaUL[NumIGA != 0 & !is.na(IGA), ], aes(IGA, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 30, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(NumIGA ~ Arm, switch = "y")
+<<All IGA choices collapsed, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("All income generatng activity choices collapsed over different number of IGAs", "\\\\ {\\footnotesize All of multiple investment choices are summed by arms and plotted as bars. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+iga.unique3[, num := 1:.N]
+igaUL <- reshape(iga.unique3, direction = "long", idvar = c("num", "NumIGA", "Arm", "N"),
+  varying = paste0("IGA.", 1:3))
+setnames(igaUL, "time", "rank")
+setkey(igaUL, num, rank)
+library(ggplot2)
+ggplot(data = igaUL[NumIGA != 0 & !is.na(IGA), ], aes(IGA, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(. ~ Arm, switch = "y")
+@
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure IGA choices}, \ref{Figure All IGA choices}} show that there are very few members who chose to invest in more than one project for the ``large'' arms, while in the \textsf{traditional} arm, almost no one invested only in one project. Goat/sheep and small trades are the top choices for the first IGA in \textsf{traditional}. This indicates the exitence of both a liquidity constraint and convexity in the production technology of large domestic animals. This also validates our supposition that dairy livestock production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive a cow. \textsc{\small Figure \ref{Figure All IGA choices collapsed}} shows there are a significant number of cases in the \textsf{traditional} arm that members reporting to raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. Contrasting \textsf{large}, \textsf{large grace} with \textsf{cow} arms, it suggests that entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake among members.
+\end{finding}
+\end{palepinkleftbar}
+
+Together with \textsc{\small Table \ref{tab FD saving}} showing smaller net saving and repayment among \textsf{traditional}, the restriction on a project choice induced by a smaller loaned sum resulted in smaller returns. Between with or no grace period loans, cumulative net saving and repayment are both larger with loans with a grace period. No such difference is found between \textsf{cow} and other arms.
+
+\subsection{Marriage}
+
+<<warning = F>>=
+# RosterAdminDataUsedForEstimation.rds has too few traditional arm. Use RosterAdminData.rds.
+# ar <- readRDS(paste0(path1234, "RosterAdminDataUsedForEstimation.rds"))
+ar <- readRDS(paste0(path1234, "RosterAdminData.rds"))
+ma <- ar[, 
+  grepout("Arm|Mem|groupid|^hhid|^mid|Age|sex|Year|Months|surve|marita|curr|Marr|HeadA|HeadL|OtherN|OtherM|RM|creditst|Tra", 
+  colnames(ar)), with = F]
+# define eligible daughters
+ma[, tee := 1:.N, by = .(hhid, mid)]
+ma[, MaxT := max(tee), by = .(hhid, mid)]
+#table0(ma[MarriedOff & grepl("Fem", sex) & tee == MaxT, .(Year, Age_1)])
+ma[, ReadyToMarry := 0L]
+ma[AgeComputed >= 10 & AgeComputed <= 40 & 
+  grepl("Fe", sex) & grepl("unm", marital), ReadyToMarry := 1L]
+ma[, NumEligible := sum(ReadyToMarry), by = .(Arm, survey)]
+setkey(ma, Arm, survey, NumEligible)
+
+table0(ma[survey == 1, .(creditstatus, TradGroup)])
+
+reshape(unique(ma[, .(Arm, survey, NumEligible)]), direction = "wide", 
+  idvar = "Arm", timevar = "survey", v.names = "NumEligible")
+# Count cases eventually getting married but a certain period after disbursement
+ma[, AttritBefore3Y := any(max(.SD[, MonthsElapsed], na.rm = T) <= 36), 
+  .SDcols = "MonthsElapsed", by = hhid]
+ma[, AttritBefore2Y := any(max(.SD[, MonthsElapsed], na.rm = T) <= 24), 
+  .SDcols = "MonthsElapsed", by = hhid]
+ma[, AttritBefore1Y := any(max(.SD[, MonthsElapsed], na.rm = T) <= 12), 
+  .SDcols = "MonthsElapsed", by = hhid]
+#ma[(AttritBefore1Y) & grepl("tr", Arm), .(Arm, hhid, mid, Age_1, Year, tee, MonthsElapsed, current)]
+@
+Tabulate marriage for \textsf{sex} == ``Female" \& \textsf{ReadyToMarry}, where the latter is unmarried females with ages between 10 and 40.
+<<>>=
+#table0(ma[tee == 1, .(Arm, AttritBefore3Y)])
+#table0(ma[tee == 1, .(Arm, AttritBefore2Y)])
+setkey(ma, Arm, hhid, mid, survey)
+ma[, c("MarriedAfter3Y", "MarriedAfter2Y") := 0L]
+ma[!(AttritBefore3Y), MarriedAfter3Y := 
+   as.integer(any(.SD[MonthsElapsed > 36, MarriedOff])), 
+  .SDcols = "MarriedOff", by = .(hhid, mid)]
+ma[!(AttritBefore2Y), MarriedAfter2Y := 
+  as.integer(any(.SD[MonthsElapsed > 24, MarriedOff])), 
+  .SDcols = "MarriedOff", by = .(hhid, mid)]
+ma[!(AttritBefore1Y), MarriedAfter1Y := 
+  as.integer(any(.SD[MonthsElapsed > 12, MarriedOff])), 
+  .SDcols = "MarriedOff", by = .(hhid, mid)]
+M3 <- table0(ma[!AttritBefore3Y & tee == 1 & 
+  sex == "Female" & ReadyToMarry, .(Arm, MarriedAfter3Y)])
+M2 <- table0(ma[!AttritBefore2Y & tee == 1 &
+  sex == "Female" & ReadyToMarry, .(Arm, MarriedAfter2Y)])
+M1 <- table0(ma[tee == 1 &
+  sex == "Female" & ReadyToMarry, .(Arm, MarriedAfter1Y)])
+M0 <- table0(ma[tee == 1 &
+  sex == "Female" & ReadyToMarry, .(Arm, MarriedOff)])
+@
+When we compare the marriage rates, we need to define the denominator sensibly. It should be all relevant aged females that are present in baseline. As we do not want to include marriages immediately after receiving loans, we need to take off some period to count the marriage cases. We will consider 1 year, 2 years, and 3 years. At the same time, there are househods who chose not to receive a loan. 
+Then, we need the denominator to be relevant aged females who do not attrit by:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	1 year (\Sexpr{sum(M1)} individuals), or,
+\item	2 years (\Sexpr{sum(M2)} individuals), or,
+\item	3 years (\Sexpr{sum(M3)} individuals).
+\end{itemize}
+<<>>=
+ma[, AttritedBefore := "never"]
+ma[(AttritBefore1Y), AttritedBefore := "year 1"]
+ma[!AttritBefore1Y & AttritBefore2Y, AttritedBefore := "year 2"]
+ma[!AttritBefore1Y & !AttritBefore2Y & AttritBefore3Y, AttritedBefore := "year 3"]
+ma[, AttritedBefore := factor(AttritedBefore, levels = c(paste("year", 1:3), "never"))]
+setkey(ma, Arm, AttritedBefore)
+ma[sex == "Female" & ReadyToMarry, 
+  .(NumEligible = length(MarriedOff), 
+  Married = sum(MarriedOff),
+  MarriageRate = round(mean(MarriedOff), 2)), 
+  by = .(Arm, AttritedBefore)]
+@
+\begin{palepinkleftbar}
+\begin{finding}
+There is very small difference in marriage rates between arms with grace and without grace.
+\end{finding}
+\end{palepinkleftbar}
+<<eval = F>>=
+cbind(M1, round(M1/apply(M1, 1, sum), 2))
+cbind(M2, round(M2/apply(M2, 1, sum), 2))
+cbind(M3, round(M3/apply(M3, 1, sum), 2))
+@
+\end{document}

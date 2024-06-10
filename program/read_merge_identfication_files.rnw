@@ -1,0 +1,24 @@
+<<>>=
+setwd(pathsource.mar)
+fn <- list.files(path = foldername, pattern = ".prn$", 
+	recursive = T, full.names = T)
+fn <- unique(fn)
+fnids <- grepout("\\/id", fn)
+fnids <- fnids[!grepl("rev", fnids)]
+idfiles <- lapply(1:3, function(i) cbind(rd = i, Z[fn %in% fnids][[i]]))
+@
+Column names with hh, rd, gid, name.
+<<>>=
+lapply(idfiles, function(x) grepout("hh|rd|gid|name", colnames(x)))
+@
+Rds with \textsf{hh\_id}, variable name corrected to \textsf{hhid}.
+<<>>=
+c(unlist(lapply(idfiles, function(x) any("hh_id" %in% colnames(x)))),
+unlist(lapply(idfiles, function(x) any("hhid" %in% colnames(x)))))
+#Rds without \textsf{hhid} (named as \textsf{id}).
+setnames(idfiles[[1]], c("rname", "tl_name", "zila", "cell"), 
+	c("r_name", "s_name", "zilla", "cell_no"))
+<<results = 'hide'>>=
+lapply(idfiles, function(x) 
+	setnames(x, grepout("\\_", colnames(x)), gsub("\\_", ".", grepout("\\_", colnames(x)))))
+@

@@ -1,0 +1,2399 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("ImpactEstimationOriginal1600Memo.rnw", "ImpactEstimationOriginal1600Memo.tex"); system("platex ImpactEstimationOriginal1600Memo"); system("dvipdfmx ImpactEstimationOriginal1600Memo")
+%   path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ImpactEstimationOriginal1600Memo/"); library(knitr); knit("ImpactEstimationOriginal1600Memo.rnw", "ImpactEstimationOriginal1600Memo.tex"); system("platex ImpactEstimationOriginal1600Memo"); system("pbiblatex ImpactEstimationOriginal1600Memo"); system("dvipdfmx ImpactEstimationOriginal1600Memo")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\citet{Wooldridge2010}
+
+
+
+
+
+
+
+\hfil Estimating lending impacts using original 1600 households\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+
+\section{Summary}
+
+\subsection{Definitions}
+
+(125*45*3) or, CumRepaid/(190*45*2)
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Traditional]	A cash loan of Tk. 5600 with one year maturity. Repay Tk 125 * 45 weeks = 5625 each year for 3 years.
+\item[Large]	A cash loan of Tk. 16800 with three year maturity. Repay Tk 125 * 45 weeks * 3 years = 16875
+\item[Large Grace]	A cash loan of Tk. 16800 with a one year grace period and three year maturity. Repay Tk 190 * 45 weeks * 2 years = 17100.
+\item[Cow]	An in-kind loan of a cow worth Tk. 16800 with a one year grace period and three year maturity. Repay Tk 190 * 45 weeks * 2 years = 17100.
+\item[LargeSize]	An indicator variable takes the value of 1 if the arm is Large, Large Grace, or Cow.
+\item[WithGrace]	An indicator variable takes the value of 1 if the arm is Large Grace or Cow.
+\item[InKind]	Same as Cow.
+\end{description}
+When one uses covariates \textsf{Large, Large Grace, Cow} in estimation, their estimates represent each arm's characteristics relative to \textsf{Traditional}. When one uses covariates \textsf{LargeSize, WithGrace, InKind}, their estimates represent their labeled names.
+
+\subsection{Inference}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	First-difference estimators are used. This can be seen as an extension of DID to multi-periods (although historically the latter precedes the former). FD is used also for a binary indicator such as schooling.
+\item	All the standard errors are clustered at the group (char) level.
+\item	To aid the understanding if the data is more suited to the assumption of first-difference rather than fixed-effects, I used a check suggested by \citet[][10.71]{Wooldridge2010}. It is an AR(1) regression of FD residuals. Most of results show low autocorrelations which is consistent with the assumption of FD estimator. The use of cluster-robust standard errors gives consistent estimates of SEs, so it boils down to efficiency. 
+\item	I rely more on the formulation using \textsf{LargeSize, WithGrace, InKind} than \textsf{Large, LargeGrace, Cow} due to an ease in interpretation. Numerically, both are equivalent.
+\item	A caution on reading the estimates: All are estimates on increments. If \textsf{LargeSize} has an estimate of 10, then it is a 10 unit larger change than the baseline (traditional). If the interaction of \textsf{LargeSize} with rd 2-3 is 10, then it is a 10 unit larger change than rd 2-3 change of baseline. If the estimated value of intercept is 10 and rd 2-3 is 10, then rd 2-3 change is 20 for baseline, 30 for \textsf{LargeSize}. 
+\end{itemize}
+
+\subsection{Findings}
+
+Overall, the intervention reveals that larger sized loans accerelate the timing of becoming an owner of large livestock without adversely affecting the repayments. This applies to both the ultra poor and the moderately poor. A loan amount seems to have convex returns at a low level of assets. Higher growths come at a cost of slower school progression of older girls and smaller increases in consumption for arms with a grace period, so the welfare implication is mixed. In addition, given that the number of cows per owner remains the similar after 2 years, it does not provide evidence for accelerated growth of livestock after becoming an owner in this short window. Another note is that the loan repayment was poor for unknown reasons so, in the hindsight, the risks required a higher margin for this type of lending to the target population, which could have reduced participation.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Net saving and repayments]	 Sample uses all administrative records available. Smaller net saving for \textsf{traditional} arm. Period of rd 2-3 saw a decline in net saving, even further for \textsf{LargeGrace, Cow}, but remain just about zero, then become negative in rd 3-4. Repayment is greater for \textsf{Large, LargeGrace, Cow} in rd 2-3 but they become statistically the same with \textsf{Traditional} in rd 3-4 (\textsc{Table \ref{tab FD saving original HH}}). \textsc{\normalsize Table \ref{tab FD saving attributes original HH}} reveals \textsf{LargeSize} have larger net saving while both \textsf{WithGrace} and \textsf{NonCash} have smaller. Repayment is larger with \textsf{LargeSize} but smaller with \textsf{WithGrace} and \textsf{NonCash} in (3). (4) shows rd 2-3 have larger repayment for \textsf{WithGrace}, which is by design. Repayment is positively autocorrelated and is negatively correlated with previous net saving. The ultra poor repaid just as much as the moderately poor, or even more (\textsc{Table \ref{tab FD saving2 original HH}}). This is evidence against the popular belief that the ultra poor are riskier.  
+\item[Flow net saving and repayments]	 Sample uses all administrative records available. Net saving decreased steadily for all arms, and larger decrease for \textsf{LargeGrace, Cow} arms. There are no statistically noticeable increases in net saving in all rounds as observed in (2). Repayment increased in round 2 for \textsf{LargeGrace, Cow} which is by design. All arms increased the repayment throughout in 4 (\textsc{Table \ref{tab FD Flow saving original HH}}). 
+\textsc{\normalsize Table \ref{tab FD flow saving attributes original HH}} reveals \textsf{WithGrace} have repayment increases in rd 2, which then declined in rd 4.
+The ultra poor's repayment changes are not different from the moderately poor except in rd 1 and 4 (\textsc{Table \ref{tab FD saving2 original HH}}). This is changes in repayment which does not inform about repayment total or debt outstanding. This needs to be contrasted against the result that the repayment rate is higher with the ultra poor, so slower repayment change is a result of larger repayment at the beginning. This is evidence against the popular belief that the ultra poor are riskier.  
+\item[Schooling]	Enrollment changes are larger for primary school girls in \textsf{Large} and \textsf{Cow} arms for primary but smaller for junior in rd 1 vs rd 4 comparisons (\textsc{Table \ref{tab FD enroll5 original HH}}). When seen by attributes in \textsc{\normalsize Table \ref{tab FD enroll5 attributes original HH}}, \textsf{LargeSize} shows smaller changes especially for primary school boys. Primary school girls in \textsf{LargeSize} and \textsf{NonCash} show larger changes, while junior and high school girls in \textsf{LargeSize} show smaller changes than boys. This indicates that large sized arms have detrimetal impacts on older girls' schooling but promotional impacts on primary school aged girls. No decline in enrollment changes when repaying for the arms of \textsf{WithGrace}, despite the larger installments.
+\item[Assets]	Household assets increased in all arms. Initially increased then decreased. There might have been liquidation of assets to repay the loans. Productive assets declined consecutively. Flood in rd 1 makes the increase in household assets smaller. Productive assets see a major decline among \textsf{Large} during rd 3-4 period (\textsc{\normalsize Table \ref{tab FD assets original HH}}). Comparison by attributes (\textsc{\normalsize Table \ref{tab FD assets attributes original HH}}) or of rd 2 and rd 4 gives the same picture (\textsc{\normalsize Table \ref{tab FD assets rd24 original HH}}). Comparison against the loan non-recipients shows that they also experience a similar, increase-increase-decrease pattern. This indicates that the pattern observed among the loan recipients may be a systemic pattern of the area, not necessarily reflecting the repayment burdern (\textsc{\normalsize Table \ref{tab FD assets pure control original HHs}}).
+\item[Livestock]	Larger increases in holding values in rd 1-2, smaller increases in rd 2-3, no change in rd 3-4. Previous cow owners show a smaller increase in rd 1-2 while not rd 3-4 or rd 2-3 in the \textsf{Cow} arm (\textsc{\normalsize Table \ref{tab FD livestock original HH}}). Figures show that cow ownership increased for all arms but the \textsf{traditional} arm. \textsc{\normalsize Table \ref{tab FD livestock attributes original HH}} shows baseline trend is a large increse in rd 1-2, a small increase in rd 2-3, a small decline in rd 3-4, while \textsf{LargeSize} sees an even larger increase in rd 1-2 and similar trend as baseline afterwards. This shows that member who received a larger sized disbursement could hold on to its level of livestock accumulation. \textsc{\normalsize Table \ref{tab FD livestock poor original HH}} shows, albeit at $p$ values around 10\%, the ultra poor has a larger increase relative to the moderately poor, which is another manifestation against the popular notion that the ultra poor are riskier.
+\item[Total asset values]	Similar resulsts as assets.
+\item[Labour incomes]	Small sample. Increased during rd 2-3 in all arms (\textsc{\normalsize Table \ref{tab FD incomes original HH}}). 
+\item[Consumption]	Increased during rd 2-3 in all arms, a decrese in rd 3-4 (\textsc{\normalsize Table \ref{tab FD consumption original HH}}). Another notable result is that \textsf{NonCash} reduced the consumption in rd 3-4 even further than the baseline loan (\textsc{\normalsize Table \ref{tab FD consumption attributes original HH}}).
+\item[IGAs]	Multiple IGAs for \textsf{Tradtional} arm. Everyone else chose to invest in cows, suggesting entrepreneurship does not seem to matter in the uptake of loans. It is consistent with the presence of a poverty trap induced by a liquidity constraint and convexity in livestock production technology.
+\end{description}
+
+One sees changes in investment choices when one compares \textsf{traditional} and all other arms. However, consumption does not seem to differ. Repayments and asset holding are greater in all other arms. These are consistent with households are enforcing the repayment disciplines and reinvesting the proceeds rather than increasing consumption. 
+
+
+[From the previous memo] A more detailed summary:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Low repayment rates]	Repayment was poor. Net saving was forfeit for repayment. Mean raw loan recovery rate (counting only repayments) measured at the end of third year was 0.67 overall, and was lowest for \textsf{traditional} at 0.48. Counting also net saving, these numbers change to 0.85, 0.59, respectively.
+\item[Large-sized or grace period loans resulted in higher repayment rates]	Controlling for the loan size, larger initial lending resulted in larger repayment and net saving. As opposed to GUK's anxiety, lending was relatively less risky with large loans and loans with a grace period.
+\item[No difference in repayment risk by poverty status] Raw loan recovery rates are 0.67, 0.67, respectively, for ultra poor and moderately poor. Also no statitically meaningful difference is found for cumulative repayment plus cumulative net saving.
+\item[No difference in household assets]	Household assets increased in rd 1 - 3, then reduced in rd 4 (possibly liquidating for repayment purpose), with the overall impact of increased household asset values yet no statistically significant difference between arms. 
+\item[No difference in labour incomes, per member consumption, marriage rates]	Per member consumption increased in all arms with no difference between arms. Marriage rates do not difffer between arms. A greater swing in labour incomes for \textsf{large}.
+\end{description}
+
+\section{Read files}
+
+
+\subsection{Read from a list}
+
+In reading raw files, I added ID information (\textsf{\footnotesize ./ID/ID\_Updated\_received\_from\_Abu.dta}) to all pages. I further added HH ID information from the admin file.
+
+
+
+
+
+
+
+Description of data:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ad]	Administrative data: Up to [-24, 48] months after first loan disbursement. This file has not been used in \textsf{read\_cleaned\_data.rnw}.
+\item[ros]	 \textsf{roster} to condition the initial status prior to participation.
+\item[sch]	Schooling panel with attrition. Aged 6-18 in rd1. \textsf{Enrolled=\{0,1\}} is defined for children aged 6-18 in rd1 by referencing to \textsf{currently\_enrolled} and age information.
+\item[ass]	 Assets. Household assets (houses, durables) and productive assets (machines, tools). 
+\item[lvo]	Livestock holding. 
+\item[lab]	Labour incomes.
+\item[far]	Farming revenues (no costs reported).
+\item[con]	Household consumption. Food expenditure asks both bought and consumed volumes and prices. We impute consumption values by using median prices. All quantity is set to annualised quantity.
+\item[shk]	Shocks. Merged with all other files.
+\end{description}
+
+\subsection{Sample selection and treament assignment}
+
+\subsubsection{Merge admin and roster files}
+
+
+%Redefine arms to include \textsf{DropOuts} in original arms.
+
+
+
+
+
+How I combined between pages: First, merge time-invariant portion of admin data with roster data \textsf{ros} with \textsf{hhid} as a key. Then it is merged with time-variant portion of admin data using \textsf{hhid, Year, Month} as keys. %Keep only dates when survey data match. 
+Second, merge the resulting file with other data \textsf{sch}, \textsf{ass}, ... By merging in this way, I get arm information for each HH in survey 1 with some NAs. I fill in NAs by using village level information.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[adw3]	idfu[adw2]: admin data \textsf{adw2} + \textsf{idfu} (arm information)
+\item[ad0]	Selected columns of adw3.
+\end{description}
+Base: roster.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.0]	adbase[ros]: \textsf{ros} + invariant portion of admin data \textsf{ad0}.
+\item[ar.1]	adrest[ar.0]: \textsf{ar.0} + variable portion of admin data \textsf{ad0}.
+\item[ar] vr[ar.1]: \textsf{ar.1} + \textsf{vr} (RCT\_village.dta)
+\end{description}
+Base: admin.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.00]	ros.00W[ad0]: \textsf{ad0} + \textsf{ros.00W} (survey round info).
+\item[arAll]	ros.0[ar.00]: \textsf{ar.00} (admin data with survey round info) + \textsf{ros.0} (roster only with first observed round).
+\item[arA] vr[arAll]: \textsf{arAll} (admin data as base + roster) + \textsf{vr} (village randomisation)
+\end{description}
+
+Tabulation of arms with \textsf{ar.0}. There are 220 NAs which will be filled in with \textsf{RCT\_village.dta} with \textsf{ar, arAll} in the next subsection.
+\begin{Schunk}
+\begin{Soutput}
+
+traditional       large large grace         cow        <NA> 
+        485         464         467         487         220 
+\end{Soutput}
+\end{Schunk}
+%Observations with no \textsf{povertystatus} are drop outs and rejecters.
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace cow
+     1           8    17          20  34
+     2         167   343         340 346
+\end{Soutput}
+\end{Schunk}
+
+There are 26 members (\textsf{oldMember} in \textsf{Mstatus}), 
+20 members (\textsf{newGroup} in \textsf{Mstatus}),
+162 members (\textsf{iRejection} and \textsf{iReplacement} in \textsf{Mstatus})
+who did not borrow but only saved. This is identified by \textsf{DisDate1} == NA \& \textsf{creditstatus} == No (not NAs, because they are offered and declined). 
+\begin{Schunk}
+\begin{Soutput}
+     survey     DisDate1            creditstatus         Mstatus   
+ Min.   :1   Min.   :NA    Yes            :  0   gErosion    : 80  
+ 1st Qu.:1   1st Qu.:NA    No             :208   gRejection  :140  
+ Median :1   Median :NA    Replaced Member:  0   iRejection  :159  
+ Mean   :1   Mean   :NA    NA's           :220   iReplacement:  3  
+ 3rd Qu.:1   3rd Qu.:NA                          newGroup    : 20  
+ Max.   :1   Max.   :NA                          oldMember   : 26  
+             NA's   :428                                           
+\end{Soutput}
+\end{Schunk}
+220 NAs in \textsf{creditstatus} are \textsf{gErosion} and \textsf{gRejection}. Their arms are not recorded in survey data and they will be supplemented with \textsf{vr} (from \textsf{RCT\_vilage.dta}) later.
+\begin{Schunk}
+\begin{Soutput}
+     survey           Arm      ObPattern  AttritIn         Mstatus   
+ Min.   :1   traditional:  0   0111:  0   2: 46    gErosion    : 80  
+ 1st Qu.:1   large      :  0   1000: 46   3:  6    gRejection  :140  
+ Median :1   large grace:  0   1010:  1   4: 54    iRejection  :  0  
+ Mean   :1   cow        :  0   1011:  0   9:114    iReplacement:  0  
+ 3rd Qu.:1   NA's       :220   1100:  6            newGroup    :  0  
+ Max.   :1                     1110: 53            oldMember   :  0  
+                               1111:114                              
+              Mgroup   
+ continued       :  0  
+ drop outs       :140  
+ forced drop outs: 80  
+ new group       :  0  
+ replacements    :  0  
+                       
+                       
+\end{Soutput}
+\end{Schunk}
+%So are the same with nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("old", Mstatus), ]) \textsf{oldMember} in \textsf{Mstatus}:
+
+%There are nrow(ar.1[is.na(DisDate1) & MemNum == 1 & grepl("Rep", Mstatus), ]) members (\textsf{iReplacement} in \textsf{Mstatus}) who did not borrow but only saved. 
+
+Create \textsf{BorrowerStatus} to indicate these guys (\textsf{DisDate1} == NA \& \textsf{creditstatus} == No) as a \textsf{pure saver}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+
+       borrower      pure saver quit membership 
+           1791              49             159 
+\end{Soutput}
+\end{Schunk}
+Set \textsf{No} in \textsf{creditstatus} if NA in \textsf{DisDate1}.
+\begin{Schunk}
+\begin{Soutput}
+     survey     DisDate1            creditstatus         Mstatus   
+ Min.   :1   Min.   :NA    Yes            :  0   gErosion    : 80  
+ 1st Qu.:1   1st Qu.:NA    No             :428   gRejection  :140  
+ Median :1   Median :NA    Replaced Member:  0   iRejection  :159  
+ Mean   :1   Mean   :NA                          iReplacement:  3  
+ 3rd Qu.:1   3rd Qu.:NA                          newGroup    : 20  
+ Max.   :1   Max.   :NA                          oldMember   : 26  
+             NA's   :428                                           
+         BorrowerStatus
+ borrower       :  0   
+ pure saver     :208   
+ quit membership:220   
+                       
+                       
+                       
+                       
+\end{Soutput}
+\end{Schunk}
+
+Need to merge in 2 steps: Merge admin (time-invariant) with roster with \textsf{hhid} as a key, then merge to admin (time-variant {\footnotesize [e.g., OtherRepaid, OtherNetSaving, OtherMisses, CumOtherMisses, CumRepaid, CumEffectiveRepayment, CumNetSaving, CumPlannedInstallment, CumOtherRepaid, CumOtherNetSaving, CumMisses, CumRepaidRate, CumEffectiveRepaidRate, RMOtherNetSaving, RMOtherRepaid]}) with \textsf{hhid, Year, Month} as keys. This is because there are 8398 non-matching cases if we merge using \textsf{Year, Month} of \textsf{IntDate} in roster data and \textsf{Year, Month} of \textsf{Date} in admin data. This is inevitable because survey precedes the first meeting of borrowers: The admin data starts from 2013-05-01 while survey data starts from 2011-10-09 and rd 1 ends at 2013-10-12 for \textsf{oldMember}s with the median date 2012-10-20. Below gives \textsf{Year, Month} in roster data in rd 1 with no match in admin data.
+\begin{Schunk}
+\begin{Soutput}
+
+  2011-October  2011-November   2012-January   2012-October  2012-November 
+             6              1             19           1146            327 
+ 2012-December 2013-September   2013-October   2014-January   2014-October 
+            79              6             19             12             83 
+ 2014-November  2014-December  2015-November  2015-December   2016-January 
+            43             36            111             40             26 
+  2017-January  2017-February     2017-March     2017-April          NA-NA 
+            44             97             17             17             21 
+\end{Soutput}
+\end{Schunk}
+After 2014, it is mostly drop out members who do not match with admin data because they do not attend the meeting.
+\begin{Schunk}
+\begin{Sinput}
+table0(ar00[is.na(MonthsElapsed) & MemNum == 1 & Year >= 2014, 
+  Mgroup])
+\end{Sinput}
+\begin{Soutput}
+
+   continued    drop outs    new group replacements 
+          78          381           58            9 
+\end{Soutput}
+\end{Schunk}
+No additional match if matching only with \textsf{Year}. 
+\begin{Schunk}
+\begin{Soutput}
+               FALSE TRUE
+YearMonthMatch  2055 5958
+YearMatch       2055 5958
+\end{Soutput}
+\end{Schunk}
+In \textsf{roster + admin} (base: roster): Tabulate \textsf{hhid} observations by \textsf{survey} round and \textsf{RArm} before supplementing with \textsf{AssignOriginal} and \textsf{VArm}. Note: 220 observations with NA are also pointed in \textsf{read\_cleaned\_data.rnw} and are going to be dealt with in the next subsection.
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace cow <NA>
+     1         485   464         467 487  220
+     2         472   445         447 446  173
+     3         472   448         452 453  168
+     4         465   444         447 444  114
+\end{Soutput}
+\end{Schunk}
+
+\subsubsection{Merge village level info}
+
+
+
+\textsf{ar}: \textsf{ar.1} + \textsf{vr} (RCT\_village.dta)
+
+I use arm \textsf{VArm} from village level information. Tabulation of \textsf{AssignOriginal} against \textsf{VArm} shows complementarity so I can use one variable to fill in NAs in another.
+\begin{Schunk}
+\begin{Soutput}
+              VArm
+AssignOriginal traditional large large grace  cow <NA>
+   traditional        1244     0           0    0  650
+   large                 0  1423           0    0  378
+   large grace           0     0        1437    0  376
+   cow                   0     0           0 1631  199
+   <NA>                418   158          40   59    0
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{RArm} after supplementing with \textsf{AssignOriginal} and \textsf{VArm}.
+\begin{Schunk}
+\begin{Sinput}
+ar[is.na(RArm) & !is.na(AssignOriginal), RArm := AssignOriginal]
+ar[is.na(RArm) & !is.na(VArm), RArm := VArm]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace cow
+     1         605   504         507 507
+     2         585   485         447 466
+     3         582   487         452 472
+     4         540   483         447 444
+\end{Soutput}
+\end{Schunk}
+Below is what is supplemented from \textsf{VArm} of village level information to the 220 NAs.
+\begin{Schunk}
+\begin{Soutput}
+                 RArm
+BorrowerStatus    traditional large large grace cow
+  borrower                  0     0           0   0
+  pure saver                0     0           0   0
+  quit membership         120    40          40  20
+\end{Soutput}
+\end{Schunk}
+Contets of \textsf{pure savers}
+\begin{Schunk}
+\begin{Soutput}
+
+traditional       large large grace         cow 
+        102          12          22          72 
+\end{Soutput}
+\end{Schunk}
+\textsf{arA}: \textsf{arAll} (admin data as base + roster) + \textsf{vr} (village randomisation)
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace cow
+     1         474   397         375 443
+     2         472   444         447 446
+     3         468   441         442 435
+     4         463   444         446 444
+\end{Soutput}
+\begin{Soutput}
+      BorrowerStatus
+survey borrower pure saver quit membership
+     1     1496         43             150
+     2     1636         49             124
+     3     1621         49             116
+     4     1622         47             128
+\end{Soutput}
+\begin{Soutput}
+             BorrowerStatus
+RArm          borrower pure saver quit membership
+  traditional     1501        188             188
+  large           1686          0              40
+  large grace     1644          0              66
+  cow             1544          0             224
+\end{Soutput}
+\begin{Soutput}
+      BorrowerStatus
+survey borrower pure saver quit membership
+     1     1400         43             246
+     2     1636         49             124
+     3     1621         49             116
+     4     1622         47             128
+\end{Soutput}
+\end{Schunk}
+
+\subsection{Merge admin-roster with other files}
+
+\subsubsection{Choosing sample in admin-roster}
+
+Tabulation of \textsf{RArm} when dropping \textsf{twice, double} in traditional arm.
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow total
+1         441   504         507 507  1959
+2         319   485         447 466  1717
+3         316   487         452 472  1727
+4         278   483         447 444  1652
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{RArm} when dropping \textsf{twice} in traditional arm. This may make most sense but a large attrition between rd 1 and 2.
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow total
+1         505   504         507 507  2023
+2         430   485         447 466  1828
+3         426   487         452 472  1837
+4         388   483         447 444  1762
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{RArm} when dropping dirbursement after 2015-01-01. This has less attrition but includes heterogenous treatment among traditional.
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow total
+1         328   385         359 328  1400
+2         323   371         350 316  1360
+3         323   372         349 318  1362
+4         321   370         345 312  1348
+\end{Soutput}
+\end{Schunk}
+In \textsf{roster + admin} 1: Tabulate observations after keeping only observations used in estimation: Keep if \textsf{Mstatus} includes strings old, iRej, gEro, gRej, \& \textsf{DisDate1} is before 2015-01-01, \& \textsf{TradGroup} does not include strings tw.
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow total
+1         170   296         278 248   992
+2         137   285         270 240   932
+3         137   286         270 239   932
+4         136   284         266 235   921
+\end{Soutput}
+\end{Schunk}
+In \textsf{roster + admin} 2: Keep if \textsf{Mstatus} includes strings old, iRej, gEro, gRej, \& \textsf{TradGroup} does not include strings tw (relaxing  \textsf{DisDate1} is before 2015-01-01). \textcolor{blue}{This the data used in this note.} This also shows a lower attrition rate for \textsf{large} arm. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow total
+1         400   400         400 400  1600
+2         327   384         342 366  1419
+3         324   386         348 366  1424
+4         287   382         343 342  1354
+\end{Soutput}
+\end{Schunk}
+Create \textsf{o1600} to indicate the original 1600 HHs. Tabulation of total observations in roster by \textsf{o1600} and \textsf{survey}.
+\begin{Schunk}
+\begin{Soutput}
+     survey
+o1600    1    2    3    4
+    0 2101 2510 2543 2457
+    1 6532 5817 5843 5420
+\end{Soutput}
+\end{Schunk}
+Tabulation of total observations in roster by \textsf{o1600} and \textsf{survey} after restricting to 1 obs per HH.
+\begin{Schunk}
+\begin{Soutput}
+     survey
+o1600    1    2    3    4
+    0  523  611  616  607
+    1 1600 1372 1377 1307
+\end{Soutput}
+\end{Schunk}
+Tabulation for \textsf{arA}. This has fewer observations per meeting than \textsf{ar} when only using 1 obs per rd,
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace cow
+     1         138   285         253 311
+     2         167   343         342 346
+     3         165   341         338 335
+     4         165   343         342 342
+\end{Soutput}
+\end{Schunk}
+but more observations per round because there are multiple meetings per round.
+\begin{Schunk}
+\begin{Soutput}
+      RArm
+survey traditional large large grace  cow
+     1         747  1359        1379 2393
+     2        3054  6197        6221 6156
+     3        2220  4650        4607 4596
+     4        2379  5074        5073 5095
+\end{Soutput}
+\end{Schunk}
+\textsf{arA} is used in saving and repayment regressions. Summary by conditioning on \textsf{o1600} == 1 \& \textsf{MemNum} == 1 \& \textsf{DisDate1} == NA.
+
+There are errors in repayment. \textsf{hhid} 8169303, 8169305, 8169306, 8169316 recorded as repaid 16300, 16800, 16300, 16424, respectively, but with no record of disbursement and repayment before the final meeting. Change repayment to 0.
+\begin{Schunk}
+\begin{Soutput}
+      hhid        survey       DisDate1   ObPattern           creditstatus
+ 8169303:48   Min.   :2.0   Min.   :NA    0111:  0   Yes            :  0  
+ 8169305:48   1st Qu.:2.0   1st Qu.:NA    1000:  0   No             :192  
+ 8169306:48   Median :3.0   Median :NA    1010:  0   Replaced Member:  0  
+ 8169316:48   Mean   :2.9   Mean   :NA    1011:  0                        
+              3rd Qu.:4.0   3rd Qu.:NA    1100:  0                        
+              Max.   :4.0   Max.   :NA    1110:  0                        
+                            NA's   :192   1111:192                        
+          RArm                  Mgroup            Mstatus      GroupStatus 
+ traditional:192   continued       :192   gErosion    :  0   accepted:192  
+ large      :  0   drop outs       :  0   gRejection  :  0                 
+ large grace:  0   forced drop outs:  0   iRejection  :  0                 
+ cow        :  0   new group       :  0   iReplacement:  0                 
+                   replacements    :  0   newGroup    :  0                 
+                                          oldMember   :192                 
+                                                                           
+ value.repay value.NetSaving         BorrowerStatus
+ 0    :188   0      :93      borrower       :  0   
+ 16300:  2   40     :29      pure saver     :192   
+ 16424:  1   60     : 9      quit membership:  0   
+ 16800:  1   20     : 8                            
+             30     : 8                            
+             50     : 8                            
+             (Other):37                            
+\end{Soutput}
+\end{Schunk}
+After correcting the error, below gives the summary.
+\begin{Schunk}
+\begin{Soutput}
+      hhid         survey        DisDate1   ObPattern           creditstatus
+ 7020405:  1   Min.   :1.00   Min.   :NA    0111: 13   Yes            :  0  
+ 7020412:  1   1st Qu.:2.00   1st Qu.:NA    1000: 22   No             :185  
+ 7020417:  1   Median :2.00   Median :NA    1010:  0   Replaced Member:  0  
+ 7020905:  1   Mean   :1.81   Mean   :NA    1011:  0                        
+ 7031502:  1   3rd Qu.:2.00   3rd Qu.:NA    1100:  8                        
+ 7031505:  1   Max.   :2.00   Max.   :NA    1110:  1                        
+ (Other):179                  NA's   :185   1111:141                        
+          RArm                 Mgroup            Mstatus      GroupStatus 
+ traditional:79   continued       : 26   gErosion    :  0   accepted:185  
+ large      :12   drop outs       :159   gRejection  :  0                 
+ large grace:22   forced drop outs:  0   iRejection  :159                 
+ cow        :72   new group       :  0   iReplacement:  0                 
+                  replacements    :  0   newGroup    :  0                 
+                                         oldMember   : 26                 
+                                                                          
+ value.repay value.NetSaving         BorrowerStatus
+ 0:185       0      :159     borrower       :  0   
+             80     :  9     pure saver     : 26   
+             60     :  5     quit membership:159   
+             40     :  2                           
+             50     :  2                           
+             70     :  2                           
+             (Other):  6                           
+\end{Soutput}
+\end{Schunk}
+
+Tabulate observations without disbursement date info. 
+\begin{Schunk}
+\begin{Soutput}
+     survey     DisDate1            creditstatus         Mstatus   
+ Min.   :1   Min.   :NA    Yes            :  0   gErosion    : 80  
+ 1st Qu.:1   1st Qu.:NA    No             :428   gRejection  :140  
+ Median :1   Median :NA    Replaced Member:  0   iRejection  :159  
+ Mean   :1   Mean   :NA                          iReplacement:  3  
+ 3rd Qu.:1   3rd Qu.:NA                          newGroup    : 20  
+ Max.   :1   Max.   :NA                          oldMember   : 26  
+             NA's   :428                                           
+         BorrowerStatus
+ borrower       :  0   
+ pure saver     :208   
+ quit membership:220   
+                       
+                       
+                       
+                       
+\end{Soutput}
+\end{Schunk}
+These are people who rejected loans. Add \textsf{RejectedLoans} to \textsf{FirstDisPeriod}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+     survey     DisDate1                         FirstDisPeriod
+ Min.   :1   Min.   :2013-05-01 00:00:00   BeforeJan2015:1400  
+ 1st Qu.:1   1st Qu.:2013-07-01 00:00:00   Year2015     : 295  
+ Median :1   Median :2013-11-01 00:00:00   Year2016     :   0  
+ Mean   :1   Mean   :2014-03-23 17:07:57   AfterJan2017 :   0  
+ 3rd Qu.:1   3rd Qu.:2014-12-01 00:00:00   RejectedLoans: 428  
+ Max.   :1   Max.   :2015-12-01 00:00:00                       
+             NA's   :428                                       
+          creditstatus          Mstatus             BorrowerStatus
+ Yes            :1695   gErosion    :  80   borrower       :1695  
+ No             : 428   gRejection  : 140   pure saver     : 208  
+ Replaced Member:   0   iRejection  : 160   quit membership: 220  
+                        iReplacement: 115                         
+                        newGroup    : 408                         
+                        oldMember   :1220                         
+                                                                  
+\end{Soutput}
+\end{Schunk}
+%This tabulation of \textsf{survey} vs. \textsf{Arm} shows addition from \textsf{roster+admin} 1 is mostly in round 1 for \textsf{traditional} but in all rds for other arms. \textsf{FirstDisPeriod} gives the period of first disbursement, and all credit reeceivers received loans by the end of 2015.
+
+%Breakdown of first disbursement by \textsf{RArm} at rd 1 in \textsf{roster + admin} 2.
+
+%Same tabulation if no conditioning on \textsf{Mstatus} or  \textsf{TradGroup}.
+
+%Tabulation of membership status against \textsf{GroupStatus} from \textsf{"RCT\_village.dta"}.
+
+There are 114 cases of group rejections in \textsf{GroupStatus} classified as individual rejections in \textsf{Mstatus}. Overwrite \textsf{Mstatus} with \textsf{GroupStatus} in these cases.
+\begin{Schunk}
+\begin{Soutput}
+              GroupStatus
+Mstatus        accepted erosion group rejection
+  gErosion            0     189               0
+  gRejection          0       0             486
+  iRejection        543       0               0
+  iReplacement      445       0               0
+  newGroup         1603       0               0
+  oldMember        4747       0               0
+\end{Soutput}
+\begin{Soutput}
+                traditional large large grace  cow total
+accepted               1894  1801        1813 1830  7338
+erosion                 110     0          20   59   189
+group rejection         308   158          20    0   486
+\end{Soutput}
+\end{Schunk}
+As one can see below, \textsf{gRejection} is more frequent in \textsf{traditional} and \textsf{large}, while there is none in \textsf{cow}. \textsf{traditional, cow} have more frequent \textsf{iRejection}. So \textsf{traditional} was disliked both at group and individual levels, \textsf{large} was disliked as a group, \textsf{cow} was disliked at an individual level, and \textsf{large grace} were well received at both group and individual levels. This indicates attractiveness of a grace period at least at the group level, and a large cash form (over small cash or in-kind) at the individual level.
+\begin{Schunk}
+\begin{Soutput}
+              RArm
+Mstatus        traditional large large grace cow
+  gErosion              40     0          20  20
+  gRejection            80    40          20   0
+  iRejection            54    12          22  72
+  iReplacement          39     8          11  57
+  newGroup             166    96          96  50
+  oldMember            226   348         338 308
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+             traditional large large grace  cow
+gErosion            0.07  0.00        0.03 0.04
+gRejection          0.16  0.08        0.04 0.00
+iRejection          0.11  0.02        0.04 0.12
+iReplacement        0.08  0.02        0.02 0.11
+newGroup            0.27  0.19        0.16 0.10
+oldMember           0.45  0.69        0.67 0.61
+total               1.14  1.00        0.96 0.98
+\end{Soutput}
+\end{Schunk}
+
+%Create roster member total \textsf{RosterMemTotal}. 
+
+Save roster-admin data.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(ar, paste0(pathsaveHere, "RosterAdminData.rds"))
+saveRDS(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+fwrite(ar, paste0(pathsaveHere, "RosterAdminData.prn"), sep = "\t", quote = F)
+fwrite(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+
+%Schooling. \gobblepars
+
+%Schooling pattern in sch1.
+
+
+
+
+%In \textsf{sch1}: Number of unique \textsf{hhid}s by \textsf{year} (original entry) or \textsf{Year} (extracted from \textsf{IntDate}).
+
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and round (\textsf{survey}).
+
+%In \textsf{sch1}: RoundOrder is 1 if individual is observed for the first time in data, 2 if for the second time, ...
+
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and age (\textsf{AgeComputed}).
+
+
+\subsubsection{Attach variables from admin-roster to other files}
+
+
+Attach \textsf{RArm, Arm, TradGroup, Mem, ObPattern, AttritIn, o1600, Mstatus, BorrowerStatus, creditstatus, povertystatus, RMvalue.repay, RMvalue.NetSaving, RMOtherNetSaving, RMOtherRepaid, HHsize, HeadLiteracy, IntDate, DisDate1} from \textsf{ar}.
+
+\begin{Schunk}
+\begin{Sinput}
+vartoattach <- c("RArm", "Arm", "TradGroup", "Mem", 
+  "ObPattern", "AttritIn", "o1600", "Mstatus", "BorrowerStatus", 
+  "creditstatus", "povertystatus", "RMvalue.repay", 
+  "RMvalue.NetSaving", "RMOtherNetSaving", "RMOtherRepaid",
+  "HHsize", "HeadLiteracy", "IntDate", "DisDate1")
+dfiles <- c("ass", "s1", "lvo", "lab", "far", "con", "shk")
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  dd[, groupid := as.integer(as.numeric(as.character(gid)))]
+  dd[, gid := NULL]
+  dd[, Year :=  as.numeric(format(as.Date(IntDate), "%Y"))]
+  dd[, Month := as.character(format(as.Date(IntDate), "%B"))]
+  dd[Year <= 2010, Year := Year + 10]
+  # drop all variables in each page before copying from ar0
+  dd[, (vartoattach) := NULL]
+  setorder(dd, groupid, hhid, survey, Year, Month)
+  setkey(dd, groupid, hhid, survey)
+  if (j < length(dfiles)) dd <- ar0[dd]
+  assign(dfiles[j], dd)
+}
+\end{Sinput}
+\end{Schunk}
+%Create \textsf{Arm*HadCows}, \textsf{Arm*HadCows*Time} interactions in \textsf{lvo}. \gobblepars
+
+Check number of HHs in assets by \textsf{o1600}:
+\begin{Schunk}
+\begin{Sinput}
+table(ass[, .(creditstatus, survey, o1600)])
+\end{Sinput}
+\begin{Soutput}
+, , o1600 = 0
+
+                 survey
+creditstatus         1    2    3    4
+  Yes              478  588  593  586
+  No                23   23   23   21
+  Replaced Member    0    0    0    0
+
+, , o1600 = 1
+
+                 survey
+creditstatus         1    2    3    4
+  Yes             1192 1047 1054 1039
+  No               403  323  323  268
+  Replaced Member    0    0    0    0
+\end{Soutput}
+\begin{Sinput}
+#table0(ass[o1600 == 0L, .(creditstatus, survey)])
+\end{Sinput}
+\end{Schunk}
+Save all data.
+
+\begin{Schunk}
+\begin{Sinput}
+fwrite(s1, paste0(pathsaveHere, "RosterAdminSchoolingData.prn"), sep = "\t", quote = F)
+fwrite(ass, paste0(pathsaveHere, "AssetAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvo, paste0(pathsaveHere, "LivestockAdminData.prn"), sep = "\t", quote = F)
+fwrite(lab, paste0(pathsaveHere, "LabourIncomeAdminData.prn"), sep = "\t", quote = F)
+fwrite(far, paste0(pathsaveHere, "FarmRevenueAdminData.prn"), sep = "\t", quote = F)
+fwrite(con, paste0(pathsaveHere, "ConsumptionAdminData.prn"), sep = "\t", quote = F)
+fwrite(shk, paste0(pathsaveHere, "Shocks.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+
+
+
+Further data preparations (trimming, adding shocks, round numbering, creating dummy vectors, interaction terms) for estimation. Produces files: \textsf{\footnotesize RosterAdminDataUsedForEstimation.prn, AllMeetingsRosterAdminDataUsedForEstimation.prn, AssetAdminDataUsedForEstimation.prn, LivestockAdminDataUsedForEstimation.prn, LabourIncomeAdminDataUsedForEstimation.prn, FarmRevenueAdminDataUsedForEstimation.prn, ConsumptionAdminDataUsedForEstimation.prn, ShocksAdminDataUsedForEstimation.prn}.
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Data trimming results\label{tab trim}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/TrimmingNumObsTable.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize GUK survey data.}\\
+Notes: & 1. & Top panel is observations for all rounds. Bottom panel is observations for round 1 only. We aim for ITT estimates and need to retain original sampled individuals. old$|$iRej$|$\^{}g in \textsf{Mstatus} are strings for old members, individual rejecters, group rejecters, group erosion. con$|$\^{}dro$|$\^{}rep in \textsf{Mgroup} indicates continuing, dropouts, replacing members. tw$|$dou in \textsf{TradGroup} are members who received loans twice and double amount in the 2nd loans. They are omitted from analysis because they are under a different treatment arm.\\
+& 2. & 
+\end{tabular}
+\end{minipage}
+
+%Number of observations after trimming: 1. Keep only membership = 1 or 4, which corresponds to Mstatus old, iRej, gR, gE; 2. Keep only continuing, dropouts members in Mgroup.
+
+
+
+
+\hfil\begin{minipage}[t]{12cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations  in each file at round 1 from HHs with single treatment\label{tab NObsOHall}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{10pt}
+\renewcommand{\arraystretch}{.7}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/NumObsOriginalHHs_all.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Sample is all households: Original 1600 and added households through new groups and individuals replacing opt-out members. All households in traditional arm who received more than one loan are excluded.\\
+& 2. &  
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{12cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 1600 HHs\label{tab NObsOHo1600}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{10pt}
+\renewcommand{\arraystretch}{.7}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/NumObsOriginalHHs_o1600.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Sample is original 1600 households who agree to join the group. This includes households who later dropped out due to flood, group rejections, and individual rejections. All original 1600 households are tracked but some attrit from the sample.\\
+& 2. &  
+\end{tabular}
+\end{minipage}
+
+
+\newpage
+\section{Descriptive statistics of original 1600 HHs}
+
+
+
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[c]	continuing members.
+\item[d]	drop out members.
+\item[a]	absence.
+\item[n]	members of a new group.
+\item[r]	replacing members.
+\end{description}
+\begin{Schunk}
+\begin{Soutput}
+         Mpattern
+ObPattern caaa caca cacc ccaa ccac ccca cccc daaa dada dadd ddaa ddda dddd naaa
+     0111    0    0   14    0    0    0    0    0    0   13    0    0    0    0
+     1000   25    0    0    0    0    0    0   68    0    0    0    0    0    5
+     1010    0    4    0    0    0    0    0    0    1    0    0    0    0    0
+     1011    0    0    0    0    1    0    0    0    0    0    0    0    0    0
+     1100    0    0    0   11    0    0    0    0    0    0   14    0    0    0
+     1110    0    0    0    0    0   13    0    0    0    0    0   54    0    0
+     1111    0    0    0    0    0    0 1153    0    0    0    0    0  229    0
+         Mpattern
+ObPattern nann nnaa nnna nnnn raaa rara rarr rraa rrra rrrr
+     0111    4    0    0    0    0    0    5    0    0    0
+     1000    0    0    0    0    2    0    0    0    0    0
+     1010    0    0    0    0    0    1    0    0    0    0
+     1011    0    0    0    0    0    0    0    0    0    0
+     1100    0    2    0    0    0    0    0    1    0    0
+     1110    0    0    9    0    0    0    0    0    6    0
+     1111    0    0    0  440    0    0    0    0    0  144
+\end{Soutput}
+\end{Schunk}
+\textsf{AttritIn}: Attrition round. 9 is nonattriting members.
+\begin{Schunk}
+\begin{Soutput}
+
+   2    3    4    9 
+ 100   56  258 7975 
+\end{Soutput}
+\begin{Soutput}
+        ObPattern
+AttritIn 0111 1000 1010 1011 1100 1110 1111
+       2    0  100    0    0    0    0    0
+       3    0    0    0    0   28    0    0
+       4    0    0    6    0    0   82    0
+       9   36    0    0    1    0    0 1966
+\end{Soutput}
+\begin{Soutput}
+        survey
+AttritIn    1    2    3    4
+       2  100    0    0    0
+       3   28   28    0    0
+       4   88   82   88    0
+       9 2003 1967 2002 2003
+\end{Soutput}
+\end{Schunk}
+\textsf{Mstatus} changes for some \textsf{groupid}s. Correct \textsf{Mstatus} by checking \textsf{comment} for dropping out (taken from CharRandomization2012.prn).
+\begin{Schunk}
+\begin{Soutput}
+              survey
+Mstatus          1   2   3   4
+  gErosion       0   0   0   0
+  gRejection   114 114 114   0
+  iRejection     1   1   1 114
+  iReplacement   0   0   0   0
+  newGroup       0   0   0   0
+  oldMember      0   0   0   1
+\end{Soutput}
+\end{Schunk}
+See how \textsf{Mstatus} changes at rd 4: This suggests \textsf{iRejection} needs to change to \textsf{gRejection}, and \textsf{iRejection} to \textsf{oldMember}.
+\begin{Schunk}
+\begin{Soutput}
+              survey
+Mstatus          1   2   3   4
+  gErosion      80  55  54   0
+  gRejection   140 118 114   0
+  iRejection     7   7   5 118
+  iReplacement   6   6   6   6
+  newGroup       0   0   0   0
+  oldMember     13  13  13  14
+\end{Soutput}
+\end{Schunk}
+\textsf{group.id} (created from first characters of \textsf{hhid}) and their reasons for dropping out.
+\begin{Schunk}
+\begin{Soutput}
+        comment
+group.id denial <NA>
+   70317     19    0
+   70319     20    0
+   70539     16    0
+   70858     20    0
+   71372      0    1
+   81483     20    0
+   81697     19    0
+\end{Soutput}
+\end{Schunk}
+Correct \textsf{Mstatus} in rd 4 from \textsf{iRejection} to \textsf{gRejection} if denial is the \textsf{comment}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+              survey
+Mstatus          1   2   3   4
+  gErosion       0   0   0   0
+  gRejection   114 114 114 114
+  iRejection     1   1   1   0
+  iReplacement   0   0   0   0
+  newGroup       0   0   0   0
+  oldMember      0   0   0   1
+\end{Soutput}
+\end{Schunk}
+Correct \textsf{Mstatus} in rd 1-3 from \textsf{iRejection} to \textsf{oldMember} if NA is the \textsf{comment}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+      hhid    Mstatus survey creditstatus
+1: 7137220 iRejection      1          Yes
+2: 7137220 iRejection      2          Yes
+3: 7137220 iRejection      3          Yes
+4: 7137220  oldMember      4          Yes
+\end{Soutput}
+\begin{Soutput}
+              survey
+Mstatus        1 2 3 4
+  gErosion     0 0 0 0
+  gRejection   0 0 0 0
+  iRejection   1 1 1 0
+  iReplacement 0 0 0 0
+  newGroup     0 0 0 0
+  oldMember    0 0 0 1
+\end{Soutput}
+\begin{Soutput}
+              survey
+Mstatus        1 2 3 4
+  gErosion     0 0 0 0
+  gRejection   0 0 0 0
+  iRejection   0 0 0 0
+  iReplacement 0 0 0 0
+  newGroup     0 0 0 0
+  oldMember    1 1 1 1
+\end{Soutput}
+\end{Schunk}
+Original 1600 HHs (original sample) by arm and membership status.
+\begin{Schunk}
+\begin{Soutput}
+              AssignOriginal
+Mstatus        traditional large large grace cow
+  gErosion              40     0          20  20
+  gRejection            80    40          20   0
+  iRejection            53    12          22  72
+  iReplacement           0     0           0   0
+  newGroup               0     0           0   0
+  oldMember            227   348         338 308
+\end{Soutput}
+\end{Schunk}
+Including \textsf{r} or individually replacing HHs (replacing sample): 1759
+\begin{Schunk}
+\begin{Soutput}
+              AssignOriginal
+Mstatus        traditional large large grace cow
+  gErosion              40     0          20  20
+  gRejection            80    40          20   0
+  iRejection            53    12          22  72
+  iReplacement          53    12          22  72
+  newGroup               0     0           0   0
+  oldMember            227   348         338 308
+\end{Soutput}
+\end{Schunk}
+%First disbursement year of individual and replacing samples. We have about 100+ in 2013 for replacing sample.
+
+Use original sample. \gobblepars
+
+Attrition. % (\textsf{WillAttrit} is just a check if reshaping forced 4 obs per HH.)
+
+%Merge \textsf{xid} with other files. Keep \textsf{all==T}.
+
+
+%Attririon by membership status in repayment-saving:
+
+%Membership status in schooling: Schooling files have multiple observations per household.
+
+Number of obs per survey round in the schooling file:
+\begin{Schunk}
+\begin{Soutput}
+      tee
+teenum    1    2    3    4
+     1 1600 1600 1600 1600
+     2  682  511  446  322
+     3  248  150  120   83
+     4   50   26   17   11
+     5   13    3    2    2
+     6    2    0    0    0
+\end{Soutput}
+\end{Schunk}
+Assets: Original arm assignment by membership status in rd 1: 1820 households.
+\begin{Schunk}
+\begin{Soutput}
+              AssignOriginal
+Mstatus        traditional large large grace cow <NA>
+  gErosion              40     0          20  20    0
+  gRejection            80    40          20   0    0
+  iRejection            53    12          22  72    0
+  iReplacement           0     0           0   0    0
+  newGroup               0     0           0   0    0
+  oldMember            227   348         338 308    0
+  <NA>                   0     0           0   0  220
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+
+
+\section{Estimation using original 1600 HHs}
+
+
+\subsection{Repayment and net saving}
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 1090 obs due to NA.
+\end{Soutput}
+\begin{Soutput}
+Dropped 6540 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+Repayment formally started in round 2. So taking a first-difference leaves us with period 2-3 and period 3-4. After first-differencing, \textsf{arA} has 51230 rows with 1090 individuals with repeatedly observed for 48 times, respectively. By survey rounds, there are 2, 18, 13, 15 observations per household in rounds 1, 2, 3, 4, respectively. Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In regressions, we opted to use survey rounds as period indicators rather than meeting serial numbers to increase the precision of estimates.
+%Drop nrow(dar2d[tee <= 2, ]) observations in \textsf{ar} that have round 1 data (for unknown reasons). After first-differencing, \textsf{ar} has nrow(dar2d[tee>2, ]) rows with table(dar2d[tee > 2, Tee]) individuals with repeatedly observed for as.numeric(names(table(dar2d[tee>2, Tee])))+1 times, respectively. table(dar2d[tee > 2, Tee])["3"] individuals observed for 4 times started repayment even before official disbursement date, so its round 1 will be dropped.
+
+Note all binary interaction terms are demeaned and then interacted.
+
+%NAs in \textsf{CumRepaid}.
+
+Tabulation at rd 1:
+\begin{Schunk}
+\begin{Soutput}
+              RArm
+Mstatus        traditional large large grace cow
+  gErosion               0     0           0   0
+  gRejection             0     0           0   0
+  iRejection            54     9          18  70
+  iReplacement           0     0           0   0
+  newGroup               0     0           0   0
+  oldMember             84   276         235 241
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Warning: Removed 714 rows containing non-finite values (stat_smooth).
+\end{Soutput}
+\begin{Soutput}
+Warning: Removed 742 rows containing missing values (geom_point).
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Warning: Removed 1610 rows containing non-finite values (stat_smooth).
+\end{Soutput}
+\begin{Soutput}
+Warning: Removed 1610 rows containing missing values (geom_point).
+\end{Soutput}
+\end{Schunk}
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly net saving and repayment\label{fig weeklysavingrepay}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/CumulativeWeeklyNetSavingAndRepayment.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows cumulative net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly net repayment rates\label{fig weeklysavingrepayrate}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/CumulativeWeeklyRepaymentRateByPovertystatus.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows cumulative net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment\label{tab FD saving original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment by attributes\label{tab FD saving attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net cumulative saving and repayment, ultra poor vs. moderately poor\label{tab FD saving2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingPovertystatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of flow net saving and repayment\label{tab FD Flow saving original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingFlowOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of flow net saving and repayment by attributes\label{tab FD flow saving attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingFlowAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net flow saving and repayment, ultra poor vs. moderately poor\label{tab FD flow saving2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SavingFlowPovertystatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{fig weeklysavingrepay}} visually presents that repayment is no different between the ultra poor and the moderately poor. The subsequent regression table econometrically confirms this (\textsc{\normalsize Table \ref{tab FD saving2 original HH}}). 
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Schooling}
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 1721 obs due to NA.
+Dropped 1721 obs due to NA.
+Dropped 399 obs due to T<2.
+Dropped 1136 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
+\begin{Schunk}
+\begin{Soutput}
+         SchPattern
+ObPattern 0000 0001 000n 0011 001n 00nn 0100 010n 0111 011n 01nn 0nnn 1000 1001
+     0111    0    0    0    0    0    0    0    0    0    2    2    6    0    0
+     1000    0    0    0    0    0    0    0    0    0    0    0   63    0    0
+     1010    0    0    0    0    0    1    0    0    0    0    0    4    0    0
+     1011    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+     1100    0    0    0    0    0    2    0    0    0    0    5    2    0    0
+     1110    0    0    7    0    2    2    0    0    0    8    0    3    0    0
+     1111   40    7   41   25    4   50    2    2  173   15   11  182   13    2
+         SchPattern
+ObPattern 100n 1011 101n 10nn 1100 1101 110n 1110 1111 111n 11n1 11nn 1nnn
+     0111    0    0    0    1    0    0    0    0    0   12    0    0    5
+     1000    0    0    0    0    0    0    0    0    0    0    0    0   56
+     1010    0    0    0    0    0    0    0    0    0    0    0    1    4
+     1011    0    0    0    0    0    0    0    0    0    0    0    1    0
+     1100    0    0    0    0    0    0    0    0    0    0    0   12    3
+     1110    2    0    1    0    0    0    1    0    0   42    0    5    0
+     1111    9    9    4   17   11    1   16    4  781   77    1   44  135
+\end{Soutput}
+\end{Schunk}
+Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
+\begin{Schunk}
+\begin{Soutput}
+  traditional large large grace cow traditional large large grace cow
+1         460   479         505 487         300   396         369 403
+2         300   396         369 403         300   396         369 403
+3         266   356         340 351         266   356         340 351
+4         204   306         282 277         204   306         282 277
+\end{Soutput}
+\end{Schunk}
+\textsf{sch} has 5781 rows. Drop 463 observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
+%and nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ]) observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with nrow(s1x) rows. 
+
+With OLS,  154, 246, 1068 individuals are repeatedly observed for 2, 3, 4 times, respectively. With FD, \textsf{sch} is reduced to 3597 rows after first-differencing with 140, 231, 993 individuals with repeatedly observed for 1, 2, 3 times, respectively.
+Individuals with NAs in \textsf{Enrolled}: 0 obs for \textsf{sch}. 
+%Mostly older children (round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1) in \textsf{s1x}, round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1) in \textsf{s.2}) but with a high reported enrollment rate (round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1) for \textsf{s1x}, round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1) for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
+Check missingness in schooling level information.
+\begin{Schunk}
+\begin{Soutput}
+
+   0    1 
+3065 2253 
+\end{Soutput}
+\end{Schunk}
+Drop 3065 obs without school level information.
+
+%Check missingness in arm information.
+
+%An example of dummy interactions: \textsf{\footnotesize tobeintSchdumTimdum}.
+%Obs for \textsf{sch} after FD.
+
+%Obs for \textsf{s1x} and admin repayment data.
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 1721 obs due to NA.
+Dropped 1721 obs due to NA.
+Dropped 399 obs due to T<2.
+Dropped 1136 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment\label{tab FD enroll original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SchoolingOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment by attributes\label{tab FD enroll attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SchoolingAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net school enrollment, ultra poor vs. moderately poor\label{tab FD enroll2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SchoolingPovertystatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SchoolingRd14DiffOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences by attributes\label{tab FD enroll5 attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/SchoolingRd14DiffAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\subsection{Assets}
+
+Assets reportd in rd 1 is too small, indicating possible errors or different way of reporting only in rd 1. So we also examine rd 2 vs. rd 4 differences (\textsf{as3, as4}).
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 2804 obs due to NA.
+Dropped 4027 obs due to NA.
+Dropped 2804 obs due to NA.
+Dropped 4027 obs due to NA.
+Dropped 2039 obs due to NA.
+Dropped 2040 obs due to NA.
+Dropped 2039 obs due to NA.
+Dropped 2040 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+Main assets are household assets (\textsf{HAssetAmount}) and production assets (\textsf{PAssetAmount}) both with 4973 observations. After first-differencing, they become 3595 observations, with 21, 94, 3480 households observed for 2, 3, 4 times. We also examine rd 2 vs. rd 4 differences, which has 2389 observations. After first-differencing, they become 1161 observations.
+
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets\label{tab FD assets original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets by attributes\label{tab FD assets attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, moderately poor vs. ultra poor\label{tab FD assets2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetPovertyStatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, round 2 and 4 comparison\label{tab FD assets rd24 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetRd24DiffOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+
+
+Robustness: To understand underlying pattern of asset accumulation, we compare the loan recipients and loan rejecters. This distinction is made by households by choice, so the indicator variable is considered to be endogenous to asset level. This is a limitation, however, it has its own merit in giving an idea how loan recipients faired during the study period relative to loan nonrecipients. \textsc{\small Table \ref{tab FD assets pure control original HHs}} shows that the pure controls also experience similar increase-increase-decrease pattern for household assets. This suggests the pattern observed among the loan recipients may be a systemic pattern of the area, not necessarily reflecting the repayment burdern. This partially relieves a concern that repayment burden was excessive for loan recipients.
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, loan recipients vs. pure control\label{tab FD assets pure control original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetOriginalHHsRobustnessFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{Schunk}
+\begin{Soutput}
+    0%    10%    20%    30%    40%    50%    60%    70%    80%    90%   100% 
+    10    170    240    300    380    420    500    650    900   1500 133000 
+\end{Soutput}
+\end{Schunk}
+
+Check what is happening with productive assets. 
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig PAssets}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/ProdAssetClassesByRound.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding of loan nonrecipients\label{fig PAssetsLoanNonrecipients}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/ProdAssetClassesByRoundLoanNonrecipients.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. \\[1ex]
+\end{tabular}
+}
+
+
+\subsection{Livestock}
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 2807 obs due to NA.
+Dropped 4031 obs due to NA.
+Dropped 2041 obs due to NA.
+Dropped 2042 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Dropped 196 obs due to T<2.
+Dropped 1402 obs due to NA.
+Dropped 196 obs due to T<2.
+Dropped 3080 obs due to NA.
+Dropped 154 obs due to T<2.
+Dropped 1272 obs due to NA.
+Dropped 154 obs due to T<2.
+Dropped 1386 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values\label{tab FD livestock original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/LivestockOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values by attributes\label{tab FD livestock attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/LivestockAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values, ultra vs. moderately poor\label{tab FD livestock poor original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/LivestockPovertyStatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values, rd 1 vs. rd 4 comparison\label{tab FD livestock3 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/LivestockTIntSizeOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Check quickly if the estimated results make sense.
+\begin{Schunk}
+\begin{Soutput}
+       hhid         Arm Year LivestockCode number_owned mrkt_value
+ 1: 7020319       large 2012        cow/ox            2          0
+ 2: 7020319       large 2014        cow/ox            5      18000
+ 3: 7020319       large 2015        cow/ox            6      19000
+ 4: 7020319       large 2017        cow/ox            5      25000
+ 5: 7020614 large grace 2012                          0          0
+ 6: 7020614 large grace 2014        cow/ox            2      16000
+ 7: 7020614 large grace 2015        cow/ox            5      16000
+ 8: 7020614 large grace 2017        cow/ox            6      24000
+ 9: 7021003 large grace 2012        cow/ox            1          0
+10: 7021003 large grace 2014        cow/ox            8      18000
+11: 7021003 large grace 2015        cow/ox            4      20000
+12: 7021003 large grace 2017        cow/ox            4      23000
+13: 7021012 large grace 2012  Chicken/duck            4          0
+14: 7021012 large grace 2014        cow/ox            2      24000
+15: 7021012 large grace 2015        cow/ox            3      19000
+16: 7021012 large grace 2017        cow/ox            8      25000
+17: 7021216         cow 2012        cow/ox            6          0
+18: 7021216         cow 2014        cow/ox            5      20000
+19: 7021216         cow 2015        cow/ox            3      18000
+20: 7021216         cow 2017        cow/ox            3      30000
+21: 7031706       large 2012        cow/ox            1          0
+22: 7031706       large 2014        cow/ox            7      12000
+23: 7031706       large 2015        cow/ox            3      15000
+24: 7031706       large 2017        cow/ox            3      38000
+25: 7031715       large 2012        cow/ox            2          0
+26: 7031715       large 2014        cow/ox            9      15000
+27: 7031715       large 2015        cow/ox            8      16000
+28: 7031715       large 2017        cow/ox            1      30000
+29: 7031716       large 2012        cow/ox            1          0
+30: 7031716       large 2014        cow/ox            6      16000
+31: 7031716       large 2015        cow/ox            5      17000
+32: 7031716       large 2017        cow/ox            2      42000
+33: 7031905       large 2012        cow/ox            4          0
+34: 7031905       large 2014        cow/ox            5      16000
+35: 7031905       large 2015        cow/ox            7      20000
+36: 7031905       large 2017        cow/ox            7      20000
+37: 7042017       large 2012                          0          0
+38: 7042017       large 2014        cow/ox            3      18000
+39: 7042017       large 2015        cow/ox            6      20000
+40: 7042017       large 2017        cow/ox            4      20000
+41: 7054005 large grace 2012                          0          0
+42: 7054005 large grace 2014        cow/ox            4      18000
+43: 7054005 large grace 2015        cow/ox            2      16000
+44: 7054005 large grace 2017        cow/ox           10      15000
+45: 7054012 large grace 2012        cow/ox            4          0
+46: 7054012 large grace 2014        cow/ox           15      20000
+47: 7054012 large grace 2015        cow/ox           12      16000
+48: 7054012 large grace 2017        cow/ox           10      22000
+49: 7085916         cow 2012                          0          0
+50: 7085916         cow 2014                         NA         NA
+51: 7085916         cow 2015        cow/ox            2      18000
+52: 7085916         cow 2017        cow/ox            6      20000
+53: 7096202       large 2012        cow/ox            4          0
+54: 7096202       large 2014        cow/ox            2      10000
+55: 7096202       large 2015        cow/ox            8      14000
+56: 7096202       large 2017        cow/ox            9      20000
+57: 7096207       large 2012        cow/ox            1          0
+58: 7096207       large 2014        cow/ox            6      12000
+59: 7096207       large 2015        cow/ox            7      22000
+60: 7096207       large 2017        cow/ox            6      16000
+61: 7096218       large 2012        cow/ox            1          0
+62: 7096218       large 2014        cow/ox            9      16000
+63: 7096218       large 2015        cow/ox            7      16000
+64: 7096218       large 2017        cow/ox            6      20000
+65: 7106408         cow 2012        cow/ox            2          0
+66: 7106408         cow 2014        cow/ox            3      15000
+67: 7106408         cow 2016        cow/ox            7      14500
+68: 7137207 traditional 2012                          0          0
+69: 7137207 traditional 2014        cow/ox            1      16000
+70: 7137207 traditional 2015        cow/ox            6      14000
+71: 7137207 traditional 2017        cow/ox            6      16000
+72: 8169519 large grace 2012  Chicken/duck            4          0
+73: 8169519 large grace 2014        cow/ox            1      20000
+74: 8169519 large grace 2015        cow/ox            6      25000
+75: 8169519 large grace 2017        cow/ox            3      40000
+76: 8169619       large 2012  Chicken/duck            4          0
+77: 8169619       large 2014        cow/ox            3      16000
+78: 8169619       large 2016        cow/ox            6      18000
+79: 8169619       large 2017        cow/ox            6      38000
+       hhid         Arm Year LivestockCode number_owned mrkt_value
+    TotalImputedValue
+ 1:             40000
+ 2:            100000
+ 3:            120000
+ 4:            100000
+ 5:                 0
+ 6:             40000
+ 7:            100000
+ 8:            120000
+ 9:             20000
+10:            160000
+11:             80000
+12:             80000
+13:                 0
+14:             40000
+15:             60000
+16:            160000
+17:            120000
+18:            100000
+19:             60000
+20:             60000
+21:             20000
+22:            140000
+23:             60000
+24:             60000
+25:             40000
+26:            180000
+27:            160000
+28:             20000
+29:             20000
+30:            120000
+31:            100000
+32:             40000
+33:             80000
+34:            100000
+35:            140000
+36:            140000
+37:                 0
+38:             60000
+39:            120000
+40:             80000
+41:                 0
+42:             80000
+43:             40000
+44:            200000
+45:             80000
+46:            300000
+47:            240000
+48:            200000
+49:                 0
+50:                 0
+51:             40000
+52:            120000
+53:             80000
+54:             40000
+55:            160000
+56:            180000
+57:             20000
+58:            120000
+59:            140000
+60:            120000
+61:             20000
+62:            180000
+63:            140000
+64:            120000
+65:             40000
+66:             60000
+67:            140000
+68:                 0
+69:             20000
+70:            120000
+71:            120000
+72:                 0
+73:             20000
+74:            120000
+75:             60000
+76:                 0
+77:             60000
+78:            120000
+79:            120000
+    TotalImputedValue
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/Total_imputed_value_histogram_original_HHs-1} 
+
+}
+
+\caption{Total imputed value of livestock holding\\ {\footnotesize Livestock holding values are computed by using respective median prices of each year.\setlength{\baselineskip}{8pt}}}\label{Figure Total imputed value histogram original HHs}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/Histogram_of_livestock_holding_classes_original_HHs-1} 
+
+}
+
+\caption{Histogram of livestock holding classes\\ {\footnotesize Livestock holding values are computed by using respective median prices of each year.\setlength{\baselineskip}{8pt}}}\label{Figure Histogram of livestock holding classes original HHs}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/Histogram_of_livestock_holding_classes_by_year_original_HHs-1} 
+
+}
+
+\caption{Histogram of livestock holding classes by year\\ {\footnotesize Livestock holding values are computed by using respective median prices of each year.\setlength{\baselineskip}{8pt}}}\label{Figure Histogram of livestock holding classes by year original HHs}
+\end{figure}
+\end{Schunk}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{cow} reports above 20000 holding in rds 2-4 while \textsf{traditional} does not.
+\end{itemize}
+\begin{Schunk}
+\begin{Soutput}
+            Arm survey MeanImputedVal MeanNumCows   N
+ 1: traditional      1        5065.33    0.233668 398
+ 2: traditional      2       15854.00    0.817844 280
+ 3: traditional      3       20179.62    1.022059 277
+ 4: traditional      4       21233.75    1.050000 240
+ 5:       large      1        6092.42    0.275689 399
+ 6:       large      3       31056.41    1.625000 386
+ 7:       large      2       24992.86    1.278820 383
+ 8:       large      4       32686.07    1.630890 382
+ 9: large grace      1        7392.54    0.333333 399
+10: large grace      2       21510.32    1.150943 341
+11: large grace      3       27565.65    1.422619 347
+12: large grace      4       30276.97    1.528024 343
+13:         cow      1        4997.68    0.218045 399
+14:         cow      2       20550.29    1.078035 364
+15:         cow      3       25399.62    1.300562 365
+16:         cow      4       28700.23    1.436950 342
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/Number_of_cows_by_year_original_HHs-1} 
+
+}
+
+\caption{Number of cows/oxen by year\\ {\footnotesize Means are mean holding among the owners. Totals are total number of cows/oxen owned. Mean and total number of cows/oxen may diverge because the number of owners differ across round.\setlength{\baselineskip}{8pt}}}\label{Figure Number of cows by year original HHs}
+\end{figure}
+\end{Schunk}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{Figure Histogram of livestock holding classes by year original HHs}} shows increasing livestock accumulation in all arms but \textsf{traditional}. 
+\textsc{Figure \ref{Figure Number of cows by year original HHs}} shows increasng cow ownership relative to \textsf{traditional} in the bottom panel while the holding per owner is similar across all arms. This is evidence of an acceleration of becoming a large livestock owner for the large sized arms relative to the small size arm. Given that the number of cows per owner remains the similar, it does not provide evidence for accelerated growth of livestock after becoming an owner.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Assets+Livestock}
+
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+                 creditstatus
+BorrowerStatus     Yes   No
+  borrower        1192    0
+  pure saver         0  183
+  quit membership    0  220
+\end{Soutput}
+\begin{Soutput}
+              creditstatus
+Mstatus         Yes   No
+  gErosion        0   80
+  gRejection      0  140
+  iRejection      1  157
+  iReplacement    0    0
+  newGroup        0    0
+  oldMember    1191   26
+\end{Soutput}
+\begin{Soutput}
+Dropped 196 obs due to T<2.
+Dropped 1402 obs due to NA.
+Dropped 196 obs due to T<2.
+Dropped 3080 obs due to NA.
+Dropped 196 obs due to T<2.
+Dropped 1402 obs due to NA.
+Dropped 196 obs due to T<2.
+Dropped 3080 obs due to NA.
+Dropped 130 obs due to T<2.
+Dropped 1274 obs due to NA.
+Dropped 130 obs due to T<2.
+Dropped 1388 obs due to NA.
+Dropped 130 obs due to T<2.
+Dropped 1274 obs due to NA.
+Dropped 130 obs due to T<2.
+Dropped 1388 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Soutput}
+   Arm
+tee traditional large large grace cow
+  1         398   399         379 398
+  2         283   390         373 379
+  3         276   384         348 365
+  4         238   377         330 328
+\end{Soutput}
+\begin{Soutput}
+   Arm
+tee traditional large large grace cow
+  1          66    78          81  63
+  2         151   254         258 283
+  3         189   348         323 324
+  4         156   328         291 287
+\end{Soutput}
+\begin{Soutput}
+Dropped 196 obs due to T<2.
+Dropped 1402 obs due to NA.
+Dropped 196 obs due to T<2.
+Dropped 3080 obs due to NA.
+Dropped 154 obs due to T<2.
+Dropped 1272 obs due to NA.
+Dropped 154 obs due to T<2.
+Dropped 1386 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Soutput}
+Warning in `[.data.table`(AL2R, , `:=`(grepout("Time", colnames(AL2)), NULL)): length(LHS)==0; no columns to delete or assign RHS to.
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/Total_values_original_HHs-1} 
+
+}
+
+\caption{Total asset values\\ {\footnotesize Sum of assets and livestock holding values. Original 1600 HHs.\setlength{\baselineskip}{8pt}}}\label{Figure Total values original HHs}
+\end{figure}
+\end{Schunk}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets, original HHs\label{tab FD total assets original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetLivestockOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets by attributes\label{tab FD total assets attributes original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetLivestockAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets, moderately poor vs. ultra poor, original HHs \label{tab FD total assets2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/AssetLivestockPovertyStatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Incomes}
+
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 4546 obs due to T<2.
+Dropped 1133 obs due to NA.
+Dropped 4546 obs due to T<2.
+Dropped 1469 obs due to NA.
+Dropped 6242 obs due to NA.
+Dropped 6250 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Dropped 4546 obs due to T<2.
+Dropped 1133 obs due to NA.
+Dropped 4546 obs due to T<2.
+Dropped 1469 obs due to NA.
+Dropped 6242 obs due to NA.
+Dropped 6250 obs due to NA.
+\end{Soutput}
+\end{Schunk}
+
+Income sources are mainly labour incomes (\textsf{lab}) and farm revenues (\textsf{far}) with 6165 and 6400 observations, respectively. After first-differencing, they become 486 and 150 observations, with 486 households observed for 487 times. 
+
+
+Obs for survey labour income.
+\begin{Schunk}
+\begin{Soutput}
+
+  1   2   3   4 
+  1 311 128  46 
+\end{Soutput}
+\end{Schunk}
+Obs for survey labour income and admin repayment data.
+\begin{Schunk}
+\begin{Soutput}
+
+  3   4 
+106  43 
+\end{Soutput}
+\begin{Soutput}
+
+ 3  4 
+79 71 
+\end{Soutput}
+\end{Schunk}
+Obs for survey farm revenue.
+\begin{Schunk}
+\begin{Soutput}
+
+ 3  4 
+79 71 
+\end{Soutput}
+\end{Schunk}
+Obs for survey farm revenue and admin repayment data.
+\begin{Schunk}
+\begin{Soutput}
+
+ 3  4 
+79 71 
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes\label{tab FD incomes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/IncomesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes by attributes \label{tab FD incomes attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/IncomesAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes, moderately poor vs. ultra poor\label{tab FD incomes2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/IncomesPovertyStatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\subsection{Consumption}
+
+
+
+%Number of HHs with consumption before the loan is disbursed (\textsf{ConsumptionBaseline} == 1) is small.
+\begin{Schunk}
+\begin{Soutput}
+             ConsumptionBaseline
+Arm              0    1
+  traditional  513  284
+  large        146 1002
+  large grace   51  981
+  cow          200  874
+\end{Soutput}
+\begin{Soutput}
+Dropped 4028 obs due to NA.
+Dropped 4029 obs due to NA.
+\end{Soutput}
+\begin{Soutput}
+Warning in `[.data.table`(dat, , `:=`(grepout("Time.?2", colnames(dat)), : length(LHS)==0; no columns to delete or assign RHS to.
+\end{Soutput}
+\end{Schunk}
+
+Consumption is observed in rd 2-4. There are 6400 observations, with first-differencing, it becomes 2372 observations with 42, 2330 households observed for 2, 3 times. 
+
+\begin{Schunk}
+\begin{Soutput}
+Dropped 4028 obs due to NA.
+Dropped 4029 obs due to NA.
+\end{Soutput}
+\begin{Soutput}
+Warning in `[.data.table`(dat, , `:=`(grepout("Time.?2|Arm", colnames(dat)), : length(LHS)==0; no columns to delete or assign RHS to.
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption\label{tab FD consumption original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/ConsumptionOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption by attributes \label{tab FD consumption attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/ConsumptionAttributesOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption, moderately poor vs. ultra poor\label{tab FD consumption2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo/ConsumptionPovertyStatusOriginalHHsFDEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+
+\subsection{IGA}
+
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/IGA_choices_original_HHs-1} 
+
+}
+
+\caption{Income generatng activity choices\\ {\footnotesize The first income generating activity choices are plotted.\setlength{\baselineskip}{8pt}}}\label{Figure IGA choices original HHs}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/All_IGA_choices_original_HHs-1} 
+
+}
+
+\caption{All income generatng activity choices\\ {\footnotesize All of multiple investment choices are summed by arms and the number of IGAs and plotted as bars. \setlength{\baselineskip}{8pt}}}\label{Figure All IGA choices original HHs}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/ImpactEstimationOriginal1600Memo/All_IGA_choices_collapsed_original_HHs-1} 
+
+}
+
+\caption{All income generatng activity choices collapsed over different number of IGAs\\ {\footnotesize All of multiple investment choices are summed by arms and plotted as bars. \setlength{\baselineskip}{8pt}}}\label{Figure All IGA choices collapsed original HHs}
+\end{figure}
+\end{Schunk}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure IGA choices original HHs}, \ref{Figure All IGA choices original HHs}} show that there are very few members who chose to invest in more than one project for the ``large'' arms, while in the \textsf{traditional} arm, almost no one invested only in one project. Goat/sheep and small trades are the top choices for the first IGA in \textsf{traditional}. This indicates the exitence of both a liquidity constraint and convexity in the production technology of large domestic animals. This also validates our supposition that dairy livestock production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive a cow. \textsc{\small Figure \ref{Figure All IGA choices collapsed original HHs}} shows there are a significant number of cases in the \textsf{traditional} arm that members reportedly raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. Contrasting \textsf{large}, \textsf{large grace} with \textsf{cow} arms, it suggests that entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake among members.
+\end{finding}
+\end{palepinkleftbar}
+
+Together with \textsc{\small Table \ref{tab FD enroll attributes original HH}} showing smaller net saving and repayment among \textsf{traditional}, the restriction on a project choice induced by a smaller loaned sum resulted in smaller returns. 
+
+
+\subsection{Project cycle}
+
+
+
+
+
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Project choices\label{fig ProjectChoices}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/ProjectChoices.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported project choices using the lending. NAs include nonresponse to the question and dropped out individuals.  \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Largest fixed investment amount\label{fig FixedInvest}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/FixedInvestmentAmount.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported largest one-off investment amounts of the lending. \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: First and 2nd or later fixed investment amount\label{fig first2ndFixedInvest}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/FirstFixedInvestmentAmountByYear.png}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo/2ndOrLaterFixedInvestmentAmountByYear.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported largest one-off investment amounts of the lending. Top panel is the first investments reported, bottom panel is 2nd or later investments reported.\\[1ex]
+\end{tabular}
+}
+
+
+\footnotesize\bibliographystyle{aer}
+\setlength{\baselineskip}{10pt}
+\bibliography{c:/dropbox/docs/notes/seiro}
+
+\end{document}

@@ -1,0 +1,1835 @@
+\newpage
+\section{Descriptive statistics of original 1600 HHs}
+
+
+
+<<>>=
+# Following files are created in ImpactEstimatin_body1.rnw using paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds") further trimmed in DataTrimmingMembership1or4.rnw
+# All are in long format with time dummies.
+s1 <- readRDS(paste0(pathsaveHere, "RosterSchoolingAdminDataUsedForEstimation.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminDataUsedForEstimation.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminDataUsedForEstimation.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminDataUsedForEstimation.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminDataUsedForEstimation.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminDataUsedForEstimation.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminDataUsedForEstimation.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminDataUsedForEstimation.rds"))
+# what to do with errors like below?
+#ass[hhid == 7043715, .(hhid, survey, tee)]
+# Table footnote first part that is common across tables.
+TabFNTop <- "First-difference estimates using administrative and survey data. First-differenced ($\\Delta x_{t+1}\\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \\citet[][10.71]{Wooldridge2010} and $\\Pr[\\rho=0]$ is its $p$ value."
+TabFNAttributes <- "\\textsf{LargeSize} is an indicator function if the arm is of large size, \\textsf{WithGrace} is an indicator function if the arm is with a grace period, \\textsf{InKind} is an indicator function if the arm provides a cow."
+TabFNArm <- "Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount."
+TabFNUP <- "\\textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor."
+@
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[c]	continuing members.
+\item[d]	drop out members.
+\item[a]	absence.
+\item[n]	members of a new group.
+\item[r]	replacing members.
+\end{description}
+<<tabulation of ObPattern agaist Mpattern>>=
+table0(xid[survey == 1, .(ObPattern, Mpattern)])
+xid[, AttritIn := 9L]
+xid[grepl("^En|^2nd and 4", missing_followup), AttritIn := 4L]
+xid[grepl("^3rd and 4", missing_followup), AttritIn := 3L]
+xid[grepl("^2.*3.*4", missing_followup), AttritIn := 2L]
+@
+\textsf{AttritIn}: Attrition round. 9 is nonattriting members.
+<<Attrition round>>=
+table0(xid[, AttritIn])
+table0(xid[survey == 1, .(AttritIn, ObPattern)])
+table0(xid[, .(AttritIn, survey)])
+xid <- xid[, .(AssignOriginal, randomization, groupid, hhid, 
+  survey, year, AttritIn, ObPattern, Mstatus, Mgroup, 
+  creditstatus, IntDate, DistDate1)]
+xid[, group.id := as.numeric(substr(hhid, 1, 5))]
+xid[group.id == 81710, group.id := as.numeric(substr(hhid, 1, 6))]
+xid <- merge(xid, probgp, by = "group.id", all.x = T)
+xid[is.na(randomization), AssignOriginal := randomization0]
+hhido <- unique(xid[hhid %in% hhid[!grepl("new|Rep", Mstatus) & survey == 1], 
+   hhid])
+hhidor <- unique(xid[hhid %in% hhid[!grepl("new", Mstatus) & survey == 1], 
+   hhid])
+@
+\textsf{Mstatus} changes for some \textsf{groupid}s. Correct \textsf{Mstatus} by checking \textsf{comment} for dropping out (taken from CharRandomization2012.prn).
+<<Correct Mstatus by checking comment for dropping out>>=
+xid[, dM := length(unique(Mstatus)) > 1, by = hhid]
+table(xid[(dM), .(Mstatus, survey)])
+@
+See how \textsf{Mstatus} changes at rd 4: This suggests \textsf{iRejection} needs to change to \textsf{gRejection}, and \textsf{iRejection} to \textsf{oldMember}.
+<<See how Mstatus changes at rd 4>>=
+table0(xid[groupid %in% groupid[(dM)], .(Mstatus, survey)])
+#table0(xid[(dM), .(group.id, survey)])
+@
+\textsf{group.id} (created from first characters of \textsf{hhid}) and their reasons for dropping out.
+<<group.id created from first characters of hhid and their reasons for dropping out>>=
+table0(xid[(dM) & survey == 1, .(group.id, comment)])
+@
+Correct \textsf{Mstatus} in rd 4 from \textsf{iRejection} to \textsf{gRejection} if denial is the \textsf{comment}. \gobblepars
+<<Correct Mstatus in rd 4 from iRejection to gRejection>>=
+xid[(dM) & grepl("denial", comment) & survey == 4, Mstatus := "gRejection"]
+table0(xid[(dM), .(Mstatus, survey)])
+xid[, dM2 := length(unique(Mstatus)) > 1, by = hhid]
+@
+Correct \textsf{Mstatus} in rd 1-3 from \textsf{iRejection} to \textsf{oldMember} if NA is the \textsf{comment}. \gobblepars
+<<Correct Mstatus in rd 4 from iRejection to oldMember>>=
+xid[(dM2), .(hhid, Mstatus, survey, creditstatus)]
+table0(xid[(dM2), .(Mstatus, survey)])
+xid[(dM2) & is.na(comment) & survey < 4, Mstatus := "oldMember"]
+table0(xid[(dM2), .(Mstatus, survey)])
+xid[, dM3 := length(unique(Mstatus)) > 1, by = hhid]
+if (!any(xid[, dM3])) xid[, dM3 := NULL]
+xid[, c("dM", "dM2") := NULL]
+@
+Original \Sexpr{sum(table0(xid[survey==1 & hhid %in% hhido, .(Mstatus, AssignOriginal)]))} HHs (original sample) by arm and membership status.
+<<Original 1600 HHs by arm and membership status>>=
+table0(xid[survey==1 & hhid %in% hhido, .(Mstatus, AssignOriginal)])
+@
+Including \textsf{r} or individually replacing HHs (replacing sample): \Sexpr{sum(table0(xid[survey==1 & hhid %in% hhidor, .(Mstatus, AssignOriginal)]))}
+<<Including individual replacing HHs>>=
+table0(xid[survey==1 & hhid %in% hhidor, .(Mstatus, AssignOriginal)])
+@
+%First disbursement year of individual and replacing samples. We have about 100+ in 2013 for replacing sample.
+<<First disbursement year of individual and replacing samples, results = "hide">>=
+rbind(
+  original = table0(year(xid[survey==1 & hhid %in% hhido, DistDate1])),
+  replacing = table0(year(xid[survey==1 & hhid %in% hhidor, DistDate1])))
+@
+Use original sample. \gobblepars
+<<force xid to have 4 periods, warning = F, results = "hide">>=
+# By reshaping wide, I force all obs to have 4 round of data.
+# Use only hhid as idvar, because AssignOriginal has NAs.
+# If including AssignOriginal in idvar, rows with AssignOriginal = NA
+# will be dropped in widened data. 
+xidW <- reshape(xid, direction = "wide", 
+  # idvar = c("Mstatus", "groupid", "AssignOriginal", "hhid"),
+  idvar = "hhid",
+  timevar = "survey", v.names = grepout("yea|Date", colnames(xid)))
+# keep only original HHs
+xidW <- xidW[hhid %in% hhido, ]
+# force mechanical reshape long by stripping reshapeWide attributes
+attributes(xidW)$reshapeWide <- NULL
+xid <- reshape(xidW, direction = "long", 
+  idvar = "hhid",
+  varying = grepout("yea|Date", colnames(xidW)))
+# rename survey to tee
+setnames(xid, "time", "tee")
+@
+Attrition. % (\textsf{WillAttrit} is just a check if reshaping forced 4 obs per HH.)
+<<count attrition, warning = F, results = "hide">>=
+xid[, WillAttrit := 1L]
+xid[hhid %in% hhid[AttritIn>4L], WillAttrit := 0L]
+table0(xid[, .(tee, WillAttrit)])
+xid[, Rejected := 0L]
+xid[grepl("gR|iR", Mstatus), Rejected := 1L]
+@
+%Merge \textsf{xid} with other files. Keep \textsf{all==T}.
+<<Merge xid with other files, results = "hide">>=
+xid[, Fromxid := T]
+datafiles <- c("s1", "ar", "ass", "lvo", "lab", "far", "con")
+Datafiles <- c("S1", "Ar", "Ass", "Lvo", "Lab", "Far", "Con")
+DataFileNames <- c(
+  "Schooling", "Repayment", "Asset", "Livestock", 
+  "LabourIncome", "FarmIncome", "Consumption")
+#lapply(datafiles, function(x) 
+#  grepout("AssignO|^Arm$|groupi|hhid|tee", colnames(get(x))))
+# use only rd 1 characteristics
+xid[, c("year") := NULL]
+setkey(xid, AssignOriginal, groupid, hhid, tee)
+# tee numbering is not in line with survey. This causes multiple matches per hhid-tee below. Correct.
+corrtee <- c("ar", "ass", "lvo")
+for (i in corrtee) {
+  this <- get(i)
+  setkey(this, hhid, survey)
+  this[, tee := NULL]
+  this[, tee := 1:.N, by = hhid]
+  assign(i, this)
+}
+for (i in 1:length(datafiles)) {
+  X <- get(datafiles[i])
+  X[, FromFile := 1L]
+  # files up to livestock do not have AssignOriginal
+  if (i >= 4)
+    xx <- merge(xid, X, by = key(xid)[-1], all = T, 
+      suffixes = c("", paste0("From", Datafiles[i]))) else
+    xx <- merge(xid, X, by = key(xid), all = T, 
+      suffixes = c("", paste0("From", Datafiles[i])))
+  xx[is.na(FromFile), FromFile := 0L]
+  assign(paste0(datafiles[i], "x"), xx)
+  saveRDS(xx, paste0(pathsaveHere, "Roster", DataFileNames[i],
+     "AdminOriginalHHsDataUsedForEstimation.rds"))
+}
+@
+<<eval = F>>=
+arx[, en := .N, by = .(hhid, tee)]
+arx[hhid %in% hhid[en>1], ]
+@
+%Attririon by membership status in repayment-saving:
+<<Attririon by membership status in repayment, eval = F>>=
+table0(assx[tee == 1, .(Mstatus, WillAttrit)])
+@
+%Membership status in schooling: Schooling files have multiple observations per household.
+<<Attririon by membership status in schooling, results = "hide">>=
+table0(s1x[Fromxid & tee == 1, Mstatus])
+s1x[, teenum := 1:.N, by = .(hhid, tee)]
+@
+Number of obs per survey round in the schooling file:
+<<Number of obs per survey round>>=
+table0(s1x[, .(teenum, tee)])
+@
+Assets: Original arm assignment by membership status in rd 1: \Sexpr{sum(table0(assx[tee == 1, .(RArm, Mstatus)])
+)} households.
+<<Original arm assignment by membership status>>=
+table0(assx[tee == 1, .(Mstatus, AssignOriginal)])
+@
+<<tabulation of obs by page>>=
+arx[, teenum := 1:.N, by = .(hhid, tee)]
+labx[, teenum := 1:.N, by = .(hhid, tee)]
+datafiles <- c("s1", "ar", "ass", "lvo", "lab", "far", "con")
+armtabs <- NULL
+for (i in 1:length(datafiles[-2])) {
+  dx <- get(paste0(datafiles[-2][i], "x"))
+  dx <- dx[tee < AttritIn & FromFile == 1L, ]
+  if (i != grep("con", datafiles[-2])) {
+    for (j in 1:4)
+      armtabs <- 
+      #data.table(
+      rbind(armtabs,
+        table0(dx[Fromxid & tee == j, AssignOriginal]))
+      #  )
+  } else
+    for (j in 2:4)
+      armtabs <- 
+      #data.table(
+      rbind(armtabs,
+        table0(conx[Fromxid & tee == j & AttritIn != 2, AssignOriginal]))
+      #  )
+}
+# armtabs <- data.table(rbind(
+#     table0(s1x[Fromxid & tee == 1, AssignOriginal]),
+#     table0(arx[Fromxid & tee == 1, AssignOriginal]),
+#     table0(assx[Fromxid & tee == 1, AssignOriginal]), 
+#     table0(lvox[Fromxid & tee == 1, AssignOriginal]), 
+#     table0(labx[Fromxid & tee == 1, AssignOriginal]),
+#     table0(farx[Fromxid & tee == 1, AssignOriginal]),
+#     table0(conx[Fromxid & tee == 2 & AttritIn != 2, AssignOriginal])))
+    # consumption is not asked in rd 1
+armtabs <- data.table(armtabs)
+armtabs[, total := rowSums(armtabs)]
+armtabs <- data.table(
+  files = 
+    paste0("\\makebox[1cm]{\\scriptsize ", 
+      c(rep(datafiles[-c(2, grep("con", datafiles))], each = 4), 
+        rep("con", each = 3)),
+      "}")
+  , 
+  rounds = 
+    c(rep(1:4, length(datafiles)-2), 2:4)
+  , armtabs)
+armtabs[-seq(1, nrow(armtabs), 4), files := ""]
+amt <- latextab(as.matrix(armtabs), 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(1, rep(1.5, ncol(armtabs)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90")
+write.tablev(amt,  paste0(pathsaveHere, "NumObsOriginalHHs.tex"),
+  colnamestrue = F)
+@
+
+
+
+
+
+
+\section{Estimation using original 1600 HHs}
+
+
+\subsection{Repayment and net saving}
+
+<<ReadTrimRepaymentFDData original HHs, cache = F, child='c:/data/GUK/analysis/program/ReadTrimRepaymentOriginalHHsFDData.rnw'>>=
+@
+Repayment formally started in round 2. So taking a first-difference leaves us with period 2-3 and period 3-4. After first-differencing, \textsf{arA} has \Sexpr{nrow(dard1)} rows with \Sexpr{table(dard1[tee == Tee, Tee])} individuals with repeatedly observed for \Sexpr{as.numeric(names(table(dard1[tee == Tee, Tee])))+1} times, respectively. By survey rounds, there are \Sexpr{table(arA1[hhid %in% hhid[tee == max(tee)][1], survey])} observations per household in rounds 1, 2, 3, 4, respectively. Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In regressions, we opted to use survey rounds as period indicators rather than meeting serial numbers to increase the precision of estimates.
+%Drop \Sexpr{nrow(dar2d[tee <= 2, ])} observations in \textsf{ar} that have round 1 data (for unknown reasons). After first-differencing, \textsf{ar} has \Sexpr{nrow(dar2d[tee>2, ])} rows with \Sexpr{table(dar2d[tee > 2, Tee])} individuals with repeatedly observed for \Sexpr{as.numeric(names(table(dar2d[tee>2, Tee])))+1} times, respectively. \Sexpr{table(dar2d[tee > 2, Tee])["3"]} individuals observed for 4 times started repayment even before official disbursement date, so its round 1 will be dropped.
+
+Note all binary interaction terms are demeaned and then interacted.
+<<prepare data for saving regressions original HHs, warning = F, message = F, results = "hide">>=
+#ar <- readRDS(paste0(pathsaveHere, "RosterAdminDataUsedForEstimation.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminDataUsedForEstimation.rds"))
+arA[, tee := survey]
+arA[, Mid := 1:.N, by = .(hhid, survey)]
+arA <- arA[Mid == 1, ]
+arA[, Mid := NULL]
+arA[, CumSave := CumNetSaving - CumRepaid]
+arA[, CumEffectiveRepayment := CumNetSaving + CumRepaid]
+arA[, Arm := droplevels(Arm)]
+arA[, HeadLiteracy := HeadLiteracy + 0]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+setorder(arA, hhid, Date)
+arA[, grepout("LoanY|^Time$", colnames(arA)) := NULL]
+#arA[, c("dummyForcedDropOuts") := NULL]
+table0(arA[, .(tee, RArm)])
+@
+%NAs in \textsf{CumRepaid}.
+<<NAs in CumRepaid in arA, results = "hide">>=
+table0(arA[is.na(CumRepaid), .(tee, Arm)])
+@
+Tabulation at rd 1:
+<<Tabulation at rd 1 for arA>>=
+table0(arA[survey == 1, .(Mstatus, RArm)])
+<<Cumulative net saving and repayment original HHs, warAning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Cumulative weekly net saving and repayment", ""), fig.lp = 'Figure '>>=
+library(ggplot2)
+ga <- arA[!is.na(Date) & !is.na(DisDate1) & grepl("Yes", creditstatus), 
+  .(Arm, hhid, povertystatus, MonthsElapsed, 
+  CumNetSaving, CumRepaid)]
+ga1 <- ga[, !grepl("Ne", colnames(ga)), with = F]
+ga1[, variable := "repayment"]
+ga2 <- ga[, !grepl("Rep", colnames(ga)), with = F]
+ga2[, variable := "net saving"]
+setnames(ga1, grepout("Re", colnames(ga1)), "amount")
+setnames(ga2, grepout("Ne", colnames(ga2)), "amount")
+ga <- rbindlist(list(ga1, ga2))
+ColourForPoints <- c("darkblue", "darkred")
+g <- ggplot(ga, 
+  aes(x = MonthsElapsed, y = amount, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(fill = povertystatus), size = .1, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .8) +
+  geom_smooth(span = .5, size = .5,
+    aes(colour = povertystatus, group = povertystatus)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+#  scale_shape_manual(values=c(21, 25)) +
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.25, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 9),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_y_continuous() +
+  scale_x_continuous(limits = c(-12, 48), breaks = seq(-12, 48, 12)) +
+  xlab("Months since 1st loan disbursement") + 
+  ylab("Cumulative amount (Tk)") +
+  facet_grid(variable ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/",
+    "CumulativeWeeklyNetSavingAndRepayment.png"),
+  g,
+  width = 13, height = 6, units = "cm",
+  dpi = 300
+ )
+<<Cumulative repaid rate original HHs, warAning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Cumulative repayment rates", ""), fig.lp = 'Figure '>>=
+library(ggplot2)
+ga <- arA[!is.na(Date) & !is.na(DisDate1) & grepl("Yes", creditstatus), 
+  .(Arm, hhid, povertystatus, MonthsElapsed, 
+  CumNetSaving, CumRepaid, CumRepaidRate)]
+ga1 <- ga[, !grepl("Ne|Ra", colnames(ga)), with = F]
+ga1[, variable := "repayment"]
+ga2 <- ga[, !grepl("Ne|Repaid$", colnames(ga)), with = F]
+ga2[, variable := "repayment rate"]
+setnames(ga1, grepout("Re", colnames(ga1)), "amount")
+setnames(ga2, grepout("Re", colnames(ga2)), "amount")
+ga <- rbindlist(list(ga1, ga2))
+ColourForPoints <- c("darkblue", "darkred")
+g <- ggplot(ga2, 
+  aes(x = MonthsElapsed, y = amount, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(fill = povertystatus), size = .1, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .8) +
+  geom_smooth(span = .5, size = .5, #colour = "blue", 
+    aes(colour = povertystatus, group = povertystatus)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+#  scale_shape_manual(values=c(21, 25)) +
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_y_continuous(limits = c(0, 2)) +
+  scale_x_continuous(limits = c(-12, 48), breaks = seq(-12, 48, 12)) +
+  xlab("Months since 1st loan disbursement") + 
+  ylab("Cumulative repayment rates") +
+  facet_grid(povertystatus ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/",
+    "CumulativeWeeklyRepaymentRateByPovertystatus.png"),
+  g,
+  width = 13, height = 6, units = "cm",
+  dpi = 300
+ )
+@
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly net saving and repayment\label{fig weeklysavingrepay}}\\
+\hfil\includegraphics{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/",   "CumulativeWeeklyNetSavingAndRepayment.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows cumulative net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly net repayment rates\label{fig weeklysavingrepayrate}}\\
+\hfil\includegraphics{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/CumulativeWeeklyRepaymentRateByPovertystatus.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows cumulative net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+<<ReadTrimRepaymentFDData original HHs again, cache = F, warning = F, message = F, results = "hide", child='c:/data/GUK/analysis/program/ReadTrimRepaymentOriginalHHsFDData.rnw'>>=
+@
+<<saving regressions estimation set parameters original HHs>>=
+FileName <- "Saving"
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes"),
+  "OriginalHHs")
+# length(arsuffixes) = Number of est results tables to be produced
+arsuffixes <- c("", "g", "p", "s", "a")
+listheader <- paste0("sv", arsuffixes)
+Regressands <-  c(rep("CumNetSaving", 2), rep("CumRepaid", 3), 
+  rep("CumEffectiveRepayment", 3), rep("CumExcessRepayment", 3))
+DataToUse1 <- DataToUse2 <- c("dard1", "dard2", 
+  rep(c("dard1", rep("dard2", 2)), 3))
+Addseparatingcols = c(2, 5, 8); Separatingcolwidth = rep(.1, 3)
+Separatingcoltitle = c("Cumulative net saving", "Cumulative repayment", 
+   "\\mpage{3cm}{\\hfil Cumulative net saving \\\\\\hfil +cumulative repayment}", 
+   "Cumulative excess repayment")
+<<saving regresions select covariates original HHs>>=
+source(paste0(pathprogram, "RepaymentCovariateSelection.R"))
+<<saving regressions estimation original HHs>>=
+exclheader <- paste0("excl", arsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<Flow regressands>>=
+Regressands <-  c(rep("^value.NetSaving$", 2), rep("^value.repay$", 3), 
+  rep("^EffectiveRepayment$", 3), rep("^ExcessRepayment$", 3))
+DataToUse1 <- DataToUse2 <- c("dard1", "dard2", 
+  rep(c("dard1", rep("dard2", 2)), 3))
+FileNameHeader <- paste0("Flow",
+  c("", "Grace", "PovertyStatus", "Size", "Attributes"),
+  "OriginalHHs")
+Addseparatingcols = c(2, 5, 8); Separatingcolwidth = rep(.1, 3)
+Separatingcoltitle = c("Net saving", "Repayment", 
+   "Net saving + Repayment", "Excess repayment")
+<<saving regresions select covariates original HHs Flow>>=
+source(paste0(pathprogram, "RepaymentFlowCovariateSelection.R"))
+<<saving regressions estimation original HHs Flow>>=
+exclheader <- paste0("excl", arsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<check linear independence in saving  original HHs data>>=
+# svX <- sv12$data[, .(tee,
+#   T2 = dummyTraditional.Time2 > 0, L2 = dummyLarge.Time2 > 0,
+#   G2 = dummyLargeGrace.Time2 > 0, C2 = dummyCow.Time2 > 0, 
+#   T3 = dummyTraditional.Time3 > 0, L3 = dummyLarge.Time3 > 0,
+#   G3 = dummyLargeGrace.Time3 > 0, C3 = dummyCow.Time3 > 0, 
+#   T4 = dummyTraditional.Time4 > 0, L4 = dummyLarge.Time4 > 0,
+#   G4 = dummyLargeGrace.Time4 > 0, C4 = dummyCow.Time4 > 0 )]
+# svX <- sv12$data[, .(
+#   dummyTraditional.Time2 , dummyLarge.Time2 ,
+#   dummyLargeGrace.Time2 , dummyCow.Time2 , 
+#   dummyTraditional.Time3 , dummyLarge.Time3 ,
+#   dummyLargeGrace.Time3 , dummyCow.Time3 , 
+#   dummyTraditional.Time4 , dummyLarge.Time4 ,
+#   dummyLargeGrace.Time4 , dummyCow.Time4 )]
+LinDependent <- function(z, ShowMostDependent = F, ReturnColNames = F) 
+#  From CrossVal: https://stats.stackexchange.com/questions/16327/testing-for-linear-dependence-among-the-columns-of-a-matrix#39321
+#  The weakness of this function is that it does not specify which columns are jointly linearly dependent.
+#  ShowMostDependent: if T, returns column that is least linearly independent, if F, returns columns that are linearly dependent.
+{
+  if (!is.matrix(z)) z <- as.matrix(z)
+  rankofz <- qr(z)$rank
+  if (rankofz == ncol(z)) message("Full rank.") else
+  {
+    rankifremoved <- sapply(1:ncol(z), function (x) qr(z[, -x])$rank)
+    if (ReturnColNames) {
+      if (ShowMostDependent)
+        this <- colnames(z)[rankifremoved == max(rankifremoved)] else
+        this <- colnames(z)[rankifremoved == ncol(z) - 1] 
+    } else {
+      if (!ShowMostDependent)
+        this <- which(rankifremoved == max(rankifremoved)) else
+        this <- which(rankifremoved == ncol(z) - 1)
+    }
+    return(this)
+  }
+}
+# svX <- as.matrix(sv12$data[, .(
+#   Time.2, dummyLarge.Time2,
+#   dummyLargeGrace.Time2, dummyCow.Time2, 
+#   Time.3 , dummyLarge.Time3 ,
+#   dummyLargeGrace.Time3 , dummyCow.Time3 , 
+#   Time.4 , dummyLarge.Time4 ,
+#   dummyLargeGrace.Time4, dummyCow.Time4 )])
+#LinDependent(svX, F, T) 
+<<get arsv data>>=
+arsv <- ar[, .(Arm, groupid, hhid, tee = as.factor(tee))]
+svDatalist <- list(arsv, arsv, arsv, arsv, arsv, arsv, arsv, arsv)
+<<tabulating number of obs in sv ols original HHs, warning = F>>=
+InTermsSV <- lapply(svDatalist, function(x) 
+  interactXY(
+    makeDummyFromFactor(x[, Arm], NULL), 
+    makeDummyFromFactor(x[, tee], NULL)
+    ))
+InTermsSV <- rbindlist(lapply(InTermsSV, function(x) {
+  z <- data.table(t(c(nrow(x), unlist(lapply(1:ncol(x), function(i) sum(x[, i, with = F]))))))
+  setnames(z, gsub(" ", "", gsub("dummy", "", c("total", colnames(x)))))
+  z
+}))
+InTermsSV <- InTermsSV[, which(unlist(lapply(InTermsSV, function(x) !all(is.na(x) | x == 0)))), with=F]
+InTermsSV <- t(InTermsSV)
+colnames(InTermsSV) <- paste0("(", 1:ncol(InTermsSV), ")") 
+InTermsSV <- InTermsSV[c(grep("Tra", rownames(InTermsSV)), 
+  grep("Large[^g]", rownames(InTermsSV)),
+  grep("Largeg", rownames(InTermsSV)),
+  grep("Cow", rownames(InTermsSV)),
+  grep("total", rownames(InTermsSV))
+  ), ]
+# reorder within a group
+rn.j <- rownames(InTermsSV)
+newroworder <- NULL
+for (j in c("Tra", "Large[^g]", "Largeg", "Cow"))
+  newroworder <- c(newroworder, 
+    c(grep(paste0(j, ".*ale$"), rn.j), grep(paste0(j, ".*P"), rn.j), 
+      grep(paste0(j, ".*J"), rn.j), grep(paste0(j, ".*H"), rn.j)))
+InTermsSV <- InTermsSV[c(newroworder, nrow(InTermsSV)), ]
+<<descriptive stat of repayment>>=
+
+
+<<>>=
+#dummy chunk
+@
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment\label{tab FD saving original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment by attributes\label{tab FD saving attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net cumulative saving and repayment, ultra poor vs. moderately poor\label{tab FD saving2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingPovertystatusOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of flow net saving and repayment\label{tab FD Flow saving original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingFlowOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of flow net saving and repayment by attributes\label{tab FD flow saving attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingFlowAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net flow saving and repayment, ultra poor vs. moderately poor\label{tab FD flow saving2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SavingFlowPovertystatusOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{fig weeklysavingrepay}} visually presents that repayment is no different between the ultra poor and the moderately poor. The subsequent regression table econometrically confirms this (\textsc{\normalsize Table \ref{tab FD saving2 original HH}}). 
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Schooling}
+
+
+<<ReadTrimSchoolingFDData2 original HHs, cache = F, eval = F, child='c:/data/GUK/analysis/program/ReadTrimSchoolingOriginalHHsFDData2.rnw'>>=
+#source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+<<ReadTrimSchoolingFDData2 original HHs in R file one, cache = F, warning = F>>=
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
+<<Enrollment pattern in original panel>>=
+table0(s.1x[tee == 1, .(ObPattern, SchPattern)])
+@
+Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
+<<Left panel is before dropping nnn right panel is after original panel>>=
+cbind(table0(s.1x[, .(tee, RArm)]), 
+  table0(s1x[, .(tee, RArm)]))
+@
+\textsf{sch} has \Sexpr{nrow(s.1x)} rows. Drop \Sexpr{nrow(s.1x[grepl("nnn", SchPattern), ])} observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
+%and \Sexpr{nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ])} observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with \Sexpr{nrow(s1x)} rows. 
+<<schooling FD read data original HHs, warning = F>>=
+#s.1 <- s.1[!grepl("1001", EnrollPattern), ]
+s1x[, Enrolled := as.numeric(Enrolled)]
+s1x[, Fromxid := NULL]
+s1x[, Tee := .N, by = HHMid]
+ds1xd[, Tee := .N, by = HHMid]
+@
+With OLS,  \Sexpr{table(s1x[tee == 1, Tee])} individuals are repeatedly observed for \Sexpr{names(table(s1x[tee == 1, Tee]))} times, respectively. With FD, \textsf{sch} is reduced to \Sexpr{nrow(ds1xd)} rows after first-differencing with \Sexpr{table(ds1xd[tee == 2, Tee])} individuals with repeatedly observed for \Sexpr{as.numeric(names(table(ds1xd[tee == 2, Tee])))} times, respectively.
+Individuals with NAs in \textsf{Enrolled}: \Sexpr{nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])} obs for \textsf{sch}. 
+%Mostly older children (\Sexpr{round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s.2}) but with a high reported enrollment rate (\Sexpr{round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
+Check missingness in schooling level information.
+<<tab s1x dummyprimary>>=
+table0(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum))
+@
+Drop \Sexpr{sum(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum)==0)} obs without school level information.
+<<Drop obs without school level information>>=
+s1x <- s1x[apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum) == 1, ]
+ds1xd[, grepout("^Tee$", colnames(ds1xd)) := NULL]
+@
+%Check missingness in arm information.
+<<tab s1x arm info, eval = F>>=
+table0(apply(s1x[, .(dummyTraditional, dummyLarge, dummyLargeGrace, dummyCow)], 1, sum))
+@
+%An example of dummy interactions: \textsf{\footnotesize \Sexpr{tobeintSchdumTimdum}}.
+%Obs for \textsf{sch} after FD.
+<<Obs for s1x, eval = F>>=
+table(ds1xd[, tee])
+@
+%Obs for \textsf{s1x} and admin repayment data.
+<<Obs for s1x and admin repayment data, eval = F>>=
+table(ds1xRd[, tee])
+@
+<<ReadTrimSchoolingFDData2 original HHs in R file, cache = F, warning = F>>=
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+<<schooling FD select covariates original HHs>>=
+FileName <- "Schooling"
+Regressands <- rep("Enrolled", 4)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+<<schooling FD estimation covariate selection original HHs>>=
+Scsuffixes <- c("", "g", "p", "s", "a", "T", "Tg", "Ts", "D", "Dg", "Da")
+exclheader <- paste0("excl", Scsuffixes)
+source(paste0(pathprogram, "SchoolingCovariateSelection.R"))
+<<schooling FD estimation original HHs, warning = F, results = 'hide'>>=
+# Need to place ED14Diff after k > 5.
+FileNameHeaderSchooling <- c("", "Grace", "PovertyStatus", "Size", "Attributes",
+  "Rd14Diff", "Rd14DiffGrace", "Rd14DiffAttributes")
+FileNameHeader <- paste0(FileNameHeaderSchooling, "OriginalHHs")
+Scsuffixes <- c("", "g", "p", "s", "a", "D", "Dg", "Da")
+listheader <- paste0("sc", Scsuffixes)
+exclheader <- paste0("excl", Scsuffixes)
+DataToUse1 <- rep("ds1xd", 4)
+DataToUse2 <- rep("ds1x34d", 4)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<schooling FD estimation original HHs time interactions, warning = F, results = 'hide'>>=
+FileNameHeaderSchooling <- c("TInt", "TIntGrace", "TIntSize")
+FileNameHeader <- paste0(FileNameHeaderSchooling, "OriginalHHs")
+Scsuffixes <- c("T", "Tg", "Ts")
+exclheader <- paste0("excl", Scsuffixes)
+listheader <- paste0("sc", Scsuffixes)
+source(paste0(pathprogram, "FDEstimationFileSchooling.R"))
+<<>>=
+#dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment\label{tab FD enroll original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment by attributes\label{tab FD enroll attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.48}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net school enrollment, ultra poor vs. moderately poor\label{tab FD enroll2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingPovertystatusOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingRd14DiffOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences by attributes\label{tab FD enroll5 attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "SchoolingRd14DiffAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes, TabFNArm)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\subsection{Assets}
+
+Assets reportd in rd 1 is too small, indicating possible errors or different way of reporting only in rd 1. So we also examine rd 2 vs. rd 4 differences (\textsf{as3, as4}).
+
+<<ReadTrimAssetFDData original HHs, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/ReadTrimAssetOriginalHHsFDData.rnw'>>=
+@
+
+<<ReadTrimAssetFDData original HHs using R file, cache = F, warning = F, >>=
+source(paste0(pathprogram, "ReadTrimAssetOriginalHHsFDData.R"))
+@
+
+Main assets are household assets (\textsf{HAssetAmount}) and production assets (\textsf{PAssetAmount}) both with \Sexpr{nrow(ass1[!is.na(HAssetAmount), ])} observations. After first-differencing, they become \Sexpr{nrow(das1d)} observations, with \Sexpr{table(das1d[, Tee])} households observed for \Sexpr{as.numeric(names(table(das1d[, Tee])))+1} times. We also examine rd 2 vs. rd 4 differences, which has \Sexpr{nrow(ass3[!is.na(HAssetAmount), ])} observations. After first-differencing, they become \Sexpr{nrow(das3d)} observations.
+
+
+<<asset regression set parameters original HHs>>=
+FileName <- "Asset"
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes",
+  "Rd24Diff", "Rd24Grace", "Rd24DiffAttributes"), "OriginalHHs")
+Assuffixes <- c("", "G", "P", "S", "a", "D", "DG", "Da")
+listheader <- paste0("as", Assuffixes)
+DataToUse1 <- c(rep("das1d", 3), "das1Rd", rep("das2d", 3), "das2Rd")
+DataToUse2 <- c(rep("das3d", 3), "das3Rd", rep("das4d", 3), "das4Rd")
+Regressands <- c(rep("HAssetAmount", 4), rep("PAssetAmount", 4))
+Addseparatingcols = 4; Separatingcolwidth = .2
+Separatingcoltitle = c("Household asset amount (Tk)", "Productive asset amount (Tk)")
+<<asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "AssetCovariateSelection.R"))
+<<asset regression estimation original HHs>>=
+exclheader <- paste0("excl", Assuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<>>=
+#dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets\label{tab FD assets original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Asset", FileNameHeader[1], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets by attributes\label{tab FD assets attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Asset", FileNameHeader[5], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes)}\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, moderately poor vs. ultra poor\label{tab FD assets2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Asset", FileNameHeader[3], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)} Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, round 2 and 4 comparison\label{tab FD assets rd24 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Asset", FileNameHeader[6], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+<<asset regression select covariates robustness original HHs>>=
+# Compare asset changes between arms and "pure control" (loan nonreceivers)
+FileName <- "Asset"
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes",
+  "Rd24Diff", "Rd24Grace", "Rd24DiffAttributes"), "OriginalHHs")
+FileNameHeader <- paste0(FileNameHeader, "Robustness")
+Assuffixes <- c("", "G", "P", "S", "a")
+listheader <- paste0("as", Assuffixes)
+exclheader <- paste0("excl", Assuffixes)
+source(paste0(pathprogram, "AssetCovariateSelectionRobustness.R"))
+<<asset regression robustness original HHs, eval= F>>=
+DataToUse1 <- DataToUse2 <- c(rep("das1d", 3), rep("das2d", 3))
+Regressands <- c(rep("HAssetAmount", 3), rep("PAssetAmount", 3))
+Addseparatingcols = 3; Separatingcolwidth = .2
+Separatingcoltitle = c("Household asset amount (Tk)", "Productive asset amount (Tk)")
+source(paste0(pathprogram, "FDEstimationFile.R"))
+@
+
+Robustness: To understand underlying pattern of asset accumulation, we compare the loan recipients and loan rejecters. This distinction is made by households by choice, so the indicator variable is considered to be endogenous to asset level. This is a limitation, however, it has its own merit in giving an idea how loan recipients faired during the study period relative to loan nonrecipients. \textsc{\small Table \ref{tab FD assets pure control original HHs}} shows that the pure controls also experience similar increase-increase-decrease pattern for household assets. This suggests the pattern observed among the loan recipients may be a systemic pattern of the area, not necessarily reflecting the repayment burdern. This partially relieves a concern that repayment burden was excessive for loan recipients.
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, loan recipients vs. pure control\label{tab FD assets pure control original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetOriginalHHsRobustnessFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+<<prod assets>>=
+ass <-  readRDS(paste0(pathsaveHere, "RosterAssetAdminOriginalHHsDataUsedForEstimation.rds"))
+ass <- ass[!(hhid == 7043715 & HAssetAmount == 0), ]
+ass[, grepout("Time|Loan", colnames(ass)) := NULL]
+<<prod asset histogram original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Productive asset holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assP <- ass[o1600==1L & PAssetAmount > 0, ]
+assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))]
+assP[, PAssetClass := as.integer(cut(PAssetAmount, 
+  quantile(PAssetAmount, probs=seq(0, 1, .1)), include.lowest=TRUE))]
+g <- ggplot(data = assP, aes(PAssetClass)) + 
+  geom_histogram(breaks = 0:10) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(label = assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))],
+    breaks = 0:10, name = "productive asset holding deciles") +
+  theme(axis.text.x = element_text(size = 6, angle = 90, vjust = .5, hjust = 1), 
+   strip.text = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/",
+    "ProdAssetClassesByRound.png"),
+  g,
+  width = 13, height = 8, units = "cm",
+  dpi = 300
+ )
+<<prod asset histogram original HHs loan nonrecipients, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Productive asset holding among loan nonrecipients", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- ggplot(data = subset(assP, creditstatusFromAss == "No"), aes(PAssetClass)) + 
+  geom_histogram(breaks = 0:10) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(label = assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))],
+    breaks = 0:10, name = "productive asset holding deciles") +
+  theme(axis.text.x = element_text(size = 6, angle = 90, vjust = .5, hjust = 1), 
+   strip.text = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/",
+    "ProdAssetClassesByRoundLoanNonrecipients.png"),
+  g,
+  width = 13, height = 8, units = "cm",
+  dpi = 300
+ )
+@
+Check what is happening with productive assets. 
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig PAssets}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/ProdAssetClassesByRound.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding of loan nonrecipients\label{fig PAssetsLoanNonrecipients}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/ProdAssetClassesByRoundLoanNonrecipients.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. \\[1ex]
+\end{tabular}
+}
+
+
+\subsection{Livestock}
+
+<<ReadTrimLivestockFDData original HHs, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockOriginalHHsFDData.rnw'>>=
+@
+<<ReadTrimLivestockFDData in R file, cache = F>>=
+source(paste0(pathprogram, "ReadTrimLivestockFDData.R"))
+@
+<<livestock regression estimation set parameters original HHs>>=
+FileName <- "Livestock"
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes",
+    "TInt", "TIntGrace", "TIntSize", "Rd14Diff", "Rd14DiffGrace", "Rd14DiffAttributes"),
+     "OriginalHHs")
+Lvsuffixes <- c("", "G", "P", "S", "a", "T", "TG", "TS", "D", "DG", "Da")
+listheader <- paste0("lv", Lvsuffixes)
+DataToUse1 <- rep("dlvod", 7)
+DataToUse2 <- rep("dlvo3d", 7)
+tableboxwidth <- 4.5
+Regressands <- rep("TotalImputedValue", 7)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+<<livestock regression select covariates original HHs>>=
+source(paste0(pathprogram, "LivestockCovariateSelection.R"))
+<<livestock regression estimation original HHs>>=
+exclheader <- paste0("excl", Lvsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+@
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values\label{tab FD livestock original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[1], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNArm)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values by attributes\label{tab FD livestock attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[5], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes, TabFNArm)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values, ultra vs. moderately poor\label{tab FD livestock poor original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[3], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values, rd 1 vs. rd 4 comparison\label{tab FD livestock3 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Livestock", FileNameHeader[8], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Check quickly if the estimated results make sense.
+<<warning = F>>=
+lvo <-  readRDS(paste0(pathsaveHere, "LivestockAdminDataUsedForEstimation.rds"))
+setkey(lvo, Arm, tee)
+lvostat <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, tee)]
+lvostat[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+setkey(lvo, hhid, survey)
+lvo[hhid %in% hhid[TotalImputedValue > 100000],
+  .(hhid, Arm, Year, LivestockCode, number_owned, 
+  mrkt_value, TotalImputedValue)]
+lvo[, HoldingClass := "below 1000"]
+lvo[TotalImputedValue >= 1000 & TotalImputedValue < 30000, 
+  HoldingClass := "1000-29999"]
+lvo[TotalImputedValue >= 30000 & TotalImputedValue < 50000, 
+  HoldingClass := "30000-49999"]
+lvo[TotalImputedValue >= 50000, 
+  HoldingClass := "above 50000"]
+lvo[, HoldingClass := factor(HoldingClass, 
+  levels = c("below 1000", "1000-29999", "30000-49999", "above 50000"))]
+setkey(lvo, Arm, HoldingClass, tee)
+lvostat2 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, tee)]
+lvostat2[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+lvostat3 <- lvo[grepl("es", creditstatus),.(MeanIV = mean(TotalImputedValue, na.rm = T), 
+  StdIV = var(TotalImputedValue, na.rm = T)^(.5), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, HoldingClass, Year)]
+lvostat3[, c("ciLB", "ciUB") := list(MeanIV - StdIV * qt(.975, N- 1), MeanIV + StdIV * qt(.975, N- 1))]
+<<Total imputed value histogram original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total imputed value of livestock holding", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvo[TotalImputedValue > 0], aes(TotalImputedValue)) + 
+  geom_histogram(breaks = c(0, seq(10000, 200000, 10000))) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(breaks = seq(0, 200000, 20000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes original HHs, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvostat2, aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm)
+<<Histogram of livestock holding classes by year original HHs, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Histogram of livestock holding classes by year", "\\\\ {\\footnotesize Livestock holding values are computed by using respective median prices of each year.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = lvostat3, aes(HoldingClass, N)) + 
+  geom_col() +
+  xlab("Livestock holding classes") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(Year ~ Arm)
+@
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{cow} reports above 20000 holding in rds 2-4 while \textsf{traditional} does not.
+\end{itemize}
+<<>>=
+lvo[, NumberOfCows := 0L]
+lvo[grepl("ow", LivestockCode), NumberOfCows := as.integer(number_owned)]
+lvo[,
+  .(MeanImputedVal = mean(TotalImputedValue, na.rm = T), 
+  MeanNumCows = mean(NumberOfCows, na.rm = T), 
+  N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)]
+#lvo[,.(N = sum(!is.na(TotalImputedValue))), by = .(Arm, survey)]
+<<Number of cows by year original HHs, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Number of cows/oxen by year", "\\\\ {\\footnotesize Means are mean holding among the owners. Totals are total number of cows/oxen owned. Mean and total number of cows/oxen may diverge because the number of owners differ across round.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+lvo[, LivestockType := LivestockCode]
+lvo[grepl("Ox|Cow", LivestockCode), LivestockType := "Cow/Ox"]
+lvo[grepl("Goat|She", LivestockCode), LivestockType := "Goat/Sheep"]
+lvo[grepl("Duc|Hen", LivestockCode), LivestockType := "Poultry"]
+lvo[, LivestockType := factor(LivestockType)]
+lvotype <- lvo[grepl("es", creditstatus), 
+  .(Std = var(number_owned, na.rm = T)^(.5), 
+    Total = sum(number_owned, na.rm = T), 
+    N = sum(!is.na(number_owned))), 
+    by = .(Arm,  LivestockType, Year)]
+lvotype <- lvotype[!is.na(Arm), ]
+lvotype[, Mean := round(Total/N, 1)]
+setnames(lvotype, grepout("^T|N|^S|^M", colnames(lvotype)), 
+  paste0("value.", grepout("^T|N|^S|^M", colnames(lvotype))))
+lvotype[is.na(LivestockType)|LivestockType == "", LivestockType := "Other"]
+lvotype[grepl("cow", LivestockType), LivestockType := "Cow/Ox"]
+lvotypel <- reshape(lvotype, direction = "long", 
+  idvar = c("Arm", "LivestockType", "Year"),
+  varying = grepout("val", colnames(lvotype)))
+lvotypel <- lvotypel[grepl("Cow", LivestockType) & grepl("Mean|Tot|^N", time), ]
+lvotypel <- lvotypel[!is.na(Year), ]
+setkey(lvotypel, Arm, Year, LivestockType)
+lvotypel[, Variable := time]
+lvotypel[grepl("N", time), Variable := "Number of owners"]
+lvotypel[, Variable := factor(Variable, levels = c("Mean", "Total", "Number of owners"))]
+ggplot(data = lvotypel, aes(Year, value)) + 
+  geom_col(data = lvotypel[grepl("Total", Variable), ]) +
+  geom_col(data = lvotypel[grepl("Mean", Variable), ]) +
+  geom_col(data = lvotypel[grepl("N", Variable), ]) +
+  xlab("Year") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(Variable ~ Arm, scale = "free_y")
+@
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{Figure Histogram of livestock holding classes by year original HHs}} shows increasing livestock accumulation in all arms but \textsf{traditional}. 
+\textsc{Figure \ref{Figure Number of cows by year original HHs}} shows increasng cow ownership relative to \textsf{traditional} in the bottom panel while the holding per owner is similar across all arms. This is evidence of an acceleration of becoming a large livestock owner for the large sized arms relative to the small size arm. Given that the number of cows per owner remains the similar, it does not provide evidence for accelerated growth of livestock after becoming an owner.
+\end{finding}
+\end{palepinkleftbar}
+
+
+\subsection{Assets+Livestock}
+
+
+
+<<ReadTrimAssetFDData original HHs again , cache = F, warning = F, child='c:/data/GUK/analysis/program/ReadTrimAssetFDData.rnw'>>=
+<<ReadTrimLivestockFDData original HHs again, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockFDData.rnw'>>=
+<<merge assets and livestock original HHs data, cache = F, child='c:/data/GUK/analysis/program/MergeAssetsAndLivestockOriginalHHsTakeFD.rnw'>>=
+@
+
+
+<<AssetLivestock set parameters original HHs>>=
+FileName <- "AssetLivestock"
+FileNameHeader <- 
+  paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes",
+    "TInt", "TIntGrace", "TIntSize", "Rd24Diff", "Rd24DiffGrace", 
+    "Rd24DiffPovertyStatus", "Rd24DiffSize", "Rd24DiffAttributes"), "OriginalHHs")
+alsuffixes <- c("", "G", "P", "S", "a", "T", "TG", "TS", "D", "DG", "DP", "DS", "Da")
+listheader <- paste0("al", alsuffixes)
+DataToUse1 <- rep("dAL1d", 6)
+DataToUse2 <- rep("dAL2d", 6)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("TotalValue", 6)
+tableboxwidth <- 4.5
+<<asset livestock regression select covariates original HHs>>=
+source(paste0(pathprogram, "AssetLivestockCovariateSelection.R"))
+<<asset livestock regression estimation original HHs>>=
+exclheader <- paste0("excl", alsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<Total values original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. Original 1600 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = ALfig, aes(group = tee)) + 
+#  geom_point(size = .1, position = position_dodge(width = .5)) +
+#  geom_smooth(span = .5, aes(colour = Arm, group = Arm)) +
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  geom_boxplot(aes(x= tee, y = TotalValue, colour = Arm))+
+  #scale_y_log10(breaks = c(1, 1000, 5000, 10000, 20000, 50000, 100000, 500000)) +
+  scale_y_continuous(breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"), legend.position = "none") +
+  facet_grid(. ~ Arm)
+<<>>=
+# dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets, original HHs\label{tab FD total assets original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetLivestockOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets by attributes\label{tab FD total assets attributes original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetLivestockAttributesOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of total assets, moderately poor vs. ultra poor, original HHs \label{tab FD total assets2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "AssetLivestockPovertyStatusOriginalHHsFDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Incomes}
+
+<<ReadTrimIncomeFDData original HHs, cache = F, child='c:/data/GUK/analysis/program/ReadTrimIncomeOriginalHHsFDData.rnw'>>=
+@
+<<ReadTrimIncomeFDData original HHs by R file>>=
+source(paste0(pathprogram, "ReadTrimIncomeOriginalHHsFDData.R"))
+@
+
+Income sources are mainly labour incomes (\textsf{lab}) and farm revenues (\textsf{far}) with \Sexpr{nrow(lab)} and \Sexpr{nrow(far)} observations, respectively. After first-differencing, they become \Sexpr{nrow(dlabd)} and \Sexpr{nrow(dfard)} observations, with \Sexpr{table(dlabd[, Tee])} households observed for \Sexpr{as.numeric(names(table(dlabd[, Tee])))+1} times. 
+
+
+Obs for survey labour income.
+<<>>=
+table(dlabd[, tee])
+@
+Obs for survey labour income and admin repayment data.
+<<>>=
+table(dlabRd[, tee])
+table(dfarRd[, tee])
+@
+Obs for survey farm revenue.
+<<>>=
+table(dfard[, tee])
+@
+Obs for survey farm revenue and admin repayment data.
+<<>>=
+table(dfarRd[, tee])
+dlabRd <- dlabRd[tee > 2, ]
+dfard <- dfard[tee > 2, ]
+dfarRd <- dfarRd[tee > 2, ]
+
+<<income regression set parameters original HHs>>=
+FileName <- "Incomes"
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes"),
+   "OriginalHHs")
+lbsuffixes <- c("", "g", "p", "s", "a")
+listheader <- paste0("lb", lbsuffixes)
+Regressands <- c(rep("TotalHHLabourIncome", 4), rep("TotalRevenue", 3))
+DataToUse1 <- DataToUse2 <- c(rep("dlabd", 3), "dlabRd", rep("dfard", 2), "dfarRd")
+Addseparatingcols = 4; Separatingcolwidth = .2
+Separatingcoltitle = c("Labour income (Tk)", "Farm income (Tk)")
+<<incomes select covariates original HHs>>=
+source(paste0(pathprogram, "IncomeCovariateSelection.R"))
+<<income FD estimation original HHs>>=
+exclheader <- paste0("excl", lbsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<incomes select covariates robustness original HHs, echo = F, eval = F>>=
+source(paste0(pathprogram, "IncomeCovariateSelectionRobustness.R"))
+<<income FD estimation robustness original HHs, echo = F, eval = F>>=
+FileNameHeader <- paste0(FileNameHeader, "Robustness")
+exclheader <- paste0("excl", lbsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<>>=
+#dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes\label{tab FD incomes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Incomes", FileNameHeader[1], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes by attributes \label{tab FD incomes attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Incomes", FileNameHeader[5], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes, moderately poor vs. ultra poor\label{tab FD incomes2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Incomes", FileNameHeader[3], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\subsection{Consumption}
+
+<<ReadTrimConsumptionFDData original HHs, cache = F, child='c:/data/GUK/analysis/program/ReadTrimConsumptionOriginalHHsFDData.rnw'>>=
+@
+
+Consumption is observed in rd 2-4. There are \Sexpr{nrow(con)} observations, with first-differencing, it becomes \Sexpr{nrow(dcond)} observations with \Sexpr{table(dcond[, Tee])} households observed for \Sexpr{as.numeric(names(table(dcond[, Tee])))+1} times. 
+
+<<ReadTrimConsumptionFDData original HHs in R file>>=
+source(paste0(pathprogram, "ReadTrimConsumptionOriginalHHsFDData.R"))
+@
+
+<<consumption regression set parameters original HHs>>=
+FileName <- "Consumption"
+cnsuffixes <- c("", "g", "p", "s", "a")
+listheader <- paste0("cn", cnsuffixes)
+Regressands <- c(rep("PCExpenditure", 4), rep("PCHygieneExpenditure", 3))
+DataToUse1 <- DataToUse2 <- c(rep("dcond", 3), "dconRd", rep("dcond", 2), "dconRd")
+Addseparatingcols = 4; Separatingcolwidth = .2
+Separatingcoltitle = c("Per capita consumption (Tk)", "Per capita hygiene consumption (Tk)")
+<<consumption select covariates original HHs>>=
+source(paste0(pathprogram, "ConsumptionCovariateSelection.R"))
+<<consumption estimation original HHs>>=
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes"),
+  "OriginalHHs")
+exclheader <- paste0("excl", cnsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<consumption select covariates robustness original HHs, echo = F, eval = F>>=
+source(paste0(pathprogram, "ConsumptionCovariateSelectionRobustness.R"))
+<<consumption estimation robustness original HHs, eval = F>>=
+FileNameHeader <- paste0(FileNameHeader, "Robustness")
+exclheader <- paste0("excl", cnsuffixes)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+	<<>>=
+#dummy chunk
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption\label{tab FD consumption original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Consumption", FileNameHeader[1], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{TabFNTop} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption by attributes \label{tab FD consumption attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Consumption", FileNameHeader[5], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNAttributes)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption, moderately poor vs. ultra poor\label{tab FD consumption2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "Consumption", FileNameHeader[3], "FDEstimationResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNTop, TabFNUP)} Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+
+\subsection{IGA}
+
+<<warning = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+iga <- adw2[, .(hhid, Arm, Date, iga11st, iga12nd, iga13rd)]
+setnames(iga, c("hhid", "Arm", "Date", paste0("iga", 1:3)))
+#table0(iga[, iga1])
+#table0(iga[, iga2])
+#table0(iga[, iga3])
+setkey(iga, hhid, Date)
+iga[, NumIGA := sum(!is.na(iga1)) + sum(!is.na(iga2)) + sum(!is.na(iga3)), by = .(hhid, Date)]
+#iga[NumIGA == 0 & !is.na(iga1), ]
+setkey(iga, NumIGA, iga1, iga2, iga3)
+iga.unique <- unique(iga[, .(NumIGA, iga1, iga2, iga3)])
+iga.unique <- iga[iga.unique, .N/48, by = .EACHI]
+setnames(iga.unique, "V1", "N")
+setorder(iga.unique, -NumIGA, -N, iga1, iga2, iga3)
+setkey(iga, NumIGA, iga1, Arm)
+igaArm.unique <- unique(iga[, .(NumIGA, iga1, Arm)])
+igaArm.unique <- iga[igaArm.unique, .N/48, by = .EACHI]
+setnames(igaArm.unique, "V1", "N")
+setorder(igaArm.unique, -NumIGA, -N, iga1)
+for (i in 1:3) {
+  iga[, paste0("IGA.", i) := as.character(NA)]
+  iga[grepl("Cow|oxen", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "cow"]
+  iga[grepl("Goa|heep", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "goat sheep"]
+  iga[grepl("small", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "small trade"]
+  iga[grepl("house|land", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "house land"]
+  iga[grepl("machi", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "machinery"]
+  iga[grepl("addy|nut", eval(parse(text = paste0("iga", i)))), 
+    paste0("IGA.", i) := "paddy nuts corn"]
+  iga[, paste0("IGA.", i) := factor(eval(parse(text = paste0("IGA.", i))), 
+    levels = c("cow", "goat sheep", "machinery", "small trade", "house land", "paddy nuts corn", NA))]
+}
+setkey(iga, NumIGA, IGA.1, IGA.2, IGA.3, Arm)
+iga.unique3 <- unique(iga[, .(NumIGA, IGA.1, IGA.2, IGA.3, Arm)])
+iga.unique3 <- iga[iga.unique3, .N/48, by = .EACHI]
+setnames(iga.unique3, "V1", "N")
+setorder(iga.unique3, -NumIGA, -N, Arm, IGA.1, IGA.2, IGA.3)
+iga.unique3[, NumIGA := factor(NumIGA, levels = 3:0)]
+<<IGA choices original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Income generatng activity choices", "\\\\ {\\footnotesize The first income generating activity choices are plotted.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(data = iga.unique3[NumIGA != 0 & !is.na(IGA.1), ], aes(IGA.1, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 30, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(NumIGA ~ Arm, switch = "y")
+<<All IGA choices original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("All income generatng activity choices", "\\\\ {\\footnotesize All of multiple investment choices are summed by arms and the number of IGAs and plotted as bars. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+iga.unique3[, num := 1:.N]
+igaUL <- reshape(iga.unique3, direction = "long", idvar = c("num", "NumIGA", "Arm", "N"),
+  varying = paste0("IGA.", 1:3))
+setnames(igaUL, "time", "rank")
+setkey(igaUL, num, rank)
+library(ggplot2)
+ggplot(data = igaUL[NumIGA != 0 & !is.na(IGA), ], aes(IGA, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 30, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(NumIGA ~ Arm, switch = "y")
+<<All IGA choices collapsed original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("All income generatng activity choices collapsed over different number of IGAs", "\\\\ {\\footnotesize All of multiple investment choices are summed by arms and plotted as bars. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+iga.unique3[, num := 1:.N]
+igaUL <- reshape(iga.unique3, direction = "long", idvar = c("num", "NumIGA", "Arm", "N"),
+  varying = paste0("IGA.", 1:3))
+setnames(igaUL, "time", "rank")
+setkey(igaUL, num, rank)
+library(ggplot2)
+ggplot(data = igaUL[NumIGA != 0 & !is.na(IGA), ], aes(IGA, N)) + 
+  geom_col() +
+  xlab("First IGA choices") +
+  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"))+
+  facet_grid(. ~ Arm, switch = "y")
+@
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure IGA choices original HHs}, \ref{Figure All IGA choices original HHs}} show that there are very few members who chose to invest in more than one project for the ``large'' arms, while in the \textsf{traditional} arm, almost no one invested only in one project. Goat/sheep and small trades are the top choices for the first IGA in \textsf{traditional}. This indicates the exitence of both a liquidity constraint and convexity in the production technology of large domestic animals. This also validates our supposition that dairy livestock production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive a cow. \textsc{\small Figure \ref{Figure All IGA choices collapsed original HHs}} shows there are a significant number of cases in the \textsf{traditional} arm that members reportedly raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. Contrasting \textsf{large}, \textsf{large grace} with \textsf{cow} arms, it suggests that entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake among members.
+\end{finding}
+\end{palepinkleftbar}
+
+Together with \textsc{\small Table \ref{tab FD enroll attributes original HH}} showing smaller net saving and repayment among \textsf{traditional}, the restriction on a project choice induced by a smaller loaned sum resulted in smaller returns. 
+
+
+\subsection{Project cycle}
+
+<<warning = F>>=
+library(readstata13)
+pc1 <- read.dta13(paste0(path234E, "S21AProjectCycle.dta")
+  , generate.factors = T, nonint.factors = T)
+pc1 <- data.table(pc1)
+pc2 <- read.dta13(paste0(path234E, "S21BProjectCycle.dta")
+  , generate.factors = T, nonint.factors = T)
+pc2 <- data.table(pc2)
+setnames(pc1, c("id", "strat_year", "project_typf"), 
+  c("hhid", "start_year", "project_type"))
+setnames(pc2, "id", "hhid")
+xid1 <- xid[tee == 1, ]
+xid1[, tee := NULL]
+setkey(xid1, hhid); setkey(pc1, hhid); setkey(pc2, hhid)
+pc1 <- pc1[xid1]
+pc2 <- pc2[xid1]
+
+<<product choices collapsed original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Project choices", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+pc1[, Project := as.character(NA)]
+pc1[grepl("Cow|Ox", project_type) | grepl("cow", project_type_others), 
+  Project := "cow/ox"]
+pc1[grepl("Other", project_type) & grepl("goat|ram|sheep", project_type_others), 
+  Project := "goat/sheep"]
+pc1[grepl("Land", project_type), 
+  Project := "land"]
+pc1[grepl("busi|trad|tail", project_type_others), 
+  Project := "business/trade"]
+library(ggplot2)
+g <- ggplot(data = subset(pc1, creditstatus == "Yes"), aes(Project)) + 
+  geom_histogram(stat = "count") +
+  xlab("project choices") +
+  scale_y_continuous(labels = scales::percent, name = "percentage in sample")+
+  aes(y=stat(count)/sum(stat(count))) +
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 7, angle = 90, vjust = 1, hjust = ),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  facet_grid(. ~ AssignOriginal, switch = "y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/ProjectChoices.png"),
+  g,
+  width = 10, height = 4, units = "cm",
+  dpi = 300
+ )
+<<fixed investment choices collapsed original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Fixed investment amount", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- ggplot(data = subset(pc2, size_sequence == 1), aes(cost_once_amount_taka)) + 
+  geom_histogram() +
+  xlab("amount (Tk.)") +
+  scale_y_continuous()+
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  facet_grid(. ~ AssignOriginal, switch = "y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/FixedInvestmentAmount.png"),
+  g,
+  width = 10, height = 4, units = "cm",
+  dpi = 300
+ )
+<<most recent fixed investment year collapsed original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Fixed investment amount", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+pc21 <- pc2[!is.na(cost_once_when_year) & !is.na(cost_once_amount_taka), ]
+pc21[, Seq := .N:1, by = hhid]
+g <- 
+ggplot(data = subset(pc21, size_sequence == 1 & Seq > 1), 
+  aes(cost_once_amount_taka)) + 
+  geom_histogram() +
+  xlab("amount") +
+  scale_y_continuous()+
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 5),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  )+   
+  facet_grid(cost_once_when_year ~ AssignOriginal)
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/2ndOrLaterFixedInvestmentAmountByYear.png"),
+  g,
+  width = 10, height = 5, units = "cm",
+  dpi = 300
+ )
+<<first fixed investment year collapsed original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Fixed investment amount", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- 
+ggplot(data = subset(pc21, size_sequence == 1 & Seq == 1), 
+  aes(cost_once_amount_taka)) + 
+  geom_histogram() +
+  xlab("amount") +
+  scale_y_continuous()+
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 5, angle = 90, vjust = 1),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  )+   
+  facet_grid(cost_once_when_year ~ AssignOriginal)
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo/FirstFixedInvestmentAmountByYear.png"),
+  g,
+  width = 10, height = 5, units = "cm",
+  dpi = 300
+ )
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Project choices\label{fig ProjectChoices}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/ProjectChoices.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported project choices using the lending. NAs include nonresponse to the question and dropped out individuals.  \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Largest fixed investment amount\label{fig FixedInvest}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/FixedInvestmentAmount.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported largest one-off investment amounts of the lending. \\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: First and 2nd or later fixed investment amount\label{fig first2ndFixedInvest}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/FirstFixedInvestmentAmountByYear.png")}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo/2ndOrLaterFixedInvestmentAmountByYear.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Reported largest one-off investment amounts of the lending. Top panel is the first investments reported, bottom panel is 2nd or later investments reported.\\[1ex]
+\end{tabular}
+}
+
+
+\subsection{GE effects of milk}
+
+<<warning = F>>=
+lvp <-  readRDS(paste0(pathsaveHere, "RosterLivestockProductsAdminOriginalHHsDataUsedForEstimation.rds"))
+#milkprice <- median(xlp[total_milk_sold > 0 & total_milk_sold_tk > 0 & year == 2015, 
+	total_milk_sold_tk])
+
+@
+\footnotesize\bibliographystyle{aer}
+\setlength{\baselineskip}{10pt}
+\bibliography{c:/dropbox/docs/notes/seiro}
+

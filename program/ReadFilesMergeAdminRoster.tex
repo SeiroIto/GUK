@@ -1,0 +1,1429 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ReadFilesMergeAdminRoster/"); library(knitr); knit("ReadFilesMergeAdminRoster.rnw", "ReadFilesMergeAdminRoster.tex"); system("platex ReadFilesMergeAdminRoster"); system("pbiblatex ReadFilesMergeAdminRoster"); system("dvipdfmx ReadFilesMergeAdminRoster")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+\ifdefined\knitrout
+\renewenvironment{knitrout}
+{\definecolor{warningcolor}{rgb}{0, 1, 0} \definecolor{errorcolor}{rgb}{1, 0, 0}}
+{  }
+\else
+\fi
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Read and trim files for original 800 HHs\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+
+
+
+
+
+
+
+
+
+
+% This is to be read in ReadFilesMergeAdminRoster.rnw
+\textcolor{blue}{This file reads data from a list \textsf{data\_read\_in\_a\_list\_with\_baseline\_patched.rds} and c:/data/GUK/received/cleaned\_by\_RA/clean\_panel\_data\_by\_section/admin\_data\_wide2.rds, merges all non-roster files with roster-adin (\textsf{ar}), attaches village level information, and saves in c:/data/GUK/analysis/save/EstimationMemo/.}
+
+
+
+
+
+
+\section{Read from a list}
+
+In reading raw files, I added ID information (\textsf{\footnotesize ./ID/ID\_Updated\_received\_from\_Abu.dta}) to all pages. I further added HH ID information from the admin file. \textsf{(code omitted)}
+
+
+
+Use roster file as a base, pick 800 \textsf{o800} by referring to JDS data.
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	One cannot base \textsf{ar}, \textsf{arA} because they are admin files that do not include rejecters.
+\end{itemize}
+\begin{Schunk}
+\begin{Sinput}
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+ros[, o800 := 0L]
+ros[hhid %in% jds[grepl("trea", treat), hhid], o800 := 1L]
+ass[, o800 := 0L]
+ass[hhid %in% jds[grepl("trea", treat), hhid], o800 := 1L]
+\end{Sinput}
+\end{Schunk}
+Roster etries:
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ros[o800 == 1L, .(AssignOriginal, tee = 1:.N), 
+  by = .(survey, hhid)][tee == 1, .(AssignOriginal, survey)]))
+\end{Sinput}
+\begin{Soutput}
+              survey
+AssignOriginal    1    2    3    4  Sum
+   traditional  140  134  134  132  540
+   large        180  171  174  173  698
+   large grace  180  172  174  171  697
+   cow          190  180  180  177  727
+   <NA>         110   86   83   55  334
+   Sum          800  743  745  708 2996
+\end{Soutput}
+\end{Schunk}
+
+\subsection{Read village data file}
+
+\begin{Schunk}
+\begin{Sinput}
+library(readstata13)
+vr <- read.dta13(paste0(pathcleaned, "RCT_village.dta"), 
+  generate.factors = T, nonint.factors = T)
+vr <- data.table(vr)
+vr[, GroupStatus := "accepted"]
+vr[grepl("De", comment), GroupStatus := "group rejection"]
+vr[grepl("Ero", comment), GroupStatus := "erosion"]
+setnames(vr, c("comment", "randomization"), c("GroupComment", "VArm"))
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Assign arms}
+
+
+\begin{Schunk}
+\begin{Sinput}
+probgp
+\end{Sinput}
+\begin{Soutput}
+    group.id randomization0 comment
+ 1:    70205    large grace  eroded
+ 2:    70314    large grace  denial
+ 3:    70317          large  denial
+ 4:    70319          large  denial
+ 5:    70539    traditional  denial
+ 6:    70544    traditional  eroded
+ 7:    70858    traditional  denial
+ 8:    71064         cattle  eroded
+ 9:    81483    traditional  denial
+10:    81697    traditional  denial
+11:   817102    traditional  eroded
+\end{Soutput}
+\end{Schunk}
+There are NAs in arm assignment. Need to fill from village level info. Apply on \textsf{AssignOriginal} in roster file.
+\begin{Schunk}
+\begin{Sinput}
+ros[, Arm := AssignOriginal]
+ros[, Arm := factor(Arm, labels = armsC)]
+for (gg in unique(ros[is.na(AssignOriginal) & gid %in% vr[, groupid], gid]))
+  ros[is.na(AssignOriginal) & gid == gg, Arm := vr[groupid == gg, VArm]]
+addmargins(table0(ros[o800 == 1L, .(Arm, tee = 1:.N), 
+  by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           200   200         200    200  800
+   2           190   191         172    190  743
+   3           188   193         174    190  745
+   4           168   192         171    177  708
+   Sum         746   776         717    757 2996
+\end{Soutput}
+\begin{Sinput}
+ass[, Arm := AssignOriginal]
+ass[, Arm := factor(Arm, labels = armsC)]
+ass[is.na(gid), gid := substr(hhid, 1, 5)]
+for (gg in unique(ass[is.na(AssignOriginal) & gid %in% vr[, groupid], gid]))
+  ass[is.na(AssignOriginal) & gid == gg, Arm := vr[groupid == gg, VArm]]
+addmargins(table0(ass[o800 == 1L, .(Arm, tee = 1:.N), 
+  by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           184   189         189    179  741
+   2           188   191         171    188  738
+   3           188   192         174    190  744
+   4           168   192         171    177  708
+   Sum         728   764         705    734 2931
+\end{Soutput}
+\end{Schunk}
+Check how many baseline asset samples survive through rounds.
+\begin{Schunk}
+\begin{Sinput}
+ass[, InBase := F]
+ass[hhid %in% hhid[survey == 1], InBase := T]
+addmargins(table0(ass[o800 == 1L & InBase, .(Arm, tee = 1:.N), 
+  by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           184   189         189    179  741
+   2           174   181         161    169  685
+   3           176   182         164    169  691
+   4           157   182         161    156  656
+   Sum         691   734         675    673 2773
+\end{Soutput}
+\begin{Sinput}
+ass[, InBase := NULL]
+\end{Sinput}
+\end{Schunk}
+
+
+Incorporate credit and borrowing data. In rd 1, \textsf{out\_bal} = NA for all entries. Only \textsf{out\_ngo}, \textsf{out\_rel}, \textsf{loan\_amount\_lender} have entries. Create \textsf{YBal} where \textsf{Y=}NGO, relative, and lender. Then sum all: \textsf{OutBal} as outstanding balance for relatives, NGOs, and money lenders  (code omitted). In rd1, \textsf{OutBal} = \textsf{out\_rel}+\textsf{out\_ngo}+\textsf{loan\_amount\_lender}, in rd 2, 4, \textsf{OutBal} = \textsf{out\_bal}+\textsf{sum(out\_bal\_X)}+\textsf{sum(loan\_amount\_lender\_X)}. In rd 3, there is no data. 
+
+
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations in other borrowing\label{tab other borrowing num obs}}\\
+\hfil \\
+\hfil\begin{tabular}{
+>{\footnotesize\hfill}p{2cm}<{}
+>{\footnotesize\hfil}p{1cm}<{}>{\footnotesize\hfil}p{1cm}<{}>{\footnotesize\hfil}p{1cm}<{}
+}
+\rowcolor{paleblue}
+lender & round 1 & round 2 & round 4\\
+any debt & 425&1298&1053\\
+\rowcolor{gray90}
+NGO & 14&1057&572\\
+GUK & &34&871\\
+\rowcolor{gray90}
+relatives & 258&265&132\\
+money lenders & 157&291&191\\
+\rowcolor{gray90}
+non-NGO & 411&489&318
+\end{tabular}
+
+
+\textsc{\footnotesize Table \ref{tab other borrowing num obs}} shows the growing numbers of NGO debts. This should include GUK borrowing. I created \textsf{NetOutBal} = \textsf{OutBal}-GUK borrowing to get just non-GUK debts, but this does not give any insight because households do not always report lender as GUK. 
+
+
+%There are table0(obr[NetOutBal > 0 & iingo & !iiguk, survey]) in round names(table0(obr[NetOutBal > 0 & iingo & !iiguk, survey])). This indicates that GUK debts are reported not as GUK debts. If we exclude a household who report GUK debt in any round, table0(obr[NetOutBal > 0  & iingo & !iiguk & HaveDebtFromGUK != 1L, survey]) in round names(table0(obr[NetOutBal > 0 & iingo & !iiguk & HaveDebtFromGUK != 1L, survey])). Median debt for these households are 
+% median(obr[survey == 1 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 
+% median(obr[survey == 2 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 
+% median(obr[survey == 4  & iingo & !iiguk& HaveDebtFromGUK != 1L, NetOutBal], na.rm = T),
+% mean debts are 
+% round(mean(obr[survey == 1 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0), 
+% round(mean(obr[survey == 2 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0), 
+% round(mean(obr[survey == 4 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0)
+% in round 1, 2 and 4. Money lender debts are table0(obr[NetOutBal > 0 & iilen, survey]) in round names(table0(obr[NetOutBal > 0 & iilen, survey])).
+
+We define \textsf{NonNGOBal} as non-NGO debt (relative + money lender), median debts are 
+500, 
+1520, 
+NA, 
+1116,
+mean debts are 
+1256, 
+3686, 
+NaN, 
+1376 in round 1, 2 and 4.
+Mean debts by arm are 
+2150, 
+2163, 
+2521, 
+NaN for traditional, large, large grace, and cattle. 
+
+\vspace{2ex}
+\mpage{14cm}{\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Indebtedness to Non-NGOs\label{fig nonNGO debt}}\\
+\hfil\includegraphics[width = 14cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NonNGODebts.pdf}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:&  Sum of debts to relatives and money lenders in the last 12 months of survey. Each dots represent one observation, filled triangles show the group means of indetedness. \\[-1ex]
+\end{tabular}
+}
+
+\vspace{2ex}
+\textsc{\small Figure \ref{fig nonNGO debt}} gives borrowing from friends/relatives and money lenders. If we exclude loans from GUK, they are the only sources of borrowing for the households in our study area. Both box plots and means show an increased borrowing in round 2, but it decreased in round 4 to the pre-intervention level. This suggests the repayment schedule that we intended to adopt the heifer growth cycle is still not suited to the actual cash flow profiles, and such gaps might have induced the borrowers to get liquidity elsewhere for installments during the second round. If the households could foresee the gap in cash flows, they might have not participated the program. If the households could not foresee the gap and did not have credit access other than GUK, they might have ended up as a delinquent borrower.
+
+Define shock variables. \textsf{FloodInRd1} is reported flood damage in \textsf{code\_1} in round 1. \textsf{(code omitted)}
+
+
+\vspace{2ex}
+Description of data files:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ad]	Administrative data: Up to [-24, 48] months after first loan disbursement. This file has not been used in \textsf{read\_cleaned\_data.rnw}. \textsf{o800} is imported from JDS file.
+\item[ros]	 \textsf{roster} to condition the initial status prior to participation. This is the base of all files, and incudes variables \textsf{o800} and \textsf{Arm}.
+\item[sch]	Schooling panel with attrition. Aged 6-18 in rd1. \textsf{Enrolled=\{0,1\}} is defined for children aged 6-18 in rd1 by referencing to \textsf{currently\_enrolled} and age information.
+\item[ass]	 MergedAssets. Merged from several tables: household assets (houses, durables), productive assets (machines, tools), and ownership and contract (land holding; operated area, owned area). 
+\item[lvo]	Livestock holding. 
+\item[lab]	Labour incomes.
+\item[far]	Farming revenues (no costs reported).
+\item[con]	Household consumption. Food expenditure asks both bought and consumed volumes and prices. We impute consumption values by using median prices. All quantity is set to annualised quantity.
+\item[obr]	Other borrowing (pages under ``credit and borrowing'') from relatives and money lenders. To be merged with MergedAssets in this file.
+\item[shk]	Shocks. Merged with all other files.
+\end{description}
+
+\section{Sample selection and treament assignment}
+
+\subsection{Create cumulative values in admin file}
+
+Read admin files.
+\begin{Schunk}
+\begin{Sinput}
+adw3 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adw3[, MemNum := 1:.N, by = .(hhid, Year)]
+adw3[, tee := 1:.N, by = hhid]
+\end{Sinput}
+\end{Schunk}
+
+Number of meetings in recorded in admin file: there are 1999 entries that have 48 meetings.
+\begin{Schunk}
+\begin{Soutput}
+
+1999 
+  48 
+\end{Soutput}
+\end{Schunk}
+
+
+Add rolling means.
+\begin{Schunk}
+\begin{Sinput}
+# add rolling means
+library(zoo)
+rollvars <- c("value.missw", "value.repay", "value.NetSaving", "OtherNetSaving", "OtherRepaid")
+ad0[, (paste0("RM", rollvars)) := lapply(.SD, rollmean, k = 6, na.pad = TRUE), 
+   by = hhid, .SDcols = rollvars]
+  # lag rolling means by 3 months to get previous 6 month averages	
+ad0[, (paste0("RM", rollvars)) := shift(.SD, n=3, type = "lag"), 
+   by = hhid, .SDcols = paste0("RM", rollvars)]
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Merge roster with admin files: \textsf{ar.1}}
+
+Create \textsf{adbase} (baseline fixed characteristics creditstatus, Mem, povertystatus, DisDate1 taken from \textsf{ad0} (={\footnotesize c:/data/GUK/received/cleaned\_by\_RA/clean\_panel\_data\_by\_section/admin\_data\_wide2.rds}). Merge it with roster. This gives fixed characteristics of membership attached with roster. Name the resulting data as \textsf{ar.0}.
+
+Check the completeness of roster file.
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ros[o800 == 1L, .(teenum =1:.N, Arm), 
+  by = .(hhid, survey)][teenum == 1, .(survey, Arm)]), 2)
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle Sum
+     1         200   200         200    200 800
+     2         190   191         172    190 743
+     3         188   193         174    190 745
+     4         168   192         171    177 708
+\end{Soutput}
+\end{Schunk}
+
+
+
+Tabulation of arms with \textsf{ar.0} for \textsf{o800}. There are 0 NAs which will be filled in with \textsf{RCT\_village.dta} with \textsf{ar, arAll} in the next subsection.
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle Sum
+     1         200   200         200    200 800
+     2         190   191         172    190 743
+     3         188   193         174    190 745
+     4         168   192         171    177 708
+\end{Soutput}
+\end{Schunk}
+%Observations with no \textsf{povertystatus} are drop outs and rejecters.
+
+Create \textsf{adrest}: Time-variant characteristics in \textsf{ad0}. Merge with \textsf{ar.0}. Name resulting data as \textsf{ar.1}. \textsf{ar.1} is roster with fixed and variable characteristics found in admin data.
+
+\begin{Schunk}
+\begin{Sinput}
+setkey(ar.0, groupid, hhid, Year, Month)
+setkey(adrest, groupid, hhid, Year, Month)
+ar.1 <- adrest[ar.0]
+ar1vars <- c("Arm", "groupid", "creditstatus", "DisDate1", "Mship", "Mem")
+for (i in ar1vars)
+  ar.1[, (i) := eval(parse(text=
+      paste0(i, "[!is.na(", i, ")][1]")
+    )), by = hhid]
+for (i in grepout("Arm|rand|Assi", ar1vars)) {
+  ar.1[grepl("largeG", eval(parse(text=i))), (i) := "large grace"]
+  ar.1[, (i) := factor(eval(parse(text=i)), 
+    levels = c("traditional", "large", "large grace", "cattle"))]
+}
+setorder(ar.1, hhid, survey, IntDate, mid)
+ar.1[, MemNum := 1:.N, by = .(hhid, survey, IntDate)]
+\end{Sinput}
+\end{Schunk}
+Errors in \textsf{Mstatus} in \textsf{ar.1}. Correct to oldMember. (No corresponding entry in \textsf{arAll} because it is data only for members.)
+\begin{Schunk}
+\begin{Soutput}
+      hhid survey CumRepaid CumNetSaving TradGroup       Date   DisDate1
+1: 7137220      1        NA           NA      <NA>       <NA> 2013-11-01
+2: 7137220      2      1750            0   planned 2014-10-01 2013-11-01
+3: 7137220      3      4250          385   planned 2015-11-01 2013-11-01
+   creditstatus     Mship    Mstatus
+1:          Yes oldMember iRejection
+2:          Yes oldMember iRejection
+3:          Yes oldMember iRejection
+\end{Soutput}
+\end{Schunk}
+There are
+0 members (\textsf{oldMember} in \textsf{Mstatus}), 
+20 members (\textsf{newGroup} in \textsf{Mstatus}),
+3 
+members (\textsf{iReplacement} in \textsf{Mstatus}) who did not borrow but only saved. This is identified by \textsf{DisDate1} == NA \&  \textsf{EverSaved} \& \textsf{creditstatus} == No.  
+\begin{Schunk}
+\begin{Soutput}
+          Arm        DisDate1  EverSaved      creditstatus         Mstatus  
+ traditional:23   Min.   :NA   Mode:logical   Yes: 0       gErosion    : 0  
+ large      : 0   1st Qu.:NA   TRUE:23        No :23       gRejection  : 0  
+ large grace: 0   Median :NA                               iRejection  : 0  
+ cattle     : 0   Mean   :NA                               iReplacement: 3  
+                  3rd Qu.:NA                               newGroup    :20  
+                  Max.   :NA                               oldMember   : 0  
+                  NA's   :23                                                
+            Mship   
+ oldMember     : 0  
+ newMember     :23  
+ quitMembership: 0  
+                    
+                    
+                    
+                    
+\end{Soutput}
+\end{Schunk}
+There are also members who were offered membership but never took up. This is identified by \textsf{DisDate1} == NA \& \textsf{$!$EverSaved}  \& \textsf{$!$EverRepaid}. 
+\begin{Schunk}
+\begin{Soutput}
+    DisDate1  EverSaved       EverRepaid      creditstatus         Mstatus 
+ Min.   :NA   Mode :logical   Mode :logical   Yes:0        gErosion    :0  
+ 1st Qu.:NA   FALSE:2         FALSE:2         No :2        gRejection  :0  
+ Median :NA                                                iRejection  :2  
+ Mean   :NA                                                iReplacement:0  
+ 3rd Qu.:NA                                                newGroup    :0  
+ Max.   :NA                                                oldMember   :0  
+ NA's   :2                                                                 
+          Arm   
+ traditional:2  
+ large      :0  
+ large grace:0  
+ cattle     :0  
+                
+                
+                
+\end{Soutput}
+\end{Schunk}
+Create \textsf{BorrowerStatus} to indicate these guys (\textsf{DisDate1} == NA \& \textsf{EverSaved} \& \textsf{creditstatus} == No) as a \textsf{pure saver}. 2 entries with \textsf{DisDate1} == NA \& \textsf{$!$EverSaved}  \& \textsf{$!$EverRepaid} are people who quit so set as \textsf{quit membership}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+              BorrowerStatus
+Mstatus        borrower pure saver quit membership  Sum
+  gErosion           80          0               0   80
+  gRejection        140          0               0  140
+  iRejection        157          0               2  159
+  iReplacement      112          3               0  115
+  newGroup          388         20               0  408
+  oldMember        1221          0               0 1221
+  Sum              2098         23               2 2123
+\end{Soutput}
+\end{Schunk}
+In \textsf{roster + admin} (base: roster): Tabulate \textsf{hhid} observations by \textsf{survey} round and \textsf{Arm} before supplementing with \textsf{AssignOriginal} and \textsf{VArm}. Note: 0 observations with NA are also pointed in \textsf{read\_cleaned\_data.rnw} and are going to be dealt with in the next subsection.
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           605   504         507    507 2123
+   2           585   485         447    466 1983
+   3           582   487         452    472 1993
+   4           540   483         447    444 1914
+   Sum        2312  1959        1853   1889 8013
+\end{Soutput}
+\end{Schunk}
+
+\subsection{Merge admin files with roster: \textsf{arA}}
+
+Create \textsf{arAll}: admin data \textsf{ad0} with period 1 roster data. (Roster information is added only if matched with admin HH IDs.) We define rd = 4 even if Date $>$ IntDate.4.
+
+Some HHs in admin file are not found in roster. 
+\begin{Schunk}
+\begin{Soutput}
+ [1]  9807042003  9807042011  9807042514  9807042706  9807042710  9807054106
+ [7]  9807054304  9807054520  9807064605  9807064607  9807064612  9807064617
+[13]  9807064619  9807065207  9807065208  9807065212  9807065306  9807065307
+[19]  9807065313  9807065315  9807065316  9807065319  9807075702  9807085904
+[25]  9807085914  9807086106  9807086107  9807106513  9807106517  9807106518
+[31]  9807126819  9807126820  9807127103  9807127105  9807127106  9807127108
+[37]  9807137203  9807137204  9807137206  9807137217  9807137218  9808169816
+[43]  9907065108  9907075402  9907075405  9907075406  9907075407  9907075410
+[49]  9907075411  9907075413  9907075418  9907075419  9907075420 98081710308
+[55] 98081710317 99070210905 99070210906 99070211813 99070310702 99070311402
+[61] 99070311403 99070311405 99070311407 99070311408 99070311411 99070311412
+[67] 99070311415 99070311416 99070311419 99070311501 99070311502 99070311505
+[73] 99070311507 99070311508 99070311509 99070311511 99070311513 99070311517
+[79] 99070311520 99070712701 99070712703 99070712704 99070712707 99070712708
+[85] 99070712710 99070712713 99070712714 99070712716 99070712720 99071010811
+[91] 99071010813 99071010814 99071010819 99081711206 99081711207 99081711208
+\end{Soutput}
+\end{Schunk}
+Refer to ID file {\footnotesize c:/data/GUK/received/cleaned\_by\_RA/clean\_panel\_data\_by\_section/ID.rds} to see their \textsf{Mstatus}. They are all new groups and individual replacing members who are not originally included in the baseline survey.
+\begin{Schunk}
+\begin{Soutput}
+              Assign
+Mstatus        traditional large large grace cow Sum
+  iReplacement          14     4          11  15  44
+  newGroup              34     4           4  10  52
+  Sum                   48     8          15  25  96
+\end{Soutput}
+\end{Schunk}
+Drop these from \textsf{arAll} who are missing in survey but found in admin. (They are kept in \textsf{ar}). \gobblepars
+
+This results in reduction in observations with 48 meetings. There are 1903 households who have 48 rows in data.
+
+
+
+In \textsf{arAll}, nonmembers (\textsf{gRejection, gErosion}) are not included.
+\begin{Schunk}
+\begin{Soutput}
+              Mship
+Mstatus        oldMember newMember quitMembership  Sum
+  gErosion             0         0              0    0
+  gRejection           0         0              0    0
+  iRejection           1         0            159  160
+  iReplacement         0       115              0  115
+  newGroup             0       408              0  408
+  oldMember         1220         0              0 1220
+  Sum               1221       523            159 1903
+\end{Soutput}
+\end{Schunk}
+%No additional match if matching only with \textsf{Year}. 
+
+%So are the same with nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("old", Mstatus), ]) \textsf{oldMember} in \textsf{Mstatus}:
+
+
+%Need to merge in 2 steps: Merge admin (time-invariant) with roster with \textsf{hhid} as a key, then merge to admin (time-variant {\footnotesize [e.g., grepout("Other|Cum", colnames(adrest))]}) with \textsf{hhid, Year, Month} as keys. This is because there are YearMonthMatchTable["FALSE"] non-matching cases if we merge using \textsf{Year, Month} of \textsf{IntDate} in roster data and \textsf{Year, Month} of \textsf{Date} in admin data. This is inevitable because survey precedes the first meeting of borrowers: The admin data starts from unique(ad0[Date == min(Date), Date]) while survey data starts from unique(ros[IntDate == min(IntDate, na.rm = T), IntDate]) and rd 1 ends at unique(ros[IntDate == max(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate]) for \textsf{oldMember}s with the median date unique(ros[IntDate == median(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate]). Below gives \textsf{Year, Month} in roster data in rd 1 with no match in admin data.
+
+%After 2014, it is mostly drop out members who do not match with admin data because they do not attend the meeting.
+
+
+\subsection{Merge village level info with \textsf{ar.1}; \textsf{ar}}
+
+Create \textsf{ar}: \textsf{ar.1} + \textsf{vr} (RCT\_village.dta). Roster as base + admin.
+\begin{Schunk}
+\begin{Soutput}
+                 AttritIn
+BorrowerStatus       2    3    4    9  Sum
+  borrower          46   30  390 1514 1980
+  pure saver         0    0   24  729  753
+  quit membership    6    9    8  483  506
+  Sum               52   39  422 2726 3239
+\end{Soutput}
+\begin{Soutput}
+          EverRepaid
+DisDate3NA <NA>
+      TRUE 1980
+\end{Soutput}
+\begin{Soutput}
+< table of extent 0 x 0 >
+\end{Soutput}
+\end{Schunk}
+I use arm \textsf{VArm} from village level information. Tabulation of \textsf{AssignOriginal} against \textsf{VArm} shows complementarity so I can use one variable to fill in NAs in another.
+\begin{Schunk}
+\begin{Soutput}
+             VArm
+Arm           traditional large large grace cattle Sum
+  traditional         200     0           0      0 200
+  large                 0   200           0      0 200
+  large grace           0     0         200      0 200
+  cattle                0     0           0    200 200
+  Sum                 200   200         200    200 800
+\end{Soutput}
+\begin{Soutput}
+             VArm
+Arm           traditional large large grace cattle <NA>  Sum
+  traditional         439     0           0      0  166  605
+  large                 0   408           0      0   96  504
+  large grace           0     0         411      0   96  507
+  cattle                0     0           0    457   50  507
+  Sum                 439   408         411    457  408 2123
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{Arm} after supplementing with \textsf{VArm}.
+\begin{Schunk}
+\begin{Sinput}
+ar[, ArmBefore := Arm]
+ar[is.na(Arm) & !is.na(VArm), Arm := VArm]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ar[o800 == 1L & MemNum == 1, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           200   200         200    200  800
+   2           190   191         172    190  743
+   3           188   193         174    190  745
+   4           168   192         171    177  708
+   Sum         746   776         717    757 2996
+\end{Soutput}
+\begin{Sinput}
+addmargins(table0(ar[MemNum == 1, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           605   504         507    507 2123
+   2           585   485         447    466 1983
+   3           582   487         452    472 1993
+   4           540   483         447    444 1914
+   Sum        2312  1959        1853   1889 8013
+\end{Soutput}
+\end{Schunk}
+Below is what is supplemented from \textsf{VArm} of village level information to the 0 NAs.
+\begin{Schunk}
+\begin{Sinput}
+ar[MemNum == 1 & survey == 1 & is.na(ArmBefore), 
+  BorrowerStatus := "quit membership"]
+table0(ar[MemNum == 1 & survey == 1 & is.na(ArmBefore) & !is.na(VArm), 
+  .(BorrowerStatus, Arm)])
+\end{Sinput}
+\begin{Soutput}
+< table of extent 3 x 0 >
+\end{Soutput}
+\begin{Sinput}
+table0(ar[o800 == 1L & MemNum == 1 & survey == 1 & is.na(ArmBefore) & !is.na(VArm), 
+  .(BorrowerStatus, Arm)])
+\end{Sinput}
+\begin{Soutput}
+< table of extent 3 x 0 >
+\end{Soutput}
+\begin{Sinput}
+ar[, ArmBefore := NULL]
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Merge village level info with \textsf{arAll}; \textsf{arA}}
+
+Create \textsf{arA}: \textsf{arAll} (admin data as base + roster) + \textsf{vr} (village randomisation)
+
+Tabulation of \textsf{BorrowerStatus} in \textsf{arA} at round 1.
+\begin{Schunk}
+\begin{Soutput}
+                 Arm
+BorrowerStatus    traditional large large grace cattle  Sum
+  borrower                383   452         445    415 1695
+  pure saver               49     0           0      0   49
+  quit membership          53    12          22     72  159
+  Sum                     485   464         467    487 1903
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{Mstatus} in \textsf{arA} at round 1.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle  Sum
+  gErosion               0     0           0      0    0
+  gRejection             0     0           0      0    0
+  iRejection            53    12          22     72  159
+  iReplacement          39     8          11     57  115
+  newGroup             166    96          96     50  408
+  oldMember            227   348         338    308 1221
+  Sum                  485   464         467    487 1903
+\end{Soutput}
+\end{Schunk}
+Tabulation of \textsf{Mstatus} in \textsf{ar} at round 1.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle  Sum
+  gErosion              40     0          20     20   80
+  gRejection            80    40          20      0  140
+  iRejection            53    12          22     72  159
+  iReplacement          39     8          11     57  115
+  newGroup             166    96          96     50  408
+  oldMember            227   348         338    308 1221
+  Sum                  605   504         507    507 2123
+\end{Soutput}
+\end{Schunk}
+%How I combined between pages: First, merge time-invariant portion of admin data with roster data \textsf{ros} with \textsf{hhid} as a key. Then it is merged with time-variant portion of admin data using \textsf{hhid, Year, Month} as keys. %Keep only dates when survey data match. 
+%Second, merge the resulting file with other data \textsf{sch}, \textsf{ass}, ... By merging in this way, I get arm information for each HH in survey 1 with some NAs. I fill in NAs by using village level information.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[adw3]	idfu[adw2]: admin data \textsf{adw2} + \textsf{idfu} (arm information)
+\item[ad0]	Selected columns of adw3.
+\end{description}
+Base: roster.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.0]	adbase[ros]: \textsf{ros} (33223, 37) + invariant portion of admin data \textsf{ad0} (1999, 5).
+\item[ar.1]	adrest[ar.0]: \textsf{ar.0} (33223, 40)+ variable portion of admin data \textsf{ad0} (95952, 45).
+\item[ar] vr[ar.1]: \textsf{ar.1} (33223, 83) + \textsf{vr} (RCT\_village.dta) (80, 4), resulting in (33223, 87). Number of individuals: 2123.
+\end{description}
+Base: admin. This has a smaller number of individuals because admin data do not include individuals who left the group.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.00]	ros.00W[ad0]: \textsf{ad0} (95952, 49) + \textsf{ros.00W} (survey round info) (2123, 5).
+\item[arAll]	ros.0[ar.00]: \textsf{ar.00} (admin data with survey round info) (95952, 50) + \textsf{ros.0} (roster only with first observed round) (2123, 11).
+\item[arA] vr[arAll]: \textsf{arAll} (admin data as base + roster) (91344, 63) + \textsf{vr} (village randomisation) (80, 4), resulting in (91344, 68). Number of individuals: 1903.
+\end{description}
+
+
+\subsection{Attach \textsf{o1600}}
+
+
+Create \textsf{o1600} to indicate the original 1600 HHs. Tabulation of total observations in roster \textsf{ar} by \textsf{o1600} and \textsf{survey}.
+\begin{Schunk}
+\begin{Soutput}
+     survey
+o1600    1    2    3    4
+    0 2503 2510 2543 2457
+    1 6130 5817 5843 5420
+\end{Soutput}
+\end{Schunk}
+Tabulation of total observations in roster \textsf{ar} by \textsf{o1600} and \textsf{survey} after restricting to 1 obs per HH.
+\begin{Schunk}
+\begin{Soutput}
+     survey
+o1600    1    2    3    4
+  0    627  611  616  607
+  1   1496 1372 1377 1307
+  Sum 2123 1983 1993 1914
+\end{Soutput}
+\end{Schunk}
+
+Tabulation of o800 for \textsf{ar}.
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle Sum
+     1         200   200         200    200 800
+     2         190   191         172    190 743
+     3         188   193         174    190 745
+     4         168   192         171    177 708
+\end{Soutput}
+\end{Schunk}
+At rd 1.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion              20     0          10     10  40
+  gRejection            40    20          10      0  70
+  iRejection            31     9          13     37  90
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember            109   171         167    153 600
+  Sum                  200   200         200    200 800
+\end{Soutput}
+\end{Schunk}
+At rd 4. There are 92 attritions.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion               0     0           0      0   0
+  gRejection             0     0           0      0   0
+  iRejection            61    28          11     30 130
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember            107   164         160    147 578
+  Sum                  168   192         171    177 708
+\end{Soutput}
+\end{Schunk}
+
+\subsection{Define statuses}
+
+Check \textsf{AttritIn} consistency. Define the observed largest survey rounds and tabulate against \textsf{AttritIn}.
+\begin{Schunk}
+\begin{Soutput}
+     AttritIn
+Tee     2   3   4   9 Sum
+  1    41   0   0   0  41
+  2     0  14   0   0  14
+  3     0   0  37   0  37
+  4     0   0   0 708 708
+  Sum  41  14  37 708 800
+\end{Soutput}
+\begin{Soutput}
+              AttritIn
+Mstatus          2   3   4   9 Sum
+  gErosion      12   0  28   0  40
+  gRejection    11   4   0  55  70
+  iRejection    10   4   1  75  90
+  iReplacement   0   0   0   0   0
+  newGroup       0   0   0   0   0
+  oldMember      8   6   8 578 600
+  Sum           41  14  37 708 800
+\end{Soutput}
+\end{Schunk}
+Tabulation for \textsf{arA}. It has survey == 5 which are meetings after the rd 4 interview. \textsf{arA} has fewer observations per meeting than \textsf{ar} when only using 1 obs per rd,
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1            12    21          30     49  112
+   2           167   343         342    346 1198
+   3           165   341         338    335 1179
+   4           165   343         343    342 1193
+   Sum         509  1048        1053   1072 3682
+\end{Soutput}
+\end{Schunk}
+but more observations per round because there are multiple meetings per round. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle   Sum
+   1           445   845         967   1886  4143
+   2          3054  6197        6221   6156 21628
+   3          2220  4650        4607   4596 16073
+   4          2681  5588        5485   5602 19356
+   Sum        8400 17280       17280  18240 61200
+\end{Soutput}
+\end{Schunk}
+Tabulation of o800 for \textsf{arA}. It has a smaller number of obs than \textsf{ar} because it does not include rejecters or flood evacuees.
+\begin{Schunk}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle Sum
+     1           9    10          14     18  51
+     2         134   171         172    180 657
+     3         133   170         169    175 647
+     4         132   173         171    177 653
+\end{Soutput}
+\end{Schunk}
+Refer to \textsf{ar} to see who are missing in \textsf{arA}.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion              20     0          10     10  40
+  gRejection            40    20          10      0  70
+  iRejection             0     0           0      0   0
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember              0     0           0      0   0
+  Sum                   60    20          20     10 110
+\end{Soutput}
+\end{Schunk}
+Initial period obs matches with loan recipients of \textsf{ar}.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion               0     0           0      0   0
+  gRejection             0     0           0      0   0
+  iRejection            31     9          13     37  90
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember            109   171         167    153 600
+  Sum                  140   180         180    190 690
+\end{Soutput}
+\end{Schunk}
+
+In \textsf{ar}, there are 114 cases of group rejections in \textsf{GroupStatus} classified as individual rejections in \textsf{Mstatus}. Overwrite \textsf{Mstatus} with \textsf{GroupStatus} in these cases, which results in the below:
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ar[tee == 1 & MemNum == 1, .(Mstatus, GroupStatus)]))
+\end{Sinput}
+\begin{Soutput}
+              GroupStatus
+Mstatus        accepted erosion group rejection  Sum
+  gErosion            0      80               0   80
+  gRejection          0       0             140  140
+  iRejection        159       0               0  159
+  iReplacement      115       0               0  115
+  newGroup          408       0               0  408
+  oldMember        1221       0               0 1221
+  Sum              1903      80             140 2123
+\end{Soutput}
+\begin{Sinput}
+ar[grepl("iR", Mstatus) & grepl("rej", GroupStatus), Mstatus := "gRejection"]
+ar[, tee:= 1:.N, by = hhid]
+addmargins(table0(ar[tee == 1 & MemNum == 1, .(GroupStatus, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+                 Arm
+GroupStatus       traditional large large grace cattle  Sum
+  accepted                485   464         467    487 1903
+  erosion                  40     0          20     20   80
+  group rejection          80    40          20      0  140
+  Sum                     605   504         507    507 2123
+\end{Soutput}
+\end{Schunk}
+Define \textsf{BStatus}.
+\begin{Schunk}
+\begin{Sinput}
+datas <- c("ar", "arA")
+for (i in 1:length(datas))
+{
+  dd <- get(datas[i])
+  dd[, BStatus := BorrowerStatus]
+  dd[grepl("gRe", Mstatus), BStatus := "group rejection"]
+  dd[grepl("iRej", Mstatus), BStatus := "individual rejection"]
+  dd[grepl("gEr", Mstatus), BStatus := "rejection by flood"]
+  dd[, BStatus := factor(BStatus, levels = c("borrower", "pure saver", 
+    "individual rejection", "group rejection", "rejection by flood"))]
+  assign(datas[i], dd)
+}
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, .(BStatus, AttritIn)]))
+\end{Sinput}
+\begin{Soutput}
+                      AttritIn
+BStatus                  2   3   4   9 Sum
+  borrower               8   6   8 578 600
+  pure saver             0   0   0   0   0
+  individual rejection  10   4   1  75  90
+  group rejection       11   4   0  55  70
+  rejection by flood    12   0  28   0  40
+  Sum                   41  14  37 708 800
+\end{Soutput}
+\begin{Sinput}
+if (any(ar[, is.na(BStatus)])) 
+  addmargins(table0(ar[is.na(BStatus)&tee == 1&o800==1L, .(Mstatus, BorrowerStatus)]))
+\end{Sinput}
+\end{Schunk}
+If any: 0 NAs in \textsf{BStatus} are borrowers. Correct it.
+
+For \textsf{o800}:
+\begin{Schunk}
+\begin{Soutput}
+                      GroupStatus
+BStatus                accepted erosion group rejection Sum
+  borrower                  600       0               0 600
+  pure saver                  0       0               0   0
+  individual rejection       90       0               0  90
+  group rejection             0       0              70  70
+  rejection by flood          0      40               0  40
+  Sum                       690      40              70 800
+\end{Soutput}
+\begin{Soutput}
+             AttritIn
+Arm             2   3   4   9 Sum
+  traditional   8   4  20 168 200
+  large         5   2   1 192 200
+  large grace  23   3   3 171 200
+  cattle        5   5  13 177 200
+  Sum          41  14  37 708 800
+\end{Soutput}
+\begin{Soutput}
+                      AttritIn
+BStatus                  2   3   4   9 Sum
+  borrower               8   6   8 578 600
+  pure saver             0   0   0   0   0
+  individual rejection  10   4   1  75  90
+  group rejection       11   4   0  55  70
+  rejection by flood    12   0  28   0  40
+  Sum                   41  14  37 708 800
+\end{Soutput}
+\end{Schunk}
+If we exclude twice or double disbursements in traditional (24 members).
+\begin{Schunk}
+\begin{Soutput}
+             AttritIn
+Arm             2   3   4   9 Sum
+  traditional   8   4  20 144 176
+  large         5   2   1 192 200
+  large grace  23   3   3 171 200
+  cattle        5   5  13 177 200
+  Sum          41  14  37 684 776
+\end{Soutput}
+\end{Schunk}
+For \textsf{traditional} arm.
+\begin{Schunk}
+\begin{Soutput}
+                      AttritIn
+BStatus                  2   3   4   9 Sum
+  borrower               1   0   1  83  85
+  pure saver             0   0   0   0   0
+  individual rejection   4   1   1  25  31
+  group rejection        1   3   0  36  40
+  rejection by flood     2   0  18   0  20
+  Sum                    8   4  20 144 176
+\end{Soutput}
+\end{Schunk}
+
+
+\section{Merge admin-roster with other files}
+
+\subsection{Choosing sample in admin-roster}
+
+In \textsf{ar}: Keep if \textsf{Mstatus} includes strings old, iRej, gEro, gRej, \& \textsf{TradGroup} does not include strings tw (relaxing  \textsf{DisDate1} is before 2015-01-01). There are 776 HHs at the baseline. \textcolor{blue}{This the admin data used in this note.} This also shows a lower attrition rate for \textsf{large} arm. \gobblepars
+
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ar[o800 == 1L & grepl("old|iRej|^g", Mstatus) & 
+  !grepl("tw", TradGroup) & MemNum == 1, .(survey, Arm)])) 
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           176   200         200    200  776
+   2           166   191         172    190  719
+   3           164   193         174    190  721
+   4           144   192         171    177  684
+   Sum         650   776         717    757 2900
+\end{Soutput}
+\end{Schunk}
+
+In \textsf{ar}, as one can see below, \textsf{gRejection} is more frequent in \textsf{traditional} and \textsf{large}, while there is none in \textsf{cattle}. \textsf{traditional, cattle} have more frequent \textsf{iRejection}. So \textsf{traditional} was disliked both at group and individual levels, \textsf{large} was disliked as a group, \textsf{cattle} was disliked at an individual level, and \textsf{large grace} were well received at both group and individual levels. This indicates attractiveness of a grace period at least at the group level, and a large cash form (over small cash or in-kind) at the individual level.
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle  Sum
+  gErosion              40     0          20     20   80
+  gRejection            80    40          20      0  140
+  iRejection            53    12          22     72  159
+  iReplacement          39     8          11     57  115
+  newGroup             166    96          96     50  408
+  oldMember            227   348         338    308 1221
+  Sum                  605   504         507    507 2123
+\end{Soutput}
+\end{Schunk}
+In \textsf{ar}, for \textsf{o800} we have:
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion              20     0          10     10  40
+  gRejection            40    20          10      0  70
+  iRejection            31     9          13     37  90
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember            109   171         167    153 600
+  Sum                  200   200         200    200 800
+\end{Soutput}
+\end{Schunk}
+
+%Create roster member total \textsf{RosterMemTotal}. 
+
+
+\textsf{arA} is used in saving and repayment regressions. \gobblepars
+
+Contrast it with \textsf{arA}:
+\begin{Schunk}
+\begin{Soutput}
+              Arm
+Mstatus        traditional large large grace cattle Sum
+  gErosion               0     0           0      0   0
+  gRejection             0     0           0      0   0
+  iRejection            31     9          13     37  90
+  iReplacement           0     0           0      0   0
+  newGroup               0     0           0      0   0
+  oldMember            109   171         167    153 600
+  Sum                  140   180         180    190 690
+\end{Soutput}
+\end{Schunk}
+Create \textsf{LYear}.
+
+Save roster-admin data to \textsf{\footnotesize c:/data/GUK/analysis/save/EstimationMemo/}.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(ar, paste0(pathsaveHere, "RosterAdminData.rds"))
+saveRDS(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+fwrite(ar, paste0(pathsaveHere, "RosterAdminData.prn"), sep = "\t", quote = F)
+fwrite(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+Schooling. \gobblepars
+
+%Schooling pattern in sch1.
+
+
+%In \textsf{sch1}: Number of unique \textsf{hhid}s by \textsf{year} (original entry) or \textsf{Year} (extracted from \textsf{IntDate}).
+
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and round (\textsf{survey}).
+
+%In \textsf{sch1}: RoundOrder is 1 if individual is observed for the first time in data, 2 if for the second time, ...
+
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and age (\textsf{AgeComputed}).
+
+
+\subsection{Attach variables from admin-roster to other files}
+
+
+Attach \textsf{Arm, TradGroup, Mem, ObPattern, AttritIn, o1600, Mstatus, BorrowerStatus, BStatus, creditstatus, povertystatus, RMvalue.repay, RMvalue.NetSaving, RMOtherNetSaving, RMOtherRepaid, HHsize, HeadLiteracy, IntDate, DisDate1} from \textsf{ar}.
+
+\begin{Schunk}
+\begin{Sinput}
+vartoattach <- c("Arm", "TradGroup", "Mem", 
+  "ObPattern", "AttritIn", "o1600", 
+  "Mstatus", "BorrowerStatus", "BStatus",
+  "creditstatus", "povertystatus", "RMvalue.repay", 
+  "RMvalue.NetSaving", "RMOtherNetSaving", "RMOtherRepaid",
+  "HHsize", "HeadLiteracy", "IntDate", "DisDate1")
+dfiles <- c("ass", "s1", "lvo", "lvoL", "lvp", "lab", "far", "con", "obr", "shk")
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  if (!any(grepl("groupid", colnames(dd)))) {
+    dd[, groupid := as.integer(as.numeric(as.character(gid)))]
+    dd[, gid := NULL]
+  }
+  dd[, Year :=  as.numeric(format(as.Date(IntDate), "%Y"))]
+  dd[, Month := as.character(format(as.Date(IntDate), "%B"))]
+  dd[Year <= 2010, Year := Year + 10]
+  # attach o800
+  dd[, o800 := 0L]
+  dd[hhid %in% jds[grepl("trea", treat), hhid], o800 := 1L]
+  # drop all variables in each page before copying from ar0
+  dd[, (vartoattach) := NULL]
+  setorder(dd, groupid, hhid, survey, Year, Month)
+  setkey(dd, groupid, hhid, survey)
+  if (j < length(dfiles)) dd <- ar0[dd]
+  assign(dfiles[j], dd)
+}
+\end{Sinput}
+\end{Schunk}
+%Create \textsf{Arm*HadCows}, \textsf{Arm*HadCows*Time} interactions in \textsf{lvo}. \gobblepars
+\begin{Schunk}
+\begin{Soutput}
+ [1] "dummyHadCows"                        "dummyHadCows.Time3"                 
+ [3] "dummyHadCows.Time4"                  "dummyTraditional.dummyHadCows"      
+ [5] "dummyLarge.dummyHadCows"             "dummyLargeGrace.dummyHadCows"       
+ [7] "dummyCattle.dummyHadCows"            "dummyTraditional.dummyHadCows.Time3"
+ [9] "dummyLarge.dummyHadCows.Time3"       "dummyLargeGrace.dummyHadCows.Time3" 
+[11] "dummyCattle.dummyHadCows.Time3"      "dummyTraditional.dummyHadCows.Time4"
+[13] "dummyLarge.dummyHadCows.Time4"       "dummyLargeGrace.dummyHadCows.Time4" 
+[15] "dummyCattle.dummyHadCows.Time4"     
+\end{Soutput}
+\begin{Soutput}
+ dummyHadCows.Time3
+ Min.   :0.0000    
+ 1st Qu.:0.0000    
+ Median :0.0000    
+ Mean   :0.0617    
+ 3rd Qu.:0.0000    
+ Max.   :1.0000    
+\end{Soutput}
+\end{Schunk}
+Check number of HHs in assets by \textsf{o1600}:
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table(ass[, .(creditstatus, survey, o1600)]))
+\end{Sinput}
+\begin{Soutput}
+, , o1600 = 0
+
+            survey
+creditstatus    1    2    3    4  Sum
+         Yes  571  587  593  586 2337
+         No    23   23   23   21   90
+         Sum  594  610  616  607 2427
+
+, , o1600 = 1
+
+            survey
+creditstatus    1    2    3    4  Sum
+         Yes 1012 1040 1052 1039 4143
+         No   172  150  155  154  631
+         Sum 1184 1190 1207 1193 4774
+
+, , o1600 = Sum
+
+            survey
+creditstatus    1    2    3    4  Sum
+         Yes 1583 1627 1645 1625 6480
+         No   195  173  178  175  721
+         Sum 1778 1800 1823 1800 7201
+\end{Soutput}
+\begin{Sinput}
+addmargins(table(ass[o800 == 1, .(survey, creditstatus)]))
+\end{Sinput}
+\begin{Soutput}
+      creditstatus
+survey  Yes   No  Sum
+   1    555   84  639
+   2    580   72  652
+   3    585   76  661
+   4    578   75  653
+   Sum 2298  307 2605
+\end{Soutput}
+\begin{Sinput}
+#table0(ass[o1600 == 0L, .(creditstatus, survey)])
+\end{Sinput}
+\end{Schunk}
+Check number of HHs in schooling by \textsf{o1600}:
+\begin{Schunk}
+\begin{Sinput}
+table(s1[, .(Schooling, survey, o1600)])
+\end{Sinput}
+\begin{Soutput}
+, , o1600 = 0
+
+             survey
+Schooling        1    2    3    4
+  primary0512  528  427  361  202
+  junior1315   133  129  140  204
+  high1618      94   94   93  111
+
+, , o1600 = 1
+
+             survey
+Schooling        1    2    3    4
+  primary0512 1318  911  659  322
+  junior1315   307  279  427  499
+  high1618     202  198  179  225
+\end{Soutput}
+\begin{Sinput}
+addmargins(table(s1[o800 == 1, .(survey, Schooling)]))
+\end{Sinput}
+\begin{Soutput}
+      Schooling
+survey primary0512 junior1315 high1618  Sum
+   1           695        159      110  964
+   2           483        147      105  735
+   3           344        230       90  664
+   4           165        264      115  544
+   Sum        1687        800      420 2907
+\end{Soutput}
+\end{Schunk}
+Check number of \textsf{o800} HHs in \textsf{ar}:
+\begin{Schunk}
+\begin{Sinput}
+ar[, tee := as.integer(1:.N), by = .(hhid, survey)]
+addmargins(table0(ar[tee == 1 & o800 == 1L, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1           200   200         200    200  800
+   2           190   191         172    190  743
+   3           188   193         174    190  745
+   4           168   192         171    177  708
+   Sum         746   776         717    757 2996
+\end{Soutput}
+\end{Schunk}
+Check number of \textsf{o800} HHs in \textsf{arA}:
+\begin{Schunk}
+\begin{Sinput}
+arA[, tee := as.integer(1:.N), by = .(hhid, survey)]
+addmargins(table0(arA[tee == 1 & o800 == 1L, .(survey, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+      Arm
+survey traditional large large grace cattle  Sum
+   1             9    10          14     18   51
+   2           134   171         172    180  657
+   3           133   170         169    175  647
+   4           132   173         171    177  653
+   Sum         408   524         526    550 2008
+\end{Soutput}
+\end{Schunk}
+Number of observations differ between \textsf{ar} and \textsf{arA} because the latter does not include rejecters. 
+\begin{Schunk}
+\begin{Soutput}
+             traditional large large grace cattle traditional large large grace
+gErosion              20     0          10     10           0     0           0
+gRejection            40    20          10      0           0     0           0
+iRejection            31     9          13     37          31     9          13
+iReplacement           0     0           0      0           0     0           0
+newGroup               0     0           0      0           0     0           0
+oldMember            109   171         167    153         109   171         167
+             cattle
+gErosion          0
+gRejection        0
+iRejection       37
+iReplacement      0
+newGroup          0
+oldMember       153
+\end{Soutput}
+\end{Schunk}
+Original 800 households in \textsf{arA} (members only).
+\begin{Schunk}
+\begin{Soutput}
+[1] TRUE
+\end{Soutput}
+\begin{Soutput}
+              EverRepaid
+Mstatus        TRUE Sum
+  gErosion        0   0
+  gRejection      0   0
+  iRejection      0   0
+  iReplacement    0   0
+  newGroup        0   0
+  oldMember     600 600
+  Sum           600 600
+\end{Soutput}
+\end{Schunk}
+What is relevant in estimation is observations by \textsf{LoanYear}, total of 600.
+\begin{Schunk}
+\begin{Soutput}
+        Arm
+LoanYear traditional large large grace cattle  Sum
+     1           109   171         167    153  600
+     2           109   171         167    153  600
+     3           109   171         167    153  600
+     4           109   171         167    153  600
+     Sum         436   684         668    612 2400
+\end{Soutput}
+\end{Schunk}
+If we restrict to \textsf{planned} in \textsf{TradGroup}, number of observation becomes 576.
+\begin{Schunk}
+\begin{Soutput}
+        Arm
+LoanYear traditional large large grace cattle  Sum
+     1            85   171         167    153  576
+     2            85   171         167    153  576
+     3            85   171         167    153  576
+     4            85   171         167    153  576
+     Sum         340   684         668    612 2304
+\end{Soutput}
+\end{Schunk}
+\textsf{ObPattern} in original 800.
+\begin{Schunk}
+\begin{Soutput}
+         Arm
+ObPattern traditional large large grace cattle Sum
+     0111           0     2           3      1   6
+     1000           1     5           1      1   8
+     1010           0     1           0      0   1
+     1011           0     0           0      0   0
+     1100           0     1           3      2   6
+     1110           1     0           3      3   7
+     1111         107   162         157    146 572
+     Sum          109   171         167    153 600
+\end{Soutput}
+\end{Schunk}
+\textsf{BorrowerStatus} pattern in original 800.
+\begin{Schunk}
+\begin{Soutput}
+                 Arm
+BorrowerStatus    traditional large large grace cattle Sum
+  borrower                109   171         167    153 600
+  pure saver                0     0           0      0   0
+  quit membership           0     0           0      0   0
+  Sum                     109   171         167    153 600
+\end{Soutput}
+\end{Schunk}
+\textsf{BStatus} pattern in original 800.
+\begin{Schunk}
+\begin{Soutput}
+                      Arm
+BStatus                traditional large large grace cattle Sum
+  borrower                     109   171         167    153 600
+  pure saver                     0     0           0      0   0
+  individual rejection           0     0           0      0   0
+  group rejection                0     0           0      0   0
+  rejection by flood             0     0           0      0   0
+  Sum                          109   171         167    153 600
+\end{Soutput}
+\end{Schunk}
+\textsf{BorrowerStatus} pattern in original 800 with only \textsf{planned} in \textsf{TradGroup}.
+\begin{Schunk}
+\begin{Soutput}
+                 Arm
+BorrowerStatus    traditional large large grace cattle Sum
+  borrower                 85   171         167    153 576
+  pure saver                0     0           0      0   0
+  quit membership           0     0           0      0   0
+  Sum                      85   171         167    153 576
+\end{Soutput}
+\end{Schunk}
+\textsf{BStatus} pattern in original 800 with only \textsf{planned} in \textsf{TradGroup}.
+\begin{Schunk}
+\begin{Soutput}
+                      Arm
+BStatus                traditional large large grace cattle Sum
+  borrower                      85   171         167    153 576
+  pure saver                     0     0           0      0   0
+  individual rejection           0     0           0      0   0
+  group rejection                0     0           0      0   0
+  rejection by flood             0     0           0      0   0
+  Sum                           85   171         167    153 576
+\end{Soutput}
+\end{Schunk}
+Below tabulates attrition pattern in \textsf{ar} for 800 and 1600 households.
+
+
+
+\begin{Schunk}
+\begin{Soutput}
+pdf 
+  2 
+\end{Soutput}
+\end{Schunk}
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Attrition and membership status among original 800 and 1600 households\label{fig AttritionMstatuso8001600}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo2/AttritionMstatuso800Ando1600.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey and administrative data. \textsf{ar}\\
+Note:& Top panel: Membership status and respective non-attrition in \textsf{o800}. Bottom panel: Membership status and respective non-attrition in \textsf{o1600}.\\[1ex]
+\end{tabular}
+}
+
+
+
+Save all data in c:/data/GUK/analysis/save/EstimationMemo/.
+
+\begin{Schunk}
+\begin{Sinput}
+fwrite(s1, paste0(pathsaveHere, "RosterAdminSchoolingData.prn"), sep = "\t", quote = F)
+fwrite(ass, paste0(pathsaveHere, "AssetAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvoL, paste0(pathsaveHere, "LivestockLongAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvo, paste0(pathsaveHere, "LivestockAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvp, paste0(pathsaveHere, "LivestockProductsAdminData.prn"), sep = "\t", quote = F)
+fwrite(lab, paste0(pathsaveHere, "LabourIncomeAdminData.prn"), sep = "\t", quote = F)
+fwrite(far, paste0(pathsaveHere, "FarmRevenueAdminData.prn"), sep = "\t", quote = F)
+fwrite(con, paste0(pathsaveHere, "ConsumptionAdminData.prn"), sep = "\t", quote = F)
+fwrite(obr, paste0(pathsaveHere, "OtherBorrowingAdminData.prn"), sep = "\t", quote = F)
+fwrite(shk, paste0(pathsaveHere, "Shocks.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+
+
+\end{document}

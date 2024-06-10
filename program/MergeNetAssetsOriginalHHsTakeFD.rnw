@@ -1,0 +1,108 @@
+<<warning = F>>=
+#ass <-  readRDS(paste0(pathsaveHere, "RosterAssetAdminOriginalHHsDataUsedForEstimation.rds"))
+ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+ass[, grepout("Loan|UD|Forced", colnames(ass)) := NULL]
+# merge debt outstanding to assets. 
+# arA has on avg 12 meetings per survey round. Which meeting in a survey round
+# should I use? Merge both immediate past and future dates.
+# First, reshape AssD to wide: hhid survey IntDate1, ..., IntDate4
+# Second, merge with arA and find meetings immediately before and after IntDatX
+# Third, keep only meetings immediately before and after IntDatX
+arD <- arA[, .(hhid, survey, tee, Date, CumLoanAmount, 
+  CumEffectiveRepayment, CumRepaid, CumNetSaving, DebtOutstanding)]
+assD <- ass[!is.na(IntDate), .(Arm, BStatus, hhid, survey, IntDate)]
+assDW <- reshape(assD, direction = "wide", idvar = c("Arm", "BStatus", "hhid"), 
+  timevar = "survey", v.names = "IntDate")
+setkey(assDW, hhid); setkey(arD, hhid)
+arDebt <- assDW[arD]
+arDebt[, c("PeriodPos", "SVY") := .(as.character(NA), as.integer(NA))]
+for (i in 1:4) {
+  arDebt[, DiffDays := Date - eval(parse(text=paste0("IntDate.", i)))]
+  arDebt[, ImmedAfter := min(DiffDays[DiffDays >= 0], na.rm = T), by = hhid]
+  arDebt[, ImmedBefore := max(DiffDays[DiffDays < 0], na.rm = T), by = hhid]
+  arDebt[, (paste0(c("MtgBefore.", "MtgAfter."), i)) := 0L]
+  arDebt[DiffDays == ImmedBefore, (paste0("MtgBefore.", i)) := 1L]
+  arDebt[DiffDays == ImmedBefore, c("PeriodPos", "SVY") := .("before", as.integer(i))]
+  arDebt[DiffDays == ImmedAfter, (paste0("MtgAfter.", i)) := 1L]
+  arDebt[DiffDays == ImmedAfter, c("PeriodPos", "SVY") := .("after", as.integer(i))]
+}
+arDebt <- arDebt[eval(parse(text=
+  paste(
+    paste0(grepout("Mtg", colnames(arDebt)), collapse = "+")
+  , "!=0")
+  )), ]
+arDebt[, grepout("^IntD.*[1-4]$|^Diff|^M..Diff|^Immed|^Mtg[AB]|survey", colnames(arDebt)) := NULL]
+setnames(arDebt, "SVY", "survey")
+arDebtW <- reshape(arDebt, direction = "wide", idvar = c("hhid", "survey"),
+  timevar = "PeriodPos", v.names = grepout("Cum|Date|Deb|tee", colnames(arDebt)))
+setkey(arDebtW, Arm, BStatus, hhid, survey)
+setkey(ass, Arm, BStatus, hhid, survey)
+ass <- arDebtW[ass]
+# use before. using after gives many cases of NetValue > TotalValue 
+assstrings <- "^Arm$|^groupid$|hhid|tee|^.Asse|^dummy.*[a-z]$|Floo|Time\\.?.|Head|With|.Size|^Cum[ERN].*before$|^Debt.*before$|BSta"
+lvostrings <- "^groupid$|hhid|tee|^TotalIm|Cows"
+if (Only800) ass <- ass[o800 == 1L, ]
+ass1 <- ass[, grepout(assstrings, colnames(ass)), with = F]
+ass1R <- ass[, grepout(paste0(assstrings, "|RM"), colnames(ass)), with = F]
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+if (Only800) lvo <- lvo[o800 == 1L, ]
+lvo[, grepout("Loan|UD|Forced", colnames(lvo)) := NULL]
+lvo1 <- lvo[, grepout(lvostrings, colnames(lvo)), with = F]
+# merge
+commoncols <- intersect(colnames(ass1), colnames(lvo1))
+NeA1 <- merge(ass1, lvo1, by = commoncols, NeAl = T)
+NeA1[is.na(TotalImputedValue), TotalImputedValue := 0]
+NeA1[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+NeA1[, NetValue := TotalValue - a2b(DebtOutstanding.before, NA, 0)]
+NeA1[, c("TotalImputedValue", "HAssetAmount", 
+  "PAssetAmount", "TotalValue") := NULL]
+NeA1 <- unique(NeA1)
+NeA1[, grepout("before", colnames(NeA1)) := NULL]
+# before-after style 2 time point data. Choose tee == 2 as baseline because there are many zeros in tee == 1.
+NeA2 <- NeA1[tee == 2 | tee == 4, ]
+NeA2[, grepout("Time", colnames(NeA2)) := NULL]
+commoncols <- intersect(colnames(ass1R), colnames(lvo1))
+NeA1R <- merge(ass1R, lvo1, by = commoncols, NeAl = T)
+NeA1R[is.na(TotalImputedValue), TotalImputedValue := 0]
+NeA1R[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+NeA1R[, NetValue := TotalValue - a2b(DebtOutstanding.before, NA, 0)]
+NeAfig <- NeA1R[, .(Arm, groupid, hhid, dummyUltraPoor, tee, NetValue)]
+setnames(NeAfig, c("NetValue", "dummyUltraPoor"), c("TotalValue", "UltraPoor"))
+NeAfig[, povertystatus := "ultra poor"]
+NeAfig[UltraPoor == 0L, povertystatus := "moderately poor"]
+NeAfig[, povertystatus := factor(povertystatus, 
+  levels = c("ultra poor","moderately poor"))]
+NeAfig[, UltraPoor := NULL]
+NeA1R[, c("TotalImputedValue", "HAssetAmount", 
+  "PAssetAmount", "TotalValue") := NULL]
+NeA1R[, grepout("before", colnames(NeA1R)) := NULL]
+NeA1R <- unique(NeA1R)
+NeA2R <- NeA1R[tee == 2 | tee == 4, ]
+NeA2R[, grepout("Time", colnames(NeA2)) := NULL]
+
+datas <- c(paste0("NeA", 1:2), paste0("NeA", 1:2, "R"))
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+  dl <- prepFDData(get(datas[i]), Group = "^hhid$", 
+     TimeVar = "tee", Cluster = "groupid", 
+     LevelCovariates = "^dummy|^Arm|Floo|^Time\\..$|Head|Cows|BSta", 
+     drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+     use.var.name.for.dummy.prefix = F, print.messages = F)
+  dat <- dl$diff
+  if (i == 1) {
+    # Recreate Time.4 which is dropped when kept only 1:(T-1) obs.
+    #dat[, c("Time.2", "Time.3", "Time.4") := 0L]
+    #dat[tee == 1, Time.2 := 1L]
+    #dat[tee == 2, Time.3 := 1L]
+    #dat[tee == 3, Time.4 := 1L]
+    dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  }
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dNeA1Rd <- dNeA1Rd[tee > 2, ]
+saveRDS(NeA1, paste0(pathsaveHere, "NetAssets.rds"))
+write.tablev(NeA1, paste0(pathsaveHere, "NetAssets.prn"), colnamestrue = F)
+@

@@ -1,0 +1,76 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("ImpactEstimationOriginal1600Memo.rnw", "ImpactEstimationOriginal1600Memo.tex"); system("platex ImpactEstimationOriginal1600Memo"); system("dvipdfmx ImpactEstimationOriginal1600Memo")
+%   path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ImpactEstimationOriginal1600Memo/"); library(knitr); knit("ImpactEstimationOriginal1600Memo.rnw", "ImpactEstimationOriginal1600Memo.tex"); system("platex ImpactEstimationOriginal1600Memo"); system("pbiblatex ImpactEstimationOriginal1600Memo"); system("dvipdfmx ImpactEstimationOriginal1600Memo")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\citet{Wooldridge2010}
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo_OptionSetting.rnw'>>=
+<<>>=
+# Only change the trimming conditions to switch between "1 or 4" to "NoFlood"
+ThisIsNoFlood <- F
+if (ThisIsNoFlood) 
+  pathsaveHere <- pathsaveNoFlood else 
+  pathsaveHere <- pathsaveOriginal1600Memo
+# Below file reads from a list data_read_in_a_list_with_baseline_patched.rds,
+# admin_data_wide2.rds, CharRandomization2012.prn, RCT_village.dta and
+# saves RosterAdminSchoolingData.rds etc 
+# in folder pathsaveOriginal1600Memo.
+<<all chunks1, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo_body1.rnw'>>=
+# Below reads from folder pathsaveOriginal1600Memo and 
+# saves with XXXAdminDataUsedForEstimation.rds in 
+# folder pathsaveOriginal1600Memo
+<<DataTrimmingOriginal1600, cache = F, child='c:/data/GUK/analysis/program/DataTrimmingOriginal1600Memo.rnw'>>=
+# Below reads from folder pathsaveOriginal1600Memo and 
+# XXXAdminDataUsedForEstimation.rds and estimates. 
+<<original HH regressions, eval = T, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo_body3.rnw'>>=
+@
+\end{document}

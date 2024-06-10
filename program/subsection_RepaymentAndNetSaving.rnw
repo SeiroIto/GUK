@@ -1,0 +1,343 @@
+In estimating impacts on repayment and saving, we use borrower only data \textsf{arA}.
+
+<<ReadTrimRepaymentData original HHs, cache = F, message = F>>=
+gc()
+source(paste0(pathprogram, "ReadTrimRepaymentANCOVA.R"))
+@
+By survey rounds, in repayment and saving file, there are \Sexpr{apply(table(arA[o800==1L, .(unqsvy = unique(survey)), by = hhid]), 2, sum)} observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the \textsf{InitialSample} size of \Sexpr{nrow(ar[o800 == 1& tee == 1, ])} in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.
+
+Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In repayment and saving regressions, we aggregate the data at survey rounds. This is because we have no household survey information at the monthly frequency that we can attribute the causes of monthly repayment and saving fluctuations.
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Initial sample by arm in administrative data\label{tab IniSampByArm}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+%\hfil\begin{tikzpicture}
+%\node (tbl) {\input{\Sexpr{  paste0(pathsaveHere, "InitialSampleSizeByArm.tex")}}};
+%\end{tikzpicture}\\
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{  paste0(pathsaveHere, "InitialSampleSizeByArmInAr.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Number of individuals who received a loan/cow. %within \Sexpr{InitialSampleMonthUpperBound} months after the first loan/cow is disbursed in a group. 
+Left panel are initial 800 members who were offered at the first round, including individuals who declined or left the group. Right panel also includes members who were offered on a later date.\\
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Initial sample by arm in repayment data\label{tab IniSampByArmArA}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{  paste0(pathsaveHere, "InitialSampleSizeByArmInArA.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Number of individuals who received a loan/cow. %within \Sexpr{InitialSampleMonthUpperBound} months after the first loan/cow is disbursed in a group. 
+Left panel in \textsc{\normalsize Table \ref{tab IniSampByArmArA}} is initial 800 members who were offered at the first round, including individuals who declined or left the group. Right panel also includes members who were offered on a later date.\\
+\end{tabular}
+\end{minipage}
+
+\textsc{\normalsize Table \ref{tab IniSampByArm}} shows the tabuation of \textsf{InitisalSample} by arms. Left panel are \textsf{InitialSample} including borrowers, pure savers, group rejecters, flood victims, and members who left the group. Right panel includes late borrowers who were initially assigned as the control. One can see that \textsf{traditional} arm members have the highest proportion of group-rejecters and individual rejecters. This shows stronger reluctance of \textsf{traditional} arm members in borrowing the small loans. 
+
+
+Read administrative meeting data attached with HH information \textsf{\Sexpr{DataFileNames[2]}} (\textsf{arA}). Note all binary interaction terms are demeaned and then interacted.
+<<prepare data for saving regressions original HHs, warning = F, message = F, results = "hide">>=
+#ar <- readRDS(paste0(pathsaveHere, "RosterAdminDataUsedForEstimation.rds"))
+#arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminDataUsedForEstimation.rds"))
+#arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+if (Only800) arA <- arA[o800 == 1L & !grepl("tw|dou", TradGroup) & 
+  !is.na(LoanYear), ]
+# EffectiveRepayment := value.repay + value.NetSaving
+##arA[, CumSave := CumNetSaving - CumRepaid]
+##arA[, CumEffectiveRepayment := CumNetSaving + CumRepaid]
+arA[, Arm := droplevels(Arm)]
+arA[, HeadLiteracy := HeadLiteracy + 0]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+setorder(arA, hhid, Date)
+arA[, grepout("^Time$", colnames(arA)) := NULL]
+#arA[, c("dummyForcedDropOuts") := NULL]
+table0(arA[LoanMonth == 1, .(LoanYear, Arm)])
+table0(arA[, .(survey, Arm)])
+@
+%NAs in \textsf{CumRepaid}.
+<<NAs in CumRepaid in arA, results = "hide">>=
+table0(arA[is.na(CumRepaid), .(tee, Arm)])
+@
+Tabulation at rd 1 (12th month):
+<<Tabulation at rd 1 for arA>>=
+addmargins(table0(arA[o800 == 1L & tee == 12, .(Mstatus, Arm)]))
+<<net saving and cumulative repayment, warning = F, message = F, results = "hide", fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Weekly net saving and cumulative repayment", ""), fig.lp = 'Figure '>>=
+library(ggplot2)
+ga <- arA[!is.na(Date) & !is.na(DisDate1) & grepl("Yes", creditstatus), 
+  .(Arm, hhid, povertystatus, MonthsElapsed, 
+  DebtOutstanding, CumLoanAmount, value.repay, value.NetSaving, 
+  CumPlannedInstallment, CumRepaidRate, CumEffectiveRepaidRate)]
+ga <- arA[!is.na(Date) & !is.na(DisDate1) & grepl("Yes", creditstatus), 
+  .(Arm, hhid, povertystatus, MonthsElapsed, 
+  value.NetSaving, CumRepaid)]
+ga1 <- ga[, !grepl("Ne", colnames(ga)), with = F]
+ga1[, variable := "cumulative repayment"]
+ga2 <- ga[, !grepl("Rep", colnames(ga)), with = F]
+ga2[, variable := "weekly net saving"]
+setnames(ga1, grepout("Re", colnames(ga1)), "amount")
+setnames(ga2, grepout("Ne", colnames(ga2)), "amount")
+ga <- rbindlist(list(ga1, ga2))
+ga[, Arm := factor(Arm, labels = c(Arms[-4], "Cattle"))]
+ga[, variable := factor(variable)]
+ColourForPoints <- c("darkblue", "darkred")
+g1 <- ggplot(ga[grepl("rep", variable), ], 
+  aes(x = MonthsElapsed, y = amount, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(fill = povertystatus), size = .01, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .6) +
+  geom_smooth(span = .5, size = .75,
+    aes(colour = povertystatus, group = povertystatus)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme(
+    legend.position="none", 
+    plot.margin = margin(t = 0, b = 0, l = 0, r = 0, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_y_continuous(limits = c(0, 20000)) +
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, 12))+
+  xlab("Months since 1st loan disbursement") + 
+  ylab("Amount (BDT)") +
+  facet_grid(variable ~ Arm)
+g2 <- ggplot(ga[grepl("sav", variable), ], 
+  aes(x = MonthsElapsed, y = amount, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(fill = povertystatus), size = .01, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .6) +
+  geom_smooth(span = .5, size = .75,
+    aes(colour = povertystatus, group = povertystatus)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.25, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_y_continuous(limits = c(0, 800)) +
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, 12))+
+  xlab("Months since 1st loan disbursement") + 
+  ylab("Amount (BDT)") +
+  facet_grid(variable ~ Arm)
+library(gridExtra)
+g <- grid.arrange(g1, g2, heights = c(2, 2.5), ncol=1)
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo2/",
+    "CumulativeWeeklyNetSavingAndRepayment.png"),
+  g,
+  width = 14, height = 10, units = "cm",
+  dpi = 400
+ )
+library(grid)
+cairo_pdf(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo2/",
+    "CumulativeWeeklyNetSavingAndRepayment.pdf"),
+  , width = 13/2.54, height = 10/2.54, pointsize = 10) # native unit: inch
+grid.draw(g)
+whatever <- dev.off()
+<<Cumulative repaid rate original HHs, warning = F, message = F, results = "hide", fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Cumulative repayment rates", ""), fig.lp = 'Figure '>>=
+library(ggplot2)
+ga <- arA[!is.na(Date) & !is.na(DisDate1) & grepl("Yes", creditstatus) & 
+  grepl("bo", BStatus) & o800 == 1L, 
+  .(Arm, hhid, povertystatus, MonthsElapsed, 
+  CumNetSaving, CumRepaid, CumRepaidRate, CumEffectiveRepaidRate)] 
+# ga1: amount
+ga1 <- ga[, !grepl("Ne|Rate", colnames(ga)), with = F]
+ga1[, variable := "repayment"]
+# ga2: rate
+ga20 = copy(ga)
+ga20 <- ga20[, grepout("Ne|Repaid$|variab", colnames(ga20)) := NULL]
+ga20 <- ga20[!is.na(CumEffectiveRepaidRate) & 
+  !is.na(CumEffectiveRepaidRate), ]
+ga21 <- ga20[, .(Arm, hhid, povertystatus, MonthsElapsed, CumEffectiveRepaidRate)]
+ga22 <- ga20[, .(Arm, hhid, povertystatus, MonthsElapsed, CumRepaidRate)]
+setnames(ga21, "CumEffectiveRepaidRate", "value")
+setnames(ga22, "CumRepaidRate", "value")
+ga21[, variable := "Repay+net saving"]
+ga22[, variable := "Repayment"]
+ga2 <- rbindlist(list(ga21, ga22))
+ga2[, variable := factor(variable, 
+  levels = c("Repayment", "Repay+net saving"))]
+setnames(ga1, grepout("Re", colnames(ga1)), "amount")
+#setnames(ga2, grepout("Re", colnames(ga2)), "amount")
+#ga <- rbindlist(list(ga1, ga2))
+ColourForPoints <- c("darkblue", "darkred")
+g <- ggplot(ga2, 
+  aes(x = MonthsElapsed, y = value, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(fill = povertystatus), size = .01, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .6) +
+  geom_smooth(span = .5, size = .5, #colour = "blue", 
+    aes(colour = povertystatus, group = povertystatus)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+#  scale_shape_manual(values=c(21, 25)) +
+  theme(
+    legend.position="bottom", 
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 9),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text = element_text(size = 7),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_y_continuous(limits = c(0, 2)) +
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, 12)) +
+  xlab("Months since 1st loan disbursement") + 
+  ylab("Cumulative repayment rates") +
+  facet_grid(variable ~ Arm, scales = "free_y") +
+  geom_hline(aes(yintercept = 1), colour = "lightgreen", data = ga2)
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo2/",
+    "CumulativeWeeklyRepaymentRateByPovertystatus.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+@
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Weekly net saving and cumulative repayment\label{fig weeklysavingrepay}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo2/",   "CumulativeWeeklyNetSavingAndRepayment.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows weekly net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly net repayment rates\label{fig weeklysavingrepayrate}}\\
+\hfil\includegraphics{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo2/CumulativeWeeklyRepaymentRateByPovertystatus.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows ratios of cumulative repayment against cumulative due amount, sum of cumulative repayment and cumulative net saving (saving - withdrawal) against cumulative due amount, against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+
+
+<<ReadTrimRepayment ANCOVA, cache = F, warning = F, message = F, results = "hide">>=
+gc()
+source(paste0(pathprogram, "ReadTrimRepaymentANCOVA.R"))
+@
+<<saving regressions estimation set parameters>>=
+FileName <- "Repayment"
+FileNameHeader <- c("", "PovertyStatus", "Attributes", 
+  "TimeVarying", "TimeVaryingPovertyStatus", "TimeVaryingAttributes")
+# length(arsuffixes) = Number of est results tables to be produced
+regsuffixes <- c("", "P", "a", "T", "TP", "Ta")
+listheader <- paste0("sv", regsuffixes)
+Regressands <-  c(rep(c("CumNetSaving", "CumRepaid"), each = 5), 
+  rep("CumEffectiveRepayment", each = 6))
+Regressands <-  c(rep(c("NetSaving", "Repaid"), each = 5), 
+  rep("EffectiveRepayment", 6))
+Regressands <-  c(rep(c("NetSaving", "Repaid"), each = 5), "Repaid")
+Addseparatingcols = c(1, 6); Separatingcolwidth = rep(.1, 2)
+Separatingcoltitle = c("", "Net saving", "Repayment"
+#, "\\mpage{3cm}{\\hfil Net saving \\\\\\hfil + repayment}"
+)
+<<saving regresions select covariates>>=
+source(paste0(pathprogram, "RepaymentCovariateSelectionANCOVA.R"))
+<<saving regressions estimation>>=
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+jay <- 11
+DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+gc()
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVARepaymentResults.rnw"))}
+
+<<descriptive stat of repayment>>=
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+if (Only800) arA <- arA[o800 == 1L & grepl("bo", BStatus), ]
+DesRep <- arA[, 
+  .(Arm, hhid, povertystatus, BStatus, 
+    Date, DisDate1, tee, MtgNum,
+    CumEffectiveRepayment, CumRepaid, CumPlannedInstallment,
+    CumEffectiveRepaidRate, CumRepaidRate, EffectivelyFullyRepaid
+  )]
+# Note: when CumPlannedInstallment==0, RepaidRate is NA
+DesRep[, FullyRepaid := 0L]
+# In read_admin_data.rnw
+# CumRepaid = cumsum(value.repay)
+# CumRepaidRate := CumRepaid/(125*45*3) or, CumRepaid/(190*45*2), 
+# CumPlannedInstallment := 125 * floor(WeeksElapsed) or 190 * floor(WeeksElapsed)
+DesRep[, FullyRepaid := as.integer(any(
+  !is.na(CumRepaidRate) & tee > 24 & CumRepaidRate >= 1
+  )), 
+  by = hhid]
+addmargins(table(DesRep[tee == 1, .(Arm, FullyRepaid)]),
+  1:2, sum, T)
+# Use EeffectiveFullyRepaid
+TabRepay <- addmargins(table(DesRep[tee == 1 & grepl("bo", BStatus), 
+  .(Arm, EffectivelyFullyRepaid)]), 1:2, sum, T)
+dnTR <- dimnames(TabRepay)
+TabRepay <- data.table(as.matrix.data.frame(TabRepay))
+TabRepay[, Arm := dnTR$Arm]
+TabRepay[, FullRepayRate := round(V2/V3*100, 2)]
+setcolorder(TabRepay, c(4, 1:3, 5))
+setnames(TabRepay, c("Arm", "no", "yes", "sum", "FullRepayRate"))
+TabRepay[grepl("sum", Arm), Arm := "overall"]
+saveRDS(TabRepay, paste0(pathprogram, 
+  "table/EstimationMemo/RepaymentTable.rds"))
+# Use EeffectiveFullyRepaid at 37th month
+TabRepay2 <- addmargins(table(DesRep[tee == 37 & grepl("bo", BStatus), 
+  .(Arm, CumEffectiveRepaidRate>=1)]), 1:2, sum, T)
+dnTR2 <- dimnames(TabRepay2)
+TabRepay2 <- data.table(as.matrix.data.frame(TabRepay2))
+TabRepay2[, Arm := dnTR2$Arm]
+TabRepay2[, FullRepayRate := round(V2/V3*100, 2)]
+setcolorder(TabRepay2, c(4, 1:3, 5))
+setnames(TabRepay2, c("Arm", "no", "yes", "sum", "FullRepayRate"))
+TabRepay2[grepl("sum", Arm), Arm := "overall"]
+saveRDS(TabRepay2, paste0(pathprogram, 
+  "table/EstimationMemo/RepaymentAt37MonthTable.rds"))
+
+<<>>=
+#dummy chunk
+@
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{Figure \ref{fig weeklysavingrepay}} visually presents that repayment is no different between the ultra poor and the moderately poor. The subsequent regression table econometrically confirms this (\textsc{\normalsize Table \ref{tab FD saving2 original HH}}). 
+\end{finding}
+\end{palepinkleftbar}
+

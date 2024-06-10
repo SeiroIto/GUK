@@ -1,0 +1,44 @@
+#con <-  readRDS(paste0(pathsaveHere, "RosterConsumptionAdminOriginalHHsDataUsedForEstimation.rds"))
+con <- readRDS(paste0(pathsaveHere, DataFileNames[9], "InitialSample.rds"))
+if (Only800) con <- con[o800 == 1L, ]
+con[, ConsumptionBaseline := 0L]
+con[as.Date(IntDate) < as.Date(DisDate1), ConsumptionBaseline := 1L]
+con[, ConsumptionBaseline := as.integer(any(ConsumptionBaseline == 1L)), 
+  by = hhid]
+#Number of HHs with consumption before the loan is disbursed (\textsf{ConsumptionBaseline} == 1) is small.
+table(con[, .(Arm, ConsumptionBaseline)])
+con <- con[,
+  grepout("groupid|hhid|tee|^dummy[A-Z]|Floo|Tim|LargeSize|With|Poo|RM|Expen|Head|HH|^Arm$|BSta", 
+  colnames(con)), with = F]
+expcol <- grepout("Exp", colnames(con))
+con[, paste0("PC", expcol) := .SD/HHsize, .SDcols = expcol]
+pcexpcol <- grepout("PC", colnames(con))
+con[, c("PCExpenditure", "TotalExpenditure") := 
+  .(eval(parse(text=paste(pcexpcol, collapse = "+"))), 
+    eval(parse(text=paste(expcol, collapse = "+"))))]
+con[, grepout("Loan|UD|^Tota|Small|Food|Ener|Soc|^Hygi|^Time$", colnames(con)) := NULL]
+# drop Time 2 (period 1-2) and its iteractions, because data starts from t=2
+#conR[, grepout("Time.?2|Time.?3|^Time$", colnames(con)) := NULL]
+conR = copy(con)
+conR[, grepout("Time.?2|^Time$", colnames(con)) := NULL]
+con[, grepout("RM", colnames(con)) := NULL]
+datas <- c("con", "conR")
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+# a  dl <- prepFDData(get(datas[i]), Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+# a    LevelCovariates = "^dummy[A-Z].*[a-z]$|Floo|^Time\\..$|Head|HH", 
+# a    drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+# a    use.var.name.for.dummy.prefix = F, print.messages = F)
+# a  dat <- dl$diff
+  dl <- FirstDiffPanelData(get(datas[i]), 
+    Group = "^hhid$", TimeVar = "tee", Cluster = "groupid",
+     LevelCovariates = "^dummy|Head|^Time\\..$|Female$|Floo|Eldest|HH|credits|xid$|SchPa|^Size$|^Arm$|BSta")
+  dat <- dl$diff
+  dat[, grepout("^en$", colnames(dat)) := NULL]
+  # Recreate Time.4 which is dropped when kept only 1:(T-1) obs.
+  dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dcond[, Tee := .N, by = hhid]

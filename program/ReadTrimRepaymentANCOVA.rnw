@@ -1,0 +1,81 @@
+<<>>=
+#ar <- readRDS(paste0(pathsaveHere, "RosterRepaymentAdminOriginalHHsDataUsedForEstimation.rds"))
+#arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminDataUsedForEstimation.rds"))
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+if (Only800) arA <- arA[o800 == 1L & !is.na(LoanYear) &
+  !grepl("tw|dou", TradGroup), ]
+setkey(arA, hhid, tee)
+arA[survey == 2, Time.2 := 1L]
+#arA[, Mid := 1:.N, by = .(hhid, survey)]
+#arA <- arA[Mid == 1, ]
+#arA[, Mid := NULL]
+arA[, CumSave := CumNetSaving - CumRepaid]
+arA[, CumEffectiveRepayment := CumNetSaving + CumRepaid]
+for (rr in grepout("^RM", colnames(arA)))
+  arA[, (rr) := eval(parse(text=paste0(rr, "*RMDenomination")))]
+arA[, Arm := droplevels(Arm)]
+arA[, HeadLiteracy := HeadLiteracy + 0]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+setorder(arA, hhid, Date)
+arA[, grepout("^Time$|UD|[mM]issw|Small|^Size", 
+  colnames(arA)) := NULL]
+arA[, ExcessRepayment := 0]
+arA[grepl("bo", BorrowerStatus), 
+  ExcessRepayment := value.repay - PlannedInstallment]
+arA[, CumExcessRepayment := cumsum(ExcessRepayment), by = hhid]
+# use only borrowers
+arA2 <- arA[grepl("bo", BorrowerStatus), 
+  #grepout("groupid|^hhid|tee|RArm|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|RMOther|RMvalue.[rN]|HeadA|HeadL|Floo|With|Size", 
+  grepout("^groupid|^hhid|survey|tee|LY|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|ExcessRepayment$|RMOther|RMvalue.[rN]|HeadA|HeadL|Floo|With|Size|^value\\.|^EffectiveR|^Arm$|BSta", 
+  colnames(arA)), with = F]
+arA1 = copy(arA2)
+arA1[, grepout("RM", colnames(arA1)) := NULL]
+#  hhid == 7096302, 3 have round 1 observation which corresponds to pre disbursement date. Drop their round 1 data.
+# dar1 <- prepFDData(ar1[!((hhid == 7096302 & tee == 1) | (hhid == 7096303 & tee == 1)), ], 
+#   Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+#   LevelCovariates = "^dumm.*[a-z]$|RAr|Floo|^Time\\..$|HeadL|HeadA|LoanY", 
+#   drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+#   use.var.name.for.dummy.prefix = F, print.messages = F)
+# dar2 <- prepFDData(ar1, Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+#   LevelCovariates = "^dumm.*[a-z]$|RAr|Floo|^Time\\..$|HeadL|HeadA|LoanY", 
+#   drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+#   use.var.name.for.dummy.prefix = F, print.messages = F)
+dl <- FirstDiffPanelData(X = arA1, 
+  Group = "^hhid$", TimeVar = "^tee$", Cluster = "^groupid$",
+  LevelCovariates = "^dummy|Head|surve|^Time\\..$|^LY[2-4]|Female$|Floo|Eldest|^Arm|^cred.*s$|xid$|Sch.*Pa|^Arm$|BSta")
+dard1 <- dl$diff
+ard1 <- arA1[-as.numeric(unlist(dl$droppedRows)), ]
+ard1[, c("Repaid", "NetSaving", "ExcessRepayment") := 
+  .(c(CumRepaid[1], firstdiff(CumRepaid)), 
+    c(CumNetSaving[1], firstdiff(CumNetSaving)),
+    c(CumExcessRepayment[1], firstdiff(CumExcessRepayment))), by = hhid]
+meanar1 <- ard1[, .(
+  MeanFDCumRepaid = mean(Repaid),
+  MeanFDCumNetSaving = mean(NetSaving),
+  MeanFDCumExcessRepayment = mean(ExcessRepayment)), 
+  by = survey][survey == 1, ]
+dl <- FirstDiffPanelData(X = arA2, 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid",
+  LevelCovariates = "^dummy|Head|surve|^Time\\..$|Female$|Floo|Eldest|^Arm|^cred.*s$|xid$|Sch.*Pa|^Arm$|BSta")
+dard2 <- dl$diff
+ard2 <- arA2[-as.numeric(unlist(dl$droppedRows)), ]
+ard2[, c("Repaid", "NetSaving", "ExcessRepayment") := 
+  .(c(CumRepaid[1], firstdiff(CumRepaid)), 
+    c(CumNetSaving[1], firstdiff(CumNetSaving)),
+    c(CumExcessRepayment[1], firstdiff(CumExcessRepayment))), by = hhid]
+meanar2 <- ard2[, .(
+  MeanFDCumRepaid = mean(Repaid),
+  MeanFDCumNetSaving = mean(NetSaving),
+  MeanFDCumExcessRepayment = mean(ExcessRepayment)), 
+  , by = survey][survey == 1, ]
+meanar <- rbind("dard1" =meanar1, "dard2" =meanar2)
+datas <- c("dard1", "dard2")
+for (i in 1:length(datas)) {
+  dat <- get(datas[i])
+  # need to keep Time.?2 because there are many tee/meetings per HH in a given survey round
+  dat[, grepout("^en$", colnames(dat)) := NULL]
+  dat[, Tee := .N, by = hhid]
+  dat <- dat[Tee > 1, ]
+  assign(datas[i], dat)
+}
+@

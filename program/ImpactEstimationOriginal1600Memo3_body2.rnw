@@ -1,0 +1,28 @@
+\Sexpr{NotPrintFileNames} \textcolor{red}{Read: \Sexpr{paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds")}}.
+
+<<>>=
+# Following files are created in ImpactEstimatin_body1.rnw using paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds") further trimmed in DataTrimmingMembership1or4.rnw
+# All are in long format with time dummies.
+# s1 <- readRDS(paste0(pathsaveHere, "RosterSchoolingAdminDataUsedForEstimation.rds"))
+# ar <- readRDS(paste0(pathsaveHere, "RosterAdminDataUsedForEstimation.rds"))
+# arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminDataUsedForEstimation.rds"))
+# ass <- readRDS(paste0(pathsaveHere, "AssetAdminDataUsedForEstimation.rds"))
+# lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminDataUsedForEstimation.rds"))
+# lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminDataUsedForEstimation.rds"))
+# lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminDataUsedForEstimation.rds"))
+# far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminDataUsedForEstimation.rds"))
+# con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminDataUsedForEstimation.rds"))
+# what to do with errors like below?
+#ass[hhid == 7043715, .(hhid, survey, tee)]
+# Table footnote first part that is common across tables.
+TabFNTop <- "First-difference estimates using administrative and survey data. First-differenced ($\\Delta x_{t+1}\\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \\citet[][10.71]{Wooldridge2010} and $\\Pr[\\rho=0]$ is its $p$ value."
+TabFNAttributes <- "\\textsf{LargeSize} is an indicator function if the arm is of large size, \\textsf{WithGrace} is an indicator function if the arm is with a grace period, \\textsf{InKind} is an indicator function if the arm provides a cow."
+TabFNArm <- "Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount."
+TabFNUP <- "\\textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor."
+@
+<<>>=
+for (i in 1:length(DataFileNames))
+  assign(datafiles[i], readRDS(
+    paste0(pathsaveHere, DataFileNames[i], "Trimmed.rds")
+    ))
+@

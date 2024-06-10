@@ -1,0 +1,1581 @@
+% This is to be read in ReadFilesMergeAdminRoster.rnw
+\textcolor{blue}{This file reads data from a list \textsf{\Sexpr{gsub("\\_", "\\\\_", "data_read_in_a_list_with_baseline_patched.rds")}} and \Sexpr{gsub("\\_", "\\\\_", paste0(path1234, "admin_data_wide2.rds"))}, merges all non-roster files with roster-adin (\textsf{ar}), attaches village level information, and saves in \Sexpr{pathsaveHere}.}
+
+<<compute mean RR, echo = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+ad0 <- adw2[grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & 
+  !grepl("tw|dou", TradGroup), .(Arm, povertystatus, MonthsElapsed, CumNetSaving, CumRepaid)]
+ad0[, RepaymentRate := CumRepaid / (125*45*3)]
+ad0[, EffectiveRepaymentRate := (CumRepaid + CumNetSaving) / (125*45*3)]
+ad0[grepl("gr|cat", Arm), c("RepaymentRate", "EffectiveRepaymentRate") := 
+  .(CumRepaid / (190*45*2), (CumRepaid + CumNetSaving)/ (190*45*2))]
+setkey(ad0, Arm)
+meanRR <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate)), by = Arm]
+meanRR2 <- ad0[MonthsElapsed == 36, .(meanRR = mean(RepaymentRate))]
+meanERR <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate)), by = Arm]
+meanERR2 <- ad0[MonthsElapsed == 36, .(meanERR = mean(EffectiveRepaymentRate))]
+meanPERR <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = .(Arm, povertystatus)]
+meanPERR2 <- ad0[MonthsElapsed == 36, .(meanPERR = mean(EffectiveRepaymentRate)), by = povertystatus]
+meanPRR <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = .(Arm, povertystatus)]
+meanPRR2 <- ad0[MonthsElapsed == 36, .(meanPRR = mean(RepaymentRate)), by = povertystatus]
+<<get file names from source, ecno = F>>=
+setwd(path1234)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+fn <- list.files(path = foldername, pattern = ".dta$", recursive = T, full.names = T)
+fn <- fn[!grepl("orking|Live.*p.dta", fn)]
+fn <- unique(fn)
+fnd <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn)))
+@
+
+
+
+\section{Read from a list}
+
+In reading raw files, I added ID information (\textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", grepout("Abu\\.", fn))}}) to all pages. I further added HH ID information from the admin file. \textsf{(code omitted)}
+
+<<read files from ZB, warning = F>>=
+sch1 <- readRDS(paste0(path1234, "schooling_Age6-18InRd1.rds"))
+ZB <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+# roster
+ros <- ZB[[1]]
+# relocation
+loc <- ZB[[grep("relo", names(ZB))]]
+#loc[, .(hhid, survey, IntDate, duration_year, current_loc)]
+# poverty
+pov <- ZB[[grep("poverty$", names(ZB))]]
+pov <- ZB[[grep("pov.*up", names(ZB))]]
+# shocks
+shk <- ZB[[grep("shock", names(ZB))]]
+# asset (HH and productive
+ass <- ZB[[grep("Mer", names(ZB))]]
+# livestock products
+lvp <- ZB[[grep("liv.*prod", names(ZB))]]
+# livestock ownership
+lvo <- ZB[[grep("liv.*own", names(ZB))]]
+# livestock ownership Long
+lvoL <- ZB[[grep("Liv.*Long", names(ZB))]]
+# labour income
+lab <- ZB[[grep("la.*come", names(ZB))]]
+# farm income
+far <- ZB[[grep("fa.*ion", names(ZB))]]
+# HH consumption
+con <- ZB[[grep("hh.con", names(ZB))]]
+# credit and borrowing
+obr <- ZB[[grep("credit", names(ZB))]]
+<<read xid admin data file>>=
+xid <- readRDS(paste0(path1234, "ID.rds"))
+xid[, creditstatus := droplevels(creditstatus)]
+xid[, creditstatus := factor(creditstatus, levels = c("Yes", "No"))]
+@
+<<assign arms to dropped out HHs in this file>>=
+# add group level info to xid
+# fill in original arm assignment of drop outs, forced drop outs
+probgp <- fread(paste0(path0, "received/CharRandomization2012.prn"))
+probgp[, randomization0 := randomization]
+probgp[grepl("grace", randomization0), randomization0 := "large grace"]
+probgp[grepl("credit$", randomization0), randomization0 := "large"]
+probgp[grepl("con", randomization0), randomization0 := "traditional"]
+probgp[grepl("pack", randomization0), randomization0 := "cattle"]
+probgp <- probgp[, .(group.id, randomization0, comment)]
+xid[, ObsPattern := "1111"]
+xid[grepl("^Fi", missing_followup), ObsPattern := "0111"]
+xid[grepl("^Se", missing_followup), ObsPattern := "1011"]
+xid[grepl("^En", missing_followup), ObsPattern := "1110"]
+xid[grepl("^2nd and 4", missing_followup), ObsPattern := "1010"]
+xid[grepl("^3rd and 4", missing_followup), ObsPattern := "1100"]
+xid[grepl("^2.*3.*4", missing_followup), ObsPattern := "1000"]
+@
+
+<<select variables and compute aggregates in each files, warning = F>>=
+ass <- ass[, .(gid, hhid, Mstatus, AssignRegression, AssignOriginal, survey, DistDate1, IntDate, 
+  #NarrowNLHAssetAmount, 
+  NLHAssetAmount, BroadNLHAssetAmount,
+  #RNarrowNLHAssetAmount, RNLHAssetAmount, RBroadNLHAssetAmount,
+  PAssetAmount, NarrowPAssetAmount, 
+  NLAssetAmount, #NarrowNLAssetAmount, 
+  BroadNLAssetAmount,
+  #RNLAssetAmount, RNarrowNLAssetAmount, RBroadNLAssetAmount,
+  AmountFilled)]
+ros <- ros[, .(AssignRegression, AssignOriginal, 
+  gid, hhid, Mstatus, Mgroup, ObPattern, AttritIn,
+  IntDate, year, survey, 
+  mid, rel_hhh, fmid, mmid, sex, Age_1, AgeComputed, 
+  current, marital, stay, nonstaym, reasons, literacy, edu, 
+  HeadLiteracy, HeadAge, HHsize, randomization)]
+ros[, HeadLiteracy := as.numeric(HeadLiteracy)]
+sch1[, groupid := as.integer(as.numeric(as.character(gid)))]
+ros[, groupid := as.integer(as.numeric(as.character(gid)))]
+ros[grepl("2004", IntDate), IntDate := 
+  strptime(gsub("2004", "2014", as.character(IntDate)), format = "%Y-%m-%d")]
+ros[grepl("2005", IntDate), IntDate := 
+  strptime(gsub("2005", "2015", as.character(IntDate)), format = "%Y-%m-%d")]
+ros[, Year := as.numeric(format(as.Date(IntDate), "%Y"))]
+ros[Year <= 2010, Year := Year + 10]
+ros[, Month := format(as.Date(IntDate), "%B")]
+setorder(ros, gid, hhid, IntDate, -Age_1, mid)
+ros[, ChildAgeOrderAtRd1 := as.integer(NA)]
+ros[grepl("^son", rel_hhh), ChildAgeOrderAtRd1 := 1:.N, by = .(IntDate, hhid)]
+# ChildAgeOrderAtRd1 is complete and no child is left unordered.
+if (any(nrow(ros[is.na(ChildAgeOrderAtRd1) & Age_1 <= 18 & grepl("^son", rel_hhh)]) > 0))
+  ros[is.na(ChildAgeOrderAtRd1) & Age_1 <= 18 & grepl("^son", rel_hhh)]
+ros[, c("EldestSon", "EldestDaughter") := 0L]
+ros[grepl("^son", rel_hhh) & ChildAgeOrderAtRd1 == 1 & sex == "Male", EldestSon := 1L]
+ros[grepl("^son", rel_hhh) & ChildAgeOrderAtRd1 == 1 & sex == "Female", EldestDaughter := 1L]
+ros[, MarriedOff := 
+  any(grepl("marr", .SD[, reasons])) & 
+  !any(grepl("dea|job", .SD[, reasons])), 
+  .SDcols = "reasons", by = .(hhid, mid)]
+# Why below?
+# drop head/spouse or adults (age > 18) but keep married off
+#ros <- ros[MarriedOff | !(grepl("head|spo", rel_hhh) | Age_1 >18), ]
+# drop married off
+ros <- ros[!(MarriedOff), ]
+# livestock
+lvo <- lvo[, c("gid", "hhid", "survey", "IntDate", 
+  grepout("Cows|Sold|Own|Mkt|Dead|Born|Eat|^Total|Value\\.", colnames(lvo))), with = F]
+#lvo <- lvo[, .(gid, hhid, survey, IntDate, 
+#  dummyHadCows, NumCows, NumCowsOwnedAtRd1, 
+#  sales_cattle, sales_ox, sales_sheep, dead, born, 
+#  nowned_cattle, nowned_ox,
+#  LivestockCode, number_owned, mrkt_value, total_cost, 
+#  TotalImputedValue, TotalSelfEvaluatedValue)]
+# labour income
+lab <- lab[, .(gid, hhid, survey, IntDate, mid, 
+  code_1, duration_1, income1, code_2, duration_2, income2, 
+  totalincome, TotalHHLabourIncome)]
+# farm income
+far <- far[, .(gid, hhid, survey, IntDate, 
+  area_1, crop_code_1, total_production_1, Revenue1, 
+  area_2, crop_code_2, total_production_2, Revenue2, 
+  area_3, crop_code_3, total_production_3, Revenue3, TotalRevenue)]
+# HH consumption
+con = copy(ZB[[grep("hh.con", names(ZB))]])
+con <- a2b.data.table(con, NA, 0)
+setnames(con, "pulse_total", "pulses_total")
+setnames(con, "pgarlic_exp", "garlic_exp")
+setnames(con, "bettel_total", "bettle_total")
+setnames(con, grepout("other_pulse", colnames(con)), 
+  gsub("other\\_pu", "otherpu", grepout("other_pulse", colnames(con))))
+setnames(con, grepout("chew_tob", colnames(con)), 
+  gsub("chew\\_to", "chewto", grepout("chew_tob", colnames(con))))
+items <- unique(unlist(strsplit(grepout("bought", colnames(con)), "_")))
+items <- items[!grepl("bought", items)]
+# impute unit value as item_UPrice
+for (i in items) {
+  con[, paste0(i, "_UPrice") := 
+    eval(parse(text = paste0(i, "_exp"))) / eval(parse(text = paste0(i, "_bought")))]
+}
+# Set time unit to annual.
+TimeUnitForCon <- rep(7, length(items))
+TimeUnitForCon[grep("oil", items):length(items)] <- 30
+con[, paste0(items[TimeUnitForCon == 7], "_AnnTotal") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 7], "_total"))) * 4.5 * 12]
+con[, paste0(items[TimeUnitForCon == 30], "_AnnTotal") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 30], "_total"))) * 12]
+con[, paste0(items[TimeUnitForCon == 7], "_AnnBought") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 7], "_bought"))) * 4.5 * 12]
+con[, paste0(items[TimeUnitForCon == 30], "_AnnBought") := 
+  eval(parse(text = paste0(items[TimeUnitForCon == 30], "_bought"))) * 12]
+# Inf -> NA (so median price to stay finite)
+con <- a2b.data.table(con, Inf, NA)
+for (i in items) {
+  con[, paste0(i, "_MedianUPrice") := 
+    median(eval(parse(text = paste0(i, "_UPrice"))), na.rm = T), by = year]
+  con[, paste0(i, "_ImputedValue") := 
+    eval(parse(text = paste0(i, "_MedianUPrice"))) * 
+      eval(parse(text = paste0(i, "_AnnTotal")))]
+  # errors: total < bought. => use bought as total.
+  con[eval(parse(text = paste0(i, "_AnnTotal"))) < eval(parse(text = paste0(i, "_AnnBought"))), 
+    paste0(i, "_ImputedValue") := 
+      eval(parse(text = paste0(i, "_MedianUPrice"))) * 
+      eval(parse(text = paste0(i, "_AnnBought")))]
+}
+# NA -> 0 (so total becomes nonNA)
+con <- a2b.data.table(con, NA, 0)
+con[, OtherFoodExpenditure := other_staples_exp+stem_exp+carrot_exp+leaf_exp+
+  other_vege_exp+seasonal_fruits_exp+other_fruit_exp+hard_spices_exp+
+  soft_spices_exp+other_drinks_exp]
+con[, HygieneExpenditure := cloth_exp + soap_exp + haircut_exp + cosmetic_exp]
+con[, SocialExpenditure := fest_exp + mosque_exp + contra_exp + social_exp]
+con[, EnergyExpenditure := fuel_wood_exp + transport_exp + communication_exp + other_exp]
+items <- items[items != "tea"]
+con[, FoodExpenditure0 := 
+  eval(parse(text = paste(grepout("AnnTotal", colnames(con)), collapse = "+")))]
+con[, FoodExpenditure := FoodExpenditure0 + OtherFoodExpenditure]
+con <- con[, .(gid, hhid, 
+  IntDate, survey, FoodExpenditure, HygieneExpenditure, 
+  SocialExpenditure, EnergyExpenditure)]
+@
+Incorporate credit and borrowing data. In rd 1, \textsf{out\_bal} = NA for all entries. Only \textsf{out\_ngo}, \textsf{out\_rel}, \textsf{loan\_amount\_lender} have entries. Create \textsf{YBal} where \textsf{Y=}NGO, relative, and lender. Then sum all: \textsf{OutBal} as outstanding balance for relatives, NGOs, and money lenders  (code omitted). In rd1, \textsf{OutBal} = \textsf{out\_rel}+\textsf{out\_ngo}+\textsf{loan\_amount\_lender}, in rd 2, 4, \textsf{OutBal} = \textsf{out\_bal}+\textsf{sum(out\_bal\_X)}+\textsf{sum(loan\_amount\_lender\_X)}. In rd 3, there is no data. 
+<<Create OutBal, warning = F, results = "hide">>=
+# No rd3 info
+outs <- grepout("^out|lo.*am.*lender", colnames(obr))
+# iidebt: indicator of rows with nonNA in debt outstanding to various lenders
+iidebt <- eval(parse(text=paste(paste0("!is.na(", outs, ")"), collapse = "|")), envir = obr)
+#destat(obr[iidebt, c("hhid", "survey", outs), with = F])
+# out_bal is outstanding balance for all loans combined, but not always. 
+destat(obr[survey == 1,  c("hhid", "survey", outs), with = F])
+destat(obr[survey == 2 & iidebt,  c("hhid", "survey", outs), with = F])
+# NGO borrowing indicator
+iingo <- !eval(parse(text="is.na(out_ngo) & is.na(out_ngo_2) & is.na(out_ngo_3)"), envir = obr)
+obr[, NGOBal := eval(parse(text=
+  paste(paste0("a2b(", grepout("out.ngo", colnames(obr)), ", NA, 0)"), collapse = "+")
+  ))]
+# relative borrowing indicator
+iirel <- paste(paste0("is.na(", grepout("out.rel", colnames(obr)), ")"), collapse = "&")
+iirel <- !eval(parse(text=iirel), envir = obr)
+obr[, RelBal := eval(parse(text=
+  paste(paste0("a2b(", grepout("out.rel", colnames(obr)), ", NA, 0)"), collapse = "+")
+  ))]
+# money lender borrowing (only borrowed amount, not outstanding amount, is shown)
+# there is no variable called out_lender when we have out_lender_2, ..3
+iilen <- paste(paste0("is.na(", grepout("amount.len", colnames(obr)), ")"), collapse = "&")
+iilen <- !eval(parse(text=iilen), envir = obr)
+obr[, LenBal := eval(parse(text=
+  paste(paste0("a2b(", grepout("amount.len", colnames(obr)), ", NA, 0)"), collapse = "+")
+  ))]
+# debt outstanding
+# In rd 1, out_bal = NA for all entries. Only out_ngo, out_rel, loan_amount_lender have entries.
+# for rd 1, OutBal = out_rel+out_ngo+loan_amount_lender
+# for rd 2, 4, OutBal = NGOBal + RelBal + LenBal
+obr[, OutBal := as.numeric(NA)]
+obr[survey == 1, OutBal := a2b(out_rel, NA, 0)+a2b(out_ngo, NA, 0)+a2b(loan_amount_lender, NA, 0)]
+obr[survey > 1, OutBal := NGOBal + RelBal + LenBal]
+# lender name columns
+tkn <- grepout("taken", colnames(obr))
+obr[, (tkn) := lapply(.SD, factor), .SDcols = tkn]
+# GUK borrowing indicator
+iiguk <- paste(paste0("grepl(\"guk\",", tkn, ")"), collapse = "|")
+iiguk <- eval(parse(text=iiguk), envir = obr)
+addmargins(table0(data.table(NGO=iingo, GUK=iiguk)[obr[, survey]==1, ]))
+# NGO balance likely to include only GUK, but cannot see in data for sure
+for (i in c(1, 2, 4)) print(destat(obr[survey==i & !iiguk, .(NGOBal, RelBal, LenBal, OutBal)]))
+for (i in c(1, 2, 4)) print(destat(obr[survey==i & !(hhid %in% hhid[iiguk]), .(NGOBal, RelBal, LenBal, OutBal)]))
+# lender name is nonNA
+iitkn <- !eval(parse(text=paste(paste0("is.na(", tkn, ")"), collapse = "&")), envir = obr)
+addmargins(table(obr[(iitkn), c(tkn[-3], "survey"), with = F], useNA = "ifany"))
+tball = copy( table(obr[(iingo|iiguk|iirel|iilen), survey]))
+tbngo = copy( table(obr[(iingo), survey]))
+tbguk = copy(  table(obr[(iiguk), survey]))
+tbrel = copy(  table(obr[(iirel), survey]))
+tblen = copy(  table(obr[(iilen), survey]))
+tbrellen = copy(  table(obr[(iirel|iilen), survey]))
+@
+
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations in other borrowing\label{tab other borrowing num obs}}\\
+\hfil \\
+\hfil\begin{tabular}{
+>{\footnotesize\hfill}p{2cm}<{}
+>{\footnotesize\hfil}p{1cm}<{}>{\footnotesize\hfil}p{1cm}<{}>{\footnotesize\hfil}p{1cm}<{}
+}
+\rowcolor{paleblue}
+lender & round 1 & round 2 & round 4\\
+any debt & \Sexpr{paste(tball, collapse = "&")}\\
+\rowcolor{gray90}
+NGO & \Sexpr{paste(tbngo, collapse = "&")}\\
+GUK & \Sexpr{paste(c("", tbguk), collapse = "&")}\\
+\rowcolor{gray90}
+relatives & \Sexpr{paste(tbrel, collapse = "&")}\\
+money lenders & \Sexpr{paste(tblen, collapse = "&")}\\
+\rowcolor{gray90}
+non-NGO & \Sexpr{paste(tbrellen, collapse = "&")}
+\end{tabular}
+
+
+\textsc{\footnotesize Table \ref{tab other borrowing num obs}} shows the growing numbers of NGO debts. This should include GUK borrowing. I created \textsf{NetOutBal} = \textsf{OutBal}-GUK borrowing to get just non-GUK debts, but this does not give any insight because households do not always report lender as GUK. 
+
+<<create NetBal, results = "hide">>=
+# The only concern is NGO debts include GUK
+summary(obr[(iitkn), c("hhid", "survey", tkn), with = F])
+# NetOutBal := OutBal-GUK borrowing, if out_ngo==NA, subtract zero
+## loan_taken_from_specify_4_1 (loan taken at rd 4, loan #1)
+obr[, NetOutBal := OutBal]
+#obr[grepl("guk", loan_taken_from_specify_4_1) & is.na(out_ngo), c("hhid", "survey", tkn, outs), with = F]
+#obr[grepl("guk", loan_taken_from_specify_4_2) & is.na(out_ngo_2), c("hhid", "survey", tkn, outs), with = F]
+#obr[grepl("guk", loan_taken_from_specify_4_1) & !is.na(out_ngo), c("hhid", "survey", tkn, outs), with = F]
+#obr[grepl("guk", loan_taken_from_specify_4_2) & !is.na(out_ngo_2), c("hhid", "survey", tkn, outs), with = F]
+obr[grepl("guk", loan_taken_from_specify_4_1) & !is.na(out_ngo), NetOutBal := OutBal - out_ngo]
+obr[grepl("guk", loan_taken_from_specify_4_2) & !is.na(out_ngo_2), NetOutBal := OutBal - out_ngo_2]
+# members who have debts only from non-GUK: OutBal == NetOutBal
+addmargins(table0(obr[(iidebt) & OutBal == NetOutBal, .(Assign, survey)]), 1)
+# HaveDebtFromGUK
+obr[, HaveDebtFromGUK := 0L]
+obr[hhid %in% hhid[iiguk], HaveDebtFromGUK := 1L]
+addmargins(table0(obr[, .(survey, HaveDebtFromGUK)]))
+obr[, NonNGOBal := 0L]
+obr[survey == 1, NonNGOBal := a2b(out_rel, NA, 0)]
+obr[survey > 1, NonNGOBal := OutBal-a2b(out_ngo, NA, 0)-a2b(out_ngo_2, NA, 0)-a2b(out_ngo_3, NA, 0)]
+@
+%There are \Sexpr{table0(obr[NetOutBal > 0 & iingo & !iiguk, survey])} in round \Sexpr{names(table0(obr[NetOutBal > 0 & iingo & !iiguk, survey]))}. This indicates that GUK debts are reported not as GUK debts. If we exclude a household who report GUK debt in any round, \Sexpr{table0(obr[NetOutBal > 0  & iingo & !iiguk & HaveDebtFromGUK != 1L, survey])} in round \Sexpr{names(table0(obr[NetOutBal > 0 & iingo & !iiguk & HaveDebtFromGUK != 1L, survey]))}. Median debt for these households are 
+% \Sexpr{median(obr[survey == 1 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T)}, 
+% \Sexpr{median(obr[survey == 2 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T)}, 
+% \Sexpr{median(obr[survey == 4  & iingo & !iiguk& HaveDebtFromGUK != 1L, NetOutBal], na.rm = T)},
+% mean debts are 
+% \Sexpr{round(mean(obr[survey == 1 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0)}, 
+% \Sexpr{round(mean(obr[survey == 2 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0)}, 
+% \Sexpr{round(mean(obr[survey == 4 & iingo & !iiguk & HaveDebtFromGUK != 1L, NetOutBal], na.rm = T), 0)}
+% in round 1, 2 and 4. Money lender debts are \Sexpr{table0(obr[NetOutBal > 0 & iilen, survey])} in round \Sexpr{names(table0(obr[NetOutBal > 0 & iilen, survey]))}.
+
+We define \textsf{NonNGOBal} as non-NGO debt (relative + money lender), median debts are 
+\Sexpr{median(obr[survey == 1 & (iirel|iilen), NonNGOBal], na.rm = T)}, 
+\Sexpr{median(obr[survey == 2 & (iirel|iilen), NonNGOBal], na.rm = T)}, 
+\Sexpr{median(obr[survey == 3 & (iirel|iilen), NonNGOBal], na.rm = T)}, 
+\Sexpr{median(obr[survey == 4 & (iirel|iilen), NonNGOBal], na.rm = T)},
+mean debts are 
+\Sexpr{round(mean(obr[survey == 1 & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[survey == 2 & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[survey == 3 & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[survey == 4 & (iirel|iilen), NonNGOBal], na.rm = T), 0)} in round 1, 2 and 4.
+Mean debts by arm are 
+\Sexpr{round(mean(obr[grepl("tra", AssignOriginal) & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[grepl("large$", AssignOriginal) & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[grepl("grace$", AssignOriginal) & (iirel|iilen), NonNGOBal], na.rm = T), 0)}, 
+\Sexpr{round(mean(obr[grepl("cattle", AssignOriginal) & (iirel|iilen), NonNGOBal], na.rm = T), 0)} for traditional, large, large grace, and cattle. 
+
+\vspace{2ex}
+\mpage{14cm}{\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Indebtedness to Non-NGOs\label{fig nonNGO debt}}\\
+\hfil\includegraphics[width = 14cm]{\Sexpr{paste0(pathprogram, "figure/EstimationMemo/NonNGODebts.pdf")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:&  Sum of debts to relatives and money lenders in the last 12 months of survey. Each dots represent one observation, filled triangles show the group means of indetedness. \\[-1ex]
+\end{tabular}
+}
+
+\vspace{2ex}
+\textsc{\small Figure \ref{fig nonNGO debt}} gives borrowing from friends/relatives and money lenders. If we exclude loans from GUK, they are the only sources of borrowing for the households in our study area. Both box plots and means show an increased borrowing in round 2, but it decreased in round 4 to the pre-intervention level. This suggests the repayment schedule that we intended to adopt the heifer growth cycle is still not suited to the actual cash flow profiles, and such gaps might have induced the borrowers to get liquidity elsewhere for installments during the second round. If the households could foresee the gap in cash flows, they might have not participated the program. If the households could not foresee the gap and did not have credit access other than GUK, they might have ended up as a delinquent borrower.
+
+Define shock variables. \textsf{FloodInRd1} is reported flood damage in \textsf{code\_1} in round 1. \textsf{(code omitted)}
+<<shocks definitions>>=
+# shocks
+# shk[!is.na(code_1) | !is.na(code_2), .(hhid, survey, IntDate, code_1, damage_amount_1, 
+#   code_2, damage_amount_2)]
+shk[, damage_amount_1 := as.numeric(damage_amount_1)]
+shk[, damage_amount_2 := as.numeric(damage_amount_2)]
+shkoverview <- shk[, .(Shock1 = round(sum(!is.na(code_1))/.N, 3), 
+  MedianD1 = median(damage_amount_1, na.rm = T), 
+  MeanD1 = round(mean(damage_amount_1, na.rm = T), 0), 
+  Shock2 = round(sum(!is.na(code_2))/.N, 3), 
+  MedianD2 = median(damage_amount_2, na.rm = T),
+  MeanD2 = round(mean(damage_amount_2, na.rm = T), 0),
+  AvgNumShocks = round((sum(!is.na(code_1)) + sum(!is.na(code_2)) + 
+    sum(!is.na(code_3)) + sum(!is.na(code_4)))/.N, 3)), 
+  by = .(survey, AssignOriginal)]
+setkey(shkoverview, survey, AssignOriginal)
+#shkoverview
+#table0(shk[, .(survey, code_1)])
+shk <- ZB[[grep("shock", names(ZB))]]
+codecols <- grepout("code", colnames(shk))
+shk[, (paste0("Code", 1:4)) := lapply(.SD, function(x) !is.na(x)), .SDcols = codecols]
+shk[, (paste0("Code", 1:4)) := lapply(.SD, as.numeric), .SDcols = paste0("Code", 1:4)]
+shk[, NumberOfShocks := eval(parse(text = paste(paste0("Code", 1:4), collapse = "+")))]
+setkey(shk, hhid, survey)
+shk[, FloodInRd1 := 0L]
+shk[survey == 1, FloodInRd1 := as.integer(grepl("Fl", code_1))]
+shk[, FloodInRd1 := FloodInRd1[1], by = hhid]
+shk[, FloodInRd4 := 0L]
+shk[survey == 4, FloodInRd4 := as.integer(grepl("Fl", code_1))]
+shk[, FloodInRd4 := FloodInRd4[1], by = hhid]
+shk <- shk[, .(gid, hhid, survey, IntDate, Hhidyear, FloodInRd1, #FloodInRd4, 
+  code_1, code_2, damage_amount_1, damage_amount_2, NumberOfShocks)]
+@
+
+\vspace{2ex}
+Description of data files:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ad]	Administrative data: Up to [-24, 48] months after first loan disbursement. This file has not been used in \textsf{read\_cleaned\_data.rnw}. \textsf{o800} is imported from JDS file.
+\item[ros]	 \textsf{roster} to condition the initial status prior to participation.
+\item[sch]	Schooling panel with attrition. Aged 6-18 in rd1. \textsf{Enrolled=\{0,1\}} is defined for children aged 6-18 in rd1 by referencing to \textsf{currently\_enrolled} and age information.
+\item[ass]	 MergedAssets. Merged from several tables: household assets (houses, durables), productive assets (machines, tools), and ownership and contract (land holding; operated area, owned area). 
+\item[lvo]	Livestock holding. 
+\item[lab]	Labour incomes.
+\item[far]	Farming revenues (no costs reported).
+\item[con]	Household consumption. Food expenditure asks both bought and consumed volumes and prices. We impute consumption values by using median prices. All quantity is set to annualised quantity.
+\item[obr]	Other borrowing (pages under ``credit and borrowing'') from relatives and money lenders. To be merged with MergedAssets in this file.
+\item[shk]	Shocks. Merged with all other files.
+\end{description}
+
+\section{Sample selection and treament assignment}
+
+\subsection{Create cumulative values in admin file}
+
+Read admin files.
+<<read adw2 admin file, echo = T>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+idfu <- readRDS(paste0(pathsave, "idfu.rds"))
+@
+%Redefine arms to include \textsf{DropOuts} in original arms.
+<<Redefine arms to include DropOuts in original arms>>=
+idfu[, ArmInidfu := unique(arm[!is.na(arm) & arm !="before intervention"]), by = hhid]
+idfu <- unique(idfu[, .(hhid, ArmInidfu)])
+<<merge adw2 and idfu>>=
+setkey(idfu, hhid)
+setkey(adw2, hhid)
+adw3 <- idfu[adw2]
+adw3[, MemNum := 1:.N, by = .(hhid, Year)]
+adw3[, tee := 1:.N, by = hhid]
+<<CumLoanAmount>>=
+#xid <- readRDS(paste0(path1234, "ID.rds"))
+#dis <- unique(xid[, .(hhid, DistDate1, DistDate2, DistDate3)])
+adw3[Date < DisDate1, loanamount1st := 0L]
+adw3[, MinDate := min(Date[Date >= DisDate1]),  by = hhid][
+  Date > MinDate, loanamount1st := 0L]
+adw3[is.na(DisDate2) | Date < DisDate2, loanamount2nd := 0L]
+adw3[, MinDate := min(Date[Date >= DisDate2]),  by = hhid][
+  Date > MinDate, loanamount2nd := 0L]
+adw3[is.na(DisDate3) | Date < DisDate3, loanamount3rd := 0L]
+adw3[, MinDate := min(Date[Date >= DisDate3]),  by = hhid][
+  Date > MinDate, loanamount3rd := 0L]
+adw3[, LoanAmount := loanamount1st + loanamount2nd + loanamount3rd]
+adw3[, CumLoanAmount := cumsum(LoanAmount), by = hhid]
+adw3[, DebtOutstanding := CumLoanAmount-CumEffectiveRepayment]
+@
+Number of meetings in recorded in admin file: there are \Sexpr{names(table(table(adw3[, tee])))} entries that have \Sexpr{table(table(adw3[, tee]))} meetings.
+<<Number of meetings in recorded in admin file>>=
+table(table(adw3[, tee]))
+#table0(adw3[MemNum==1, .(ArmInidfu, randomArm)])
+<<define RArm>>=
+adw3[, RArm := Arm]
+adw3[grepl("^drop", Arm) & grepl("con", randomArm), RArm := "traditional"]
+adw3[grepl("^drop", Arm) & grepl("^La.*t$", randomArm), RArm := "large"]
+adw3[grepl("^drop", Arm) & grepl("^La.*gr", randomArm), RArm := "large grace"]
+adw3[grepl("^drop", Arm) & grepl("^pack", randomArm), RArm := "cattle"]
+@
+Pick 800 \textsf{o800} by referring to JDS data.
+<<define o800 using jds, echo = T>>=
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+adw3[, o800 := 0L]
+adw3[hhid %in% jds[grepl("trea", treat), hhid], o800 := 1L]
+@
+<<define ad0>>=
+ad0 <- adw3[, 
+  .(RArm, Arm, randomArm, groupid, hhid, o800, TradGroup, TradGroup2, 
+    creditstatus, Mem, povertystatus, membershipstatus,
+    Date, Year, Month, DisDate1, DisDate2, DisDate3, 
+    MonthsElapsed, MonthsRepaid, LoanYear,
+    PlannedInstallment, EffectiveRepayment, 
+    value.repay, value.NetSaving, value.missw,
+    EverRepaid, EverSaved,
+    OtherRepaid, OtherNetSaving, OtherMisses, CumOtherMisses,
+    CumRepaid, CumEffectiveRepayment, CumNetSaving, CumPlannedInstallment,
+    CumLoanAmount, DebtOutstanding,
+    CumOtherRepaid, CumOtherNetSaving, CumMisses, EffectivelyFullyRepaid,
+    CumRepaidRate, CumEffectiveRepaidRate)]
+<<define other variables in ad0>>=
+ad0[, Mship := tolower(membershipstatus)]
+ad0[grepl("rep|new", Mship), Mship := "newMember"]
+ad0[grepl("con", Mship), Mship := "oldMember"]
+ad0[grepl("dro", Mship), Mship := "quitMembership"]
+ad0[, Mship := factor(Mship, levels = 
+  c("oldMember", "newMember", "quitMembership"))]
+ad0[, creditstatus := droplevels(creditstatus)]
+ad0[, creditstatus := factor(creditstatus, levels = c("Yes", "No"))]
+ad0[, MtgNum := 1:.N, by = hhid]
+ad0[, MtgYear := 1L]
+for (i in 2:4) ad0[MtgNum > (i-1)*12 & MtgNum <= i*12, MtgYear := as.integer(i)]
+#table0(ad0[, .(Arm, MonthsElapsedNA = is.na(MonthsElapsed))])
+if (nrow(ad0[is.na(EffectiveRepayment)]) > 0) ad0[is.na(EffectiveRepayment)]
+if (nrow(ad0[CumPlannedInstallment != 0L & is.na(CumEffectiveRepaidRate)]) > 0) 
+  ad0[is.na(CumEffectiveRepaidRate)]
+ad0[,  c("CumRepaidRate", "CumEffectiveRepaidRate") := 
+  .(round(CumRepaid/CumPlannedInstallment, 3), 
+    round(CumEffectiveRepayment/CumPlannedInstallment, 3))]
+ad0[CumPlannedInstallment == 0L, c("CumRepaidRate", "CumEffectiveRepaidRate") := NA]
+ad0[, MeanYearlyCERR := mean(CumEffectiveRepaidRate, na.rm = T), by = .(hhid, LoanYear)]
+@
+Add rolling means.
+<<add rolling means, echo = T>>=
+# add rolling means
+library(zoo)
+rollvars <- c("value.missw", "value.repay", "value.NetSaving", "OtherNetSaving", "OtherRepaid")
+ad0[, (paste0("RM", rollvars)) := lapply(.SD, rollmean, k = 6, na.pad = TRUE), 
+   by = hhid, .SDcols = rollvars]
+  # lag rolling means by 3 months to get previous 6 month averages	
+ad0[, (paste0("RM", rollvars)) := shift(.SD, n=3, type = "lag"), 
+   by = hhid, .SDcols = paste0("RM", rollvars)]
+<<>>=
+ad0[, RMvalue.repay := RMvalue.repay/RMDenomination]
+ad0[, RMvalue.NetSaving := RMvalue.NetSaving/RMDenomination]
+ad0[, RMOtherRepaid := RMOtherRepaid/RMDenomination]
+ad0[, RMOtherNetSaving := RMOtherNetSaving/RMDenomination]
+#ad <- ad0[MonthsElapsed == 12 | MonthsElapsed == 24 | MonthsElapsed == 36 | MonthsElapsed == 48]
+#ad0[, c("EffectiveRepayment", "value.repay", "value.NetSaving", "value.missw") := NULL] 
+adbasevars <- c("RArm", "Arm", "randomArm", "o800",
+  "creditstatus", "Mem", "povertystatus", "DisDate1")
+@
+
+\subsection{Merge roster with admin files: \textsf{ar.1}}
+
+Create \textsf{adbase} (baseline fixed characteristics \Sexpr{adbasevars} taken from \textsf{ad0} (={\footnotesize \Sexpr{gsub("\\_", "\\\\_", paste0(path1234, "admin_data_wide2.rds"))} merged with \Sexpr{gsub("\\_", "\\\\_", paste0(pathsave, "idfu.rds"))}}). Merge it with roster. This gives fixed characteristics of membership attached with roster. Name the resulting data as \textsf{ar.0}.
+<<copy fixed portion of admin data with roster>>=
+## Construct ar: 1. ar.0 = adbase[ros]
+# copy baseline characteristics using only matching by hhid. If I merge all info including time-variant variables, some obs do not match with roster when using month-year, unless roster interview and admin meeting timing coincide. 
+adbase <- ad0[, c("hhid", adbasevars), with = F]
+for (i in adbasevars)
+  adbase[, (i) := eval(parse(text=
+      paste0(i, "[!is.na(", i, ")][1]")
+    )), by = hhid]
+adbase <- unique(adbase)
+setkey(ros, hhid)
+setkey(adbase, hhid)
+ar.0 <- adbase[ros]
+# copy info across rounds
+for (i in adbasevars)
+  ar.0[, (i) := eval(parse(text=
+      paste0(i, "[!is.na(", i, ")][1]")
+    )), by = hhid]
+@
+Tabulation of arms with \textsf{ar.0} for \textsf{o800}. There are \Sexpr{sum(is.na(ar.0[o800 == 1L, .(teenum =1:.N, RArm), by = .(hhid, survey)][survey == 1 & teenum == 1, RArm]))} NAs which will be filled in with \textsf{RCT\_village.dta} with \textsf{ar, arAll} in the next subsection.
+<<By merging in this way I have>>=
+table0(ar.0[o800 == 1L, .(teenum =1:.N, RArm), by = .(hhid, survey)][
+  survey == 1 & teenum == 1, RArm])
+#table0(ar.1[, .(Arm, AssignOriginal)])
+@
+%Observations with no \textsf{povertystatus} are drop outs and rejecters.
+<<tabulation of Mstatus against survey with no povertystatus, eval = F>>=
+table0(ar.0[o800 == 1L, povertystatus])
+table0(ar.0[o800 == 1L & is.na(povertystatus), .(Mstatus, survey)])
+summary(ar.0[o800 == 1L & hhid %in% hhid[is.na(povertystatus)], 
+  .(hhid, Mstatus, survey, creditstatus)])
+@
+Create \textsf{adrest}: Time-variant characteristics in \textsf{ad0}. Merge with \textsf{ar.0}. Name resulting data as \textsf{ar.1}. \textsf{ar.1} is roster with fixed and variable characteristics found in admin data.
+<<copy variable portion of admin data to roster>>=
+## Construct ar: 2. ar.1 = adrest[ar.0]
+adrest = copy(ad0)
+adrest[, (adbasevars) := NULL]
+# all saving and repayment info that does match with IntDate will be dropped. 
+setkey(ar.0, groupid, hhid, Year, Month)
+setkey(adrest, groupid, hhid, Year, Month)
+ar.1 <- adrest[ar.0]
+ar1vars <- c("Arm", "RArm", "randomization", "AssignOriginal", "groupid", "o800",
+  "creditstatus", "DisDate1", "Mship", "Mem")
+for (i in ar1vars)
+  ar.1[, (i) := eval(parse(text=
+      paste0(i, "[!is.na(", i, ")][1]")
+    )), by = hhid]
+for (i in grepout("Arm|rand|Assi", ar1vars)) {
+  ar.1[grepl("largeG", eval(parse(text=i))), (i) := "large grace"]
+  ar.1[, (i) := factor(eval(parse(text=i)), 
+    levels = c("traditional", "large", "large grace", "cattle"))]
+}
+setorder(ar.1, hhid, survey, IntDate, mid)
+ar.1[, MemNum := 1:.N, by = .(hhid, survey, IntDate)]
+@
+Errors in \textsf{Mstatus} in \textsf{ar.1}. Correct to oldMember. (No corresponding entry in \textsf{arAll} because it is data only for members.)
+<<correct errors in Mstatus>>=
+ar.1[grepl("Y", creditstatus) & grepl("iRej", Mstatus) & MemNum == 1, 
+  .(hhid, survey, CumRepaid, CumNetSaving,
+    #RepayPos = !is.na(CumRepaid) & CumRepaid>0, 
+    #NetSavingPos = !is.na(CumNetSaving) & CumNetSaving>0, 
+    TradGroup, Date, DisDate1, creditstatus, Mship, Mstatus)]
+ar.1[grepl("Y", creditstatus) & grepl("iRej", Mstatus), 
+  Mstatus := "oldMember"]
+@
+There are
+\Sexpr{nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("old", Mstatus) & EverSaved & grepl("N", creditstatus), ])} members (\textsf{oldMember} in \textsf{Mstatus}), 
+\Sexpr{nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("new", Mstatus) & EverSaved & grepl("N", creditstatus), ])} members (\textsf{newGroup} in \textsf{Mstatus}),
+\Sexpr{nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("iRe", Mstatus) & EverSaved & grepl("N", creditstatus), ])} 
+members (\textsf{iReplacement} in \textsf{Mstatus}) who did not borrow but only saved. This is identified by \textsf{DisDate1} == NA \&  \textsf{EverSaved} \& \textsf{creditstatus} == No.  
+<<members who did not borrow but only saved>>=
+summary(ar.1[is.na(DisDate1) & grepl("N", creditstatus) & 
+  survey == 1 & MemNum == 1 & EverSaved, 
+  .(Arm, DisDate1, EverSaved, creditstatus, Mstatus, Mship)] )
+@
+There are also members who were offered membership but never took up. This is identified by \textsf{DisDate1} == NA \& \textsf{$!$EverSaved}  \& \textsf{$!$EverRepaid}. 
+<<members who neither borrowed nor saved>>=
+ar.1[is.na(DisDate1) & !EverSaved & !EverRepaid, 
+  creditstatus := "No"]
+summary(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & 
+  !EverSaved & !EverRepaid, 
+  .(DisDate1, EverSaved, EverRepaid, creditstatus, Mstatus, Arm)] )
+@
+Create \textsf{BorrowerStatus} to indicate these guys (\textsf{DisDate1} == NA \& \textsf{EverSaved} \& \textsf{creditstatus} == No) as a \textsf{pure saver}. \Sexpr{nrow(ar.1[is.na(DisDate1) & !EverSaved & !EverRepaid & MemNum == 1 & survey == 1, ])} entries with \textsf{DisDate1} == NA \& \textsf{$!$EverSaved}  \& \textsf{$!$EverRepaid} are people who quit so set as \textsf{quit membership}. \gobblepars
+<<Create pure saver in Mstatus>>=
+ar.1[, BorrowerStatus := "borrower"]
+ar.1[is.na(DisDate1) & grepl("No", creditstatus) & EverSaved,
+#is.na(DisDate1) & MemNum == 1 & grepl("old|new|Rep", Mstatus), 
+  BorrowerStatus := "pure saver"]
+ar.1[is.na(DisDate1) & grepl("No", creditstatus) & grepl("No", TradGroup2),
+  BorrowerStatus := "pure saver"]
+ar.1[is.na(DisDate1) & !EverSaved & !EverRepaid, 
+  BorrowerStatus := "quit membership"]
+ar.1[, BorrowerStatus := factor(BorrowerStatus)]
+# misclassification: hhid 7137220 Mstatus: iRejection => oldMember
+# misclassification: hhid 7042013 Mstatus:  => oldMember
+ar.1[hhid == 7137220, Mstatus := "oldMember"]
+# ar.1: MemNum is sequence of roster memebers in a given survey round
+ar.1[, MemNum := 1:.N, by = .(hhid, survey, IntDate)]
+addmargins(table0(ar.1[MemNum == 1 & survey == 1, .(Mstatus, BorrowerStatus)]))
+@
+In \textsf{roster + admin} (base: roster): Tabulate \textsf{hhid} observations by \textsf{survey} round and \textsf{Arm} before supplementing with \textsf{AssignOriginal} and \textsf{VArm}. Note: \Sexpr{nrow(ar.1[survey == 1 & MemNum == 1 & is.na(AssignOriginal), ])} observations with NA are also pointed in \textsf{read\_cleaned\_data.rnw} and are going to be dealt with in the next subsection.
+<<Tabulate hhid observations by survey round and Arm before supplementing with AssignOriginal and VArm>>=
+addmargins(table0(ar.1[MemNum == 1, .(survey, Arm)]))
+#table0(ar.1[MemNum == 1, .(survey, AssignOriginal)])
+# droplevels do not work... it does not copy NAs.
+#ar.1[, RArm := droplevels(RArm)]
+@
+
+\subsection{Merge admin files with roster: \textsf{arA}}
+
+Create \textsf{arAll}: admin data \textsf{ad0} with period 1 roster data. (Roster information is added only if matched with admin HH IDs.)
+<<arAll keep all admin info in matching>>=
+## Construct arA: 1. Add survey round to ad0
+ros.0 = copy(ros)
+setkey(ros.0, hhid, survey)
+ros.00 <- unique(ros.0[, .(hhid, survey, IntDate)])
+ros.00W <- reshape(ros.00, direction = "wide", idvar = "hhid",
+  timevar = "survey", v.names = grepout("Da", colnames(ros.00)))
+setkey(ad0, hhid)
+setkey(ros.00W, hhid)
+# Attach survey IntDate info of 4 rounds to ad0
+# ar.00 is admin data with survey round info
+ar.00 <- ros.00W[ad0]
+# Define survey by using IntDate:
+# survey X = Previous interview ~ current interview
+ar.00[, survey := 1L]
+for (s in 2:4)
+  ar.00[
+    Date > eval(parse(text = paste0("IntDate.", s-1))) 
+      &
+    Date <= eval(parse(text = paste0("IntDate.", s))) 
+    , survey := as.integer(s)]
+# dates after IntDate.4 is defined as rd 5
+ar.00[Date > IntDate.4, survey := 5L]
+ar.00[, grepout("IntD", colnames(ar.00)) := NULL]
+ros.0[, tee := 1:.N, by = hhid]
+ros.0 <- ros.0[tee == 1, .(groupid, hhid, 
+  AttritIn, ObPattern, Mstatus, Mgroup, 
+  AssignOriginal, randomization,
+  HeadLiteracy, HeadAge, HHsize)]
+setkey(ar.00, hhid)
+setkey(ros.0, hhid)
+## Construct arA: 2. arAll: Add roster info to ar.00 (ad0+survey)
+# arAll is admin data with survey round info + rd 1 roster
+arAll <- ros.0[ar.00]
+setkey(arAll, hhid, Date)
+arAll[, tee := 1:.N, by = hhid]
+#table(table(arAll[,tee]))
+@
+Some HHs in admin file are not found in roster. 
+<<Some HHs in admin file are not found in roster>>=
+#unique(arAll[is.na(Mstatus), hhid])
+unique(ad0[!(hhid %in% ros.00[, hhid]), hhid])
+# refer to ID file.
+xxid <- readRDS(paste0(path1234, "ID.rds"))
+xxid[, Mstatus := gsub("In.* ", "i", membership_status)]
+xxid[, Mstatus := gsub("Gr.* ", "g", Mstatus)]
+xxid[, Mstatus := gsub("Ne.*", "newGroup", Mstatus)]
+xxid[, Mstatus := gsub("Ol.*", "oldMember", Mstatus)]
+xxid[, tee := 1:.N, by = hhid]
+@
+Refer to ID file {\footnotesize \Sexpr{gsub("\\_", "\\\\_", paste0(path1234, "ID.rds"))}} to see their \textsf{Mstatus}. They are all new groups and individual replacing members who are not originally included in the baseline survey.
+<<tabulate missing in survey but found in admin file>>=
+addmargins(table0(ad0[!(hhid %in% ros.00[, hhid]) & MtgNum == 1, .(membershipstatus, Arm)]), 2)
+addmargins(table0(
+  xxid[tee == 1 & hhid %in% ad0[!(hhid %in% ros.00[, hhid]), hhid] 
+  , .(Mstatus, AssignOriginal)]))
+@
+Drop these from \textsf{arAll} who are missing in survey but found in admin. (They are kept in \textsf{ar}). \gobblepars
+<<Drop HHs in admin file not found in roster>>=
+arAll <- arAll[hhid %in% ros.00[, hhid], ]
+@
+This results in reduction in observations with 48 meetings. There are \Sexpr{names(table(table(arAll[, tee])))} households who have 48 rows in data.
+<<This results in reduction in observations with 48 meetings>>=
+#table(table(arAll[, tee]))
+# copy info across rounds
+for (i in ar1vars)
+  arAll[, (i) := eval(parse(text=
+      paste0(i, "[!is.na(", i, ")][1]")
+    )), by = hhid]
+for (i in grepout("Arm|rand|Assi", ar1vars)) {
+  arAll[grepl("largeG", eval(parse(text=i))), (i) := "large grace"]
+  arAll[, (i) := factor(eval(parse(text=i)), 
+    levels = c("traditional", "large", "large grace", "cattle"))]
+}
+setorder(arAll, hhid, Date)
+arAll[, tee := 1:.N, by = .(hhid)]
+arAll[, MeetingTotal := .N, by = .(hhid)]
+arAll[, group.id := as.integer(substr(hhid, 1, 5))]
+arAll[group.id== 81710, group.id := as.integer(substr(hhid, 1, 6))]
+arAll[is.na(groupid), groupid := group.id]
+arAll[, group.id := NULL]
+<<arAll starts from survey 1 or 2, eval = F>>=
+table0(arAll[tee == 1 & grepl("old|iRej|^g", Mstatus) & 
+  !grepl("tw|dou", TradGroup), .(survey, RArm)])
+@
+
+In \textsf{arAll}, nonmembers (\textsf{gRejection, gErosion}) are not included.
+<<tabulation arAll Mstatus Mship>>=
+arAll[, tee := 1:.N, by = .(hhid)]
+addmargins(table0(arAll[tee == 1, .(Mstatus, Mship)]))
+arAll[hhid == 7137220, Mstatus := "oldMember"]
+arAll[, BorrowerStatus := "borrower"]
+arAll[is.na(DisDate1) & grepl("No", creditstatus) & EverSaved, 
+  BorrowerStatus := "pure saver"]
+arAll[is.na(DisDate1) & grepl("No", creditstatus) & 
+  (!EverSaved & !EverRepaid | grepl("^dr", Mgroup)),
+  BorrowerStatus := "quit membership"]
+arAll[, BorrowerStatus := factor(BorrowerStatus)]
+arAll[is.na(DisDate1) & !EverSaved & !EverRepaid, 
+  creditstatus := "No"]
+@
+%No additional match if matching only with \textsf{Year}. 
+<<YearMonthMatch, results = "hide">>=
+ros[, MemNum := 1:.N, by = .(hhid, IntDate)]
+rbind(YearMonthMatch = table(ros[MemNum == 1, paste0(hhid, "-", Year, "-", Month)] %in% 
+    ad0[, paste0(hhid, "-", Year, "-", Month)]), 
+  YearMatch = table(ros[MemNum == 1, paste0(hhid, "-", Year)] %in% 
+    ad0[, paste0(hhid, "-", Year)]))
+setorder(ar.1, hhid, survey, IntDate, mid)
+ar.1[, MemNum := 1:.N, by = .(hhid, survey, IntDate)]
+@
+%So are the same with \Sexpr{nrow(ar.1[is.na(DisDate1) & survey == 1 & MemNum == 1 & grepl("old", Mstatus), ])} \textsf{oldMember} in \textsf{Mstatus}:
+<<So are the same with oldMember, eval = F>>=
+summary(ar.1[is.na(DisDate1) & MemNum == 1 & grepl("old", Mstatus) & !EverSaved, 
+  .(groupid = factor(groupid), survey, DisDate1, creditstatus, 
+    Mstatus, CumRepaid, CumNetSaving, Arm)])
+@
+<<create YearMonthMatchTable, eval = F>>=
+ar.1[, YearMonthOfIntDate := paste0(Year, "-", Month)]
+ar.1[, YearMonthOfIntDate := factor(YearMonthOfIntDate, 
+  levels = unique(YearMonthOfIntDate[order(IntDate)]), ordered = T)]
+YearMonthMatchTable <- table(ros[, paste0(hhid, "-", Year, "-", Month)] %in% 
+    ad0[, paste0(hhid, "-", Year, "-", Month)])
+ar.1[, YearMonthOfIntDate := NULL]
+@
+%Need to merge in 2 steps: Merge admin (time-invariant) with roster with \textsf{hhid} as a key, then merge to admin (time-variant {\footnotesize [e.g., \Sexpr{grepout("Other|Cum", colnames(adrest))}]}) with \textsf{hhid, Year, Month} as keys. This is because there are \Sexpr{YearMonthMatchTable["FALSE"]} non-matching cases if we merge using \textsf{Year, Month} of \textsf{IntDate} in roster data and \textsf{Year, Month} of \textsf{Date} in admin data. This is inevitable because survey precedes the first meeting of borrowers: The admin data starts from \Sexpr{unique(ad0[Date == min(Date), Date])} while survey data starts from \Sexpr{unique(ros[IntDate == min(IntDate, na.rm = T), IntDate])} and rd 1 ends at \Sexpr{unique(ros[IntDate == max(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate])} for \textsf{oldMember}s with the median date \Sexpr{unique(ros[IntDate == median(IntDate[survey == 1 & grepl("old", Mstatus)], na.rm = T), IntDate])}. Below gives \textsf{Year, Month} in roster data in rd 1 with no match in admin data.
+<<ar00 by merging ros with ad0, eval = F, results = "hide">>=
+setkey(ros, groupid, hhid, Year, Month)
+setkey(ad0, groupid, hhid, Year, Month)
+ar00 <- ad0[ros]
+ar00[, MemNum := 1:.N, by = .(hhid, Date)]
+ar00[, YearMonthOfIntDate := paste0(Year, "-", Month)]
+ar00[, YearMonthOfIntDate := factor(YearMonthOfIntDate, 
+  levels = unique(YearMonthOfIntDate[order(IntDate)]), ordered = T)]
+table0(ar00[is.na(MonthsElapsed) & MemNum == 1, 
+  YearMonthOfIntDate])
+@
+%After 2014, it is mostly drop out members who do not match with admin data because they do not attend the meeting.
+<<it is mostly drop out members who do not match, eval = F, results = "hide">>=
+table0(ar00[is.na(MonthsElapsed) & MemNum == 1 & Year >= 2014, Mgroup])
+@
+
+\subsection{Merge village level info with \textsf{ar.1}; \textsf{ar}}
+
+<<read RCT village dta file>>=
+library(readstata13)
+vr <- read.dta13(paste0(pathcleaned, "RCT_village.dta"), 
+  generate.factors = T, nonint.factors = T)
+vr <- data.table(vr)
+vr[, GroupStatus := "accepted"]
+vr[grepl("De", comment), GroupStatus := "group rejection"]
+vr[grepl("Ero", comment), GroupStatus := "erosion"]
+setnames(vr, c("comment", "randomization"), c("GroupComment", "VArm"))
+<<create VArm and GroupStatus from vr>>=
+vr[grepl("con", VArm), VArm := "traditional"]
+vr[grepl("lar.*t$", VArm), VArm := "large"]
+vr[grepl("Lar", VArm), VArm := "large grace"]
+vr[grepl("pac", VArm), VArm := "cattle"]
+vr[, VArm := factor(VArm, levels = c("traditional", "large", "large grace", "cattle"))]
+vr <- vr[, .(groupid, VArm, GroupStatus, GroupComment)]
+@
+Create \textsf{ar}: \textsf{ar.1} + \textsf{vr} (RCT\_village.dta). Roster as base + admin.
+<<define ar by merging  vr with ar1>>=
+## Construct ar: 3. ar = vr[ar.1]
+ar.1[, TradGroup := TradGroup[!is.na(TradGroup)][1], by = hhid]
+addmargins(table0(ar.1[is.na(TradGroup) & grepl("trad", Arm), .(BorrowerStatus, AttritIn)]))
+table0(ar.1[is.na(TradGroup) & grepl("trad", Arm) & grepl("bo", BorrowerStatus), 
+  .(DisDate3NA=is.na(DisDate3), EverRepaid)])
+table0(ar.1[is.na(TradGroup) & grepl("trad", Arm) & grepl("bo", BorrowerStatus) & 
+  CumRepaid > 0 & MemNum == 1, 
+  .(DisDate1, DisDate2)])
+setkey(vr, groupid)
+setkey(ar.1, groupid)
+ar <- vr[ar.1]
+# individual replacing members, new members: GroupStatus: NA => accepted
+# \textsf{GroupStatus} from \textsf{"RCT\_village.dta"}.
+ar[grepl("Rep|new", Mstatus), GroupStatus := "accepted"]
+@
+I use arm \textsf{VArm} from village level information. Tabulation of \textsf{AssignOriginal} against \textsf{VArm} shows complementarity so I can use one variable to fill in NAs in another.
+<<Tabulation of AssignOriginal in ar>>=
+setorder(ar, hhid, survey, IntDate, mid)
+ar[, MemNum := 1:.N, by = .(hhid, survey, IntDate)]
+ar[, tee := 1:.N, by = hhid]
+addmargins(table0(ar[MemNum == 1, .(AssignOriginal, VArm)]), 2)
+@
+Tabulation of \textsf{RArm} after supplementing with \textsf{AssignOriginal} and \textsf{VArm}.
+<<supplementing RArm with AssignOriginal and VArm, echo = T>>=
+ar[is.na(RArm) & !is.na(AssignOriginal), RArm := AssignOriginal]
+ar[is.na(RArm) & !is.na(VArm), RArm := VArm]
+<<tabulate RArm after supplementing with AssignOriginal and VArm, echo = T>>=
+addmargins(table0(ar[o800 == 1L & MemNum == 1, .(survey, RArm)]), margin = 2)
+@
+Below is what is supplemented from \textsf{VArm} of village level information to the \Sexpr{nrow(ar[o800 == 1L & MemNum == 1 & survey == 1 & is.na(AssignOriginal), ])} NAs.
+<<Below is what is supplemented from VArm, echo = T>>=
+#table0(ar[MemNum == 1 & survey == 1 & is.na(AssignOriginal), RArm])
+ar[MemNum == 1 & survey == 1 & is.na(AssignOriginal), 
+  BorrowerStatus := "quit membership"]
+table0(ar[o800 == 1L & MemNum == 1 & survey == 1 & is.na(AssignOriginal), 
+  .(BorrowerStatus, RArm)])
+@
+
+\subsection{Merge village level info with \textsf{arAll}; \textsf{arA}}
+
+Create \textsf{arA}: \textsf{arAll} (admin data as base + roster) + \textsf{vr} (village randomisation)
+<<define arA by merging arAll with village info>>=
+## Construct arA: 3. arA = vr[arAll]
+setkey(vr, groupid)
+setkey(arAll, groupid)
+arA <- vr[arAll]
+arA[is.na(RArm) & !is.na(AssignOriginal), RArm := AssignOriginal]
+arA[is.na(RArm) & !is.na(VArm), RArm := VArm]
+arA[, MemNum := 1:.N, by = .(hhid, survey)]
+arA[, tee := 1:.N, by = hhid]
+arA[, teeY := 1:.N, by = .(hhid, LoanYear)]
+#table(table(arA[, tee]))
+@
+Tabulation of \textsf{BorrowerStatus} in \textsf{arA} at round 1.
+<<Tabulation of BorrowerStatus arA at round 1>>=
+addmargins(table0(arA[tee == 1,  .(BorrowerStatus, RArm)]))
+@
+Tabulation of \textsf{Mstatus} in \textsf{arA} at round 1.
+<<Tabulation of Mstatus arA at round 1>>=
+addmargins(table0(arA[tee == 1,  .(Mstatus, RArm)]))
+@
+Tabulation of \textsf{Mstatus} in \textsf{ar} at round 1.
+<<Tabulation of Mstatus ar at round 1>>=
+ar[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins(table0(ar[survey == 1 & MemNum == 1,  .(Mstatus, RArm)]))
+@
+%How I combined between pages: First, merge time-invariant portion of admin data with roster data \textsf{ros} with \textsf{hhid} as a key. Then it is merged with time-variant portion of admin data using \textsf{hhid, Year, Month} as keys. %Keep only dates when survey data match. 
+%Second, merge the resulting file with other data \textsf{sch}, \textsf{ass}, ... By merging in this way, I get arm information for each HH in survey 1 with some NAs. I fill in NAs by using village level information.
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[adw3]	idfu[adw2]: admin data \textsf{adw2} + \textsf{idfu} (arm information)
+\item[ad0]	Selected columns of adw3.
+\end{description}
+Base: roster.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.0]	adbase[ros]: \textsf{ros} (\Sexpr{dim(ros)}) + invariant portion of admin data \textsf{ad0} (\Sexpr{dim(adbase)}).
+\item[ar.1]	adrest[ar.0]: \textsf{ar.0} (\Sexpr{dim(ar.0)})+ variable portion of admin data \textsf{ad0} (\Sexpr{dim(adrest)}).
+\item[ar] vr[ar.1]: \textsf{ar.1} (\Sexpr{dim(ar.1)}) + \textsf{vr} (RCT\_village.dta) (\Sexpr{dim(vr)}), resulting in (\Sexpr{dim(ar)}). Number of individuals: \Sexpr{nrow(ar[tee == 1, ])}.
+\end{description}
+Base: admin. This has a smaller number of individuals because admin data do not include individuals who left the group.
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[ar.00]	ros.00W[ad0]: \textsf{ad0} (\Sexpr{dim(ad0)}) + \textsf{ros.00W} (survey round info) (\Sexpr{dim(ros.00W)}).
+\item[arAll]	ros.0[ar.00]: \textsf{ar.00} (admin data with survey round info) (\Sexpr{dim(ar.00)}) + \textsf{ros.0} (roster only with first observed round) (\Sexpr{dim(ros.0)}).
+\item[arA] vr[arAll]: \textsf{arAll} (admin data as base + roster) (\Sexpr{dim(arAll)}) + \textsf{vr} (village randomisation) (\Sexpr{dim(vr)}), resulting in (\Sexpr{dim(arA)}). Number of individuals: \Sexpr{nrow(arA[tee == 1, ])}.
+\end{description}
+
+
+\subsection{Attach \textsf{o1600}}
+
+
+Create \textsf{o1600} to indicate the original 1600 HHs. Tabulation of total observations in roster \textsf{ar} by \textsf{o1600} and \textsf{survey}.
+<<define o1600>>=
+ar[, o1600 := 0L]
+ar[grepl("old|iRej|^g", Mstatus) & !grepl("tw|dou", TradGroup), 
+  o1600 := 1L]
+arA[, o1600 := 0L]
+arA[grepl("old|iRej|^g", Mstatus) & !grepl("tw|dou", TradGroup), 
+  o1600 := 1L]
+# tabulation of total by o1600 and round
+table0(ar[, .(o1600, survey)])
+@
+Tabulation of total observations in roster \textsf{ar} by \textsf{o1600} and \textsf{survey} after restricting to 1 obs per HH.
+<<Tabulation of total observations in roster by o1600 and survey in rd 1>>=
+# tabulation of 1 obs per HH by o1600 and round. o1600 == 0 is added HHs through newGroup and iReplacement.
+ar[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins(table0(ar[MemNum==1, .(o1600, survey)]), 1)
+@
+
+Tabulation of o800 for \textsf{ar}.
+<<Tabulation of o800 for ar>>=
+ar[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins(table(ar[o800 == 1L & MemNum == 1, 
+  .(survey, RArm)], deparse.level  = 2), 2)
+@
+At rd 1.
+<<tabulate ar o800 at rd 1>>=
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, 
+  .(Mstatus, RArm)]))
+@
+At rd 4. There are \Sexpr{nrow(ar[o800 == 1L & MemNum == 1 & survey == 1, ])-nrow(ar[o800 == 1L & MemNum == 1 & survey == 4, ])} attritions.
+<<tabulate ar o800 at rd 4>>=
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 4, 
+  .(Mstatus, RArm)]))
+@
+
+\subsection{Define statuses}
+
+Check \textsf{AttritIn} consistency. Define the observed largest survey rounds and tabulate against \textsf{AttritIn}.
+<<Tee and AttritIn>>=
+ar[, Tee := max(survey), by = hhid]
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, .(Tee, AttritIn)]))
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, .(Mstatus, AttritIn)]))
+@
+Tabulation for \textsf{arA}. It has survey == 5 which are meetings after the rd 4 interview. \textsf{arA} has fewer observations per meeting than \textsf{ar} when only using 1 obs per rd,
+<<Tabulation for arA with MemNum 1 and o1600>>=
+arA[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins(table0(arA[MemNum==1 & o1600 == 1L, .(survey, RArm)]))
+@
+but more observations per round because there are multiple meetings per round. \gobblepars
+<<Tabulation for arA with MemNum 1>>=
+addmargins(table0(arA[o1600 == 1L, .(survey, RArm)]))
+@
+Tabulation of o800 for \textsf{arA}. It has a smaller number of obs than \textsf{ar} because it does not include rejecters or flood evacuees.
+<<Tabulation of o800 for arA>>=
+arA[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins(table0(arA[o800 == 1L & MemNum == 1, 
+  .(survey, RArm)]), 2)
+@
+Refer to \textsf{ar} to see who are missing in \textsf{arA}.
+<<refer ar to see missing in arA>>=
+addmargins(table0(
+  ar[o800 == 1L & tee == 1 & MemNum == 1 & !(hhid %in% arA[, hhid]), 
+  .(Mstatus, RArm)]
+  ))
+@
+Initial period obs matches with loan recipients of \textsf{ar}.
+<<>>=
+arA[, tee := 1:.N, by = hhid]
+addmargins(table0(arA[o800 == 1L & tee == 1, 
+  .(Mstatus, RArm)]))
+@
+
+In \textsf{ar}, there are \Sexpr{nrow(ar[MemNum == 1 & grepl("iR", Mstatus) & grepl("rej", GroupStatus), ])} cases of group rejections in \textsf{GroupStatus} classified as individual rejections in \textsf{Mstatus}. Overwrite \textsf{Mstatus} with \textsf{GroupStatus} in these cases, which results in the below:
+<<correct iR in Mstatus by copying group rejections in GroupStatus, echo = T>>=
+addmargins(table0(ar[tee == 1 & MemNum == 1, .(Mstatus, GroupStatus)]))
+ar[grepl("iR", Mstatus) & grepl("rej", GroupStatus), Mstatus := "gRejection"]
+ar[, tee:= 1:.N, by = hhid]
+addmargins(table0(ar[tee == 1 & MemNum == 1, .(GroupStatus, RArm)]))
+@
+Define \textsf{BStatus}.
+<<define BStatus, echo = T>>=
+datas <- c("ar", "arA")
+for (i in 1:length(datas))
+{
+  dd <- get(datas[i])
+  dd[, BStatus := BorrowerStatus]
+  dd[grepl("gRe", Mstatus), BStatus := "group rejection"]
+  dd[grepl("iRej", Mstatus), BStatus := "individual rejection"]
+  dd[grepl("gEr", Mstatus), BStatus := "rejection by flood"]
+  dd[, BStatus := factor(BStatus, levels = c("borrower", "pure saver", 
+    "individual rejection", "group rejection", "rejection by flood"))]
+  assign(datas[i], dd)
+}
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, .(BStatus, AttritIn)]))
+addmargins(table0(ar[is.na(BStatus)&tee == 1&o800==1L, .(Mstatus, BorrowerStatus)]))
+@
+\Sexpr{nrow(ar[is.na(BStatus)&tee == 1&o800==1L, ])} NAs in \textsf{BStatus} are borrowers. Correct it.
+<<>>=
+ar[is.na(BStatus)&tee == 1&o800==1L, BStatus := "borrower"]
+@
+For \textsf{o800}:
+<<AttritIn by arms for o800>>=
+addmargins(table0(ar[tee == 1 & MemNum == 1 & o800 == 1L, .(BStatus, GroupStatus)]))
+addmargins(table0(ar[tee == 1 & MemNum == 1 & o800 == 1L, .(RArm, AttritIn)]))
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1, .(BStatus, AttritIn)]))
+@
+If we exclude twice or double disbursements in traditional (24 members).
+<<AttritIn by arms for o800 without 24>>=
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1 & !grepl("tw|dou", TradGroup),
+ .(RArm, AttritIn)]))
+@
+For \textsf{traditional} arm.
+<<AttritIn by BStatus for o800 without 24>>=
+addmargins(table0(ar[o800 == 1L & MemNum == 1 & survey == 1 & 
+  grepl("tra", RArm) & !grepl("tw|dou", TradGroup),
+ .(BStatus, AttritIn)]))
+@
+
+
+\section{Merge admin-roster with other files}
+
+\subsection{Choosing sample in admin-roster}
+
+In \textsf{ar}: Keep if \textsf{Mstatus} includes strings old, iRej, gEro, gRej, \& \textsf{TradGroup} does not include strings tw (relaxing  \textsf{DisDate1} is before 2015-01-01). \textcolor{blue}{This the data used in this note.} This also shows a lower attrition rate for \textsf{large} arm. \gobblepars
+<<tabulate RArm in roster plus admin 2>>=
+cbind(table0(ar[grepl("old|iRej|^g", Mstatus) & 
+  !grepl("tw", TradGroup) & MemNum == 1, .(survey, RArm)]), 
+  total = apply(table0(ar[grepl("old|iRej|^g", Mstatus) & 
+    !grepl("tw", TradGroup) & MemNum == 1, .(survey, RArm)]), 1, sum))
+@
+<<create FirstDisPeriod>>=
+ar[, c("BeforeJan2015", "Year2015", "Year2016", "AfterJan2017") :=
+   .(as.Date(DisDate1) < as.Date("2015-01-01"),
+     as.Date(DisDate1) >= as.Date("2015-01-01") & 
+       as.Date(DisDate1) < as.Date("2016-01-01"),
+     as.Date(DisDate1) >= as.Date("2016-01-01") & 
+       as.Date(DisDate1) < as.Date("2017-01-01"),
+	    as.Date(DisDate1) >= as.Date("2017-01-01"))]
+ar[, FirstDisPeriod := as.character(NA)]
+ar[as.Date(DisDate1) < as.Date("2015-01-01"), 
+  FirstDisPeriod := "BeforeJan2015"]
+ar[as.Date(DisDate1) >= as.Date("2015-01-01") & 
+    as.Date(DisDate1) < as.Date("2016-01-01"), 
+  FirstDisPeriod := "Year2015"]
+ar[as.Date(DisDate1) >= as.Date("2016-01-01") & 
+    as.Date(DisDate1) < as.Date("2017-01-01"), 
+  FirstDisPeriod := "Year2016"]
+ar[as.Date(DisDate1) >= as.Date("2017-01-01"), 
+  FirstDisPeriod := "After2017"]
+@
+In \textsf{ar}, as one can see below, \textsf{gRejection} is more frequent in \textsf{traditional} and \textsf{large}, while there is none in \textsf{cattle}. \textsf{traditional, cattle} have more frequent \textsf{iRejection}. So \textsf{traditional} was disliked both at group and individual levels, \textsf{large} was disliked as a group, \textsf{cattle} was disliked at an individual level, and \textsf{large grace} were well received at both group and individual levels. This indicates attractiveness of a grace period at least at the group level, and a large cash form (over small cash or in-kind) at the individual level.
+<<tabulate Mstatus against RArm at survey 1 and MemNum 1 >>=
+ar[, MemNum := 1:.N, by = .(hhid, survey)]
+addmargins( table0(ar[MemNum == 1 & survey == 1, .(Mstatus, RArm)]))
+@
+In \textsf{ar}, for \textsf{o800} we have:
+<<tabulate Mstatus against RArm ratios o800>>=
+addmargins(table0(ar[o800 == 1 & MemNum == 1 & survey == 1, .(Mstatus, RArm)]))
+@
+<<copy RArm across rounds>>=
+ar[, RArm := RArm[!is.na(RArm)][1], by = groupid]
+@
+%Create roster member total \textsf{RosterMemTotal}. 
+<<Create RosterMemTotal>>=
+ar[, RosterMemTotal := .N, by = .(hhid, survey, IntDate)]
+# HH member orders
+#table0(ar[, .(MemNum, survey)])
+# HH size distribution
+#table0(ar[MemNum == RosterMemTotal, .(MemNum, survey)])
+# single member HHs
+#ar[hhid %in% hhid[RosterMemTotal == 1], 
+ # .(hhid, mid, survey, IntDate, sex, Age_1, marital, HeadAge)]
+@
+
+\textsf{arA} is used in saving and repayment regressions. 
+<<arA BorrowerStatus>>=
+arA[, MemNum := 1:.N, by = hhid]
+arA[, GroupStatus := factor(GroupStatus)]
+if (any(is.na(arA[, LoanYear]))) 
+  arA[!is.na(LoanYear), LoanMonth := 1:.N, by = .(hhid, LoanYear)] else
+  arA[, LoanMonth := 1:.N, by = .(hhid, LoanYear)]
+<<add LoanYear interactions>>
+arA <- cbind(arA, 
+  makeDummyFromFactor(factor(arA[, LoanYear]), nameprefix = "LY"))
+arA[, .Arm := paste0(toupper(substr(RArm, 1, 1)), substr(RArm, 2, 100))]
+arA[, .Arm := gsub(" g", "G", .Arm)]
+arA[grepl("NA", .Arm), .Arm := NA]
+arA[, .Arm := factor(.Arm, levels = c("Traditional", "Large", "LargeGrace", "Cattle", NA))]
+arA <- cbind(arA, 
+  makeDummyFromFactor(factor(arA[, .Arm]), nameprefix = "dummy"))
+arA[, (paste0("dummy", rep(levels(arA[, .Arm])[-1], 3), ".LY", rep(2:4, each = 3))) := 
+    eval(parse(text = 
+      paste0("list(", 
+        paste(
+          paste0("dummy", rep(levels(arA[, .Arm])[-1], 3), "*LY", rep(2:4, each = 3))
+        , collapse = ",")
+      , ")")
+    ))]
+arA <- data.table(arA, 
+  makeDummyFromFactor(arA[, povertystatus], reference = NULL))
+setnames(arA, c("dummyUltra Poor", "dummyModerate Poor"),
+  c("dummyUltraPoor", "dummyModeratelyPoor"))
+arA[, c("Size", "Grace", "Item") := .("SmallSize", "WithoutGrace", "Cash")]
+arA[!grepl("tra", Arm), Size := "LargeSize"]
+arA[grepl("gr|cat", Arm), Grace := "WithGrace"]
+arA[grepl("cattle", Arm), Item := "InKind"]
+arA[, c("Grace", "Size", "Item") := 
+  .(factor(Grace), factor(Size, levels = c("LargeSize", "SmallSize")), 
+    factor(Item))]
+arA <- data.table(arA, 
+  makeDummyFromFactor(arA[, Size], reference = NULL),
+  makeDummyFromFactor(arA[, Grace], reference = NULL),
+  makeDummyFromFactor(arA[, Item], reference = NULL))
+attrib <- c("LargeSize", "WithGrace", "InKind", "UltraPoor")
+arA[, (paste0("dummy", rep(attrib, 3), ".LY", rep(2:4, each = 4))) := 
+    eval(parse(text = 
+      paste0("list(", 
+        paste(
+          paste0("dummy", rep(attrib, 3), "*LY", rep(2:4, each = 4))
+        , collapse = ",")
+      , ")")
+    ))]
+# drop dummy[Traditional,Large,LargeGrace,Cow,LargeSize,WithGrace,InKind,Cash, ModeratelyPoor,UltraPoor]
+# These are dropped because level dummy variables are added in DataTrimmingOriginal1600Memo3.rnw
+arA[, grepout("\\.Arm|^Size|^Item|^Grace|^dummy.*[lewhdr]$", colnames(arA)) := NULL]
+@
+Contrast it with \textsf{arA}:
+<<Contrast it with arA>>=
+arA[, tee := 1:.N, by = hhid]
+addmargins(table0(arA[o800 == 1L & tee == 1, .(Mstatus, RArm)]))
+@
+Create \textsf{LYear}.
+<<create LYear>>=
+# Loan year is NA for such cases. 
+# Define LYear that includes LoanYear = -1 or 5.
+# From SO: https://stackoverflow.com/questions/1995933/number-of-months-between-two-dates
+elapsed_months <- function(end_date, start_date) {
+    ed <- as.POSIXlt(end_date)
+    sd <- as.POSIXlt(start_date)
+    12 * (ed$year - sd$year) + (ed$mon - sd$mon)
+}
+for (aobj in c("ar", "arA")) {
+  aob <- get(aobj)
+  aob[, LYear := LoanYear]
+  aob[Date < DisDate1, LYear := -1]
+  DueDate <- as.POSIXlt(aob[, DisDate1])
+  DueDate$mon <- DueDate$mon + 48
+  aob[elapsed_months(Date, DisDate1) <= 48 & elapsed_months(Date, DisDate1) > 36, LYear := 4]
+  aob[Date > DueDate, LYear := 5]
+  assign(aobj, aob)
+}
+@
+Save roster-admin data to \textsf{\footnotesize \Sexpr{pathsaveHere}}.
+<<Save roster-admin data, echo = T>>=
+saveRDS(ar, paste0(pathsaveHere, "RosterAdminData.rds"))
+saveRDS(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+fwrite(ar, paste0(pathsaveHere, "RosterAdminData.prn"), sep = "\t", quote = F)
+fwrite(arA, paste0(pathsaveHere, "AllMeetingsRosterAdminData.prn"), sep = "\t", quote = F)
+@
+
+Schooling. \gobblepars
+<<create Spattern in sch1, results = "hide">>=
+sch1[, Spattern := paste(as.character(.SD[, Enrolled]), collapse = ""), 
+  by = .(hhid, mid), .SDcols = "Enrolled"]
+sch1[, EnrollPattern := Spattern]
+sch1[, en := 1:.N, by = .(hhid, mid)]
+sch1[, Attrit := paste(as.character(.SD[, en]), collapse = ""), 
+  by = .(hhid, mid), .SDcols = "en"]
+sch1[Attrit == "123", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "n"), paste0(Spattern, "0"))]
+sch1[Attrit == "124", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 2), "n", substr(Spattern, 1, 3)), 
+    paste0(substr(Spattern, 1, 2), "0", substr(Spattern, 1, 3)))]
+sch1[Attrit == "12", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "nn"), paste0(Spattern, "00"))]
+sch1[Attrit == "13", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 1), "n", substr(Spattern, 2, 2), "n"), 
+    paste0(substr(Spattern, 1, 1), "0", substr(Spattern, 2, 2), "0"))]
+sch1[Attrit == "14", c("Spattern", "EnrollPattern") := 
+  .(paste0(substr(Spattern, 1, 3), "n"), 
+    paste0(substr(Spattern, 1, 3), "0"))]
+sch1[Attrit == "23", c("Spattern", "EnrollPattern") := 
+  .(paste0("n", Spattern, "n"), 
+    paste0("0", Spattern, "0"))]
+sch1[Attrit == "24", c("Spattern", "EnrollPattern") := 
+  .(paste0("n", substr(Spattern, 1, 1), "n", substr(Spattern, 2, 2)), 
+    paste0("0", substr(Spattern, 1, 1), "0", substr(Spattern, 2, 2)))]
+sch1[Attrit == "1", c("Spattern", "EnrollPattern") := 
+  .(paste0(Spattern, "nnn"), 
+    paste0(Spattern, "000"))]
+sch1[, Attrit := factor(Attrit)]
+sch1[, Spattern := factor(Spattern)]
+sch1[, EnrollPattern := factor(EnrollPattern)]
+@
+%Schooling pattern in sch1.
+<<Schooling pattern in sch1, results = "hide">>=
+table(sch1[, .(Spattern)])
+@
+<<create sx by merging schx with ar, results = "hide">>=
+setkey(ar, groupid, hhid, mid, sex, AgeComputed, year)
+setkey(sch1, groupid, hhid, mid, sex, AgeComputed, year)
+s1 <- ar[sch1]
+s1[, Tee := 1:.N, by = .(hhid, mid)]
+s1[, Year := format(as.yearmon(IntDate), "%Y")]
+@
+%In \textsf{sch1}: Number of unique \textsf{hhid}s by \textsf{year} (original entry) or \textsf{Year} (extracted from \textsf{IntDate}).
+<<s1 SVYHH, results = "hide">>=
+s1[, SVYHH := 1:.N, by = .(hhid, survey)]
+table0(s1[SVYHH == 1, .(year, Year)])
+@
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and round (\textsf{survey}).
+<<s1 num obs by year, results = "hide">>=
+table(s1[, .(year, survey)])
+@
+%In \textsf{sch1}: RoundOrder is 1 if individual is observed for the first time in data, 2 if for the second time, ...
+<<s1 year RoundOrder, results = "hide">>=
+table(s1[, .(year, RoundOrder = Tee)])
+@
+%In \textsf{sch1}: Number of observations tabulated by \textsf{year} (original entry) and age (\textsf{AgeComputed}).
+<<s1 year AgeComputed, results = "hide">>=
+table(s1[, .(year, AgeComputed)])
+@
+
+\subsection{Attach variables from admin-roster to other files}
+
+<<variables to attach from ar, echo = F>>=
+vartoattach <- c("RArm", "Arm", "TradGroup", "TradGroup2",
+  "Mem", "ObPattern", "AttritIn", "o1600", "o800",
+  "Mstatus", "BorrowerStatus", "BStatus",
+  "creditstatus", "povertystatus", "RMvalue.repay", 
+  "RMvalue.NetSaving", "RMOtherNetSaving", "RMOtherRepaid",
+  "HHsize", "HeadLiteracy", "IntDate", "DisDate1")
+@
+Attach \textsf{\Sexpr{vartoattach}} from \textsf{ar}.
+<<Attach RArm Arm TradGroup Mem Mstatus BorrowerStatus Mgroup creditstatus povertystatus>>=
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+ar0 <- ar[, c("groupid", "hhid", "survey", vartoattach), with= F]
+for (i in 2:4) {
+  ar0[, paste0("Time.", i) := 0L ]
+  ar0[grepl(i, survey), paste0("Time.", i) := 1L ]
+}
+ar0[, num := 1:.N, by = .(hhid, survey)]
+ar0 <- ar0[num == 1, ]
+ar0[, num := NULL]
+ar0[, Year :=  as.numeric(format(as.Date(IntDate), "%Y"))]
+ar0[, Month := as.character(format(as.Date(IntDate), "%B"))]
+setkey(ar0, groupid, hhid, survey, Year, Month)
+setkey(ar0, groupid, hhid, survey)
+<<merge various other files with ar0, warning = F, echo = T>>=
+vartoattach <- c("RArm", "Arm", "TradGroup", "Mem", 
+  "ObPattern", "AttritIn", "o1600", "o800",
+  "Mstatus", "BorrowerStatus", "BStatus",
+  "creditstatus", "povertystatus", "RMvalue.repay", 
+  "RMvalue.NetSaving", "RMOtherNetSaving", "RMOtherRepaid",
+  "HHsize", "HeadLiteracy", "IntDate", "DisDate1")
+dfiles <- c("ass", "s1", "lvo", "lvoL", "lvp", "lab", "far", "con", "obr", "shk")
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  if (!any(grepl("groupid", colnames(dd)))) {
+    dd[, groupid := as.integer(as.numeric(as.character(gid)))]
+    dd[, gid := NULL]
+  }
+  dd[, Year :=  as.numeric(format(as.Date(IntDate), "%Y"))]
+  dd[, Month := as.character(format(as.Date(IntDate), "%B"))]
+  dd[Year <= 2010, Year := Year + 10]
+  # drop all variables in each page before copying from ar0
+  dd[, (vartoattach) := NULL]
+  setorder(dd, groupid, hhid, survey, Year, Month)
+  setkey(dd, groupid, hhid, survey)
+  if (j < length(dfiles)) dd <- ar0[dd]
+  assign(dfiles[j], dd)
+}
+@
+%Create \textsf{Arm*HadCows}, \textsf{Arm*HadCows*Time} interactions in \textsf{lvo}. \gobblepars
+<<Create Arm*HadCows Arm*HadCows*Time interactions in lvo>>=
+lvo[, .Arm := paste0(toupper(substr(RArm, 1, 1)), substr(RArm, 2, 100))]
+lvo[, .Arm := gsub(" g", "G", .Arm)]
+lvo[grepl("NA", .Arm), .Arm := NA]
+lvo[, .Arm := factor(.Arm, levels = c("Traditional", "Large", "LargeGrace", "Cattle", NA))]
+lvo[, 
+  c(paste0("dummyHadCows.Time", 3:4), 
+     paste0("dummy", levels(lvo[, .Arm]), ".dummyHadCows"),
+     paste0("dummy", levels(lvo[, .Arm]), ".dummyHadCows.Time3"), 
+     paste0("dummy", levels(lvo[, .Arm]), ".dummyHadCows.Time4")) := as.integer(0L)]
+  # dummyHadCows.Time3, 4
+set(lvo, 
+  i = which(lvo[["dummyHadCows"]] == 1L & lvo[["Time.3"]] == 1L), 
+  j = grep("^dummyHadCows.*3", colnames(lvo)), 
+  value = 1L)
+set(lvo, 
+  i = which(lvo[["dummyHadCows"]] == 1L & lvo[["Time.4"]] == 1L), 
+  j = grep("^dummyHadCows.*4", colnames(lvo)), 
+  value = 1L)
+for (a in levels(lvo[, .Arm])) {
+  # dummyHadCows*Arm
+  set(lvo, 
+    i = which(lvo[["dummyHadCows"]] == 1L & grepl(a, lvo[[".Arm"]])), 
+    j = grep(paste0(a, ".dummyHadCows$"), colnames(lvo)), 
+    value = 1L)
+  # dummyHadCows*Arm*Time3
+  set(lvo, 
+    i = which(lvo[["dummyHadCows"]] == 1L & grepl(a, lvo[[".Arm"]]) & lvo[["Time.3"]] == 1L), 
+    j = grep(paste0(a, ".dummyHadCows.*3"), colnames(lvo)), 
+    value = 1L)
+  # dummyHadCows*Arm*Time4
+  set(lvo, 
+    i = which(lvo[["dummyHadCows"]] == 1L & grepl(a, lvo[[".Arm"]]) & lvo[["Time.4"]] == 1L), 
+    j = grep(paste0(a, ".dummyHadCows.*4"), colnames(lvo)), 
+    value = 1L)
+}
+print(grepout("Had", colnames(lvo)))
+print(summary(lvo[, .(dummyHadCows.Time3)]))
+@
+Check number of HHs in assets by \textsf{o1600}:
+<<Check number of HHs in assets by o1600, echo = T>>=
+addmargins(table(ass[, .(creditstatus, survey, o1600)]))
+addmargins(table(ass[o800 == 1, .(survey, creditstatus)]))
+#table0(ass[o1600 == 0L, .(creditstatus, survey)])
+@
+Check number of HHs in schooling by \textsf{o1600}:
+<<Check number of HHs in s1 by o1600, echo = T>>=
+table(s1[, .(Schooling, survey, o1600)])
+addmargins(table(s1[o800 == 1, .(survey, Schooling)]))
+@
+Check number of \textsf{o800} HHs in \textsf{ar}:
+<<Check number of HHs in ar, echo = T>>=
+ar[, tee := as.integer(1:.N), by = .(hhid, survey)]
+addmargins(table0(ar[tee == 1 & o800 == 1L, .(survey, RArm)]))
+@
+Check number of \textsf{o800} HHs in \textsf{arA}:
+<<Check number of HHs in arA, echo = T>>=
+arA[, tee := as.integer(1:.N), by = .(hhid, survey)]
+addmargins(table0(arA[tee == 1 & o800 == 1L, .(survey, RArm)]))
+@
+Number of observations differ between \textsf{ar} and \textsf{arA} because the latter does not include rejecters. 
+<<Number of o800 observations ar arA>>=
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ar[, tee := 1:.N, by = hhid]
+ar[, MemNum := 1:.N, by = .(hhid, survey)]
+arA[, tee := 1:.N, by = hhid]
+arA[, MemNum := 1:.N, by = .(hhid, survey)]
+# individual rejecters will not have any repayment data
+cbind(table0(ar[tee == 1 & o800 == 1L, .(Mstatus, RArm)]), 
+  table0(arA[tee == 1 & o800 == 1L, .(Mstatus, RArm)]))
+@
+Original 800 households in \textsf{arA} (members only).
+<<Original 800 households in arA>>=
+hhOnlyInAr <- ar[tee == 1 & o800 == 1L & 
+  !(hhid %in% arA[LoanMonth == 1 & o800 == 1L & !is.na(LoanYear), hhid]), hhid]
+# mark these households
+arA[, Members800 := as.integer(NA)]
+arA[tee == 1 & (o800 == 1L | hhid %in% hhOnlyInAr), 
+  Members800 := 1L]
+arA[, Members800 := Members800[!is.na(Members800)][1], by = hhid]
+arA[is.na(Members800), Members800 := 0L]
+# they are the same as o800
+all(arA[, Members800 == o800])
+arA[, Members800 := NULL]
+addmargins(table0(arA[LoanYear == 1 & LoanMonth == 1 & !is.na(LoanYear) & o800 == 1L, 
+  .(Mstatus, EverRepaid)]))
+@
+What is relevant in estimation is observations by \textsf{LoanYear}, total of \Sexpr{sum(table0(arA[LoanYear == 1 & LoanMonth == 1 & !is.na(LoanYear) & o800 == 1L,   .(LoanYear, RArm)]))}.
+<<observations by LoanYear arA>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & o800 == 1L, 
+  .(LoanYear, RArm)]))
+@
+If we restrict to \textsf{planned} in \textsf{TradGroup}, number of observation becomes \Sexpr{sum(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & 
+  o800 == 1L & !grepl("doub|twi", TradGroup), 
+  .(LoanYear, RArm)])[1, ])}.
+<<If we restrict to planned in TradGroup arR>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & 
+  o800 == 1L & !grepl("doub|twi", TradGroup), 
+  .(LoanYear, RArm)]))
+@
+\textsf{ObPattern} in original 800.
+<<attrition in o800>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & LoanYear == 1 & o800 == 1L, .(ObPattern, RArm)]))
+@
+\textsf{BorrowerStatus} pattern in original 800.
+<<BorrowerStatus in o800>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & LoanYear == 1 & o800 == 1L, .(BorrowerStatus, RArm)]))
+@
+\textsf{BStatus} pattern in original 800.
+<<BStatus in o800>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & LoanYear == 1 & o800 == 1L, .(BStatus, RArm)]))
+@
+\textsf{BorrowerStatus} pattern in original 800 with only \textsf{planned} in \textsf{TradGroup}.
+<<BorrowerStatus in o800 tradgroup>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & LoanYear == 1 & 
+  !grepl("doub|twi", TradGroup) & o800 == 1L, .(BorrowerStatus, RArm)]))
+@
+\textsf{BStatus} pattern in original 800 with only \textsf{planned} in \textsf{TradGroup}.
+<<BStatus in o800 tradgroup>>=
+addmargins(table0(arA[LoanMonth == 1 & !is.na(LoanYear) & LoanYear == 1 & 
+  !grepl("doub|twi", TradGroup) & o800 == 1L, .(BStatus, RArm)]))
+@
+Below tabulates attrition pattern in \textsf{ar} for 800 and 1600 households.
+<<attrition pattern in ar for 800 and 1600 households, warning = F>>=
+samples <- c("o800", "o1600")
+for (s in samples){
+  # MemNum == 1 is 1st obs in hhid-survey 
+  # so only 1 ob is picked for a hhid in survey round 1
+  tb0 <- table0(ar[MemNum == 1 & eval(parse(text=s)) == 1L & survey == 1, 
+    .(Mstatus, RArm)])
+  tb <- rbind(tb0, total = apply(tb0, 2, sum))
+  attseqN <- attseqT <- NULL
+  for (j in levels(ar[, Mstatus])) {
+    for (m in levels(ar[, RArm])) {
+      attseqN <- c(attseqN, 
+        nrow(ar[
+          MemNum == 1 & eval(parse(text=s)) == 1L & survey == 1 &
+          grepl(j, Mstatus) & grepl(paste0(m, "$"), RArm) & AttritIn < 9L, ])
+        )
+      attseqT <- c(attseqT, 
+        nrow(ar[
+          MemNum == 1 & eval(parse(text=s)) == 1L & survey == 1 &
+          grepl(j, Mstatus) & grepl(paste0(m, "$"), RArm), ])
+        )
+    }
+  }
+  # Below tabulates total obs and attrited obs
+  atrN0 <- matrix(attseqN, byrow = T, ncol = 4)
+  atrN <- rbind(atrN0, total = apply(atrN0, 2, sum))
+  atrTot <- matrix(attseqT, byrow = T, ncol = 4)
+  atrTot <- rbind(atrTot, total = apply(atrTot, 2, sum))
+  atrR <- atrN/atrTot
+  atrR <- a2b(atrR, "NaN", 0)
+  atrR <- formatC(atrR, digits = 2, format = "f")
+  atrR <- matrix(paste0("(", atrR, ")"), byrow = F, ncol = 4)
+  tb <- rbind(tb, atrR)[c(1, 8)+rep(0:6, each = 2), ]
+  cbind(rownames(tb), tb)
+  # AttS: Mstatus * RArm obs for total N and attrited N
+  AttS <- data.table(rbind(cbind(variable = "N", data.frame(tb0)), 
+    cbind(variable = "AttritN", data.frame(tb0)[, 1:2], Freq = c(atrN0))
+    ))
+  AttSW <- reshape(AttS, direction = "wide", idvar = c("RArm", "Mstatus"),
+    timevar = "variable", v.names = "Freq")
+  # Freq.SurvN: Surviving obs
+  AttSW[, Freq.SurvN := Freq.N - Freq.AttritN]  
+  AttSW <- AttSW[!grepl("iRep|new", Mstatus), ]
+  AttSL <- reshape(AttSW, direction = "long", idvar = c("RArm", "Mstatus"),
+    varying = grepout("Fr", colnames(AttSW)))
+  setnames(AttSL, "time", "variable")
+  AttSL[, variable := factor(variable, levels = c("N", "AttritN", "SurvN"))]
+  AttSL[, Mstatus := droplevels(Mstatus)]
+  AttSL[, Mstatus := factor(Mstatus, levels = rev(levels(Mstatus)))]
+  assign(paste0("att", s), AttSL)
+}
+#with(att8L, reorder(Mstatus, Mstatus, function(x) -length(x)))
+# with(att8L, unique(reorder(Mstatus, Freq)))
+<<attrition and Mstatus among o800, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Attrition and Mstatus", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+for (s in samples) {
+  dt <- get(paste0("att", s))
+  g <- ggplot(subset(dt, grepl("^N$|Sur", variable)), 
+    aes(x = variable, y = Freq, group = forcats::fct_rev(Mstatus), 
+      fill = forcats::fct_rev(Mstatus), order = forcats::fct_rev(Mstatus))) +
+    geom_bar(stat = "identity", width = 1, position = "stack") +
+    theme(
+      legend.position="bottom", 
+      legend.text = element_text(size = 7),
+      legend.title = element_text(size = 9),
+      legend.key = element_rect(fill = "white"),
+      legend.key.size = unit(.5, "cm"),
+      axis.text.x = element_text(size = 7),
+      axis.text.y = element_text(size = 7, vjust = .5, hjust = 1),
+      axis.title = element_text(size = 7),
+      strip.text.x = element_text(color = "blue", size = 6, 
+        margin = margin(0, .5, 0, .5, "cm")), 
+      strip.text.y = element_text(color = "blue", size = 6, 
+        margin = margin(.5, 0, .5, 0, "cm"))
+    ) + 
+    scale_fill_viridis_d() +
+    #scale_fill_brewer(palette = "Dark2") +
+    guides(fill=guide_legend(nrow=1, byrow=TRUE, title = "membership status")) +
+    facet_grid(. ~ RArm)
+  ggsave(
+    paste0(pathprogram, 
+      "figure/ImpactEstimationOriginal1600Memo2/AttritionMstatus", s, ".png"),
+    g,
+    width = 10, height = 4, units = "cm",
+    dpi = 300
+   )
+}
+@
+<<attrition and Mstatus among o800 facet, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Attrition and Mstatus", "\\\\ {\\footnotesize  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+dt <- rbind(atto800[, Sample := "o800"], atto1600[, Sample := "o1600"])
+dt[, Sample := factor(Sample, levels = c("o800", "o1600"))]
+dt[, variable := factor(variable, labels = c("initial", "attrited", "survived"))]
+g <- ggplot(subset(dt, !grepl("^at", variable)), 
+  aes(x = variable, y = Freq, group = forcats::fct_rev(Mstatus), 
+    fill = forcats::fct_rev(Mstatus), order = forcats::fct_rev(Mstatus))) +
+  geom_bar(stat = "identity", width = 1, position = "stack") +
+  theme(
+    legend.position="right", 
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 6),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+    axis.text.x = element_text(size = 5),
+    axis.text.y = element_text(size = 7, vjust = .5, hjust = 1),
+    axis.title = element_text(size = 7),
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(.5, 0, .5, 0, "cm"))
+  ) + 
+  scale_fill_viridis_d() +
+  #scale_fill_brewer(palette = "Dark2") +
+  guides(fill=guide_legend(ncol=1, byrow=TRUE, 
+    override.aes = list(size=3), title = "membership status")) +
+  facet_grid(Sample ~ RArm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, 
+    "figure/ImpactEstimationOriginal1600Memo2/AttritionMstatuso800Ando1600.png"),
+  g,
+  width = 10, height = 5, units = "cm",
+  dpi = 300
+ )
+<<figure nonNGO borrowing, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Non NGO borrowing", "\\\\ {\\footnotesize  Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+figobr <- subset(obr, o800 == 1 & !is.na(povertystatus))
+figobr[, survey := factor(survey)]
+figobr[, povertystatus2 := factor(povertystatus, labels = c("ultra poor", "moderately poor"))]
+figobr[, povertystatus2 := factor(povertystatus2, levels = c("moderately poor", "ultra poor"))]
+ColourForPoints <- c("darkblue", "darkred")
+meandata <- figobr[, .(NonNGOBal = mean(NonNGOBal)), by = .(Arm, survey, povertystatus2)] 
+meandata[survey == 3, NonNGOBal := NA]
+g <- ggplot(data = figobr, 
+    aes(x = survey, y = NonNGOBal, fill = povertystatus2, colour = povertystatus2)) + 
+  geom_point(position = position_jitterdodge(), size = .001, shape = ".") +
+  #geom_boxplot(position = position_dodge(), lwd = .1, alpha = .125) +
+  # add means
+  geom_point(data = meandata, size = .5, shape = 2, position = position_jitterdodge(),
+    show.legend = F) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_shape_manual(values=c(21, 25)) +
+  scale_y_log10(name = "debt to non-NGO lenders (taka)") + facet_grid( ~ Arm)+
+  theme(
+    axis.text.x = element_text(size = 5), 
+    axis.text.y = element_text(size = 5), 
+    axis.title = element_text(size = 5), 
+    strip.text.x = element_text(size = 5, colour = "blue", margin = margin(0, .5, 0, .5, "cm")), 
+    legend.key.size = unit(.15, "cm"),
+    legend.text = element_text(size = 5),
+    legend.title = element_blank(),
+    legend.position = "bottom")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/NonNGODebts.png"),
+  g,
+  width = 14, height = 6, units = "cm",
+  dpi = 300
+ )
+pdf(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NonNGODebts.pdf"),
+  , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
+print(g)
+dev.off()
+@
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Attrition and membership status among original 800 and 1600 households\label{fig AttritionMstatuso8001600}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo2/AttritionMstatuso800Ando1600.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey and administrative data. \textsf{ar}\\
+Note:& Top panel: Membership status and respective non-attrition in \textsf{o800}. Bottom panel: Membership status and respective non-attrition in \textsf{o1600}.\\[1ex]
+\end{tabular}
+}
+
+
+
+Save all data in \Sexpr{pathsaveHere}.
+<<Save all data eg RosterAdminSchoolingData.rds>>=
+saveRDS(s1, paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+saveRDS(ass, paste0(pathsaveHere, "AssetAdminData.rds"))
+saveRDS(lvo, paste0(pathsaveHere, "LivestockAdminData.rds"))
+saveRDS(lvoL, paste0(pathsaveHere, "LivestockLongAdminData.rds"))
+saveRDS(lvp, paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+saveRDS(lab, paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+saveRDS(far, paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+saveRDS(con, paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+saveRDS(obr, paste0(pathsaveHere, "OtherBorrowingAdminData.rds"))
+saveRDS(shk, paste0(pathsaveHere, "Shocks.rds"))
+<<echo = T>>=
+fwrite(s1, paste0(pathsaveHere, "RosterAdminSchoolingData.prn"), sep = "\t", quote = F)
+fwrite(ass, paste0(pathsaveHere, "AssetAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvoL, paste0(pathsaveHere, "LivestockLongAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvo, paste0(pathsaveHere, "LivestockAdminData.prn"), sep = "\t", quote = F)
+fwrite(lvp, paste0(pathsaveHere, "LivestockProductsAdminData.prn"), sep = "\t", quote = F)
+fwrite(lab, paste0(pathsaveHere, "LabourIncomeAdminData.prn"), sep = "\t", quote = F)
+fwrite(far, paste0(pathsaveHere, "FarmRevenueAdminData.prn"), sep = "\t", quote = F)
+fwrite(con, paste0(pathsaveHere, "ConsumptionAdminData.prn"), sep = "\t", quote = F)
+fwrite(obr, paste0(pathsaveHere, "OtherBorrowingAdminData.prn"), sep = "\t", quote = F)
+fwrite(shk, paste0(pathsaveHere, "Shocks.prn"), sep = "\t", quote = F)
+<<fnames>>=
+flnames <- c("Roster", "AllMeetingsRoster", "Asset", "Livestock", "LabourIncome", "FarmRevenue", "Consumption", "OtherBorrowing", "Shocks")
+@
+
+

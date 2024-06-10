@@ -1,0 +1,78 @@
+% Attrition tests are conducted in AttritionTests5.rnw
+% TabLabel1 is from paste0(pathprogram, "AttritionPermutationTableHeaders5.R") referred in the main rnw file
+<<eval = F>>=
+HeaderDescription[11:16] <- c(
+   "Permutation test results of attrition among borrowers", 
+     "Permutation test results of attrition among traditional arm borrowers",
+     "Permutation test results of attrition among non-traditional arm borrowers",
+     "Permutation test results of non-attriting members of traditional and non-traditional arm borrowers",
+     "Permutation test results of non-attriting members of cattle and all other arm borrowers",
+     "Permutation test results of non-attriting members of cattle and large grace arm borrowers",
+    )
+TabLabel1 <- paste("tab1", HeaderDescription)
+% TabLabelStrings is from RejectionTestsMainText4.rnw 
+% I will modify the table headers for survival/surviving members to "non-attriting borrowers"
+%   "survival$", "surviving.*race$", "surv.*other"
+<<copy from reectionTestsMainText4 pick and set table order>>=
+TabLabelStrings <- 
+c(
+  "Per.* of rejection$", "of rej.*ng traditional arm$", "of rej.*ng non-traditional arm$", 
+  "of rej.*l vs", "p rejection$", "p rej.* traditional arm$", 
+  "p rej.*g non-traditional arm$", "p rejecters.*vs", "l rejection$", 
+  "l rej.*g tra",  "l rej.*g non-", "l rej.*vs", 
+  "bo.*non-ca", 
+  "of attrition$", "of attri.* traditional arm$", 
+  "of attri.* non-traditional arm$", "of attri.* of",
+  "active status$", "active.*race$", "active.*other"
+  )
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "FormPermutationTablesForPerm.rnw"))}
+
+<<change search strings for survival tables>>=
+TabLabelStrings[19:20] <- c("active.*race arms$", "activ.*other arms$")
+@
+<<print trimmed sample attrition, results = "asis">>=
+for (i in 14:length(TabLabelStrings)) {
+  ii <- grep(TabLabelStrings[i], TabLabel1)
+  if (grepl("active", TabLabelStrings[i])){
+   tblatt <- eval(parse(text=paste0("Tb1", ii)))
+   cat(gsub("active\\\\", "attrited or rejected (NonActive) and other (Active) borrowers\\\\", 
+     tblatt)) 
+   rm(tblatt)
+  } else
+  if (grepl("active|activ.*o", TabLabelStrings[i])) {
+   tblatt <- eval(parse(text=paste0("Tb1", ii)))
+   cat(gsub("active members", "non-attriting borrowers", 
+     tblatt)) 
+    rm(tblatt)
+  } else
+   cat(eval(parse(text=paste0("Tb1", ii))))
+}
+@
+% uptake: 105+171+177+163
+% rejected: rjcted <- 71+29+23+37
+% attrited: 32+8+29+23
+% borrower nonattriting (survivors): 83+164+160+147=\Sexpr{83+164+160+147}
+% borrower attriting: boratt <- (105-83)+(171-164)+(177-160)+(163-147)
+% nonborrower nonattriting: 61+28+11+30
+% nonborrower attriting: (40+31-36-25)+(20+9-19-9)+(10+13-11)+(37-39)
+% rejected or attrited (nonsurvivors): borrower attriting + rejected = \Sexpr{boratt + rjcted}
+
+\Sexpr{knit_child(paste0(pathprogram, "AttritionTestText.rnw"))}
+
+%	\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[1]}}} shows results from tests of independence between attriters and nonattriters. We see the moderate rate of attrition is not correlated with household level characteristics at the conventional $p$ value level. Productive asset amounts seem to differ between attriters and nonattriters, with the former being larger than the latter. This positive attrition selection can cause underestimation of impacts, if the asset values are positively correlated with entrepreneurial capacity. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* traditional arm$", TabLabel1)]}}} shows attrition in the \textsf{traditional} arm. Household heads of attriters are relatively less literate than nonattriters. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* non-traditional arm$", TabLabel1)]}}} compares attriters and nonattriters in the non-\textsf{traditional} arm. Unlike \textsf{traditional} arm attriters, non-\textsf{traditional} arm attriters have more literate household heads, have a larger household size, are more exposed to floods, and have larger productive assets. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the impacts of non-\textsf{traditional} arm. These are explicitly shown in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* of", TabLabel1)]}}} where we compare attriters of \textsf{traditional} and non-\textsf{traditional} arms. Overall, attrition may have attenuated the impacts but is not likely to have inflated them.\footnote{So one can employ the Lee bounds for stronger results, but doing so will give us less precision and require more assumptions. We will not use the Lee bounds \textcolor{red}{[we can show them if necessary]}. }
+
+%	For the microfinance institutions (MFIs), attrition of the loan receiving members poses a threat to their business continuation. Financial institutions often use observable characteristics, such as collateralisable assets, and easily surveyed chracteristics, such as job experiences and schooling of borrowers, and are likely to lend if the assets levels are greater and the borrowers have relevant job experiences and more schooling. We first examine if such screening variables have any predictive power in terms of loan rejection or borrower attrition under our lending. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("survival$", TabLabel1)]}}} compares potential MFI targets (nonattriting borrowers, noted as \textsf{Survived}) vs. non-targets (attriting borrowers or loan rejecters, noted as \textsf{NonSurvived}) in all arms. It shows potential targets at the baseline have larger values in livestock and greater number of cattle, and are less affected by the flood, which conforms the conventional wisdom of lenders in using these aspects in their loan decisions. Next, we examine if the relationship of having ``less favourable'' values in these characteristics and attrition is mitigated under various loan characteristics. In \textsc{\normalsize Table \ref{\Sexpr{gsub("surviving members", "non-attriting borrowers", TabLabel1[grep("surviving members of cattle and large grace", TabLabel1)])}}}, we restrict our attention to the potential MFI targets, or the nonattriting borrowers, and compare between \textsf{cattle} and \textsf{large grace} arms, whose difference is efffectively the presence of managerial supports that the former provides. \label{PageOfAttrition}%Comparing the nonattriting borrower, characteristics are similar except that the \textsf{traditional} members are more exposed to the flood than the non-\textsf{traditional} members. 
+%	Comparing against the \textsf{large grace} arm, nonattriting borrowers of the \textsf{cattle} arm are more exposed to the flood ($p=.055$), have less productive assets ($p=.003$), have lower net asset values ($p=.046$), and have fewer livestock ($p=.137$). This shows that the smaller livestock holders or less experienced individuals are encouraged to participate and continue to operate in the \textsf{cattle} arm that has a managerial support program, with all other features being equal. This is consistent with our analysis of participation in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("bo.*non-ca", TabLabel1)]}}} which weakly hints that the \textsf{cattle} arm's managerial support programs may have encouraged participation of inexperienced or lower asset holders. This also underscores our interpretation that the current impact estimates may be downward biased, if any, as people who would otherwise attrit or reject in cattle arm stayed on. This result is confirmed with lower $p$ values due to a larger sample size when we compare the nonattriting borrowers between \textsf{cattle} arm with other arms in \textsc{\normalsize Table \ref{\Sexpr{gsub("surviving members", "non-attriting borrowers", TabLabel1[grep("surviving members of cattle and all", TabLabel1)])}}}. At the baseline, \textsf{cattle} arm nonattriting borrowers have smaller baseline livestock holding ($p$ value = .016) and smaller baseline net asset holding ($p$ value = .007) than other arms' nonattriting borrowers. 
+
+%	Moved from main text.
+	
+%	Group rejecters of \textsf{traditional} and non-\textsf{traditional} arms differ in household characteristics. Lower livestock values, smaller cattle holding, and smaller net asset values are associated with group rejection for \textsf{traditional} arm (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.* traditional arm$", TabLabel1)]}}}), while higher baseline flood exposure rates and younger household heads are associated with group rejection for non-\textsf{traditional} arms (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.*g non-traditional arm$", TabLabel1)]}}}). Given randomisation, we conjecture that it is lack of \textsf{Upfront} liquidity that prevented smaller livestock holders of \textsf{traditional} arm from participating because they cannot purchase cattle due to insufficient net asset values or an insufficient resale value of owned livestock, when members of similar characteristics partcipated in non-\textsf{traditional} arms. %This is a real resource constraint that binds the households. This is different from a psychological constraint that, so long as there is a cost or a payment involved, albeit at a minimal level, there remains a group of households who would not take up the investment \citep{Ashraf2010, CohenDupas2010}. 
+%	For non-\textsf{traditional} arm rejecters, it is the past flood that kept members from participating, even they are younger and have similar cattle holding as the non group-rejecters. 
+
+%	Individual rejecters of \textsf{traditional} arm and non-\textsf{traditional} arms share similar characteristics (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*vs", TabLabel1)]}}}). In fact, they are not very different in all the variables considered. %This is consistent with the conjecture that, had the \textsf{traditional} arm group rejecters been offered any of the non-\textsf{traditional} arms, they, as a group, may have accepted it.  %It shows the latter is more exposed to flood in baseline and has larger livestock values. This implies that, once large enough sum of loan is disbursed, %there is no minimum livestock and asset holding level to partake in the larger loans, and 
+	%despite a negative asset shock in flood and a poverty trap at this level may be overcome once household size and negative asset shocks are accounted for.
+%	The common factors associated with nonparticipation are a smaller household size and smaller livestock holding (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g tra", TabLabel1)]}}} and \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g non-", TabLabel1)]}}}), although the $p$ values for livestock holding difference between individual rejecters and non individual rejecters are around 7\% (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rejection$", TabLabel1)]}}}). %In non-\textsf{traditional} arms, the individual rejecters have only marginally different mean values relative to individual nonrejecters (\textsc{\normalsize Table \ref{tab Ireject nontrad perm}}). 
+
+

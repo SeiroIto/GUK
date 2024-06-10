@@ -1,0 +1,2385 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("read_cleaned_data.rnw", "read_cleaned_data.tex"); system("platex read_cleaned_data"); system("dvipdfmx read_cleaned_data")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/read_cleaned_data/"); library(knitr); knit("read_cleaned_data.rnw", "read_cleaned_data.tex"); system("platex read_cleaned_data"); system("dvipdfmx read_cleaned_data")
+
+\input{c:/data/knitr_preamble.rnw}
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\makeatother
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_chunk$set(fig.path='figure/read_cleaned_data', cache.path='cache/read_cleaned_data', 
+cache = F, echo = F, results = 'markup', 
+tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+library(grid)
+library(gridExtra)
+pathsave <- paste0(path, "save/")
+pathcleaned <- paste0(path0, "/received/cleaned_by_RA/")
+path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
+path234 <- paste0(pathcleaned, "only_panel_2_3_4/")
+#pathreceived.oct <- paste0(path0, "received/oct/")
+#skip.in.rd1 <- "^\\.$|^\\.\\/1$|combined"
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+source(paste0(pathprogram, "tabulate_est_for_GUK_data.R"))
+@
+
+\hfil Read cleaned GUK files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+I have renamed columns, corrected typo's, and set all original column names to lower cases. All variables that I create begin with an upper case letter. All variables beginning with a lower case letter are original variables.
+
+\textcolor{red}{Texts in red} indicate relatively major issues in data cleaning. \textcolor{green}{Texts in green} show responses to the problem. \textcolor{red}{A Variable Name in red} indicates a useful variable that I created.
+
+Several issues discussed with Abu-san on Nov 16, 2017.
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Promissing avenues for impact evaluations: Asset incomes (e.g., milk), schooling (catch up process of large amount arms). There are a few ways to define a treatment status (assignment, elapsed time).
+\item	Saving and repayment info needs to be supplemented with admin data.
+\item	Papers to be written:
+	\begin{enumerate}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Impact evaluation (+ weekly saving and revenue data).
+	\item	Financial returns.
+	\item	Relocation impacts.
+	\item	Repayment pattern and investment choices (Abu-san takes a lead?).
+	\end{enumerate}
+\item	File maintainer: Abu-san. Anyone who revises the data file should submit to Abu-san and he will update folder in the cloud.
+\end{itemize}
+
+\section{Read files}
+
+	ID file, other section files, and roster files are saved in different folders. Correct roster. Check panel structure of each section. Then we examine panel recording status (attrition, membership status, treatment assignment), and attach this to each section files.
+
+	List and read folders and files in \textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", gsub("^.*RA", ".", path1234))}}, \gobblepars
+<<>>=
+setwd(path1234)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+fn <- list.files(path = foldername, pattern = ".dta$", 
+	recursive = T, full.names = T)
+fn <- fn[!grepl("orking", fn)]
+fn <- unique(fn)
+fnd <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn)))
+#There will be warnings due to duplicated factor levels in dta which should be a fair warning but suppress them. 
+<<warning = F, results = 'hide'>>=
+setwd(path1234)
+library(foreign)
+library(readstata13)
+Z <- lapply(fn, read.dta13, generate.factors = T, nonint.factors = T)
+Z <- lapply(Z, data.table)
+names(Z) <- tolower(gsub(" ", "_", gsub(".*\\/(.*)\\.dta", "\\1", fn)))
+lapply(Z, function(x) setnames(x, c("hh_id", "panel_no"), c("hhid", "survey")))
+saveRDS(Z, paste0(path1234, "data_read_in_a_list.rds"))
+@
+\textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", gsub("^.*RA", ".", path234))}}, \gobblepars
+<<>>=
+setwd(path234)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+fn2 <- list.files(path = foldername, pattern = ".dta$", 
+	recursive = T, full.names = T)
+fn2 <- fn2[!grepl("orking", fn2)]
+fn2 <- unique(fn2)
+Z2 <- lapply(fn2, read.dta13, generate.factors = T, nonint.factors = T)
+Z2 <- lapply(Z2, data.table)
+names(Z2) <- tolower(gsub(" ", "_", gsub(".*\\/(.*)\\.dta", "\\1", fn2)))
+<<>>=
+setwd(pathcleaned)
+foldername3 <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername3 <- grepout("raw.*P.*3$", foldername3)
+fn3 <- list.files(path = foldername3, pattern = "S1.*dta$|Sec.*1.*dta", 
+	recursive = F, full.names = T)
+@
+\textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", foldername3)}}.
+<<warning = F>>=
+setwd(pathcleaned)
+foldername3 <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername3 <- grepout("raw.*P.*3$", foldername3)
+fn3 <- list.files(path = foldername3, pattern = "S1.*dta$|Sec.*1.*dta", 
+	recursive = F, full.names = T)
+Z3 <- lapply(fn3, read.dta13, generate.factors = T, nonint.factors = T)
+Z3 <- lapply(Z3, data.table)
+names(Z3) <- tolower(gsub(" ", "_", gsub(".*\\/(.*)\\.dta", "\\1", fn3)))
+setnames(Z3[[2]], "litaracy", "literacy")
+setnames(Z3[[3]], c("hhid", "mid", "memname", "rel_hhh", "current", 
+	"reasons", "year", "month", "sex", "marital", "stay", "nonstaym", 
+	"reason", "literacy", "edu", "primary", "secondary", "uid"))
+setnames(Z3[[4]], c("hhid", "mid", "memname", "rel_hhh", "current", 
+	"reasons", "year", "month", "sex", "marital", "stay", "nonstaym", 
+	"reason", "literacy", "edu", "primary", "secondary", "uid"))
+setnames(Z3[[5]], "litaracy", "literacy")
+setnames(Z3[[6]], c("id", "litaracy"), c("hhid", "literacy"))
+setnames(Z3[[7]], colnames(Z3[[3]])[-ncol(Z3[[3]])])
+@
+Add the roster to the list of 1-2-3-4 panel data files (\textsf{Z}). (Note: At this moment, \textsf{roster} is a list, not a data.table.) \gobblepars
+<<>>=
+Z$roster <- Z3
+@
+Save all files.
+<<echo = T>>=
+saveRDS(Z, paste0(path1234, "data_read_in_a_list.rds"))
+saveRDS(Z2, paste0(path1234, "data_read_in_a_list_234.rds"))
+@
+
+
+
+\section{Id}
+
+
+\subsection{Membership status}
+
+Check individual panel status: \textsf{gid} is borrower group's unique id, and \textsf{hhid} = \textsf{gid+membership ID number}. \gobblepars
+<<>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list.rds"))
+# Take only the id file.
+xid <- Z[[grep("^id", names(Z))]]
+if (length(grep("survey", colnames(xid))) > 1) xid <- xid[, -3, with = F]
+setkey(xid, hhid, gid, survey, year)
+<<>>=
+setnames(xid, c("LoanAnount_1st", "randomaization"), 
+	c("LoanAmount_1st", "randomization"))
+setnames(xid, tolower(colnames(xid)))
+@
+\textsf{member\_mid} is missing for some but \textsf{memname} is nonNA for all.
+<<>>=
+table(xid[, .(memnameNA = is.na(memname), memberNA = is.na(member_mid))])
+@
+
+In below, I create several variables to show membership-attrition patterns.
+
+Define \textsf{Mpasted}: Tabulate membership pattern across rounds. It is \textsf{cccc} if \textsf{membership==continued} for 4 rds, \textsf{d} if dropped out after rd 1 while \textsf{dd} if observed in rd 1 but dropped out in rd 2 or 3. It does not give timing of attrition. Note: Original \textsf{membership} is defined at each observed rounds. Survey team tried to track an idividual who dropped out at rd 1, so such a person is observed or is lost all the way to the final round. 
+<<>>=
+xid[, Mpasted := substr(tolower(as.character(membership)), 1, 1)]
+xid[, Mpasted := paste(as.character(.SD[, Mpasted]), collapse = ""), by = hhid, .SDcols = "Mpasted"]
+table0(xid[, .(survey, Mpasted)])
+@
+Create survey round pattern: \textsf{Spasted}.
+<<>>=
+xid[, Spasted := paste(as.character(.SD[, survey]), collapse = ""), by = hhid, .SDcols = "survey"]
+table0(xid[, .(survey, Spasted)])
+@
+%Some entries have \textsf{Spasted}==1134. A typo (corrected here).
+<<eval = F>>=
+xid[Spasted == 1134, .(hhid, survey, year, memname)]
+<<echo = F, eval = F>>=
+xid[Spasted == 1134 & year == 2014, survey := 2]
+xid[, Spasted := paste(as.character(.SD[, survey]), collapse = ""), by = hhid, .SDcols = "survey"]
+<<>>=
+table0(xid[, .(Spasted, Mpasted)])
+@
+Create \textcolor{red}{\textsf{Mpattern}} which shows membership and attrition information.
+<<echo = T>>=
+xid[, Mpattern := Mpasted]
+# if Spasted == 1, observed only in rd1, so Xaaa (a for attrition)
+xid[Spasted == 1, Mpattern := paste0(Mpasted, "aaa")]
+xid[Spasted == 12, Mpattern := paste0(Mpasted, "aa")]
+xid[Spasted == 13, Mpattern := paste0(substr(Mpasted, 1, 1), "a", 
+	substr(Mpasted, 2, 2), "a")]
+xid[Spasted == 123, Mpattern := paste0(Mpasted, "a")]
+xid[Spasted == 124, Mpattern := paste0(substr(Mpasted, 1, 2), "a", 
+	substr(Mpasted, 3, 3))]
+xid[Spasted == 134, Mpattern := paste0(substr(Mpasted, 1, 1), "a", 
+	substr(Mpasted, 2, 3))]
+@
+Tabulate membership-attrition patten:
+<<>>=
+table0(xid[, Mpattern])
+@
+(Note above number must be adjusted in the following way: Since \textsf{ccaa} is observed only in 2 rds, number of individuals is 22/2 = 11.)
+
+
+
+\subsection{Treatment assignment}
+
+Tabulate \textsf{Mpattern} against reason for current membership status (\textsf{membership\_status}).
+<<>>=
+xid[, Mstatus := gsub("In.* ", "i", membership_status)]
+xid[, Mstatus := gsub("Gr.* ", "g", Mstatus)]
+xid[, Mstatus := gsub("Ne.*", "newGroup", Mstatus)]
+xid[, Mstatus := gsub("Ol.*", "oldMember", Mstatus)]
+table0(xid[, .(Mpattern, Mstatus)])
+@
+Create \textcolor{red}{\textsf{Mgroup}} which identifies continued, newly added group (after flood?), or members replacing rejecters. 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{gErosion}: Forced drop outs.
+\item	\textsf{gRejection, iRejection}: Voluntary drop outs.
+\end{itemize}
+\gobblepars
+<<>>=
+xid[, Mgroup := "continued"]
+xid[grepl("n", Mpattern), Mgroup := "new group"]
+xid[grepl("r", Mpattern), Mgroup := "replacements"]
+xid[grepl("d", Mpattern) & grepl("Rej", Mstatus), Mgroup := "drop outs"]
+xid[grepl("d", Mpattern) & grepl("E", Mstatus), Mgroup := "forced drop outs"]
+xid[, Mpattern := factor(Mpattern)]
+xid[, Mstatus := factor(Mstatus)]
+xid[, Mgroup := factor(Mgroup)]
+@
+There is an anomaly in \textsf{membership\_status}: Given that \textsf{gid}==71372 does not reject loans by group, this must be a drop out due to individual rejection rather than Old member that \textsf{membership\_status} reports. Correct \textsf{Mgroup} and \textsf{Mstatus} accordingly (but keep original \textsf{membership\_status} unchanged).
+<<echo = T>>=
+xid[grepl("Dr", membership) & grepl("Old", membership_status), 
+	.(gid, hhid, year, Mgroup, Mpattern, Mstatus, membership, membership_status, 
+	creditstatus, missing_followup)]
+<<results = 'hide'>>=
+summary(xid[grepl(71372, gid), 
+	.(gid, year, membership, membership_status, creditstatus)])
+<<echo = T>>=
+xid[grepl("Dr", membership) & grepl("Old", membership_status), 
+	c("Mgroup", "Mstatus") := list("drop outs", "iRejection")]
+<<results = 'hide'>>=
+summary(xid[grepl(71372, gid), 
+	.(hhid, year, Mgroup, Mpattern, Mstatus, membership, membership_status, creditstatus)])
+<<>>=
+table0(xid[, .(Mstatus, Mgroup)])
+@
+Create \textcolor{red}{\textsf{Assign}} which shows realised assignment (as opposed to original assignment \textsf{randomization}) and drop out status (\textsf{Mstatus}).
+<<echo = T>>=
+xid[, AssignOriginal := gsub("^con.*", "traditional", randomization)]
+xid[, AssignOriginal := gsub("L.*t$", "large", AssignOriginal)]
+xid[, AssignOriginal := gsub("L.*d.$", "large grace", AssignOriginal)]
+xid[, AssignOriginal := gsub("^p.*", "cow", AssignOriginal)]
+xid[, Assign := AssignOriginal]
+xid[grepl("^dr", Mgroup), Assign := "drop outs"]
+xid[grepl("^fo", Mgroup), Assign := "forced drop outs"]
+<<>>=
+xid[, Assign := factor(Assign,
+	levels = c("traditional", "large", "large grace", "cow", "drop outs", "forced drop outs"))]
+xid[, AssignRegression := factor(Assign,
+	labels = c("traditional", "large", "largeGrace", "cow", "dropOuts", "forcedDropOuts"))]
+xid[, AssignOriginal := factor(AssignOriginal, c("traditional", "large", "large grace", "cow"))]
+xid[, gid := factor(gid)]
+@
+Tabulate \textsf{Mpattern} against assignment status (\textsf{Assign}).
+<<>>=
+table0(xid[, .(Mpattern, Assign)])
+@
+% Tabulate \textsf{Mgroup} against assignment status (\textsf{randomization}).
+<<eval= F>>=
+table0(xid[, .(Mgroup, Assign)])
+@
+Tabulate \textsf{Mstatus} against realiased assignment status (\textsf{Assign}).
+<<>>=
+table0(xid[, .(Mstatus, Assign)])
+@
+Tabulate membership pattern (\textsf{Mpattern}) against membership status (\textsf{Mstatus}).
+<<>>=
+table0(xid[, .(Mpattern, Mstatus)])
+@
+% There are \Sexpr{length(unique(xid[grepl("^iRej", Mstatus) & is.na(Assign), hhid]))} cases with \textsf{iRejection} and \textsf{Assign} is NA. Individual rejection must come after treatment assignment. These started as \textsf{gRejection} but changed to \textsf{iRejection} in rd4. This is a typo and will correct it.
+<<>>=
+irhhid <- unique(xid[grepl("^iRej", Mstatus) & is.na(Assign), hhid])
+if (length(irhhid) > 0) {
+	unique(xid[hhid %in% irhhid, .(survey, year, Mstatus, Mpattern, missing_followup)])
+	xid[hhid %in% irhhid & year == 2017, 
+		c("membership_status", "Mstatus") := list("Group Rejection", "gRejection")]
+}
+@
+Missingness was reported with errors but corrected with updated file of 2017-10-18. Tabulate \textsf{Mpattern} against attrition information (\textsf{missing\_followup}).
+<<>>=
+xid[is.na(missing_followup), missing_followup := "None missing"]
+xid[, missing_followup := factor(missing_followup)]
+table0(xid[, .(missing_followup, Mpattern)])
+saveRDS(xid, paste0(path1234, "ID_temp.rds"))
+@
+[As a reference, older file: Errors in coding.]
+<<>>=
+xid0 <- Z[[grep("^old_id", names(Z))]]
+setkey(xid0, hhid, gid, survey, year)
+table0(xid0[, missing_followup])
+@
+%Read individual identification files in \textsf{\footnotesize\Sexpr{#gsub("_", "\\\\_", fnids)}}.
+<<read indiv identification files, cache = F, eval = F, child='c:/data/GUK/analysis/program/read_merge_identfication_files.rnw'>>=
+@
+
+Timing of disbursement. 
+
+Create \textsf{DistDateX} to show the timing of intervention in terms of survey. There are 3 disbursements for traditional loans, so \textsf{DistDate2}, \textsf{DistDate3} are defined only for them.  \gobblepars
+<<warning = F>>=
+xid <- readRDS(paste0(path1234, "ID_temp.rds"))
+#print0(unique(xid[, distributiondate_1st]))
+# eliminate empty space
+xid[, distributiondate_1st := gsub("^  ?", "", distributiondate_1st)]
+xid[distributiondate_1st == "", distributiondate_1st := NA]
+xid[, distributiondate_2nd := gsub("^\\.|^0$", "", distributiondate_2nd)]
+xid[, distributiondate_3rd := gsub("^\\.|^0$", "", distributiondate_3rd)]
+xid[distributiondate_2nd == "", distributiondate_2nd := NA]
+xid[distributiondate_3rd == "", distributiondate_3rd := NA]
+xid[, DistDate1 := as.POSIXct(strptime(distributiondate_1st, format = "%d/%m/%Y"))]
+xid[, PurDate1 := as.POSIXct(strptime(purchaseddate_1st_loan, format = "%d/%m/%Y"))]
+xid[, DistDate2 := as.POSIXct(strptime(distributiondate_2nd, format = "%d/%m/%Y"))]
+xid[, PurDate2 := as.POSIXct(strptime(purchaseddate_2nd_loan, format = "%d/%m/%Y"))]
+xid[, DistDate3 := as.POSIXct(strptime(distributiondate_3rd, format = "%d/%m/%Y"))]
+@
+When \textsf{DistDateX}==NA and \textsf{PurDateX}$!$=NA, use \textsf{PurDateX} to fill NAs. \gobblepars
+<<echo = T>>=
+xid[is.na(DistDate1) & !is.na(PurDate1), DistDate1 := PurDate1]
+xid[is.na(DistDate2) & !is.na(PurDate2), DistDate2 := PurDate2]
+<<>>=
+# correct typos in interview dates
+xid[survey == 1 & grepl("092", st_day_inter), 
+	st_day_inter := gsub("092", "09/2", st_day_inter)]
+xid[survey == 1 & grepl(";13", st_day_inter), 
+	st_day_inter := gsub(";", "", st_day_inter)]
+xid[survey == 1 & grepl("--", st_day_inter), 
+	st_day_inter := gsub("--", "-", st_day_inter)]
+# there are 2 kinds of dates using "-" with YYYY and YY.
+xid[survey == 1 & grepl("-20..$", st_day_inter), 
+	IntDate := as.POSIXct(asc(st_day_inter), format = "%d-%m-%Y")]
+xid[survey == 1 & grepl("-..$", st_day_inter), 
+	IntDate := as.POSIXct(asc(st_day_inter), format = "%d-%m-%y")]
+xid[survey == 1 & grepl("\\/", st_day_inter), 
+	IntDate := as.POSIXct(asc(st_day_inter), format = "%d/%m/%Y")]
+xid[survey >= 2, IntDate := as.POSIXct(asc(d_1st), format = "%d%m%y")]
+xid[survey >= 2 & is.na(IntDate) & !is.na(st_day) & !is.na(st_month) & !is.na(st_year), 
+	IntDate := as.POSIXct(paste0(st_day, "-", st_month, "-", st_year), format = "%d-%m-%y")]
+xid[, c("Disbursed1", "Disbursed2", "Disbursed3") := NA]
+@
+Define \textsf{DisbursedX}: T if interview date is after the X-th disbuersement date, F otherwise. 
+<<echo = T>>=
+xid[DistDate1 > IntDate, Disbursed1 := F]
+xid[DistDate1 <= IntDate, Disbursed1 := T]
+xid[DistDate2 > IntDate, Disbursed2 := F]
+xid[DistDate2 <= IntDate, Disbursed2 := T]
+xid[DistDate3 > IntDate, Disbursed3 := F]
+xid[DistDate3 <= IntDate, Disbursed3 := T]
+@
+If \textsf{DistDate1}==NA and \textsf{creditstatus}==No, set \textsf{Disbursed1}=F (except for drop outs). Given that it is only the traditional loan takers which match this pattern, set also \textsf{Disbursed2}, \textsf{Disbursed3} to F. \gobblepars
+<<echo = T>>=
+xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & 
+	!grepl("dr", Mgroup) & grepl("N", creditstatus), 
+	c("Disbursed1", "Disbursed2", "Disbursed3") := F]
+@
+If \textsf{DistDate1}==NA  and \textsf{Mgroup}==drop outs or \textsf{Mstatus}==\{iRejection, gErosion, gRejection\}, set \textsf{DisbursedX}==F. 
+<<echo = T>>=
+xid[is.na(DistDate1) & (grepl("dr", Mgroup) | grepl("R|E", Mstatus)), Disbursed1 := F]
+@
+If \textsf{DistDate1}$!$=NA and \textsf{IntDate}==NA, set subsequent (than \textsf{DistDate1}) rd (\textsf{survey}) of \textsf{Disbursed1} to T. 
+<<echo = T>>=
+xid[!is.na(DistDate1) & is.na(IntDate), Disbursed1 := F]
+xid[!is.na(DistDate1) & is.na(IntDate), DisRd := survey]
+xid[!is.na(DistDate1) & is.na(IntDate) & survey > DisRd, Disbursed1 := T]
+xid[, DisRd := NULL]
+<<>>=
+	#table(xid[is.na(DistDate1) & !grepl("dr", Mgroup), 
+#	.(DistDate2NA = is.na(DistDate2), DistDate3NA = is.na(DistDate3))])
+setkey(xid, hhid, year, Mgroup, Assign, Mpattern, creditstatus, DistDate1, DistDate2, DistDate3)
+xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & !grepl("dr", Mgroup), 
+	Count := .N, by = list(year, Mgroup, Assign, Mpattern, creditstatus)]
+@
+\textcolor{red}{Who are these who did not receive loans but \textsf{Mgroup} is classified as a continuing member?}
+<<>>=
+unique(xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & !grepl("dr", Mgroup), 
+	.(year, DistDate1, Mgroup, Assign, Mpattern, Mstatus, membership, membership_status, 
+	creditstatus, Count)])
+@
+\textsf{hhid}s of the above.
+<<>>=
+print0(unique(xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & !grepl("dr", Mgroup), 
+	hhid]))
+@
+\textcolor{green}{[2017-11-14 Abu email] These individuals are loan rejecters yet stay as a member. $\rightarrow$ Mark as rejecters by creating a variale \textsf{LoanReject}=T/F.}
+<<echo = T>>=
+xid[, LoanReject := F]
+xid[is.na(DistDate1) & is.na(DistDate2) & is.na(DistDate3) & !grepl("dr", Mgroup), 
+	LoanReject := T]
+@
+Save \textsf{xid}. 
+<<echo = T>>=
+saveRDS(xid, paste0(path1234, "ID.rds"))
+@
+Traditional loans are disbursed 3 times.
+<<>>=
+summary(xid[!is.na(DistDate3), .(DistDate1, DistDate2, DistDate3, Assign)])
+#summary(xid[!grepl("tr", Assign), .(survey, DistDate1)])
+@
+Drop outs did not receive loans.
+<<>>=
+summary(xid[grepl("dr", Assign), .(gid, survey, DistDate1, DistDate2, DistDate3, Assign, creditstatus)])
+<<>>=
+xid <- readRDS(paste0(path1234, "ID.rds"))
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, memname, 
+	creditstatus, Mpattern, Mgroup, Mstatus, Assign, AssignRegression, 
+	IntDate, DistDate1, DistDate2, DistDate3, Disbursed1, Disbursed2, Disbursed3)])
+@
+Plot disbursement timing after excluding rejecters and drop-out members (\textsf{\small Figure \ref{Figure disbursement timing}}). \gobblepars
+<<disbursement timing, warning = F, fig.align='center', fig.height = 8, fig.width = 10, fig.cap = "Disbursement timing", fig.lp = 'Figure '>>=
+dit <- xid[, .(gid, hhid, DistDate1, DistDate2, DistDate3, Assign, Mgroup, Mstatus, Mpattern)]
+setnames(dit, c("DistDate1", "DistDate2", "DistDate3"), 
+	c("DistDate.1", "DistDate.2", "DistDate.3"))
+dit <- unique(dit[!is.na(Assign), ])
+dit <- dit[!grepl("d", Mpattern), ]
+ditl <- reshape(dit, direction = "long", idvar = c("gid", "hhid", "Assign", 
+	"Mgroup", "Mpattern", "Mstatus"),
+	varying = c("DistDate.1", "DistDate.2", "DistDate.3"))
+ditl[, DistDate := as.Date(DistDate)]
+#table0(ditl[, .(Mgroup, Mstatus)])
+library(ggplot2)
+ggplot(ditl, mapping = aes(x = DistDate, y = Assign)) + 
+	geom_point(alpha = 1/10, shape = 4, aes(color = Assign)) + 
+	scale_shape(solid = F) +
+	geom_jitter(width = .5, height = .5, aes(color = Assign)) +
+	scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y") +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("disbursement date") +
+	facet_grid(Mgroup ~.)
+@
+Plot disbursement status against interview dates (\textsf{\small Figure \ref{Figure disbursement progress against interview dates}}) and disbursement dates (\textsf{\small Figure \ref{Figure disbursement progress against disbursment dates}}). (After correcting some typos before date conversion.) %\textcolor{black}{\textbf{Found:} Some dates are erroneously entered. 21 cass of missing interview dates. }
+We plot first loan disbursment against against disbursement dates (\textsf{\small Figure \ref{Figure disbursement progress of first loans against disbursement dates}}), and calendar year (\textsf{\small Figure \ref{Figure disbursement progress against calendar year}}).
+<<disbursement progress against interview dates, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Disbursement progress of first loans against interview dates", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, Disbursed1, Disbursed2, Disbursed3, 
+	IntDate, Assign, Mgroup, Mstatus, Mpattern)]
+dit2[, Disbursed1lag := shift(Disbursed1, 1L, type="lag"), by = hhid]
+dit2[, Disbursed2lag := shift(Disbursed2, 1L, type="lag"), by = hhid]
+dit2[, Disbursed3lag := shift(Disbursed3, 1L, type="lag"), by = hhid]
+# Keep only when Dibursed1 changes from F ==> T.
+dit2 <- dit2[(Disbursed1 & !Disbursed1lag) | 
+	(Disbursed2 & !Disbursed2lag) | (Disbursed3 & !Disbursed3lag), ]
+dit2 <- unique(dit2[!is.na(Assign), ])
+dit2 <- dit2[!grepl("d", Mpattern), ]
+setkey(dit2, Assign, IntDate)
+dit2[, en1 := .N, by = Assign]
+dit2[, CumTreated.1 := as.integer(cumsum(Disbursed1))/en1, by = Assign]
+dit2[, en2 := max(en1), by = Assign]
+dit2[, CumTreated.2 := as.integer(cumsum(Disbursed2))/en2, by = Assign]
+dit2[, en3 := max(en1), by = Assign]
+dit2[, CumTreated.3 := as.integer(cumsum(Disbursed3))/en3, by = Assign]
+dit2[!grepl("tr", Assign), c("en2", "CumTreated.2", "en3", "CumTreated.3") := NA]
+dit2[, c("en2", "CumTreated.2", "en3", "CumTreated.3") := NULL]
+dit2l <- reshape(dit2, direction = "long", idvar = c("gid", "hhid", "Assign", 
+	"Mgroup", "Mpattern", "Mstatus", "IntDate", "Disbursed1", "Disbursed2"),
+	varying = grepout("^Cum", colnames(dit2)))
+dit2l[, IntDate := as.Date(IntDate)]
+library(ggplot2)
+ggplot(dit2l, mapping = aes(x = IntDate, y = CumTreated, group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign))+
+	scale_shape(solid = F) +
+	#geom_jitter(width = .5, height = .5, aes(color = Assign)) +
+	scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y") +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("interview date") + 
+		ylab("cumulative disbursement rate")
+@
+<<disbursement progress against calendar year, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Disbursement progress of first loans against calendar year", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, year, survey, DistDate1, IntDate, Disbursed1, Disbursed2, Disbursed3, 
+	Assign, Mgroup, Mstatus, Mpattern)]
+if (nrow(dit2[is.na(Disbursed1) & !is.na(DistDate1),]) > 0) 
+	dit2[is.na(Disbursed1) & !is.na(DistDate1), 
+	.(hhid, year, DistDate1, IntDate, Assign, Mgroup, Mstatus, Mpattern)]
+dit2[, CumTreated := as.integer(sum(Disbursed1, na.rm = T)), 
+	by = list(Assign, Mgroup, year)]
+dit2[, en1 := .N, by = list(Assign, Mgroup, year)]
+dit2[, en1 := .SD[survey == 1, en1][1], by = list(Assign, Mgroup)]
+dit2[, CumTreated := CumTreated/en1] 
+dit2 <- unique(dit2[, .(Assign, Mgroup, year, CumTreated, en1)])
+dit2 <- dit2[!grepl("dr", Mgroup), ]
+setkey(dit2, Assign, year)
+library(ggplot2)
+ggplot(dit2, mapping = aes(x = year, y = CumTreated, group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign))+
+	scale_shape(solid = F) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("interviewed year") + 
+		ylab("cumulative disbursement rate") + 
+	facet_grid(Mgroup ~ .)
+<<disbursement progress against calendar year after dropping obs without baseline, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Disbursement progress of first loans against calendar year after dropping obs without baseline", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, year, survey, DistDate1, IntDate, Disbursed1, Disbursed2, Disbursed3, 
+	Assign, Mgroup, Mstatus, Mpattern)]
+dit2[(hhid %in% dit2[survey == 1 & Disbursed1, hhid]), Count := .N,
+	by = list(Assign, Mgroup, year)]
+unique(dit2[(hhid %in% dit2[survey == 1 & Disbursed1, hhid]), 
+	.(Assign, Mgroup, Mstatus, Count)])
+dit2 <- dit2[!(hhid %in% dit2[survey == 1 & Disbursed1, hhid]), ]
+dit2[, CumTreated := as.integer(sum(Disbursed1, na.rm = T)), 
+	by = list(Assign, Mgroup, year)]
+dit2[, en1 := .N, by = list(Assign, Mgroup, year)]
+dit2[, en1 := .SD[survey == 1, en1][1], by = list(Assign, Mgroup)]
+dit2[, CumTreated := CumTreated/en1] 
+dit2 <- unique(dit2[, .(Assign, Mgroup, year, CumTreated, en1)])
+dit2 <- dit2[!grepl("dr", Mgroup), ]
+setkey(dit2, Assign, year)
+library(ggplot2)
+ggplot(dit2, mapping = aes(x = year, y = CumTreated, group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign))+
+	scale_shape(solid = F) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("interviewed year") + 
+		ylab("cumulative disbursement rate") + 
+	facet_grid(Mgroup ~ .)
+@
+There are \Sexpr{table(xid2[grepl("rep", Mgroup), .(year, Disbursed1)])[1, "TRUE"]} cases which received treatment at the first round of survey among \textsf{Mgroup}==replacements, and \Sexpr{table(xid2[grepl("new", Mgroup), .(year, Disbursed1)])[1, "TRUE"]} cases for \textsf{Mgroup}==new group. \textcolor{red}{These do not have baseline and needs to be dropped from analysis. The progress is shown in \textsf{\small Figure \ref{Figure disbursement progress against calendar year after dropping obs without baseline}}. }
+
+\textcolor{green}{[2017-11-17 Abu discussion] These disbursement dates are wrong and need to be replaced with information in administrative records. $\rightarrow$ Abu will send the admin files.}
+
+<<disbursement progress against disbursment dates, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Disbursement progress of first loans against disbursement dates", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, Disbursed1, Disbursed2, Disbursed3, DistDate1,
+	IntDate, Assign, Mgroup, Mstatus, Mpattern)]
+dit2[, Disbursed1lag := shift(Disbursed1, 1L, type="lag"), by = hhid]
+dit2[, Disbursed2lag := shift(Disbursed2, 1L, type="lag"), by = hhid]
+dit2[, Disbursed3lag := shift(Disbursed3, 1L, type="lag"), by = hhid]
+# Keep only when Dibursed1 changes from F ==> T.
+dit2 <- dit2[(Disbursed1 & !Disbursed1lag) | 
+	(Disbursed2 & !Disbursed2lag) | (Disbursed3 & !Disbursed3lag), ]
+dit2 <- unique(dit2[!is.na(Assign), ])
+dit2 <- dit2[!grepl("d", Mpattern), ]
+setkey(dit2, Assign, DistDate1)
+dit2[, en1 := .N, by = Assign]
+dit2[, CumTreated.1 := as.integer(cumsum(Disbursed1))/en1, by = Assign]
+dit2[, en2 := max(en1), by = Assign]
+dit2[, CumTreated.2 := as.integer(cumsum(Disbursed2))/en2, by = Assign]
+dit2[, en3 := max(en1), by = Assign]
+dit2[, CumTreated.3 := as.integer(cumsum(Disbursed3))/en3, by = Assign]
+dit2[!grepl("tr", Assign), c("en2", "CumTreated.2", "en3", "CumTreated.3") := NA]
+dit2[, c("en2", "CumTreated.2", "en3", "CumTreated.3") := NULL]
+dit2l <- reshape(dit2, direction = "long", idvar = c("gid", "hhid", "Assign", 
+	"Mgroup", "Mpattern", "Mstatus", "DistDate1", "Disbursed1", "Disbursed2"),
+	varying = grepout("^Cum", colnames(dit2)))
+dit2l[, DistDate1 := as.Date(DistDate1)]
+library(ggplot2)
+ggplot(dit2l, mapping = aes(x = DistDate1, y = CumTreated, group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign))+
+	scale_shape(solid = F) +
+	#geom_jitter(width = .5, height = .5, aes(color = Assign)) +
+	scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y") +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("disbursement date") + 
+		ylab("cumulative disbursement rate")
+@
+<<disbursement progress of first loans against disbursement dates, warning = F, fig.align='center', fig.height = 6, fig.width = 10, fig.cap = "Disbursement progress of first loans by membership status", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, Disbursed1, Disbursed2, Disbursed3, DistDate1,
+	IntDate, Assign, Mgroup, Mstatus, Mpattern)]
+dit2[, Disbursed1lag := shift(Disbursed1, 1L, type="lag"), by = hhid]
+dit2[, Disbursed2lag := shift(Disbursed2, 1L, type="lag"), by = hhid]
+dit2[, Disbursed3lag := shift(Disbursed3, 1L, type="lag"), by = hhid]
+# Keep only when Dibursed1 changes from F ==> T.
+dit2 <- dit2[(Disbursed1 & !Disbursed1lag) | 
+	(Disbursed2 & !Disbursed2lag) | (Disbursed3 & !Disbursed3lag), ]
+dit2 <- unique(dit2[!is.na(Assign), ])
+dit2 <- dit2[!grepl("d", Mpattern), ]
+setkey(dit2, Assign, DistDate1)
+dit2[, en1 := .N, by = list(Assign, Mgroup)]
+dit2[, CumTreated.1 := as.integer(cumsum(Disbursed1))/en1, by = list(Assign, Mgroup)]
+dit2[, en2 := max(en1), by = list(Assign, Mgroup)]
+dit2[, CumTreated.2 := as.integer(cumsum(Disbursed2))/en2, by = list(Assign, Mgroup)]
+dit2[, en3 := max(en1), by = list(Assign, Mgroup)]
+dit2[, CumTreated.3 := as.integer(cumsum(Disbursed3))/en3, by = list(Assign, Mgroup)]
+dit2[!grepl("tr", Assign), c("en2", "CumTreated.2", "en3", "CumTreated.3") := NA]
+dit2[, c("en2", "CumTreated.2", "en3", "CumTreated.3") := NULL]
+dit2l <- reshape(dit2, direction = "long", idvar = c("gid", "hhid", "Assign", 
+	"Mgroup", "Mpattern", "Mstatus", "DistDate1", "Disbursed1", "Disbursed2"),
+	varying = grepout("^Cum", colnames(dit2)))
+dit2l[, DistDate1 := as.Date(DistDate1)]
+dit2l[, Mgroup := factor(Mgroup)]
+library(ggplot2)
+ggplot(dit2l, mapping = aes(x = DistDate1, y = CumTreated, group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign))+
+	scale_shape(solid = F) +
+	#geom_jitter(width = .5, height = .5, aes(color = Assign)) +
+	scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y") +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("disbursement date") + 
+		ylab("cumulative disbursement rate") +
+	facet_grid(Mgroup ~ .)
+@
+<<disbursement progress of traditional loans, echo = F, eval = F, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Disbursement progress of traditional loans against interview dates", fig.lp = 'Figure '>>=
+dit2 <- xid[, .(gid, hhid, Disbursed1, Disbursed2, Disbursed3, 
+	IntDate, Assign, Mgroup, Mstatus, Mpattern)]
+dit2[, Disbursed1lag := shift(Disbursed1, 1L, type="lag"), by = hhid]
+dit2[, Disbursed2lag := shift(Disbursed2, 1L, type="lag"), by = hhid]
+dit2[, Disbursed3lag := shift(Disbursed3, 1L, type="lag"), by = hhid]
+# Keep only when Dibursed1 changes from F ==> T.
+dit2 <- dit2[(Disbursed1 & !Disbursed1lag) | 
+	(Disbursed2 & !Disbursed2lag) | (Disbursed3 & !Disbursed3lag) & 
+	grepl("tr", Assign), ]
+dit2 <- unique(dit2[!is.na(Assign), ])
+dit2 <- dit2[!grepl("d", Mpattern), ]
+setkey(dit2, IntDate)
+dit2[, c("Disbursed1", "Disbursed2", "Disbursed3") := 
+	a2b.data.table(dit2[, .(Disbursed1, Disbursed2, Disbursed3)], NA, F)]
+dit2[, en1 := sum(Disbursed1), by = Mgroup]
+dit2[, CumTreated.1 := as.integer(cumsum(Disbursed1))/en1, by = Mgroup]
+dit2[, CumTreated.2 := as.integer(cumsum(Disbursed2))/en1, by = Mgroup]
+dit2[, CumTreated.3 := as.integer(cumsum(Disbursed3))/en1, by = Mgroup]
+dit2l <- reshape(dit2, direction = "long", idvar = c("gid", "hhid", "Assign", 
+	"Mgroup", "Mpattern", "Mstatus", "IntDate", "Disbursed1", "Disbursed2"),
+	varying = grepout("^Cum", colnames(dit2)))
+dit2l[, IntDate := as.Date(IntDate)]
+dit2l[, time := factor(time)]
+library(ggplot2)
+ggplot(dit2l, mapping = aes(x = IntDate, y = CumTreated, group = Mgroup)) + 
+	geom_point(aes(color = Mgroup)) + geom_line(aes(color = Mgroup))+
+	scale_shape(solid = F) +
+	#geom_jitter(width = .5, height = .5, aes(color = Assign)) +
+	scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y") +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+		legend.position="bottom") + xlab("interview date") + 
+		ylab("cumulative disbursement rate")
+@
+%\textsf{creditstatus} gives the current treatment status. 
+<<echo = F, eval = F>>=
+table0(xid[, .(year, creditstatus)])
+table0(xid[, .(NA1 = is.na(DistDate1), NA2 = is.na(DistDate2))])
+table0(xid[!is.na(DistDate1), .(NA2 = is.na(DistDate2), NA3 = is.na(DistDate3))])
+@
+
+
+
+\section{Correct sections}
+
+
+<<>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list.rds"))
+# Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+#Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline.rds"))
+@
+
+\subsection{Roster}
+
+
+<<echo = T>>=
+Z3 <- Z[[grep("roster", names(Z))]]
+NAhhid <-  lapply(Z3, function(x) nrow(x[is.na(hhid), ]))
+@
+NAs in \textsf{hhid} in roster. Folder {\footnotesize \Sexpr{gsub("\\_", "\\\\_", names(NAhhid)[NAhhid != 0])}}, number of NAs \Sexpr{NAhhid[NAhhid != 0]}. (Note: At this moment, \textsf{roster} is saved as a list, not a data.table.)  \gobblepars
+<<>>=
+if (any(NAhhid != 0)) 
+	for (i in which(NAhhid != 0)) Z3[[i]] <- Z3[[i]][!is.na(hhid), ]
+NAmid <- lapply(Z3, function(x) nrow(x[is.na(mid), ]))
+@
+NAs in \textsf{mid} in roster. Folder {\footnotesize \Sexpr{gsub("\\_", "\\\\_", names(NAmid)[NAmid != 0])}}, number of NAs \Sexpr{NAmid[NAmid != 0]}. These look like redundant entries so we can drop with \textsf{mid}==NA. \gobblepars
+<<>>=
+if (any(NAmid != 0)) 
+	for (i in which(NAmid != 0)) Z3[[i]] <- Z3[[i]][!is.na(mid), ]
+<<>>=
+Z32 <- rbindlist(Z3[2:3], fill = T, use.names= T)
+Z33 <- rbindlist(Z3[5:4], fill = T, use.names= T)
+Z34 <- rbindlist(Z3[6:7], fill = T, use.names= T)
+# unifiy age and year variables
+Z3[[1]][, age := age_1]
+Z3[[1]][, month := age_2]
+Z3[[1]][, year := 2012]
+Z32[, age := year]; Z33[, age := year]; Z34[, age := year]
+Z32[, year := 2014]; Z33[, year := 2015]; Z34[, year := 2017]
+Z3new <- list(Z3[[1]], Z32, Z33, Z34)
+Z3new <- rbindlist(Z3new, use.names = T, fill = T)
+colsofZ3tolower <- c("rel_hhh", "marital", "stay", "nonstaym", "monetary", 
+	"literacy", "edu", "primary", "secondary", "secondary2", "current", "reasons")
+Z3new[, (colsofZ3tolower) := lapply(.SD, tolower), .SDcols = colsofZ3tolower]
+Z3new[grepl("house wif", primary), primary := "housewife"]
+Z3new[, (colsofZ3tolower) := lapply(.SD, factor), .SDcols = colsofZ3tolower]
+setkey(Z3new, hhid, mid, year)
+if (nrow(Z3new[is.na(hhid), ]) > 0) Z3new <- Z3new[!is.na(hhid), ]
+@
+Membership information \textsf{current} is not recorded in 2012, however, most but \Sexpr{nrow(Z3new[is.na(current) & year == 2012 & grepl("no", stay), ])} cases are reportedly \textsf{stay}ing in HH. So I create \textsf{current} in 2012 by using \textsf{stay}. Other corrections include: Drop duplicates: hhid==7010112 \& mid==5 and hhid==7053905 \& mid==3 \& current == 3, correct mid: hhid==7020605 \& mid == 3 \& year == 2015: mid 3$\rightarrow$4. Filled in NAs in \textsf{sex} if other rds are available. Not sure where Shaha Alom came from in HH 98081710316 in 2017. (Jahanara?)
+<<results = 'hide'>>=
+table0(Z3new[is.na(current), .(year, stay)])
+Z3new[is.na(current) & year == 2012 & grepl("y", stay), current := "member"]
+Z3new[is.na(current) & year == 2012 & grepl("n", stay), current := "not-member"]
+table0(Z3new[, .(year, current)])
+Z3new[hhid==7010112, .(hhid, mid, year, memname, rel_hhh, edu, stay, current, marital)]
+Z3new[hhid==7020605, .(hhid, mid, year, memname, rel_hhh, edu, stay, current, marital)]
+Z3new[hhid==98081710316, .(hhid, mid, memname, age_1, year, stay, current, marital)]
+Z3new <- Z3new[!(hhid==7010112 & mid==5), ]
+Z3new <- Z3new[!(hhid==7053905 & mid==3 & current == 3), ]
+Z3new[hhid==7010112 & mid==3 & year == 2015, mid := 4]
+Z3new[hhid==7020605 & mid==4 & year == 2017, 
+	c("mid", "current") := list(3, "member")]
+Z3new[hhid==98081710316  & mid==6 & year == 2017, current := "member"]
+#Z3new[grepl("1|2|3", current), .(hhid, mid, year, stay, current, marital)]
+Z3new[, current := factor(current, levels = c("member", "new member", "not-member"))]
+table(Z3new[, .(stay, current, year)], useNA = "ifany")
+Z3new[, Age_1 := age_1[!is.na(age_1)][1], by = list(hhid, mid)]
+Z3new[, diffyear := c(0, diff(year)), by = list(hhid, mid)]
+Z3new[, cumdiffyear := cumsum(diffyear), by = list(hhid, mid)]
+Z3new[, AgeComputed := Age_1 + cumdiffyear]
+Z3new[, c("diffyear", "cumdiffyear") := NULL]
+Z3new[, survey := 1]
+Z3new[year == 2014, survey := 2]
+Z3new[year == 2015, survey := 3]
+Z3new[year == 2017, survey := 4]
+Z3new[, sex := sex[!is.na(sex)][1], by = list(hhid, mid)]
+#	fast way to flag 1st obs of group
+setkey(Z3new, hhid, mid, year)
+Z3new[J(unique(Z3new[, .(hhid, mid)])), FirstObs := 1L, mult = "first"]
+Z3new[unique(Z3new[, .(hhid, mid)]), FirstObs2 := 1L, mult = "first"]
+Z3new[is.na(FirstObs), c("FirstObs", "FirstObs2") := 0L]
+@
+Add \textsf{survey} using ID (\textsf{xid}) file. (This is created later but I already have it at this point because I ran that part of file.) \gobblepars
+<<>>=
+xid <- readRDS(paste0(path1234, "ID.rds"))
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, memname, 
+	creditstatus, Mpattern, Mgroup, Mstatus, Assign, AssignRegression, 
+	IntDate, DistDate1, DistDate2, DistDate3, Disbursed1, Disbursed2, Disbursed3)])
+xid3 <- unique(xid2[, .(hhid, year, survey)])
+setnames(xid3, "year", "YearFromIdFile")
+setkey(xid3, hhid, survey)
+setkey(Z3new, hhid, survey)
+Z3new2 <- xid3[Z3new]
+setkey(Z3new2, hhid, mid, YearFromIdFile, year, survey)
+Z3new2[, .(hhid, mid, YearFromIdFile, year, survey, age)]
+Z3new2[, year := YearFromIdFile]
+<<>>=
+dupZ3 <- duplicated.rows(Z3new2, index = c("hhid", "mid", "year", "AgeComputed"), 
+	returnOnlyDuplicated = T,returnOnlyDistinctCols = T)
+@
+3 of duplicated entries in roster are errors (new borns), others are use of attrited member mid (e.g., mid = 2 left HH and mid = 3 uses mid 2 from that time on). There may be other cases of nonunique assignment of mid, but most of the times it will be picked up by an ID duplication check.
+<<echo = T>>=
+dupZ3[duplicated.num == 3 | duplicated.num == 4 | duplicated.num == 7, ]
+@
+Drop the onew with \textsf{age}==NA.
+<<echo = T>>=
+Z3new2 <- Z3new2[
+	!(hhid == 7042213 & mid == 6 & year == 2017 & is.na(age)) & 
+	!(hhid == 7042417 & mid == 5 & year == 2015 & is.na(age)) &
+	!(hhid == 7096319 & mid == 5 & year == 2017 & is.na(age)), ]
+Z3new2[hhid == 7010112, .(hhid, mid, memname, year, AgeComputed, age)]
+Z3new2[hhid == 7010112 & year == 2015 & grepl("jul", memname), mid := 3]
+Z3new2[hhid == 7020811, .(hhid, mid, memname, year, AgeComputed, age)]
+Z3new2[hhid == 7020811 & year == 2015 & grepl("run", memname), mid := 6]
+Z3new2[hhid == 7054105, .(hhid, mid, memname, year, AgeComputed, age)]
+Z3new2[hhid == 7054105 & grepl("rahima", memname), mid := 2]
+Z3new2[hhid == 7054105 & grepl("modu$", memname), mid := 3]
+Z3new2[hhid == 7054105 & grepl("rahman$", memname), mid := 4]
+Z3new2[hhid == 7054105 & grepl("jorina$", memname), mid := 5]
+Z3new2[hhid == 7054105 & grepl("soneka$", memname), mid := 6]
+Z3new2[hhid == 7054105 & grepl("jesmin$", memname), mid := 7]
+Z3new2[hhid == 7096319, .(hhid, mid, memname, year, AgeComputed, age)]
+Z3new2[hhid == 7096319 & grepl("sujon", memname), mid := 3]
+Z3new2[hhid == 7096319 & grepl("sondha", memname), mid := 4]
+Z3new2[hhid == 7096319 & grepl("munni", memname), mid := 5]
+Z3new2[hhid == 7116604, .(hhid, mid, memname, year, AgeComputed, age)]
+Z3new2[hhid == 7116604 & grepl("jesm", memname), mid := 3]
+dupZ3 <- duplicated.rows(Z3new2, index = c("hhid", "mid", "year", "AgeComputed"), 
+	returnOnlyDuplicated = T,returnOnlyDistinctCols = T)
+@
+Recalculate age. %Drop \textsf{Age\_1, AgeComputed} first. 
+Use all available age information to fill NAs. First, identify newborns who only has months recorded. \gobblepars
+<<>>=
+setkey(Z3new2, hhid, mid, year)
+#Z3new2[, c("Age_1", "AgeComputed") := NULL]
+Z3new2[, Age := age]
+# use any age info to fill NAs in Age
+noage <- unique(Z3new2[is.na(Age), .(hhid, mid)])
+# source years of nonNA Age:
+# table(Z3new2[noage, ][!is.na(Age), year])
+setkey(Z3new2, hhid, mid, year)
+Z3new2[, en := 1:.N, by = list(hhid, mid)]
+# Age == NA in 2012
+Z3new2[, Hhidmid := paste(hhid, mid, sep = "-")]
+# some are newborns
+if (nrow(Z3new2[Hhidmid %in% Hhidmid[en == 1 & is.na(Age)] &
+	is.na(age_1) & !is.na(age_2), ]) > 0)
+	Z3new2[Hhidmid %in% Hhidmid[en == 1 & is.na(Age)] &
+		is.na(age_1) & !is.na(age_2), c("age_1", "age", "Age") := 0]
+@
+For the below, there is no clue. 
+<<>>=
+Z3new2[Hhidmid %in% Hhidmid[en == 1 & is.na(Age)], 
+	.(hhid, mid, memname, year, en, Age, age, age_1, age_2)]
+@
+For others, copy \textsf{age} from first observed rd to other rds. There are \Sexpr{nrow(Z3new2[en == 1 & !is.na(age) & is.na(AgeComputed), ])} substitution can be made. 
+<<>>=
+table(Z3new2[en == 1, 
+	.(agenonNA = !is.na(age), AgeComputedNonNA = !is.na(AgeComputed))])
+setkey(Z3new2, hhid, mid, year)
+Z3new2[en == 1 & !is.na(age) & is.na(AgeComputed), Age_1 := age]
+Z3new2[, Age_1 := Age_1[1], by = list(hhid, mid)]
+Z3new2[, diffyear := c(0, diff(year)), by = list(hhid, mid)]
+Z3new2[, cumdiffyear := cumsum(diffyear), by = list(hhid, mid)]
+Z3new2[, AgeComputed := Age_1 + cumdiffyear]
+Z3new2[, c("diffyear", "cumdiffyear") := NULL]
+Z3new2[is.na(AgeComputed), .(hhid, mid, memname, year, en, age, AgeComputed)]
+@
+There are \Sexpr{nrow(Z3new2[is.na(AgeComputed),])} cases of \textsf{Age}==NA remaining. Created several head level variables. \gobblepars
+<<>>=
+Z3new2[, HeadLiteracy := F]
+Z3new2[, HeadAge := Age]
+<<echo = T>>=
+Z3new2[grepl("^he", rel_hhh) & grepl("can r.*te", literacy), HeadLiteracy := T]
+Z3new2[, c("HeadLiteracy", "HeadAge") := 
+	list(HeadLiteracy[grepl("head", rel_hhh)][1], Age[grepl("head", rel_hhh)][1]), 
+	by = hhid]
+Z3new2[, HHsize := .N, by = list(hhid, year)]
+@
+Save back in data.
+<<echo = T>>=
+Z[[grep("roster", names(Z))]] <- Z3new2
+# reorder
+Z <- Z[c("roster", names(Z)[!grepl("ros", names(Z))])]
+fnd <- c("s1 (roster)", fnd)
+@
+
+\subsection{Incomes}
+
+
+\subsubsection{Farm incomes}
+
+<<>>=
+xf <- Z[[grep("farm", names(Z))]]
+xf[, Revenue1 := total_production_1 * price_per_unit_1]
+xf[, Revenue2 := total_production_2 * price_per_unit_2]
+xf[, Revenue3 := total_production_3 * price_per_unit_3]
+xf[, c("Revenue1", "Revenue2", "Revenue3") := 
+	a2b.data.table(xf[, .(Revenue1, Revenue2, Revenue3)], NA, 0)]
+xf[, TotalRevenue := Revenue1 + Revenue2 + Revenue3]
+@
+<<warning = F>>=
+xio <- Z[[grep("inp", names(Z))]]
+xio <- a2b.data.table(xio, NA, 0)
+xio[, SeedTotalCost2 := seed_qty_2 * seed_unit_price_2]
+xio[, SeedTotalCost3 := seed_qty_3 * seed_unit_price_3]
+xio[, CompostTotalCost2 := (compost_bought_2 + compost_own_2) * compost_unit_price_2]
+xio[, CompostTotalCost3 := (compost_bought_3 + compost_own_3) * compost_unit_price_3]
+xio[, PestTotalCost2 := pest_qty_amount_2 * pest_unit_price_2]
+xio[, PestTotalCost3 := pest_qty_amount_3 * pest_unit_pr_3]
+xio[, HerbTotalCost2 := herb_qty_amount_2 * herb_unit_price_2]
+xio[, HerbTotalCost3 := herb_qty_amount_3 * herb_unit_price_3]
+xio[, TotalOfPlotCosts := seed_total_cost_1 + compost_total_cost_1 +
+	fert_total_cost_1 + herb_total_cost_1 + pest_total_cost_1 +
+	fert_total_cost_2 + fert_total_cost_3 +
+	SeedTotalCost2 + SeedTotalCost3 + CompostTotalCost2 + CompostTotalCost3 +
+	PestTotalCost2 + PestTotalCost3 + HerbTotalCost2 + HerbTotalCost3]
+xio[, TotalOfCosts := sum(TotalOfPlotCosts), by = list(hhid, year)]
+@
+Save back in data.
+<<echo = T>>=
+Z[[grep("farm", names(Z))]] <- xf
+Z[[grep("inp", names(Z))]] <- xio
+@
+
+\subsubsection{Labour incomes}
+
+
+There is a decrease in cases reporting no labour income at 2014. This is due to omission of non-working members in rd 2 onwards.
+<<>>=
+xl <- Z[[grep("labo", names(Z))]]
+#setnames(xl, c("hh_id", "panel_no"), c("hhid", "survey"))
+xl2 <- xl[!is.na(hhid), ]
+# check summation
+if (nrow(xl2[income1 + income2 != totalincome, ]) > 0) 
+	print0(xl2[income1 + income2 != totalincome, ])
+table0(xl2[, .(positive.labour.income = totalincome > 0, year)])
+@
+\textsf{HH-mid}s reporting no income in rd1 are not reporting anything in later rounds. (Show only first 2 HHs.)
+<<>>=
+ii.noincome.in1 <- unique(xl2[year < 2014 & totalincome == 0, hhid])
+setkey(xl2, hhid, mid, year)
+xl2[hhid %in% ii.noincome.in1[1:2], .(hhid, mid, year, code_1, totalincome)]
+xl2[, TotalHHLabourIncome := sum(totalincome, na.rm = T), by = list(hhid, year)]
+@
+Save back in data.
+<<echo = T>>=
+Z[[grep("labo", names(Z))]] <- xl2
+@
+
+
+\subsection{Assets}
+
+
+\subsubsection{Land holding}
+
+<<>>=
+lnd <- Z[[grep("contr", names(Z))]]
+for (i in 1:3)
+	lnd[eval(parse(text = paste0("is.na(area_", i, ")"))), paste0("area_", i) := 0]
+lnd[, OwnedArea := 0]
+for (i in 1:3) 
+	lnd[grepl("^Own$", eval(parse(text = paste0("own_con_", i)))), 
+		OwnedArea := OwnedArea + eval(parse(text = paste0("area_", i)))]
+lnd[, OperatedArea := OwnedArea]
+for (i in 1:3) 
+	lnd[grepl("rent|share|awne", eval(parse(text = paste0("own_con_", i)))), 
+		OperatedArea := OperatedArea + eval(parse(text = paste0("area_", i)))]
+@
+Save back in data.
+<<echo = T>>=
+Z[[grep("contr", names(Z))]] <- lnd
+@
+
+
+\subsubsection{Productive and household Assets}
+
+
+<<>>=
+xpa <- Z[[grep("pr.*ass", names(Z))]]
+xha <- Z[[grep("h.*ass", names(Z))]]
+#setnames(xpa, c("hh_id", "panel_no"), c("hhid", "survey"))
+#setnames(xha, c("hh_id", "panel_no"), c("hhid", "survey"))
+xpa <- xpa[!is.na(hhid), ]
+xha <- xha[!is.na(hhid), ]
+xpa[, ("PAssetAmount") := sum(.SD, na.rm = T), 
+	.SDcols = grepout("amou", colnames(xpa)), by = list(hhid, year)]
+xpa[, ("PAssetEarning") := sum(.SD, na.rm = T), 
+	.SDcols = grepout("earn", colnames(xpa)), by = list(hhid, year)]
+xha[, ("HAssetAmount") := sum(.SD, na.rm = T), 
+	.SDcols = grepout("amou", colnames(xha)), by = list(hhid, year)]
+xha[, ("HNumAsset") := nrow(.SD[grepl("Yes", status), ]), by = list(hhid, year)]
+xha[, ("HAssetAmountOneYear") := 
+	sum(.SD[grepl("ye", purchase_in_last_1_year), amount], na.rm = T), 
+	by = list(hhid, year)]
+xpa[, base := NULL]
+@
+Productive asset records \textsf{xpa} is not an exhaustive list, and HHs with no productive asset are omitted in the file. \gobblepars
+<<>>=
+#c(length(intersect(xpa[ ,hhid], xha[ ,hhid])), length(unique(xpa[ ,hhid])), 
+#	length(unique(xha[ ,hhid])))
+setkey(xpa, hhid, year, survey)
+setkey(xha, hhid, year, survey)
+@
+I merge household and productive assets together (\textsf{xas}).
+<<echo = T>>=
+dit2 <- unique(xha[, .(hhid, year, survey, HAssetAmount, HAssetAmountOneYear, HNumAsset)])
+xas <- merge(dit2, xpa, by = c("hhid", "year", "survey"), all = T)
+<<>>=
+xas[is.na(PAssetAmount), PAssetAmount := 0]
+xas[is.na(PAssetEarning), PAssetEarning := 0]
+xas[is.na(HAssetAmount), HAssetAmount := 0]
+xas[is.na(HAssetAmountOneYear), HAssetAmountOneYear := 0]
+xas[is.na(HNumAsset), HNumAsset := 0]
+@
+In 2012 and 2017, some asset information is not reported. 2017:
+<<>>=
+destat(xas[year == 2017, grepl("Asset", colnames(xas)), with = F])
+@
+2012:
+<<>>=
+destat(xas[year == 2012, grepl("Asset", colnames(xas)), with = F])
+xas[year <= 2013, HAssetAmountOneYear := NA]
+xas[year == 2017, PAssetEarning := NA]
+#table0(xas[, .(year, status1)])
+#table0(xas[, .(year, status2)])
+#table0(xas[, .(year, status3)])
+table0(xas[, .(year, bought.last1year = HAssetAmountOneYear > 0)])
+@
+Productive asset items (total of all rounds).
+<<>>=
+table0(unlist(xas[, .(pa1, pa2, pa3, pa4)]))
+<<>>=
+xas[, AssetAmount := HAssetAmount+PAssetAmount]
+@
+Save back in data.
+<<echo = T>>=
+Z[[grep("pr.*ass", names(Z))]] <- xpa
+Z[[grep("h.*ass", names(Z))]] <- xha
+Z$MergedAssets <- xas
+fnd <- c(fnd, "MergedAssets")
+@
+
+\subsubsection{Livestock}
+
+<<>>=
+xlo <- Z[[grep("liv.*ow", names(Z))]]
+xlp <- Z[[grep("liv.*pr", names(Z))]]
+# setnames(xlp, c("hh_id", "panel_no"), c("hhid", "survey"))
+# setnames(xlo, c("hh_id", "panel_no"), c("hhid", "survey"))
+xlp <- xlp[!is.na(hhid), ]
+xlo <- xlo[!is.na(hhid), ]
+@
+Self-evaluated market values and sold values.
+<<>>=
+destat(xlo[year == 2012 & number_owned > 0, .(mrkt_value, sold_value)])
+@
+Livestock reported to be owned with zero self-evaluated market value. Need to impute values for these livestock.
+<<>>=
+table0(xlo[number_owned > 0 & mrkt_value == 0, .(year, livestock_code)])
+<<echo = F>>=
+cowprice <- median(xlo[grepl("Cow", livestock_code) & number_owned > 0 & sold_value > 0, 
+	sold_value/number_owned])
+oxprice <- median(xlo[grepl("Ox", livestock_code) & number_owned > 0 & sold_value > 0, 
+	sold_value/number_owned])
+goatprice <- median(xlo[grepl("Goat", livestock_code) & number_owned > 0 & sold_value > 0, 
+	sold_value/number_owned])
+milkprice <- median(xlp[total_milk_sold > 0 & total_milk_sold_tk > 0 & year == 2015, 
+	total_milk_sold_tk])
+eggprice <- median(xlp[total_egg_sold > 0 & total_egg_sold_tk > 0, total_egg_sold])
+@
+Median sales price of a cow is \Sexpr{cowprice}, an ox is \Sexpr{floor(oxprice)}, a goat is \Sexpr{goatprice}. Use these to impute values \textsf{ImputedValue}. 
+<<>>=
+xlo[, ImputedValue := cowprice * number_owned]
+xlo[grepl("Ox", livestock_code), ImputedValue := oxprice * number_owned]
+xlo[grepl("Goa", livestock_code), ImputedValue := goatprice * number_owned]
+xlo[!grepl("Co|Ox|Goa", livestock_code), ImputedValue := mrkt_value]
+<<>>=
+# Livestock assets.
+setkey(xlo, hhid, year, survey)
+xlo[, TotalImputedValue := sum(ImputedValue, na.rm = T), by = list(hhid, year)]
+xlo[, TotalSelfEvaluatedValue := sum(mrkt_value, na.rm = T), by = list(hhid, year)]
+<<>>=
+acts <- c("_produced", "_sold", "_consumed")
+produce <- c("milk", "egg")
+totpro <- paste0("total_", rep(produce, each = length(acts)), acts)
+totpro2 <- paste0(totpro, rep(c("", "_tk"), each = length(totpro)))
+totpro.change2 <- paste0("total", acts, rep(c("", "_tk"), each = length(totpro)),
+	".", rep(produce, each = length(acts)))
+#rbind(totpro2, totpro.change2)
+setnames(xlp, totpro2, totpro.change2)
+xlp2 <- reshape(xlp, direction = "long", idvar = c("hhid", "survey", "year"),
+	varying = grepout("\\.m|\\.e", colnames(xlp)))
+setnames(xlp2, "time", "produce")
+setkey(xlp2, hhid, year, survey)
+@
+In 2012, 2013, price is not unit price but actually the total sales. Sales prices of livestock produce are recorded as in \textsf{\small Figure \ref{Figure produce raw price}}, by correcting errors in egg and milk prices in 2014, we get \textsf{\small Figure \ref{Figure imputed produce price}}. 
+
+Create a variable \textsf{ImputedPrice}: \textsf{total\_sold\_tk} for 2012, 2013, \textsf{total\_sold\_tk/\textsf{total\_sold}} for 2014, 2015, 2017. \gobblepars
+<<>>=
+xlp2[, ImputedPrice := total_sold_tk]
+xlp2[year <= 2013, ImputedPrice := total_sold_tk/total_sold]
+xlp2[, ImputedSales := total_sold_tk]
+xlp2[year > 2013, ImputedSales := total_sold * ImputedPrice]
+@
+Correct produce prices: For milk prices above 200, we use median price of below 200. Same for egg prices with a threshold of 15. 
+<<>>=
+xlp2[ImputedPrice > 200 & grepl("milk", produce), 
+	ImputedPrice := median(xlp2[ImputedPrice < 200 & grepl("milk", produce), ImputedPrice])]
+xlp2[year > 2013, ImputedSales := total_sold * ImputedPrice]
+xlp2[grepl("egg", produce) & ImputedPrice > 15, 
+	ImputedPrice := median(.SD[grepl("egg", produce) & ImputedPrice < 15, ImputedPrice])]
+xlp2[grepl("egg", produce) & ImputedPrice > 15, 
+	ImputedSales := ImputedPrice * total_sold]
+xlp2[is.na(ImputedSales), ImputedSales := 0]
+<<produce raw price, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Produce sales raw prices", fig.lp = 'Figure '>>=
+ggplot(xlp2[total_sold > 0 & total_sold_tk > 0, ], 
+	aes(x = total_sold, y = total_sold_tk, group = year)) + 
+	geom_point(aes(shape = factor(year), color = factor(year))) +
+	facet_grid(. ~ produce)
+<<imputed produce price, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Produce sales corrected prices", fig.lp = 'Figure '>>=
+ggplot(xlp2[ImputedPrice > 0, ], 
+	aes(x = total_sold, y = ImputedPrice, group = year)) + 
+	geom_point(aes(shape = factor(year), color = factor(year))) +
+	facet_grid(. ~ produce, scale = "free_y")
+<<imputed produce sales, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Imputed produce sales using corrected prices", fig.lp = 'Figure '>>=
+ggplot(xlp2[ImputedSales > 0, ], 
+	aes(x = total_sold, y = ImputedSales, group = year)) + 
+	geom_point(aes(shape = factor(year), color = factor(year))) +
+	facet_grid(. ~ produce, scale = "free_y")
+@
+Save in the original list.
+<<echo = T>>=
+Z[[grep("liv.*ow", names(Z))]] <- xlo
+Z[[grep("liv.*pr", names(Z))]] <- xlp2
+@
+
+\subsection{Poverty}
+
+\subsubsection{Monga}
+
+<<>>=
+xm <- Z[[grep("mong", names(Z))]]
+# setnames(xm, c("hh_id", "panel_no"), c("hhid", "survey"))
+@
+Correct some typos in \textsf{monga\_meals} (not shown). \gobblepars
+<<>>=
+#Correct typo:
+xm[grepl("^10$", monga_meals) , monga_meals := 1]
+xm[grepl("^30$", monga_meals) , monga_meals := 3]
+xm[grepl("^5$", monga_meals) , monga_meals := 2]
+#table(xm[, .(normal_meals, monga_meals, year)])
+@
+Visualise monga period meals per day (\textsf{\small Figure \ref{Figure meals per day}}).
+Save in the original list.
+<<echo = T>>=
+Z[[grep("mong", names(Z))]] <- xm
+@
+
+
+\subsubsection{Saving}
+
+<<>>=
+xs <- Z[[grep("sav", names(Z))]]
+#xs <- xs[!is.na(Assign), ]
+# setnames(xs, c("hh_id", "panel_no"), c("hhid", "survey"))
+@
+Saving is given in \textsf{\small Figure \ref{Figure saving}}.
+
+
+\subsection{Other}
+
+<<>>=
+fa <- Z[[grepout("far", names(Z))]]
+ii.fa <- apply(is.na(fa[, grep("area_1", colnames(fa)):grep("pri.*nit\\_3", colnames(fa)), with = F]), 1, all)
+cont <- Z[[grepout("contr", names(Z))]]
+cont <- a2b.data.table(cont, "", NA)
+cont <- a2b.data.table(cont, "\\.", NA)
+ii.cont <- apply(is.na(cont[, grep("area_1", colnames(cont)):grep("sh.*ge\\_3", colnames(cont)), with = F]), 1, all)
+@
+Superfluous entries in \textsf{\Sexpr{gsub("\\_", "\\\\_", grepout("poverty|far|contr", names(Z)))}}. There are \Sexpr{sum(ii.fa)}, \Sexpr{sum(ii.cont)}, \Sexpr{sum(is.na(Z[[grep("pov", names(Z))[1]]][, year]))}, \Sexpr{sum(is.na(Z[[grep("pov", names(Z))[2]]][, year]))} rows with all NAs, respectively.  Drop them (or otherwise this will cause many HHs without records in ID files while entries in section files). (These will cause nomber of rows to be small as indicated in \textsc{\small Table \ref{filestab}}.)
+<<echo = T>>=
+Z[[grep("pov", names(Z))[1]]] <- Z[[grep("pov", names(Z))[1]]][!is.na(year), ]
+Z[[grep("pov", names(Z))[2]]] <- Z[[grep("pov", names(Z))[2]]][!is.na(year), ]
+fa <- Z[[grepout("far", names(Z))]]
+ii <- apply(is.na(fa[, 
+	grep("area_1", colnames(fa)):grep("pri.*nit\\_3", colnames(fa)), with = F]), 1, all)
+Z[[grepout("far", names(Z))]] <- fa[!ii, ]
+cont <- Z[[grepout("contr", names(Z))]]
+cont <- a2b.data.table(cont, "", NA)
+cont <- a2b.data.table(cont, "\\.", NA)
+ii <- apply(is.na(cont[, 
+	grep("area_1", colnames(cont)):grep("sh.*ge\\_3", colnames(cont)), with = F]), 1, all)
+Z[[grepout("contr", names(Z))]] <- cont[!ii, ]
+@
+Correct errors in survey numbering.
+<<echo = T>>=
+Z[[grep("credit", names(Z))]] <- Z[[grep("credit", names(Z))]][year == 2017, survey := 4]
+Z[[grep("labo", names(Z))]] <- Z[[grep("labo", names(Z))]][year == 2013, survey := 1]
+@
+Convert empty space or dot to NA.
+<<echo = T>>=
+cr <- Z[[grepout("borr", names(Z))]]
+cr <- a2b.data.table(cr, "", NA)
+Z[[grepout("borr", names(Z))]] <- cr
+xla <- Z[[grepout("lab", names(Z))]]
+setkey(xla, hhid, year)
+xla <- a2b.data.table(xla, "", NA)
+Z[[grepout("lab", names(Z))]] <- xla
+@
+
+
+Save all data.
+<<echo = T>>=
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_2.rds"))
+@
+
+
+
+
+\section{Attach treatment information to all files}
+
+
+<<echo = T>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_2.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+<<>>=
+Z <- lapply(Z, function(x) x[, Hhidyear := paste0(hhid, "-", year)])
+xid[, Hhidyear := paste0(hhid, "-", year)]
+<<>>=
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, 
+	Mstatus, Mpattern, Mgroup, Assign, Hhidyear,
+   AssignRegression, IntDate, DistDate1, DistDate2, DistDate3, 
+   Disbursed1, Disbursed2, Disbursed3)])
+setkey(xid2, hhid, year, survey)
+<<>>=
+xid[, Hhidyear := NULL]
+xid2[, Hhidyear := NULL]
+Z <- lapply(Z, function(x) x[, Hhidyear := NULL])
+Z.0 <- Z
+@
+Attach treatment info to each files. For education file, also attach roster. 
+<<echo = T>>=
+for (i in c(2, 1, 3:length(Z))) {
+# this flip order in 1, 2 makes merge operation of edu with roster easier
+	if (any(which(grepl("id\\_", names(Z))) %in% i)) next
+	x1 <- Z[[i]]
+	#\textsf{lonely.hhid}: Found in ID but not in `section' page (here, labour income).
+	table(lonely.hhid <- unique(x1[, hhid]) %in% xid[, hhid])
+	lonely.hhid <- unique(x1[, hhid])[!lonely.hhid]
+	x2 = copy(x1[!(hhid %in% lonely.hhid), ])
+	if (any(grepl("yearRoster", colnames(x2)))) setnames(x2, "yearRoster", "year")
+	if (any(grepl("survey", colnames(x2)))) 
+		setkey(x2, hhid, year, survey) else 
+		setkey(x2, hhid, year)
+	x3 <- xid2[x2]
+	Z[[i]] <- x3
+	# for education, attach entire roster file
+	if (any(which(grepl("edu", names(Z))) %in% i)) {
+		x1 <- Z[[i]]
+		ros <- Z[[grep("ros", names(Z))]]
+		lonely.hhid <- unique(x1[, hhid]) %in% ros[, hhid]
+		lonely.hhid <- unique(x1[, hhid])[!lonely.hhid]
+		x2 = copy(x1[!(hhid %in% lonely.hhid), ])
+		if (any(grepl("hhidy", colnames(ros)))) 
+			ros[, grepout("hhidy", colnames(ros)) := NULL]
+		# need to merge with key = survey (not year) 
+		# because ros has only 2012 or survey == 1
+		setnames(ros, "year", "yearRoster")
+		setkey(ros, hhid, mid, survey)
+		setkey(x2, hhid, mid, survey)
+		x3 <- ros[x2]
+		firstcols <- c("gid", "hhid", "mid", "survey", "year", "yearRoster",
+			colnames(x2)[!grepl("hhid$|mid|gid|survey|^i?.?year$", colnames(x2))])
+		setcolorder(x3, c(firstcols, colnames(ros)[!(colnames(ros)%in%firstcols)]))
+		setkey(x3, hhid, mid, year, survey)
+		Z[[i]] <- x3
+	}
+}
+@
+Save all data.
+<<echo = T>>=
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+@
+
+
+\section{Attrition}
+
+
+I define attrition as attriting in any rds 2, 3, 4 other than rejection or erosion. 
+<<echo = T>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+ros <- Z[[grep("rost", names(Z))]]  # roster
+xas <- Z[[grep("Mer", names(Z))]]  # MergeAssets
+lnd <- Z[[grep("contra", names(Z))]]  # land holding
+xid1 <- unique(xid[, .(hhid, AssignOriginal)])
+<<>>=
+ros1 <- unique(ros[survey == 1, 
+	.(gid, hhid, survey, Mpattern, Mstatus, Mgroup, Assign, HeadAge, HeadLiteracy, HHsize)])
+xas1 <- xas[survey == 1, 
+	.(hhid, survey, HAssetAmount, PAssetAmount)]
+lnd1 <- lnd[survey == 1, 
+	.(hhid, survey, OwnedArea, OperatedArea)]
+rx <- merge(ros1, xas1, by = c("hhid", "survey"), all = T)
+rxl <- merge(rx, lnd1, by = c("hhid", "survey"), all = T)
+rxlx <- merge(rxl, xid1, by = "hhid", all = T)
+setkey(rxlx, hhid, survey)
+<<results = 'hide'>>=
+rxlx[, paste0(rep(c("AttritedIn", "AttritedFrom"), each = 4), 1:4) := F]
+rxlx[grepl(".a..", Mpattern), AttritedIn2 := T]
+rxlx[grepl("..a.", Mpattern), AttritedIn3 := T]
+rxlx[grepl("...a", Mpattern), AttritedIn4 := T]
+rxlx[grepl(".aaa", Mpattern), AttritedFrom2 := T]
+rxlx[grepl("[^a][^a]aa", Mpattern), AttritedFrom3 := T]
+rxlx[grepl("[^a][^a][^a]a", Mpattern), AttritedFrom4 := T]
+rxlx[, EverMissing := F]
+rxlx[grepl("a", Mpattern), EverMissing := T]
+rxlx[, EverAttrit := F]
+rxlx[!grepl("E|Rej", Mstatus) & (AttritedFrom2 | AttritedFrom3 | AttritedFrom4), EverAttrit := T]
+#table(rxlx[, .(AttritedIn4, AttritedFrom4)])
+#rxlx[, HeadLiteracy := as.numeric(HeadLiteracy)]
+table0(rxlx[, .(EverAttrit, AssignOriginal)])
+attritGidTab <- table0(rxlx[, .(EverAttrit, gid)])
+attritedMoreThan10Gid <- 
+	colnames(attritGidTab)[as.numeric(attritGidTab["TRUE", ]) > 10]
+attritedMoreThan4Gid <- 
+	colnames(attritGidTab)[as.numeric(attritGidTab["TRUE", ]) > 4]
+table0(rxlx[gid %in% attritedMoreThan4Gid, .(Mstatus, AssignOriginal)])
+@
+There are \Sexpr{sum(rxlx[, EverAttrit])} cases of attrition out of \Sexpr{nrow(rxlx[!grepl("dr", Mgroup), ])} non-dropout HHs in sample. 
+
+
+Plot characteristics of attrited HHs in \textsf{\small Figure \ref{Figure HH attrition pattern}}. As can be seen, nothing seems to differ across arms for attrited HHs. 
+<<HH attrition pattern, warning = F, fig.align='center', fig.height = 8, fig.width = 10, fig.cap = "Characteristics of attrited HHs between arms", fig.lp = 'Figure '>>=
+rxlxa <- rxlx[(EverAttrit), ]
+dit2 <- rxlxa[!is.na(Mgroup) & EverAttrit, ]
+setnames(dit2, c("HeadAge", "HeadLiteracy", "HHsize", "HAssetAmount", "PAssetAmount",
+	"OwnedArea", "OperatedArea"), c("val.HeadAge", "val.HeadLiteracy", "val.HHsize",
+	"val.HHAsset", "val.ProdAsset", "val.OwnedArea", "val.OperatingArea"))
+dit2l <- reshape(dit2, direction = "long", idvar = c("hhid", "survey"), 
+	varying = grepout("val", colnames(dit2)))
+dit2l[, Assign := factor(Assign)]
+dit2l[, variables := factor(time)]
+dit2[, c("Avg.HeadAge", "Avg.HeadLiteracy", "Avg.HHsize", 
+	"Avg.HHAsset", "Avg.ProdAsset", "Avg.OwnedArea", "Avg.OperatingArea") := 
+	list(mean(val.HeadAge, na.rm = T), mean(val.HeadLiteracy, na.rm = T), 
+	mean(val.HHsize, na.rm = T), mean(val.HHAsset, na.rm = T), 
+	mean(val.ProdAsset, na.rm = T), mean(val.OwnedArea, na.rm = T), 
+	mean(val.OperatingArea), na.rm = T), 
+	by = Assign]
+avgdata <- unique(dit2[, .(Assign, Avg.HeadAge, Avg.HeadLiteracy, Avg.HHsize, 
+	Avg.HHAsset, Avg.ProdAsset, Avg.OwnedArea, Avg.OperatingArea)])
+avgdata <- reshape(avgdata, direction = "long", idvar = "Assign",
+	varying = grepout("Av", colnames(avgdata)))
+setnames(avgdata, c("Avg", "time"), c("val", "variables"))
+library(ggplot2)
+ggplot(dit2l, aes(x = Assign, y = val)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_jitter(width = .2, height = .0, aes(color = Assign)) +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+	legend.position="none") + xlab("characteristics") + 
+	ylab("value") + geom_point(data = avgdata, colour = "red", size = 2, pch = 2) +
+	facet_wrap( ~ variables, scales = "free")
+	#+ facet_grid(. ~ variables, scales = "free")
+@
+Probit regression using all sampled HHs reveals attrition is random, not systematic (results suppressed). Covariates are \textsf{HeadAge, HHsize, HAssetAmount, PAssetAmount, OwnedArea, OperatedArea, AssignOriginal}. \gobblepars
+<<warning = F>>=
+reg.attrit1 <- glm(EverAttrit ~ HeadAge + HHsize + HAssetAmount + 
+	PAssetAmount + OwnedArea + OperatedArea + AssignOriginal, data = rxlx, 
+	family = binomial(link = 'probit'))
+reg.attrit2 <- glm(EverAttrit ~ HeadAge + HHsize + HAssetAmount + 
+	PAssetAmount + OwnedArea + OperatedArea + gid, data = rxlx, 
+	family = binomial(link = 'probit'))
+attrit.coeff <- summary(reg.attrit1)$coeff
+@
+Out of \Sexpr{nrow(attrit.coeff)} covariates, \textsf{\Sexpr{rownames(attrit.coeff)[attrit.coeff[,4] < .1]}} are statistically significant at 10\% level, only \textsf{\Sexpr{rownames(attrit.coeff)[attrit.coeff[,4] < .05]}} at 5\% level. 
+
+
+\section{Further correction using merged information}
+
+<<echo = T>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment.rds"))
+xid <- readRDS(paste0(path1234, "ID.rds"))
+<<>>=
+Z <- lapply(Z, function(x) x[, Hhidyear := paste0(hhid, "-", year)])
+xid[, Hhidyear := paste0(hhid, "-", year)]
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, 
+	Mstatus, Mpattern, Mgroup, Assign, Hhidyear,
+   AssignRegression, IntDate, DistDate1, DistDate2, DistDate3, 
+   Disbursed1, Disbursed2, Disbursed3)])
+setkey(xid2, hhid, year, survey)
+@
+
+
+\subsection{Schooling}
+
+
+<<>>=
+xe <- Z[[grep("edu", names(Z))]]
+<<>>=
+xe[, Hhidmid := paste(hhid, mid, sep = "-")]
+setkey(xe, hhid, mid, year, Hhidmid)
+xe[, En := 1:.N, by = list(hhid, mid)]
+xe[, N := .N, by = list(hhid, mid)]
+@
+Below tabulation shows the number of times an individual is observed. Since we have 4 rounds, \textcolor{red}{there are \Sexpr{nrow(xe[En == 1 & N == 5, ])} duplicated entries which are dropped for now but are in need of correction.}
+<<>>=
+table(xe[En == 1, N])
+@
+Here are the duplicated entries.
+<<>>=
+xe[N == 5, .(hhid, mid, memname, En, en, year, Age, primary)]
+@
+Drop these.
+<<echo = T>>=
+xe <- xe[N < 5, ]
+@
+Check for further duplication when \textsf{gid, hhid, mid, year, AgeComputed} are used as an index.
+<<>>=
+dupedu <- duplicated.rows(xe, index = c("gid", "hhid", "mid", "year", "Age"), 
+	returnOnlyDuplicated = T)
+if (nrow(dupedu) > 0) {
+	print0(dupedu[, .(duplicated.num, hhid, mid, memname, year, AgeComputed, currently_enrolled)])
+	print0(paste("Dropped", nrow(dupedu)/2,  "duplicated obs in edu file."))
+	xe <- xe[!(Hhidmid %in% dupedu[, Hhidmid]), ]
+}
+@
+NAs in \textsf{age}. Use any \textsf{age\_1} info to fill NAs in age (process not shown).
+<<>>=
+setkey(xe, hhid, mid, year)
+noage <- unique(xe[is.na(AgeComputed), .(hhid, mid)])
+# availability of Age_1 info
+# unique(xe[noage, ][!is.na(age_1), .(hhid, mid, year, en, age_1)])
+xe[, Age_1 := age_1[!is.na(age_1)][1], by = list(hhid, mid)]
+xe[, diffyear := c(0, diff(year)), by = list(hhid, mid)]
+xe[, cumdiffyear := cumsum(diffyear), by = list(hhid, mid)]
+xe[, AgeComputed := Age_1 + cumdiffyear]
+xe[, c("diffyear", "cumdiffyear") := NULL]
+<<>>=
+setkey(xe, hhid, mid, sex, year)
+iinosex <- unique(xe[is.na(sex), .(hhid, mid)])
+xe[, sex := sex[!is.na(sex)][1], by = list(hhid, mid)]
+@
+NAs in \textsf{sex}: \Sexpr{nrow(xe[is.na(sex) & En == 1, ])} individuals remain after copying whenever possible from other rounds. \textcolor{red}{These individuals are dropped for now but are in need of correction for sex, age information.} \\
+\textcolor{green}{[2017-11-14 Abu email]: A correction file is received. $\rightarrow$ (Yet to be applied.)}
+\gobblepars
+<<>>=
+setkey(xe, hhid, mid)
+xe[is.na(sex), .(hhid, mid, memname, sex, age, year)]
+<<echo = T>>=
+xe <- xe[!is.na(sex), ]
+<<>>=
+xe[, sex := factor(sex, levels = c("Male", "Female"))]
+<<results = 'hide'>>=
+dupedu2 <- duplicated.rows(xe, index = c("gid", "hhid", "mid", "year"), returnOnlyDuplicated = T)
+@
+NAs in \textsf{currently\_enrolled}. Below tabulation shows the primary occupation of these observations.
+<<>>=
+# currently_enrolled = NA
+unique(xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled), 
+	primary])
+@
+Set \textsf{currently\_enrolled} to ``No'' either if: \textsf{primary} == housewife, \textsf{rel\_hhh} == spouse, \textsf{edu} == {\footnotesize \{\Sexpr{unique(grepout("never|^pre", xe[, edu]))}\}}. 	\\
+\textcolor{green}{[2017-11-14 Abu email]: A correction file is received. $\rightarrow$ Corrected.}
+\gobblepars
+<<>>=
+xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled) & 
+	grepl("spous", rel_hhh), currently_enrolled := "No"]
+xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled) & 
+	grepl("never|^pre", edu), currently_enrolled := "No"]
+xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled) & 
+	grepl("wife", primary), currently_enrolled := "No"]
+@
+Correction:
+<<>>=
+xe[hhid == 7020214 & mid == 3 & year == 2012, currently_enrolled := "Yes"]
+xe[hhid == 7031603 & mid == 6 & year == 2012, currently_enrolled := "Yes"]
+xe[hhid == 7042005 & mid == 6 & year == 2012, currently_enrolled := "Yes"]
+xe[hhid == 7043319 & mid == 3 & year == 2012, currently_enrolled := "No"]
+xe[hhid == 7054501 & mid == 4 & year == 2012, currently_enrolled := "Yes"]
+xe[hhid == 7064605 & mid == 8 & year == 2012, currently_enrolled := "Yes"]
+xe[hhid == 7065302 & mid == 4 & year == 2012, currently_enrolled := "No"]
+xe[hhid == 7085917 & mid == 4 & year == 2012, currently_enrolled := "No"]
+xe[hhid == 9807031612 & mid == 3 & year == 2013, currently_enrolled := "No"]
+xe[hhid == 9807054319 & mid == 3 & year == 2013, currently_enrolled := "Yes"]
+@
+Having done so, below remains as NAs because these provide no clue on enrollment status. \textcolor{red}{Need to be supplemented with new information on \textsf{currently\_enrolled}.} Drop these individuals for entire period for now. 
+<<>>=
+xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled), 
+	.(hhid, mid, year, AgeComputed, edu, primary)]
+<<echo = T>>=
+xe <- xe[!(Hhidmid %in% 
+	xe[AgeComputed >= 5 & AgeComputed <= 18 & is.na(currently_enrolled), Hhidmid]), ]
+@
+Define \textcolor{red}{\textsf{Enrolled}}: 1 if \textsf{currently\_enrolled} is yes, 0 otherwise. \gobblepars
+<<>>=
+xe[, Enrolled := 0L]
+xe[grepl("Y|y", currently_enrolled), Enrolled := 1L]
+table0(xe[Age_1 > 5 & Age_1 <= 18, .(Enrolled, year)])
+attrit.ERej <- nrow(xe[Age_1 > 5 & Age_1 <= 18 & grepl("E|Rej", Mstatus) & year == 2012, ]) - nrow(xe[Age_1 > 5 & Age_1 <= 18 & grepl("E|Rej", Mstatus) & year == 2014, ])
+attrit.old <- nrow(xe[Age_1 > 5 & Age_1 <= 18 & grepl("old", Mstatus) & year == 2012, ]) - nrow(xe[Age_1 > 5 & Age_1 <= 18 & grepl("old", Mstatus) & year == 2014, ])
+@
+Why are there so many observations in 2012 and 2013 combined? Attrition in \textsf{oldmember}: \Sexpr{attrit.ERej} out of \Sexpr{attrit.old} reduction in obs is explained by \Sexpr{unique(grepout("E|Rej", xe[, Mstatus]))}. 
+<<>>=
+table0(xe[Age_1 > 5 & Age_1 <= 18, .(year, Mstatus)])
+<<>>=
+hhid2 <- xe[Age_1 > 5 & Age_1 <= 18 & year != 2012, hhid]
+xe[Age_1 > 5 & Age_1 <= 18, Attrited.1 := F]
+xe[Age_1 > 5 & Age_1 <= 18 & !(hhid %in% hhid2), Attrited.1 := T]
+@
+Plot characteristics of attrited members in \textsf{\small Figure \ref{Figure attrition pattern}}.
+<<attrition pattern, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Characteristics of attrited members between arms", fig.lp = 'Figure '>>=
+dit2 <- xe[!is.na(Mgroup) & Attrited.1, 
+	.(hhid, mid, year, Mgroup, Assign, Mstatus, Age_1, sex, Enrolled)]
+setnames(dit2, c("Age_1", "sex", "Enrolled"), c("val.Age", "val.sex", "val.Enrolled"))
+dit2[, val.Sex := 1]
+dit2[grepl("M", val.sex), val.Sex := 0]
+dit2[, val.sex := NULL]
+dit2l <- reshape(dit2, direction = "long", idvar = c("hhid", "mid", "year"), 
+	varying = grepout("val", colnames(dit2)))
+dit2l[, Mstatus := factor(Mstatus)]
+dit2l[, variables := factor(time)]
+dit2[, c("Avg.Sex", "Avg.Age", "Avg.Enrolled") := 
+	list(mean(val.Sex), mean(val.Age), mean(val.Enrolled)), by = Mstatus]
+avgdata <- unique(dit2[, .(Mstatus, Avg.Sex, Avg.Age, Avg.Enrolled)])
+avgdata <- reshape(avgdata, direction = "long", idvar = "Mstatus",
+	varying = grepout("A", colnames(avgdata)))
+setnames(avgdata, c("Avg", "time"), c("val", "variables"))
+library(ggplot2)
+ggplot(dit2l, aes(x = Mstatus, y = val)) + 
+	geom_point(aes(color = Mstatus)) + 
+	geom_jitter(width = .25, height = .25, aes(color = Mstatus)) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="none") + xlab("characteristics") + 
+	ylab("value") + geom_point(data = avgdata, colour = "red", size = 2, pch = 2) +
+	facet_wrap( ~ variables, scales = "free")
+	#+ facet_grid(. ~ variables, scales = "free")
+@
+
+
+
+
+Define \textsf{Schooling} according to \textsf{AgeComputed}. This variable is time-variant. \gobblepars
+<<>>=
+xe[, currently_enrolled := factor(currently_enrolled, levels = c("No", "Yes"))]
+xe[AgeComputed >= 5 & AgeComputed <= 12, Schooling := "primary0512"]
+xe[AgeComputed >= 13 & AgeComputed <= 15, Schooling := "junior1315"]
+xe[AgeComputed >= 16 & AgeComputed <= 18, Schooling := "high1618"]
+xe[, Schooling := factor(Schooling, levels = 
+	c("primary0512", "junior1315", "high1618"))]
+@
+Enrollment by age at first observation (years 2012, 2013) is tabulated in below. We defined such that \textsf{Enrolled}==\textsf{currently\_enrolled} for ages 5-18.
+<<>>=
+table0(xe[year < 2014 & Age_1 < 30, .(currently_enrolled, Age_1)])
+table0(xe[year < 2014 & Age_1 < 30, .(Enrolled, Age_1)])
+@
+Enrollment rates for ages 5 - 18 (\textsf{\small Figure \ref{Figure enrollment}}). Note that females can marry out which may be a reason for the general upward trend in female schooling.
+<<>>=
+xe[, NumEnrollment := sum(Enrolled), by = list(Assign, Schooling, sex, year)]
+xe[, NumberObs := .N, by = list(Assign, Schooling, sex, year)]
+xe[, BaseNumber := NumberObs[1], by = list(Assign, Schooling, sex)]
+@
+Save schooling data.
+<<echo = T>>=
+saveRDS(xe, paste0(path1234, "schooling.rds"))
+@
+
+
+Use augmented panel to keep the denominator as the number of people in the first round, assuming that attrited females are not going to schools (need to check with roster updates). Without it, enrollment rates for females is inflated through time. This requires to generate NAs in missing rounds. 
+\begin{dinglist}{43}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Use \textsf{data.table:::dcast} to reshape to wide format which fills in NA for attrited members.
+\end{dinglist}
+\gobblepars
+<<results = 'hide'>>=
+xe <- readRDS(paste0(path1234, "schooling.rds"))
+dim(X <- xe[, .(gid, hhid, mid, year, Age_1, AgeComputed, sex, 
+	edu, currently_enrolled, AssignRegression, Enrolled, Schooling)])
+dim(X <- X[!duplicated(X), ])
+# drop following duplicated entries
+#X[hhid==7054202 & mid == 5|hhid==7031803 & mid == 4, ]
+X <- X[!(hhid==7054202 & mid == 5|hhid==7031803 & mid == 4), ]
+dim(X <- X[!is.na(currently_enrolled), ])
+#duplicated.rows(X, index = c("gid", "hhid", "mid", "year"), returnOnlyDuplicated = T)
+# set age range: 6-18 in rd 1
+setkey(X, hhid, mid, year)
+X <- X[!is.na(gid), ]
+Xw <- X[Age_1 > 5 & Age_1 <= 18, ]
+Xw <- Xw[, Schooling := NULL]
+@
+To a wide format and compute age using other years.
+<<echo = T>>=
+Xw <- dcast(Xw, ... ~ year, value.var = 
+	grepout("En|Age|^en$|^curr|edu", colnames(Xw)), sep = ".")
+@
+There are \Sexpr{nrow(Xw[!is.na(Enrolled.2013) & is.na(AgeComputed.2012), ])} individuals with \textsf{AgeComputed}==NA. All of these individuals have age information in other years.
+<<>>=
+table0(Xw[, .(Enrolled.2013, AgeComputed.2012)])
+table0(Xw[, .(AgeNA2012 = is.na(AgeComputed.2012), 
+	AgeNAOtherYear = is.na(AgeComputed.2013) & 
+	is.na(AgeComputed.2014) & is.na(AgeComputed.2015) & is.na(AgeComputed.2017))])
+@
+There are \Sexpr{nrow(Xw[is.na(AgeComputed.2012) & !(is.na(AgeComputed.2013) & is.na(AgeComputed.2014) & is.na(AgeComputed.2015) & is.na(AgeComputed.2017)),])} individuals whose age can be imputed from other rds. Impute (process not shown).
+<<>>=
+# impute ages with available info
+Xw[is.na(AgeComputed.2012) & !is.na(AgeComputed.2013), 
+	AgeComputed.2012 := AgeComputed.2013-1]
+Xw[is.na(AgeComputed.2012) & !is.na(AgeComputed.2014), 
+	AgeComputed.2012 := AgeComputed.2014-2]
+Xw[is.na(AgeComputed.2012) & !is.na(AgeComputed.2015), 
+	AgeComputed.2012 := AgeComputed.2015-3]
+Xw[is.na(AgeComputed.2012) & !is.na(AgeComputed.2017), 
+	AgeComputed.2012 := AgeComputed.2017-5]
+Xw[is.na(AgeComputed.2013) & !is.na(AgeComputed.2012), 
+	AgeComputed.2013 := AgeComputed.2012+1]
+Xw[is.na(AgeComputed.2014) & !is.na(AgeComputed.2012), 
+	AgeComputed.2014 := AgeComputed.2012+2]
+Xw[is.na(AgeComputed.2015) & !is.na(AgeComputed.2012), 
+	AgeComputed.2015 := AgeComputed.2012+3]
+Xw[is.na(AgeComputed.2017) & !is.na(AgeComputed.2012), 
+	AgeComputed.2017 := AgeComputed.2012+5]
+if (nrow(Xw[is.na(AgeComputed.2012), ])>0) 
+	print0(table0(Xw[is.na(AgeComputed.2012), AgeComputed.2015]))
+@
+Reshape back to long. \gobblepars
+<<echo = T>>=
+X2 <- reshape(Xw, direction = "long", idvar = c("gid", "hhid", "mid"),
+	varying = grepout("\\.20", colnames(Xw)))
+<<>>=
+setnames(X2, "time", "year")
+setkey(X2, gid, hhid, mid, year)
+X2[AgeComputed >= 5 & AgeComputed <= 12, Schooling := "primary0512"]
+X2[AgeComputed >= 13 & AgeComputed <= 15, Schooling := "junior1315"]
+X2[AgeComputed >= 16 & AgeComputed <= 18, Schooling := "high1618"]
+X2[, Schooling := factor(Schooling, levels = 
+	c("primary0512", "junior1315", "high1618"))]
+@
+Define \textsf{GradeYear}: Class grade in numerics.
+<<>>=
+X2[, GradeYear := as.numeric(NA)]
+for (yy in 1:10) X2[grepl(paste("class", yy), edu), GradeYear := yy]
+for (yy in 1:10) X2[grepl(paste0("^", yy, "$"), edu), GradeYear := yy]
+X2[, GradeYear := as.integer(GradeYear)]
+X2[grepl("pre|yet|never", edu), GradeYear := 0L]
+X2[grepl("ssc|hsc", edu), GradeYear := 10L]
+X2[grepl("ma|ba|colle", edu), GradeYear := 11L]
+X2[!grepl("Yes", currently_enrolled) & (is.na(GradeYear) | GradeYear == 0L), 
+	Enrolled := 0L]
+table0(X2[, .(year, GradeYear)])
+table0(X2[, .(Enrolled, year)])
+@
+Define \textsf{Year}: year 2013 $\rightarrow$ 2012.
+<<>>=
+X2[, Year := year]
+X2[Year == 2013, Year := 2012]
+table0(X2[, .(Enrolled, Year)])
+X2[, en := 1:.N, by = list(hhid, mid)]
+X2[, EN := .N, by = list(hhid, mid)]
+#table0(X2[year == 2017, EN])
+X2[, c("Age_1", "currently_enrolled", "EN") := NULL]
+@
+<<echo = T>>=
+X2[Year == 2017 & grepl("for", AssignRegression), Enrolled := NA]
+X2[, NumEnrollment := sum(Enrolled), by = list(AssignRegression, Schooling, sex, Year)]
+X2[, NumberObs := .N, by = list(AssignRegression, Schooling, sex, Year)]
+X2[, BaseNumber := NumberObs[1], by = list(AssignRegression, Schooling, sex)]
+@
+Save augmented panel schooling data.
+<<echo = T>>=
+saveRDS(X2, paste0(path1234, "schooling_augmented_panel.rds"))
+@
+
+
+\subsection{Missing ID file entries}
+
+
+<<>>=
+i <- grep("assis", names(Z))
+Z[[i]][hhid == 7031401]
+xid2[hhid == 7031401]
+@
+Some HHs have different years recorded in section files than ID file. For example, \textsf{hhid}==7137219 has 2012, 2014 in ID but 2015 in \textsf{\Sexpr{gsub("\\_", "\\\\_", grepout("cred|far", names(Z)))}}. 
+<<>>=
+xid[hhid==7137219, .(hhid, year, Mgroup, Assign, membership, AssignOriginal, Mpattern)]
+z7137219 <- lapply(Z, function(x) unique(x[hhid==7137219, .(hhid, year, survey)]))
+z7137219 <- lapply(1:length(z7137219), function(i) z7137219[[i]][, filename := names(z7137219)[i]])
+z7137219 <- rbindlist(z7137219)
+z7137219[year == 2015,]
+#xid[hhid==7031415, .(hhid, year, Mgroup, Assign, membership, AssignOriginal, Mpattern)]
+#z7031415 <- lapply(Z, function(x) unique(x[hhid==7031415, year]))
+#table(unlist(z7031415))
+@
+Below is the list of \textsf{hhid} and \textsf{year} that are missing in ID files. \textcolor{red}{Why are these entries missing in ID file?} Below gives the \textsf{hhid}s.
+<<>>=
+hys <- lapply(Z, function(x) unique(x[, .(hhid, year, survey)]))
+hys <- rbindlist(hys)
+tab.hys <- table(hys[, .(hhid, year)])
+tab.xid <- table(xid[, .(hhid, year)])
+tab.hys <- data.table(tab.hys)
+tab.hys <- reshape(tab.hys, direction = "wide", idvar = "hhid",
+	v.names = "N", timevar = "year")
+tab.xid <- data.table(tab.xid)
+tab.xid <- reshape(tab.xid, direction = "wide", idvar = "hhid",
+	v.names = "N", timevar = "year")
+hysxid <- merge(tab.xid, tab.hys, by = "hhid", all = T, suffixes = c(".xid", ".hys"))
+iix <- grepout("xid", colnames(hysxid))
+iih <- grepout("hys", colnames(hysxid))
+yrs <- c(2012:2015, 2017)
+for (i in 1:length(iix)) hysxid[, c(iix[i], iih[i]) := list(as.numeric(eval(parse(text = iix[i])) > 0), 
+	as.numeric(eval(parse(text = iih[i])) > 0))]
+for (i in 1:length(iix)) hysxid[, (paste0("IdMinusSec.", yrs[i])) := 
+	eval(parse(text = paste(iix[i], "-", iih[i])))]
+hysxid <- hysxid[IdMinusSec.2012 != 0 | IdMinusSec.2013 != 0 | IdMinusSec.2014 != 0 |
+	IdMinusSec.2015 != 0 | IdMinusSec.2017 != 0, grepout("^hh|Id", colnames(hysxid)), with = F]
+hysxid <- reshape(hysxid, direction = "long", idvar = "hhid", 
+	varying = grepout("Id", colnames(hysxid)))
+hysxid <- hysxid[IdMinusSec != 0, ]
+hysxid[, IdMinusSec := NULL]
+setnames(hysxid, "time", "year")
+setkey(hysxid, hhid, year)
+hysxid[, Hhidyear := paste(hhid, year, sep = "-")]
+print0(hysxid[, Hhidyear])
+@
+\textcolor{green}{[2017-11-14 Abu email]: 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	(T)hese 26 households are errors from double entry process. Please drop these IDs from these sections. The ID file is correct. $\rightarrow$ Not dealt with.
+\item	There are two shamitee with the same gid=70314. After the baseline we followed only the group starting with 99. Thus we changed the gid to 9970314 (manually). Please kindly convert all the gid 70314 with 9970314. $\rightarrow$ Corrected.
+\end{itemize}
+} Note: When I asked previously it was 26 HH-years but now \Sexpr{length(hysxid[, Hhidyear])} HH-years after corrections in other parts.
+<<echo = T, warning = F>>=
+xid2[gid == 70314, c("gid", "hhid") := list(9970314, as.integer(paste0(99, hhid)))]
+@
+
+A direct consequence of not having matching ID file is lacking treatment assignment information. As a patch, copy treatment assignment and group information across rounds in section files (but keep ID file uncorrected, as we expect its update later).
+<<echo = T>>=
+Z[-grep("id", names(Z))] <- lapply(Z[-grep("id", names(Z))], 
+	function(x) if (any(is.na(x[, Mgroup]))) 
+	x[hhid %in% x[is.na(Mgroup), hhid], 
+	Mgroup := Mgroup[!is.na(Mgroup)][1], by = hhid] else x)
+<<>>=
+Z <- lapply(Z, function(x) x[, Hhidyear := paste0(hhid, "-", year)])
+xid2[, Hhidyear := paste0(hhid, "-", year)]
+@
+
+\subsection{Missing baseline}
+
+<<>>=
+#ii <- apply(is.na(cr[, grep("^lo.*go$", colnames(cr)):grep("int.*der", colnames(cr)), with = F]), 1, all)
+#Z[[grepout("borr", names(Z))]] <- cr[!ii, ]
+#ii <- apply(naorzero(xla[, grep("^code_1$", colnames(xla)):grep("totalin", colnames(xla)), with = F]), 1, all)
+#Z[[grepout("lab", names(Z))]] <- xla[!ii, ]
+#unlist(lapply(Z, function(x) x[hhid == 7020312 & year == 2014, ]))
+missingHHinID <- lapply(Z, 
+	function(x) unique(x[!(Hhidyear %in% xid2[, Hhidyear]), .(hhid, year)]))
+#Z[[grep("assis", names(Z))]][hhid == 7031401]
+missingHHinID <- lapply(1:length(missingHHinID), 
+	function(i) missingHHinID[[i]][, filename := names(Z)[i]])
+missingHHinID <- rbindlist(missingHHinID)
+missingHHinID <- missingHHinID[!is.na(hhid), ]
+missingHHinID <- missingHHinID[!duplicated(missingHHinID), ]
+missingHHinID[, filename := factor(filename, levels = names(Z))]
+missingFiles <- dcast(missingHHinID, hhid + year ~ filename, 
+	value.var = "filename", fun.aggregate = length)
+missingFiles[, Hhidyear := paste(hhid, year, sep = "-")]
+HHmissingIDFile <- unique(missingFiles[, hhid])
+@
+%There are \textsf{hhid}s that are missing in ID file (but appearing in other section files). There are \Sexpr{nrow(missingFiles)} such entries.
+%Below shows \textsf{hhid}s present in more than 2 section files but missing in ID file. \textsf{missingHHinID} is a list of \textsf{hhid-year} combinations that are missing in ID file and found only in section files. \textsf{missingFiles} is a table of \textsf{hhid, year} that indicate missing hhids in ID file but present in section files. 
+<<>>=
+# ros <- fread(paste0(path0, "/analysis/source/oct/1/original/section1_householdcomposition.prn"))
+# setnames(ros, "hh_id", "hhid")
+# setkey(ros, hhid, mid)
+# ros[, u_id := NULL]
+# print0(missingFiles[apply(missingFiles[, -c(1:2, ncol(missingFiles)), with = F], 1, sum) > 0, Hhidyear])
+@
+Drop these \Sexpr{nrow(missingFiles)} individuals by dropping entries with \textsf{Mgroup}==NA. Below gives the number of rows being dropped, number of variables with all-NAs and not all-NAs (which indicate how much information is thrown away by this). Thanks to copying of \textsf{Mgroup} and other group information, the number of rows dropped is small.
+<<>>=
+tabs <- lapply(Z, function(x) 
+	if (any(grepl("Mg", colnames(x)))) table(apply(is.na(x[is.na(Mgroup),]), 2, all)) else 0)
+tabs2 <- lapply(Z, function(x) 
+	if (any(grepl("Mg", colnames(x)))) nrow(x[is.na(Mgroup),]) else 0)
+tabs <- lapply(tabs, table2datatable)
+tabs <- rbindlist(tabs, use.names = T, fill = T)
+tabs[, rowsDropped := as.numeric(unlist(tabs2))]
+tabs[, filenames := names(Z)]
+tabs[, V1 := NULL]
+setcolorder(tabs, c("filenames", "rowsDropped", "TRUE", "FALSE"))
+setnames(tabs, c("filenames", "rowsDropped", "allNAcols", "not.allNAcols"))
+tabs <- a2b.data.table(tabs, NA, 0)
+tabs
+<<echo = T>>=
+Z <- lapply(Z, function(x) 
+	if (any(grepl("Mg", colnames(x)))) x[!is.na(Mgroup),] else x)
+<<>>=
+HHnobaseline <- unique(xid2[survey == 1 & Disbursed1, hhid])
+# xid3 is ID list of individuals with baseline info, xid2 includes individuals without baseline
+xid3 <- xid2[!(hhid %in% HHnobaseline), ]
+@
+If we drop individuals without baseline, it further reduces sample size by \Sexpr{length(HHnobaseline[!(HHnobaseline %in% HHmissingIDFile)])}, and its breakdown of \textsf{Mgroup, year} is given in the below.
+<<>>=
+table0(xid2[hhid %in% HHnobaseline, .(year, Mgroup)])
+<<echo = T>>=
+ZB <- lapply(Z, function(x) x[!(hhid %in% HHnobaseline), ])
+@
+Save files.
+<<echo = T>>=
+saveRDS(Z, paste0(path1234, "data_read_in_a_list_with_treatment_patched.rds"))
+saveRDS(ZB, paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+@
+In what follows, all analysis is based on the sample with baseline.
+
+
+\subsection{Panel structure by page}
+
+Names of sections in \textsf{\footnotesize \Sexpr{gsub("^.*RA", ".", gsub("\\_", "\\\\_", path1234))}}: \textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", names(Z))}}
+<<>>=
+fn2d <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn2)))
+fn2d <- gsub("section\\_(\\w)", "\\1", fn2d)
+fn2d <- gsub("section\\_", "s", fn2d)
+@
+Names of sections in \textsf{\footnotesize \Sexpr{gsub("^.*RA", ".", gsub("\\_", "\\\\_", path234))}}: \textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", fn2d)}}
+<<echo = T>>=
+Z2 <- readRDS(paste0(path1234, "data_read_in_a_list_234.rds"))
+<<>>=
+# 2, 3, 4
+table2datatable <- function(x) data.table(t(as.matrix(x)))
+fl.234 <- rbindlist(lapply(Z2[grep("2.3.4", fn2)], 
+	function(x) table2datatable(table(x[, year]))))
+fl.234[, filename := gsub("^.*\\/", "", fn2d[grepl("2.3.4", fn2)])]
+# 2
+fl2 <- data.table(lapply(Z2[grep("only\\_2\\/", fn2)], function(x) table(x[, year])))
+setnames(fl2, "2014")
+fl2[, "2014" := as.numeric(unlist(fl2[, 1]))]
+fl2[, filename := gsub("^.*\\/", "", fn2d[grepl("only\\_2\\/", fn2)])]
+# 3
+fl3 <- data.table(lapply(Z2[grep("only_3\\/", fn2)], function(x) table(x[, year])))
+setnames(fl3, "2015")
+fl3[, filename := gsub("^.*\\/", "", fn2d[grepl("only\\_3\\/", fn2)])]
+fl3[, "2015" := as.numeric(unlist(fl3[, 1]))]
+# 4
+fl4 <- data.table(lapply(Z2[grep("endline", fn2)], function(x) nrow(x)))
+setnames(fl4, "2017")
+fl4[, "2017" := as.numeric(unlist(fl4[, 1]))]
+fl4[, filename := gsub("^.*\\/", "", fn2d[grepl("endline", fn2)])]
+fl234 <- rbind(fl.234, fl2, fl3, fl4, use.names = T, fill = T)
+fl234[, "2013" := NA]
+setcolorder(fl234, c("filename", 2013:2015, 2017))
+<<>>=
+fn3d <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn3)))
+fn3d <- gsub("section\\_(\\w)", "\\1", fn3d)
+fn3d <- gsub("section\\_", "s", fn3d)
+@
+Names of sections in \textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", foldername3)}}: \textsf{\footnotesize \Sexpr{gsub("\\_", "\\\\_", gsub("^.*\\/", "", fn3d))}}
+<<echo = T>>=
+Z. <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+Z3new <- Z.[[grep("roster", names(Z.))]]
+xid <- readRDS(paste0(path1234, "ID.rds"))
+<<>>=
+fl.ros <- table2datatable(table(Z3new[, year]))
+fl.ros[, filename := "s1 (roster)"]
+@
+Below tabulation shows many unmatched \textsf{hhid} across rounds in roster. (FALSE indicates no match in other rds.)
+<<>>=
+rh2012 <- unique(Z[[grep("ros", names(Z))]][year == 2012, hhid])
+rh2013 <- unique(Z[[grep("ros", names(Z))]][year == 2013, hhid])
+rh2014 <- unique(Z[[grep("ros", names(Z))]][year == 2014, hhid])
+rh2015 <- unique(Z[[grep("ros", names(Z))]][year == 2015, hhid])
+rh2017 <- unique(Z[[grep("ros", names(Z))]][year == 2017, hhid])
+rh2012tab <- table2datatable(table(rh2012 %in% unique(c(rh2013, rh2014, rh2015, rh2017))))
+rh2013tab <- table2datatable(table(rh2013 %in% unique(c(rh2012, rh2014, rh2015, rh2017))))
+rh2014tab <- table2datatable(table(rh2014 %in% unique(c(rh2012, rh2013, rh2015, rh2017))))
+rh2015tab <- table2datatable(table(rh2015 %in% unique(c(rh2012, rh2013, rh2014, rh2017))))
+rh2017tab <- table2datatable(table(rh2017 %in% unique(c(rh2012, rh2013, rh2014, rh2015))))
+rh2012tab[,year := 2012]; rh2013tab[,year := 2013]; rh2014tab[,year := 2014]
+rh2015tab[,year := 2015]; rh2017tab[,year := 2017]
+rhtab <- rbindlist(list(rh2012tab, rh2013tab, rh2014tab, rh2015tab, rh2017tab), use.names = T, fill = T)
+setcolorder(rhtab, c("year", "TRUE", "FALSE"))
+rhtab <- a2b.data.table(rhtab, NA, 0)
+rhtab
+attritedHH <- rh2012[!(rh2012 %in% unique(c(rh2013, rh2014, rh2015, rh2017)))]
+xid2 <- unique(xid[, .(gid, hhid, povertystatus, year, survey, memname, 
+	creditstatus, Mpattern, Mgroup, Mstatus, Assign, AssignRegression, 
+	IntDate, DistDate1, DistDate2, DistDate3, Disbursed1, Disbursed2, Disbursed3)])
+attrited2012 <- rh2012[!(rh2012 %in% unique(c(rh2013, rh2014, rh2015, rh2017)))]
+attrited2013 <- rh2013[!(rh2013 %in% unique(c(rh2014, rh2015, rh2017)))]
+attritedInRd1 <- unique(c(attrited2012, attrited2013))
+@
+\Sexpr{sum(rhtab[year <= 2013, "FALSE"])} HHs in 2012/2013 with unmatched hhid in subsequent rds in roster files: {\footnotesize \Sexpr{as.character(attritedInRd1[order(attritedInRd1)])}}. Among which \Sexpr{nrow(xid2[hhid %in% attritedHH & grepl("Er|Rej", Mstatus), ])} are dropped out HHs. Below tabulation shows there are \textcolor{red}{\Sexpr{nrow(xid2[hhid %in% attritedHH & grepl("^old", Mstatus), ])} cases of continuing members not being captured after 2012.} Although classified as continuing members, are they drop outs? (Remaining \Sexpr{sum(rhtab[year <= 2013, "FALSE"]) - nrow(xid2[hhid %in% attritedHH & grepl("Er|Rej", Mstatus), ]) - nrow(xid2[hhid %in% attritedHH & grepl("^old", Mstatus), ])} cases?)
+
+\textcolor{green}{[2017-11-14 Abu email]: (T)hese households took the loan but have migrated to Dhaka or other places and could not be traced. $\rightarrow$ Create \textsf{RanAway} = T/F.} 
+<<>>=
+table(xid2[hhid %in% attritedHH, .(Assign, Mstatus)])
+xid2[hhid %in% attritedHH & grepl("^old", Mstatus), 
+	.(gid, hhid, memname, year, Mstatus, Assign, creditstatus)]
+<<echo = T>>=
+xid2[, RanAway := F]
+xid2[hhid %in% attritedHH & grepl("^old", Mstatus), RanAway := T]
+<<warning = F>>=
+# 1, 2, 3, 4
+#lapply(Z, function(x) grepout("year", colnames(x)))
+fl1234 <- rbindlist(lapply(Z, function(x) table2datatable(table(x[, year]))),
+	use.names = T, fill = T)
+fl1234[, filename := fnd]
+fltab <- rbind(fl1234, fl.234, use.names = T, fill = T)
+setcolorder(fltab, c("filename", 2012:2015, 2017))
+fltab[, rds := apply(!is.na(fltab[, -1, with = F]), 1, sum)]
+fltab[rds >= 4, rds := 4]
+for (yy in c(2014, 2015, 2017))
+	fltab[is.na(unlist(fltab[, grep(yy, colnames(fltab)), with = F])), rds := rds - 1]
+fltab[rds == 1, rds := 2]
+setcolorder(fltab, c("filename", "rds", 2012:2015, 2017))
+flt <- as.matrix(fltab)
+flt[is.na(fltab)] <- ""
+flt[, 1] <- gsub("\\_", "\\\\_", flt[, 1])
+write.tablev(latextab(flt, alternatecolor = "gray90", delimiterline = NULL,
+	hleft = c("\\sf", rep("\\footnotesize\\hfil", ncol(flt)-1)),
+	hcenter = c(5, .7, rep(1, ncol(flt)-2)), 
+	hright = c("\\hfill", rep("", ncol(flt)-1))),
+	paste0(pathcleaned, "file_tabulation.tex"), colnamestrue = F)
+@
+
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{13cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Files and survey rounds\label{filestab}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.75}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathcleaned, "file_tabulation.tex")}}};
+\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& Compiled from GUK data.\\[-1ex]
+Notes:& 1. Number of rows are displayed.\\[-1ex]
+& 2. 2012 and 2013 are round 1. 2012 and 2013 data were jointly reported for \textsf{s1 (roster)} but separated by using information from \textsf{id} file. \textsf{MergedAssets} is a merged file of \textsf{hh\_asset} and \textsf{productive\_assets}. \\[-1ex]
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+
+\section{Plots}
+
+<<echo = T>>=
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+@
+
+\subsection{Incomes}
+
+<<>>=
+xf <- Z[[grep("farm", names(Z))]]
+xio <- Z[[grep("inp", names(Z))]]
+xl2 <- Z[[grep("labo", names(Z))]]
+<<>>=
+xrev <- xf[TotalRevenue > 0, .(hhid, year, survey, Mgroup, Assign, TotalRevenue)]
+xrev[, year := factor(year, levels = c(2012:2015, 2017))]
+xrev[, Panel := factor(survey)]
+xrev[, hhid := factor(hhid)]
+xrev[, survey := NULL]
+xcosts <- xio[TotalOfCosts > 0, .(hhid, year, survey, TotalOfCosts)]
+xcosts[, year := factor(year, levels = c(2012, 2014:2015))]
+xcosts[, Panel := factor(survey)]
+xcosts[, hhid := factor(hhid)]
+xcosts[, survey := NULL]
+@
+Revenues are reported partially.
+<<>>=
+summary(xrev)
+@
+Costs are reported partially. There are \Sexpr{as.integer(table(xrev[, year]))} HHs who report revenues for \Sexpr{levels(xrev[, year])}, only \Sexpr{as.integer(table(xcosts[, year]))} HHs report costs for \Sexpr{levels(xcosts[, year])}, respectively.
+<<>>=
+summary(xcosts)
+@
+<<>>=
+xrev2 <- xf[, .(hhid, year, survey, Mgroup, Assign, TotalRevenue)]
+@
+Plot agricultural revenues (\textsf{\small Figure \ref{Figure farm revenue}}).
+<<farm revenue, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Farming revenues", fig.lp = 'Figure '>>=
+dit2 <- xrev2[, .(hhid, year, Assign, Mgroup, TotalRevenue)]
+dit2 <- dit2[!is.na(Assign), ]
+dit2 <- dit2[TotalRevenue > 0, ]
+dit2[, TGroup := "treated"]
+dit2[grepl("dro", Mgroup), TGroup := "control"]
+dit2[, Tgroup := factor(TGroup)]
+dit2[, year := factor(year)]
+library(ggplot2)
+ggplot(dit2, aes(x = factor(year), y = log(TotalRevenue))) + 
+	geom_boxplot(aes(color = Tgroup)) + 
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("log revenue")
+@
+Check trends in HH total labour income (\textsf{\small Figure \ref{Figure labour incomes}, \ref{Figure labour incomes 2}}).
+<<labour incomes, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Labour incomes", fig.lp = 'Figure '>>=
+dit2 <- unique(xl2[, .(gid, hhid, year, Assign, Mgroup, TotalHHLabourIncome)])
+dit2 <- dit2[!is.na(Assign), ]
+dit2[, TGroup := "treated"]
+dit2[grepl("dro", Mgroup), TGroup := "control"]
+dit2[, TGroup := factor(TGroup)]
+dit2[, year := factor(year)]
+library(ggplot2)
+ggplot(dit2, aes(x = year, y = log(TotalHHLabourIncome))) + 
+ 	geom_boxplot(aes(color = TGroup)) + 
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + ylab("log labour income")
+	# + facet_grid(Assign ~ .)
+<<labour incomes 2, warning = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Labour incomes bewteen arms and controls", fig.lp = 'Figure '>>=
+#table0(dit2[, .(Assign, Mgroup)])
+dit2 <- dit2[!is.na(Assign), ]
+#dit2 <- dit2[totalincome > 0, ]
+#dit2[, year := factor(year)]
+library(ggplot2)
+ggplot(dit2, aes(x = year, y = log(TotalHHLabourIncome))) + 
+	geom_boxplot(aes(color = Assign)) + 
+	theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("log labour income")
+@
+
+\subsection{Assets}
+
+<<>>=
+xas <- Z$MergedAssets
+xlo <- Z[[grep("liv.*ow", names(Z))]]
+xlp2 <- Z[[grep("liv.*pr", names(Z))]]
+dit2 <- xas[, .(gid, hhid, year, Assign, Mgroup, HAssetAmount, 
+	HAssetAmountOneYear, HNumAsset, PAssetAmount, PAssetEarning, povertystatus)]
+dit2l <- dit2[!duplicated(dit2), ]
+dit2l <- dit2l[!is.na(Mgroup), ]
+dit2l[, AvgAssetAmount := mean(HAssetAmount+PAssetAmount, na.rm = T), 
+	by = list(Assign, Mgroup, year)]
+dit2l[, AvgAssetPurchased := mean(HAssetAmountOneYear, na.rm = T), 
+	by = list(Assign, Mgroup, year)]
+dit2l[, AvgAssetEarning := mean(PAssetEarning, na.rm = T), 
+	by = list(Assign, Mgroup, year)]
+dit2l <- unique(dit2l[, .(Assign, Mgroup, AvgAssetAmount, 
+	AvgAssetPurchased, AvgAssetEarning, year)])
+@
+Plot asset values (\textsf{\small Figure \ref{Figure asset value}}), asset earning (\textsf{\small Figure \ref{Figure asset earning}}), and newly purchased asset values asset values (\textsf{\small Figure \ref{Figure newly purchased asset}}).
+<<asset value, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Asset value by arms", fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(dit2l, aes(x = year, y = log(AvgAssetAmount), group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("asset value") + facet_grid(Mgroup ~ .)
+<<asset earning, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Asset earnings by arms", fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(subset(dit2l, year != 2017), aes(x = year, y = log(AvgAssetEarning), group = Assign)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_line(aes(color = Assign, linetype = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("asset earning") + facet_grid(Mgroup ~ ., scale = "free_y")
+<<newly purchased asset, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Asset purchased in last one year by arms", fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(subset(dit2l, year != 2012), aes(x = year, y = log(AvgAssetPurchased), group = Assign)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_line(aes(color = Assign, linetype = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("asset purchased in one year") + facet_grid(Mgroup ~ ., scale = "free_y")
+@
+<<>>=
+dit2 <- xlo[, .(gid, hhid, year, Assign, Mgroup, TotalImputedValue, 
+	TotalSelfEvaluatedValue, povertystatus)]
+dit2 <- dit2[!duplicated(dit2), ]
+dit2 <- dit2[!is.na(Assign), ]
+dit2[is.na(TotalImputedValue), TotalImputedValue := 0]
+dit2[is.na(TotalSelfEvaluatedValue), TotalSelfEvaluatedValue := 0]
+dit2[, AvgTotalImputedValue := mean(TotalImputedValue), 
+	by = list(Assign, Mgroup, year)]
+dit2[, AvgTotalSelfEvaluatedValue := mean(TotalSelfEvaluatedValue), 
+	by = list(Assign, Mgroup, year)]
+dit2[, NumberObs := .N, by = list(Assign, Mgroup, year)]
+dit2 <- unique(dit2[, .(Assign, Mgroup, AvgTotalImputedValue, 
+	AvgTotalSelfEvaluatedValue, year, NumberObs)])
+setnames(dit2, c("AvgTotalImputedValue", "AvgTotalSelfEvaluatedValue"),
+	c("Avg.Imputed", "Avg.SelfEvaluated"))
+dit2l <- reshape(dit2, direction = "long", 
+	idvar = c("Assign", "Mgroup", "year"),
+	varying = grepout("^Av", colnames(dit2)))
+setnames(dit2l, "time", "computation")
+<<>>=
+xlp2[, NumberObs := .N, by = list(Assign, Mgroup, year)]
+dit2 <- xlp2[!is.na(Assign), ]
+dit2[, AvgImputedPrice := mean(ImputedPrice, na.rm = T), 
+	by = list(Assign, Mgroup, year, produce)]
+dit2[, AvgImputedSales := mean(ImputedSales), 
+	by = list(Assign, Mgroup, year, produce)]
+dit2[, year := factor(year)]
+dit3 <- unique(dit2[, .(Assign, Mgroup, AvgImputedPrice, AvgImputedSales, produce, year, NumberObs)])
+@
+Livestock asset values are given in \textsf{\small Figure \ref{Figure livestock asset value}}.
+<<livestock asset value, warning = F, fig.align='center', fig.height = 6, fig.width = 10, fig.cap = "Livestock asset value by arms", fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(dit2l, aes(x = year, y = log(Avg), group = Assign)) + 
+	geom_point(aes(color = Assign)) + geom_line(aes(color = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("asset value") + facet_grid(Mgroup ~ computation)
+@
+Livestock produce sales using imputed prices are given in \textsf{\small Figure \ref{Figure livestock produce sales}}.
+<<livestock produce sales, warning = F, fig.align='center', fig.height = 6, fig.width = 10, fig.cap = "Livestock produce sales by arms", fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(dit3, aes(x = year, y = log(AvgImputedSales), group = Assign)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_line(aes(color = Assign, linetype = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("revenue (taka)") + facet_grid(Mgroup ~ produce)
+@
+
+\subsection{Poverty}
+
+<<>>=
+xm <- Z[[grep("mong", names(Z))]]
+xs <- Z[[grep("sav", names(Z))]]
+<<meals per day, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Meals per day by arms and controls", fig.lp = 'Figure '>>=
+dit2 <- xm[, .(hhid, year, Assign, Mgroup, monga_meals, normal_meals)]
+dit2[, c("Meals.monga", "Meals.normal") := list(monga_meals, normal_meals)]
+dit2[, c("monga_meals", "normal_meals") := NULL]
+dit2 <- dit2[!is.na(Meals.monga) & !is.na(Assign), ]
+dit2 <- dit2[!duplicated(dit2), ]
+dit2[, NumberObs := .N, by = list(Assign, year)]
+dit2l <- reshape(dit2, direction = "long", idvar = c("hhid", "Mgroup", "year"),
+	varying = grepout("^Me", colnames(dit2)))
+dit2l[, AvgMeals := mean(Meals), by = list(Assign, time, year)]
+dit2l <- unique(dit2l[, .(Assign, AvgMeals, time, year, NumberObs)])
+library(ggplot2)
+ggplot(dit2l, aes(x = year, y = AvgMeals, group = Assign)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_line(aes(color = Assign, linetype = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("mean meals per day") + facet_grid(time ~ ., scale = "free_y")
+@
+<<saving, warning = F, fig.align='center', fig.height = 4, fig.width = 6, fig.cap = "Saving by arms and controls", fig.lp = 'Figure '>>=
+dit2 <- xs[, .(gid, hhid, year, Assign, Mgroup, cash_home_1)]
+dit2[is.na(cash_home_1), cash_home_1 := 0]
+dit2l <- dit2[!duplicated(dit2), ]
+dit2l[, AvgCash := mean(cash_home_1), by = list(Assign, Mgroup, year)]
+dit2l <- unique(dit2l[, .(Assign, Mgroup, AvgCash, year)])
+library(ggplot2)
+ggplot(dit2l, aes(x = year, y = AvgCash, group = Assign)) + 
+	geom_point(aes(color = Assign)) + 
+	geom_line(aes(color = Assign, linetype = Assign)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("cash at home") + facet_grid(Mgroup ~ ., scale = "free_y")
+@
+
+\subsection{Schooling}
+
+<<>>=
+xe <- readRDS(paste0(path1234, "schooling.rds"))
+X2 <- readRDS(paste0(path1234, "schooling_augmented_panel.rds"))
+<<enrollment, warning = F, fig.align='center', fig.height = 8, fig.width = 10, fig.cap = "School enrollment by arms and controls", fig.lp = 'Figure '>>=
+dit2 <- xe[!is.na(currently_enrolled), 
+	.(gid, hhid, mid, year, sex, AgeComputed, Assign, Mgroup, Schooling, Enrolled,
+	BaseNumber, NumberObs, NumEnrollment)]
+dit2l <- dit2[!is.na(Schooling), ]
+dit2l <- dit2l[!duplicated(dit2l), ]
+table0(dit2l[AgeComputed < 30, .(Enrolled, AgeComputed)])
+setkey(dit2l, Assign, Schooling, sex, year)
+#dit2l[, AvgEnrollment := NumEnrollment/BaseNumber]
+dit2l[, AvgEnrollment := NumEnrollment/NumberObs]
+dit2l[, BaseNumberReduced := BaseNumber/20]
+dit2l <- unique(dit2l[, .(Assign, Schooling, sex, year, AvgEnrollment, BaseNumberReduced)])
+setkey(dit2l, Assign, Schooling, sex, year)
+library(ggplot2)
+ggplot(dit2l, aes(x = year, y = AvgEnrollment, group = Assign,
+	size = BaseNumberReduced)) +
+	geom_point(aes(color = Assign, shape = Assign)) + 
+	# Need to set size because I set size in ggplot aes. Otherwise, line size will be BaseNumberReduced
+	geom_line(aes(color = Assign, linetype = Assign, size = 1/20)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("year") + 
+	ylab("enrollmet rates") + facet_grid(Schooling ~ sex, scale = "free_y")
+@
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	(Voluntary) drop out group has lower enrollment rates.
+\end{itemize}
+
+Plot enrollment (\textsf{\small Figure \ref{Figure enrollment with artificially augmented panel}}).
+<<enrollment with artificially augmented panel, warning = F, fig.align='center', fig.height = 8, fig.width = 10, fig.cap = "School enrollment with artificially augmented panel by arms and controls", fig.lp = 'Figure '>>=
+dit2 <- X2[!is.na(Enrolled), 
+	.(gid, hhid, Year, sex, AgeComputed, AssignRegression, Schooling, 
+	BaseNumber, NumberObs, NumEnrollment)]
+dit2l <- dit2[!is.na(Schooling), ]
+dit2l <- dit2l[!duplicated(dit2l), ]
+setkey(dit2l, AssignRegression, Schooling, sex, Year)
+dit2l[, AvgEnrollment := NumEnrollment/NumberObs]
+dit2l[, BaseNumberReduced := BaseNumber/20]
+setkey(dit2l, AssignRegression, Schooling, sex, Year)
+dit2l <- unique(dit2l[, .(AssignRegression, Schooling, sex, Year, AvgEnrollment, BaseNumberReduced)])
+dit2l[Year == 2017 & grepl("for", AssignRegression), AvgEnrollment := NA]
+library(ggplot2)
+ggplot(dit2l, aes(x = Year, y = AvgEnrollment, group = AssignRegression,
+	size = BaseNumberReduced)) +
+	geom_point(aes(color = AssignRegression, shape = AssignRegression)) + 
+	# Need to set size because I set size in ggplot aes. Otherwise, line size will be BaseNumberReduced
+	geom_line(aes(color = AssignRegression, linetype = AssignRegression, size = 1/20)) +
+	theme(#axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+	legend.position="bottom") + xlab("Year") + 
+	ylab("enrollmet rates") + facet_grid(Schooling ~ sex, scale = "free_y")
+@
+
+
+
+\clearpage
+\section{Regressions}
+
+
+Regress enrollment. Use members who were 6-18 year olds in rd 1. This includes attrited individuals so estimation is based on unbalanced panel.
+<<echo = T>>=
+X <- list(xas, xlo, xlp2, xe)
+names(X) <- c("Assets", grepout("^l.*own", names(Z)),
+	grepout("^l.*pr", names(Z)), grepout("^ed", names(Z)))
+Regressants <- c("AssetAmount", "TotalSelfEvaluatedValue",
+	"ImputedSales", "NumEnrollment")
+
+dim(xe <- readRDS(paste0(path1234, "schooling.rds")))
+X <- xe[, .(gid, hhid, mid, year, Age_1, AgeComputed, sex, 
+	currently_enrolled, AssignRegression, Enrolled, Schooling)]
+if (any(duplicated(X))) dim(X <- X[!duplicated(X), ])
+# drop following duplicated entries
+#X[hhid==7054202 & mid == 5|hhid==7031803 & mid == 4, ]
+X <- X[!(hhid==7054202 & mid == 5|hhid==7031803 & mid == 4), ]
+# set age range: 6-18 in rd 1
+setkey(X, hhid, mid, year)
+table0(X[, .(Age1 = is.na(Age_1), AgeComp = is.na(AgeComputed))])
+X <- X[!is.na(Age_1), ]
+if (any(!is.na(X[, currently_enrolled]))) X <- X[!is.na(currently_enrolled), ]
+dim(X1 <- X[Age_1 > 5 & Age_1 <= 18, ])
+setkey(X1, hhid, mid, year)
+X1[, en := 1:.N, by = list(hhid, mid)]
+X1[, id := paste(hhid, mid, sep = "-")]
+if (length(badid <- X1[en == 5, id]) > 0) X1[id %in% badid, ]
+X1[, c("id", "Age_1", "currently_enrolled") := NULL]
+X1[, EN := .N, by = list(hhid, mid)]
+table(X1[, EN])/(1:4)
+X1[, EN := NULL]
+@
+Save X1.
+<<>>=
+saveRDS(X1, paste0(path1234, "schooling_Age6-18InRd1.rds"))
+<<>>=
+pd <- preparePanelData(X1, Group = "^hhid|mid", Cluster = "^gid$", 
+	TimeVar = "year", LevelCovariates = "Age|EN", 
+	use.var.name.for.dummy.prefix = F, print.messages = T)
+dX1 <- pd$diff
+dX1[, EN := .N, by = list(hhid, mid)]
+table(dX1[, EN])/(1:3)
+dX1[, EN := NULL]
+@
+Create demeaned interation terms with demeaned \textsf{female} dummy. 
+<<>>=
+iidd <- grepout("^du", colnames(dX1))
+iiDd <- unlist(lapply(iidd, function(x) paste0(toupper(substr(x, 1, 1)), substr(x, 2, 100))))
+# pick dummy variables and demean
+dX1[, (paste0("demeaned", iiDd)) := 
+	lapply(1:length(iidd), function(i) eval(parse(text=iidd[i])) - mean(eval(parse(text=iidd[i]))))]
+iiDD <- grepout("^demea", colnames(dX1))
+dX1[, (paste(iiDD[1], iiDD[-1], sep = "*")) := 
+	lapply(2:length(iiDD), function(i) eval(parse(text=paste(iiDD[1], iiDD[i], sep = "*"))))]
+est1 <- FDestimation(dX1, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "year", Exclude = "\\*|demean",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+est2 <- FDestimation(dX1, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "year", Exclude = "^dum",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+@
+We will also use augmented balanced panel. Given attrited members do not report schooling, not considering attrition may give a biased picture. Tabulation of number of periods for all child members are \Sexpr{est1$Ttable} for $T=2, 3, 4$, respectively. We will assume that attrited members discontinue schooling and augment the attrited portion of the panel with \textsf{Enrolled}==0, except for \textsf{forced dropped outs} whose year 2017 portion will be dropped from the analysis. \gobblepars
+<<>>=
+X2 <- readRDS(paste0(path1234, "schooling_augmented_panel.rds"))
+table0(X2[, .(Enrolled, AssignRegression)])
+<<echo = T>>=
+X2 <- X2[!is.na(Enrolled), ]
+<<>>=
+dim(X2 <- X2[, .(gid, hhid, mid, year, Year, AgeComputed, sex, 
+	AssignRegression, Enrolled, Schooling)])
+pd <- preparePanelData(X2, Group = "^hhid|mid", Cluster = "^gid$", 
+	TimeVar = "Year", LevelCovariates = "Age|EN", drop.if.NA.in.differencing = F,
+	use.var.name.for.dummy.prefix = F, print.messages = T)
+dX2 <- pd$diff
+iidd <- grepout("^du", colnames(dX2))
+iiDd <- unlist(lapply(iidd, function(x) paste0(toupper(substr(x, 1, 1)), substr(x, 2, 100))))
+# pick dummy variables and demean
+dX2[, (paste0("demeaned", iiDd)) := 
+	lapply(1:length(iidd), function(i) eval(parse(text=iidd[i])) - mean(eval(parse(text=iidd[i]))))]
+iiDD <- grepout("^demea", colnames(dX2))
+dX2[, (paste(iiDD[1], iiDD[-1], sep = "*")) := 
+	lapply(2:length(iiDD), function(i) eval(parse(text=paste(iiDD[1], iiDD[i], sep = "*"))))]
+<<>>=
+est3 <- FDestimation(dX2, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "Year", Exclude = "^deme|EN|Num|^year$",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+est4 <- FDestimation(dX2, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "Year", Exclude = "^dumm|EN|Num|^year$",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+est5 <- FDestimation(dX2, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "Year", Exclude = "^dumm|EN|Num|^year$",
+	Regressand = "Enrolled", intercept = F, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+@
+Introduce \textsf{Year} 2 and \textsf{Year} 3 effects model to flexibly accommodate period specific common time trends. \gobblepars 
+<<>>=
+dX3 = copy(dX2)
+dX3[, c("Year2", "Year3") := 0L]
+dX3[Year == 2015, Year2 := 1L]
+dX3[Year == 2017, Year3 := 1L]
+iiyy2 <- grepout("^Year2$", colnames(dX3))
+iiyy3 <- grepout("^Year3$", colnames(dX3))
+# pick dummy variables and demean
+dX3[, (paste0("demeaned", iiyy2)) := eval(parse(text=iiyy2)) - mean(eval(parse(text=iiyy2)))]
+dX3[, (paste0("demeaned", iiyy3)) := eval(parse(text=iiyy3)) - mean(eval(parse(text=iiyy3)))]
+iiDD <- grepout("^demea", colnames(dX3))
+iiDD1 <- c(iiDD[length(iiDD)-1], iiDD[-(length(iiDD)-0:1)])
+iiDD2 <- c(iiDD[length(iiDD)], iiDD[-(length(iiDD)-0:1)])
+dX3[, (paste(iiDD1[1], iiDD1[-1], sep = "*")) := 
+	lapply(2:length(iiDD1), function(i) eval(parse(text=paste(iiDD1[1], iiDD1[i], sep = "*"))))]
+dX3[, (paste(iiDD2[1], iiDD2[-1], sep = "*")) := 
+	lapply(2:length(iiDD2), function(i) eval(parse(text=paste(iiDD2[1], iiDD2[i], sep = "*"))))]
+#dX3[, (paste("Year3", iidd, sep = "*")) := 
+#	lapply(1:length(iidd), 
+#	function(i) eval(parse(text=paste("Year3", iidd[i], sep = "*"))))]
+# Drop forced dropouts Year 3 interactions
+dX3[, grepout("Year3.*Forced", colnames(dX3)) := NULL]
+	#	demeaned Year 3 & interactions only, use Year as time variable
+est6 <- FDestimation(dX3, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "^Year$", 
+	Exclude = "^dumm|EN|Num|^year$|.*Year3|^Year2$",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+	#	demeaned Year 3 & interactions only, use Year as time variable
+est7 <- FDestimation(dX3, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "^Year$", 
+	Exclude = "^dumm|EN|Num|^year$|.*Year2|^Year3$",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+est8 <- FDestimation(dX3, Group = "^hhid|mid", 
+	Cluster = "^gid$", TimeVar = "^Year$", 
+	Exclude = "^dumm|EN|Num|^year$|^Year.$",
+	Regressand = "Enrolled", intercept = T, 
+	return.V = T, return.level.data = F, return.diff.data = F, print.messages = T)
+<<>>=
+changedimnames <- function(x, from, to, dim = "col") {
+  if (grepl("col", dim)) 
+    colnames(x) <- gsub(from, to, colnames(x)) else
+    rownames(x) <- gsub(from, to, rownames(x))
+  return(x)
+}
+<<>>=
+estlist <- list(est1, est3, est4, est5, est6, est7, est8)
+est <- lapply(estlist, function(x) x$est)
+est <- lapply(est, function(x) x[, -3])
+est <- lapply(est, changedimnames, "dummy", "", "row")
+est <- lapply(est, changedimnames, "demeanedDummy", "", "row")
+est <- lapply(est, changedimnames, "demeaned", "", "row")
+est <- lapply(est, changedimnames, ":", "$\\\\times$", "row")
+est <- lapply(est, changedimnames, "^E.*", "estimate")
+est <- lapply(est, changedimnames, "^S.*", "std error")
+est <- lapply(est, changedimnames, "^P.*", "p value")
+est <- lapply(est, changedimnames, "^\\(.*", "Intercept", "row")
+tb <- tabs2latex3(est)
+ns <- unlist(lapply(estlist, function(x) sum(x$Ttable)))
+tb <- as.matrix(cbind(covariates = gsub("^se\\$.*", "", rownames(tb)), tb))
+tb <- rbind(tb, c("N", ns))
+#write.tablev(latextab(tb, hleft = c("\\footnotesize\\sf ", rep("\\hfil\\footnotesize$", ncol(tb)-1)), 
+write.tablev(latextab(tb, hleft = c("\\scriptsize\\sf ", rep("\\hfil\\scriptsize$", ncol(tb)-1)), 
+	hright = c("\\hfill", rep("$", ncol(tb)-1)),
+	hcenter = c(3, rep(1.3, ncol(tb)-1)), delimiterline = NULL, 
+	#adjustlineskip = "-.7ex", 
+	adjustlineskip = "-.6ex", 
+	#alternatecolor2 = "gray90", 
+	alternatestart2 = 3, 
+	alternatecolor4 = NULL, alternatestart4 = 5), 
+	paste0(pathsave, "education_prelim.tex"), colnamestrue = F)
+@
+
+\begin{table}
+%\hspace{-2em}\begin{minipage}[t]{13cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Enrollment, 6-18 year olds \label{FDedu0618}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.45}
+\hspace{-2em}\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/education_prelim.tex}};
+\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& Compiled from GUK data.\\[-1ex]
+Notes:& 1. A first-difference estimator with standard errors clustered at group (\textsf{gid}) level. \\[-1ex]
+& 2. Change in enrollment is regressed on each categories of groups indicated by covariates. Default category of treatment assignment is group with traditional loans, males for gender, primary (6-12) for schools. (1) uses unbalanced panel, (2)-(8) use augmented balanced panel where attrited members are assumed to have stopped schooling. (6), (8) use survey rounds as time variable, while all others use calendar year as time variable. \textsf{Year2}, \textsf{Year3} refer to period-specific common trend effects between period 1 and 2, period 2 and 3, respectively. All interaction terms are demeaned.\\[-1ex]
+& 3. $*$, $**$, $***$ indicate significance levels at 10\%, 5\%, 1\%, respectively.\\[-1ex]
+& 4. 
+\end{tabular}
+%\end{minipage}
+\end{table}
+
+
+
+%Demean dummy variables: 
+<<eval = F>>=
+for (j in grepout("agHH|progra|flood", colnames(yzw0)))
+	set(yzw0, j = j, value = as.numeric(yzw0[[j]]))
+for (j in grepout("sex\\.|edule|agHH|progra|^dumm", colnames(yzw0)))
+	set(yzw0, j = j, value = yzw0[[j]] - mean(yzw0[[j]], na.rm = T))
+@
+
+
+\end{document}

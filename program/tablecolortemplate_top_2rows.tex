@@ -1,0 +1,12 @@
+\begin{pgfonlayer}{background}
+\shade[toprow]
+	($(tbl.north west)+(0.13, -0.8ex)$)
+	rectangle ($(tbl.north east)-(0.13, 1.9)$);
+%\draw[rounded corners, top color = white, bottom color = black,
+%	middle color = red, draw = blue!20] 
+%	($(tbl.south west)+(0.12, 0.5)$) 
+%	rectangle ($(tbl.south east)-(0.12, 0)$);
+\draw[maintable]
+    ($(tbl.north east)-(0.13, .85)$)
+    rectangle ($(tbl.south west)+(0.13, 0.1)$);
+\end{pgfonlayer}

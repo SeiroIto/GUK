@@ -1,0 +1,163 @@
+<<ReadTrimSchoolingFDData, eval= F, cache = F, child='c:/data/GUK/analysis/program/ReadTrimSchoolingFDData.rnw'>>=
+<<ReadTrimAssetFDData, cache = F, warning = F, child='c:/data/GUK/analysis/program/ReadTrimAssetFDData.rnw'>>=
+<<ReadTrimLivestockFDData, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockFDData.rnw'>>=
+<<>>=
+s01 <- readRDS(paste0(pathsaveHere, "RosterSchoolingAdminDataUsedForEstimation.rds"))
+s01[, Enrolled := as.numeric(Enrolled)]
+xid <- readRDS(paste0(path1234, "ID.rds"))
+xid <- xid[, .(randomization, AssignOriginal, groupid, hhid, survey, year, Mstatus, Mgroup)]
+xid[, Attrited := 1L]
+xid[hhid %in% hhid[survey == 4], Attrited := 0L]
+xid[, Rejected := 0L]
+xid[grepl("gR|iR", Mstatus), Rejected := 1L]
+table(xid[, .(survey, Attrited)])
+table(table(xid[Attrited == 1L, hhid]))
+xid[, c("En", "Tee") := .(1:.N, .N), by = hhid]
+xid <- xid[En == 1 & year == 2012, ]
+xid[, c("En", "survey") := NULL]
+xid[, Fromxid := T]
+table0(xid[is.na(AssignOriginal), .(Mgroup, Mstatus)])
+Z. <- readRDS(paste0(path1234, "data_read_in_a_list_with_baseline_patched.rds"))
+ros <- Z.[[grep("roster", names(Z.))]]
+ros <- ros[, .(AssignOriginal, gid, hhid, year, survey, Mstatus,
+  HeadLiteracy, HeadAge, HHsize)]
+setnames(ros, c("year", "survey", "Mstatus", "gid", "HeadLiteracy"), 
+  c("yearFromRos", "tee", "MstatusFromRos", "groupid", "HeadLiterate"))
+ros[, groupid := as.numeric(as.character(groupid))]
+ros[, Attrited := 1L]
+ros[hhid %in% hhid[tee == 4], Attrited := 0L]
+ros[, Rejected := 0L]
+ros[grepl("gR|iR", MstatusFromRos), Rejected := 1L]
+ros[, En := 1:.N, by = .(hhid, tee)]
+ros <- ros[En == 1 & tee == 1, ]
+ros[, c("En", "tee") := NULL]
+tab1 <- data.table(as.data.frame.table(table0(ros[, .(MstatusFromRos, AssignOriginal)])))
+tab1 <- reshape(tab1, direction = "wide", idvar = "MstatusFromRos", timevar = "AssignOriginal")
+setnames(tab1, grepout("Fr", colnames(tab1)), 
+  gsub("Freq.", "", grepout("Fr", colnames(tab1))))
+setnames(tab1, "NA", "ExitBeforeAssigned")
+tab1[, total := rowSums(tab1[, -1, with = F])]
+tab1
+ps2 <- s01[, .(Arm, groupid, hhid, Year, tee, Mstatus, FloodInRd1, Enrolled)]
+setnames(ps2, c("Year", "Mstatus"), paste0(c("Year", "Mstatus"), "FromS"))
+ps2[, Attrited := 1L]
+ps2[hhid %in% hhid[tee == 4], Attrited := 0L]
+ps2[, Rejected := 0L]
+ps2[grepl("gR|iR", MstatusFromS), Rejected := 1L]
+ps2[, En := 1:.N, by = .(hhid, tee)]
+ps2 <- ps2[En == 1 & tee == 1, ]
+ps2[, c("En", "tee") := NULL]
+ps1 <- s01[, .(Arm, groupid, hhid, mid, tee, HeadLiteracy, HeadAge, 
+  EldestSon, EldestDaughter, HHsize, FloodInRd1, Enrolled, Age_1, sex)]
+ps1[, HHMid := paste(hhid, mid, sep = ".")]
+psas <- ass[, .(Arm, groupid, hhid, tee, Mstatus, HAssetAmount, PAssetAmount)]
+setnames(psas, "Mstatus", "MstatusFromAss")
+psas[, Attrited := 1L]
+psas[hhid %in% hhid[tee == 4], Attrited := 0L]
+psas[, Rejected := 0L]
+psas[grepl("gR|iR", MstatusFromAss), Rejected := 1L]
+psas[, En := 1:.N, by = hhid]
+psas <- psas[En == 1, ]
+psas[, c("En", "tee") := NULL]
+pslv <- lvo[, .(Arm, groupid, hhid, tee, TotalImputedValue)]
+pslv[, Attrited := 1L]
+pslv[hhid %in% hhid[tee == 4], Attrited := 0L]
+pslv[, En := 1:.N, by = hhid]
+pslv <- pslv[En == 1, ]
+pslv[, c("En", "tee") := NULL]
+#pslv <- pslv[hhid %in% gsub("\\..*", "", unique(ds1d[, HHMid])), ]
+@
+
+<<>>=
+setkey(xid, AssignOriginal, groupid, hhid)
+atxr <- merge(xid, ros, by = key(xid), all= T, suffixes = c("", ".ros"))
+nrow(atxr[!is.na(Mstatus), ])
+table0(atxr[, .(Attrited, Attrited.ros)])
+atxr[is.na(Attrited), Attrited := Attrited.ros]
+atxr[is.na(Rejected), Rejected := Rejected.ros]
+atxrs <- merge(atxr, ps2, by = c("groupid", "hhid"), all= T, , suffixes = c("", ".sc"))
+nrow(atxrs[!is.na(Mstatus), ])
+table0(atxrs[, .(Attrited, Attrited.sc)])
+atxrs[is.na(Rejected), Rejected := Rejected.sc]
+table0(atxrs[is.na(AssignOriginal) & is.na(Mstatus), .(MstatusFromS, MstatusFromRos)])
+table(table(atxrs[, hhid]))
+atxrsa <- merge(atxrs, psas, by = c("Arm", "groupid", "hhid"), all= T, , suffixes = c("", ".ass"))
+nrow(atxrsa[!is.na(Mstatus), ])
+table0(atxrsa[, .(Attrited, Attrited.ass)])
+atxrsa[is.na(Attrited), Attrited := Attrited.ass]
+atxrsa[is.na(Rejected), Rejected := Rejected.ass]
+atxrsav <- merge(atxrsa, pslv, by = c("Arm", "groupid", "hhid"), all= T, , suffixes = c("", ".lv"))
+nrow(atxrsav[!is.na(Mstatus), ])
+table0(atxrsav[, .(Attrited, Attrited.lv)])
+atxrsav[, OriginalHH := 0L]
+atxrsav[!is.na(Mstatus), OriginalHH := 1L]
+table(atxrsav[, OriginalHH])
+@
+<<attrition permutation test, warning = F>>=
+library(coin)
+pmresults <- vector(mode = "list", length(vartobetested))
+selection.criteria <- c("Attrited", "Rejected")
+data.criteria <- c("", "OriginalHH")
+for (m in 1:length(selection.criteria)) {
+  for (k in 1:length(data.criteria)) {
+    if (k == 1) 
+      iiD <- rep(T, nrow(atxrsav)) else
+      iiD <- atxrsav[, OriginalHH == 1L]
+    set.seed(100+m+k)
+    for (i in 1:length(vartobetested))
+      pmresults[[i]] <- independence_test(eval(parse(text=
+        paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+        data = atxrsav[iiD, ], distribution = approximate(B=9999))
+    #pmresults[[1]]@statistic@teststatistic
+    Pmtresults <- NULL
+    for (i in 1:length(vartobetested)) 
+      if (vartobetested[i] == "AssignOriginal")
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            sum(!grepl("trad", unlist(atxrsav[eval(parse(text = selection.criteria[m])) == 0L & iiD, 
+              vartobetested[i], with = F])))/
+              nrow(atxrsav[eval(parse(text = selection.criteria[m])) == 0L & iiD, ]),
+            sum(!grepl("trad", unlist(atxrsav[eval(parse(text = selection.criteria[m])) == 1L & iiD, 
+              vartobetested[i], with = F])))/
+              nrow(atxrsav[eval(parse(text = selection.criteria[m])) == 1L & iiD, ]),
+            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]]) 
+            )) else
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            mean(unlist(atxrsav[eval(parse(text = selection.criteria[m])) == 0L & iiD, 
+              vartobetested[i], with = F]), na.rm = T),
+            mean(unlist(atxrsav[eval(parse(text = selection.criteria[m])) == 1L & iiD, 
+              vartobetested[i], with = F]), na.rm = T),
+	            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]]) 
+            ))
+    Pmtresults <- data.table(Pmtresults)
+    setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.mid", "p-value.lower", "p-value.upper"))
+    Pmtresults[grepl("Impute", variables), variables := gsub("To.*", "LivestockValue", variables)]
+    cols <- grepout("p|er|ttr|eje", colnames(Pmtresults))
+    Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+    Pmtresults[,  (cols) := lapply(.SD, round, 3), .SDcols = cols]
+    setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.lower", "p-value.mid", "p-value.upper"))
+    Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90")
+    obs0L <- nrow(atxrsav[eval(parse(text = selection.criteria[m])) == 0L & iiD, ])
+    obs1L <- nrow(atxrsav[eval(parse(text = selection.criteria[m])) == 1L & iiD, ])
+    pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+        paste(c("\\makebox[3cm]{\\hfill n}", 
+         obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+         round(obs1L/(obs0L+obs1L), 3), ")\\hfill}}")), collapse = " & "),
+        pmt[nrow(pmt), , drop = F] 
+      )
+    write.tablev(pmt,  paste0(pathsaveHere, 
+      selection.criteria[m], data.criteria[k], "PermutationTestResults.tex"),
+      colnamestrue = F)
+  }
+}
+@
+

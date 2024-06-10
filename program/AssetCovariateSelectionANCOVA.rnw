@@ -1,0 +1,37 @@
+<<>>=
+excl.base <- "^PureCo|^credit|Arm$|With|.Size|Poo|Trad|InKind|Cash|^Arm$|BSta|Time"
+exclG.base <- "^PureCo|^credit|^dummy[FTLCS]|Poo|.Size|Witho|InKind|Cash|^Arm$|BSta|Time"
+exclP.base <- "^PureCo|^credit|^dummy[FTLCS]|With|.Size|Moder|InKind|Cash|^Arm$|BSta|Time" 
+exclS.base <- "^PureCo|^credit|^dummy[FTC]|Large\\.|Large$|Poo|Small|Grac|InKind|Cash|^Arm$|BSta|Time"
+exclD.base <- "^PureCo|^credit|With|.Size|Poo|Trad|Time|InKind|Cash|^Arm$|BSta"
+exclDG.base <- "^PureCo|^credit|^dummy[FTLCS]|.Size|Poo|Witho|InKind|Cash|^Arm$|BSta|Time"
+excla.base <- "^PureCo|^credit|dummy[TC]|Large$|Large\\.|LargeG|Witho|Poor|Small|^Arm$|BSta|Time"
+exclT.base <- "^PureCo|^credit|Arm$|^dummy[LTC].*[a-z]$|With|.Size|Poo|Trad|InKind|Cash|^Arm$|BSta"
+exclTa.base <- "^PureCo|^credit|ze$|ce$|nd$|Trad|Cow|Cash|Large$|Large\\.|LargeG|Witho|Poor|Small|^Arm$|BSta"
+exclDa.base <- "^PureCo|^credit|^dummy[LTC].*[a-z]$|Large$|Large\\.|LargeG|Witho|Poor|Small|^NumCows$|^Arm$|BSta|Time"
+# For j == 4, 6, RM reduces sample to T = 3 (hence 2 period FD data), so drop period 2-3 dummy
+for (a in Assuffixes) {
+  if (a != "S" & !grepl("D", a)) {
+    assign(paste0("excl", a, 1), "Floo|RM|Eff|HH|Head|0$") 
+    assign(paste0("excl", a, 2), "Floo|RM|Eff|HH|Head")
+    assign(paste0("excl", a, 3), "RM|Eff")
+    assign(paste0("excl", a, 4), "Floo|RM|Eff|HH|Head|0$")
+    assign(paste0("excl", a, 5), "Floo|RM|Eff|HH|Head")
+    assign(paste0("excl", a, 6), "RM|Eff")
+  } else if (a == "S") {
+    assign(paste0("excl", a, 1), "Floo|RM|HH|Head|0$")
+    assign(paste0("excl", a, 2), "Floo|RM|HH|Head")
+    assign(paste0("excl", a, 3), "RM")
+    assign(paste0("excl", a, 4), "Floo|RM|HH|Head|0$")
+    assign(paste0("excl", a, 5), "Floo|RM|HH|Head")
+    assign(paste0("excl", a, 6), "RM")
+  } else if (grepl("D", a)) {
+    assign(paste0("excl", a, 1), "Floo|RM|HH|Head|0$")
+    assign(paste0("excl", a, 2), "Floo|RM|HH|Head")
+    assign(paste0("excl", a, 3), "RM")
+    assign(paste0("excl", a, 4), "Floo|RM|HH|Head|0$")
+    assign(paste0("excl", a, 5), "Floo|RM|HH|Head")
+    assign(paste0("excl", a, 6), "RM")
+  }
+}
+@

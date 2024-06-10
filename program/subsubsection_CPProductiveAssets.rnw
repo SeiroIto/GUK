@@ -1,0 +1,96 @@
+<<>>=
+patblW <- readRDS(paste0(path1234, "PAssetItems.rds"))
+patblW <- a2b.data.table(patblW, NA, 0)
+patblWPC <- readRDS(paste0(path1234, "NarrowPAssetItems.rds"))
+patblWPC <- a2b.data.table(patblWPC, NA, 0)
+@
+Productive assets are sorveyed consistently across rounds, except hand pumps that were asked only in round 1. Major productive assets (above 300 entries) are \Sexpr{tolower(patblW[!grepl("Sum|Total", pa) & (Entries.1+Entries.2+Entries.3+Entries.4>300) , pa])}. Bee boxes have increased dramatically from round 2. Sickles/dao/axes/spades and fishing nets have decreased dramatically since round 2. These indicate that household production may have shifted to more domestic-oriented tasks. There is no indication that productive asset holding related to cattle rearing has increased.
+
+<<cp merge prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+@
+<<cp ProdAsset set parameters original HHs>>=
+FileName <- "CompletePanelProdAsset"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TPa")
+listheader <- paste0("pa", regsuffixes)
+<<cp prod asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "ProdAssetCovariateSelectionANCOVA2.R"))
+<<cp get jay from pa covariate selection>>=
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+# Select only HHs with complete panel
+NeA1 = copy(NeA1R2[tee > 1 & CompleteAssetPanel, ])
+NeA1[, grepout("Net|^R|To|Narrow", colnames(NeA1)) := NULL]
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("PAssetAmount", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+NeA1[, grepout("Value", colnames(NeA1)) := NULL]
+<<cp display covariates prod asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<cp prod asset regression estimation original HHs>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<cp prod asset values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap ="", fig.lp = 'Figure '>>=
+library(ggplot2)
+dsub <- subset(NeAfig, !is.na(Arm))
+dsub[, Arm := factor(Arm, labels = armsC)]
+#dsub[, Arm := factor(Arm, levels = rev(armsC))]
+dsub[, teeArm := factor(paste0(Arm, tee), levels = (paste0(armsC, rep(1:4, each = 4))))]
+g <- 
+ggplot(data = dsub, 
+  aes(y = PAssetAmount+1, fill = Arm, col = Arm, group = Arm)) + 
+  geom_boxplot(outlier.size = 0, fill = NA, notch = T, notchwidth = .4, size = .25,
+    aes(x = tee, group = teeArm)) +
+  scale_y_log10(breaks = c(0, 250, 500, 1000, 5000, 10000, 20000, 50000, 100000, 500000)) +
+  geom_point(aes(x = tee, colour = Arm), size = .5, alpha = .7, 
+    position=position_jitterdodge(jitter.width = .3, dodge.width = .75))+
+  scale_colour_manual(values = c("red", "blue", "purple", "green")) +
+  #scale_y_continuous(breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"), 
+    legend.position = "bottom")
+#dsub <- diamonds[sample(nrow(diamonds), 1000), ]
+#ggplot(dsub, aes(x = cut, y = carat, fill = clarity)) +
+#  geom_boxplot(outlier.size = 0) +
+#  geom_point(pch = 21, position = position_jitterdodge())
+ggsave(
+  paste0(pathprogram, 
+    "EstimationMemo/figure/CompletePanelProdAssets.png"),
+  g,
+  width = 12*2, height = 8*2, units = "cm",
+  dpi = 300
+ )
+pdf(file =  
+  paste0(pathprogram, 
+    "EstimationMemo/figure/CompletePanelProdAssets.pdf"),
+  , width = 12*2/2.54, height = 8*2/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+<<>>=
+# dummy chunk
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig prod asset survey round}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/CompletePanelProdAssets.pdf")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Productive assets are \Sexpr{tolower(patblW[!grepl("Sum|Total", pa), pa])}. \\[1ex]
+\end{tabular}
+}
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAProdAssetResults.rnw"))}
+
+
+

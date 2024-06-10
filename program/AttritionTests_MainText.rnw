@@ -1,0 +1,67 @@
+Among \Sexpr{nrow(ar)} observations, there are \Sexpr{length(unique(ar[grepl("floo", BStatus), groupid]))} whose villages are washd away and \Sexpr{nrow(ar[grepl("^g.*reje", BStatus), ])} who by group rejected the assigned arms which are \Sexpr{names(table0(ar[grepl("^g.*reje", BStatus), Arm]))} with \Sexpr{table(ar[grepl("^g.*reje", BStatus), Arm])} individuals, respectively. There are \Sexpr{table(ar[grepl("^i.*rej", BStatus), Arm])} individuals who individually rejected \Sexpr{names(table(ar[grepl("^i.*rej", BStatus), Arm]))}, respectively. Among attrited HHs, when were they lost?
+<<>>=
+table(ar[Attrited == 1L, Tee])
+@
+Reasons for attrition and relation to flood damage.
+<<>>=
+table0(ar[Attrited == 1L, .(FloodInRd1, BStatus)])
+table0(ar[Attrited == 1L, .(AssignOriginal, BStatus)])
+@
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling \Sexpr{PermRepTimes} times.
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[1], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection\label{tab reject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, selection.criteria[2], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection\label{tab Greject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "GRejectedPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection\label{tab Ireject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "IRejectedPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{Rejected} and \textsf{Nonrejected} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. Individual rejection is observed only for non group rejecters. Sample size is smaller in \textsc{Table \ref{tab Ireject perm}} as \Sexpr{nrow(ar[grepl("gr", BStatus), ])} observations are dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+	\textsc{\normalsize Table \ref{tab attrit perm}} shows results from tests of independence between attriters and non-attriters. We see a moderate rate of attrition is not correlated with household level characteristics. 
+
+	\textsc{\normalsize Table \ref{tab reject perm}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters). It shows that smaller household size, being affected by flood at the baseline, smaller livestock holding, and less exposue to cattle growing are correlated with opting out offered type of lending. Acknowledging the reasons for rejection can be different, we tested the independence of each characteristics in the cases of group rejecters (vs. non group rejecters) and individual rejecters (vs. non-individual rejeceters) in 
+\textsc{\normalsize Table \ref{tab Greject perm}} and \textsc{\normalsize Table \ref{tab Ireject perm}}. One sees that \textsf{HeadLiteracy} is fewer among the group rejecters, while smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{LivestockValues} and \textsf{NumCows} are associated with individual rejecters. It is difficult to understand group level decisions, but individual decisions not to participate may be more straightforward: Smaller household size may indicate difficulty in securing the cattle production labour in a household, being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+

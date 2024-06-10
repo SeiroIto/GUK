@@ -1,0 +1,29 @@
+Previous literature I.2
+	Behavioral foundation of entrepreneurship:
+		Astebro et al. (2014): review paper
+		Fafchamps and Quinn (forthcoming): random assignment of peers to entrepreneurs in Ghana
+		Kremer et al. (2013, AER P&P): behavior biases' impact on firm performance in Kenyan retail shops; using risk games
+		Fehr and List (2004, JEEA): Trust games to CEOs in Costa Rica
+	Reminder as a tool to overcome limited attention issues:
+		Several RCTs in the context of savings (e.g., Karlan et al. 2016; Kast et al. 2012)
+		On-going RCT on micro entrepreneurs in India by Goto et al. (2017)
+
+Previous literature I.3
+	Management as a technology
+		Bloom et al (2016): theory and global evidence supporting the theory
+	RCTs to improve management skills of micro entrepreneurs, resulting in higher productivity or adoption of good management
+		Bloom et al. (2016 QJE): inventory control and factory information training in India
+		Higuchi et al. (2015 JEBO): KAIZEN training in Vietnam
+		More KAIZEN RCTs in Africa by Sonobe and his co.
+
+Additional Literature
+
+Astebro, Thomas, Holger Herz, Ramana Nanda, and Robert A. Weber (2014) "Seeking the Roots of Entrepreneurship: Insights from Behavioral Economics." Journal of Economic Perspectives 28(3): 49-70.
+Bloom, Nicholas, Raffaella Sadun, and John Van Reenen (2016) "Management as a Technology", NBER Working Paper 22327, June 2016.
+Fafchamps, Marcel, and Simon Quinn (forthcoming) "Networks and Manufacturing Firms in Africa: Results from a Randomized Field Experiment", forthcoming in World Bank Economic Review.
+Fehr, Ernst, and John A. List (2004) "The Hidden Costs and Returns of Incentives: Trust and Trustworthiness among CEOs", Journal of the European Economic Association, 2(5): 743-71.
+Goto, Jun, Hironori Ishizaki, Takashi Kurosaki, Yasuyuki Sawada, and Shunsuke Tsuda (2017) "Old and New India: A Comparison of Entrepreneurs in Delhi using Experimental and Non-Experimental Data," mimeo, February 2017.
+Higuchi, Y., Nam, V.H., and Sonobe, T. (2015) "Sustained impacts of Kaizen training", Journal of Economic Behavior and Organization, 120: 189-206.
+Karlan, D., McConnell, M., Mullainathan, S., & Zinman, J. (2016). "Getting to the top of mind: How reminders increase saving". Management Science.
+Kast, F., Meier, S., & Pomeranz, D. (2012). "Under-savers anonymous: Evidence on self-help groups and peer pressure as a savings commitment device", NBER working paper, No. w18417.
+Kremer, Michael, Jean Lee, Jonathan Robinson, and Olga Rostapshova, "Behavioral biases and firm behavior: Evidence from Kenyan retail shops," American Economic Review, 2013, 103(3): 362-368.

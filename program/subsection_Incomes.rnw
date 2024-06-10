@@ -1,0 +1,48 @@
+<<ReadTrimIncome ANCOVA by R file, warning = F>>=
+source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
+@
+Income sources are mainly labour incomes (\textsf{lab}) and farm revenues (\textsf{far}) with \Sexpr{nrow(lab[o800 == 1L & tee == 2,])} and \Sexpr{nrow(far[o800 == 1L & tee == 2,])} observations at baseline, respectively. 
+
+<<Labour income regression set parameters original HHs>>=
+FileName <- "LabourIncome"
+FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("lb", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<Labour incomes select covariates original HHs>>=
+source(paste0(pathprogram, "LabourIncomeCovariateSelectionANCOVA2.R"))
+<<get jay from income covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- c(rep("TotalHHLabourIncome", 3))
+DataToUse1 <- DataToUse2 <- rep("lab", 3)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+<<income ANCOVA estimation>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<Farm income regression set parameters original HHs>>=
+FileName <- "FarmIncome"
+FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("fr", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<Farm incomes select covariates original HHs>>=
+source(paste0(pathprogram, "FarmIncomeCovariateSelectionANCOVA2.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- rep("TotalRevenue", 3)
+DataToUse1 <- DataToUse2 <- rep("far", 3)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+<<Farm income ANCOVA estimation>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<>>=
+#dummy chunk
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAIncomeResults.rnw"))}

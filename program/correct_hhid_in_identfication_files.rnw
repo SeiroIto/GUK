@@ -1,0 +1,21 @@
+<<>>=
+idf[, hhid := asc(hhid)]
+idf[grepl(990817, hhid), hhid := gsub("990817", "990819", hhid)]
+idf[grepl("98.*544", hhid), hhid := gsub("544", "545", hhid)]
+idf[grepl("98070511", hhid), hhid := gsub("98070511", "99070511", hhid)]
+idf[grepl("9808159108|9808159119|9808159120", hhid), 
+	hhid := gsub("9808159", "8159", hhid)]
+idf[grepl("9808159202|9808159212", hhid), 
+	hhid := gsub("98081592", "81591", hhid)]
+idf[grepl("^u.*vati|^n.*vati", village) & grepl("^98", hhid), 
+	hhid := gsub("9807", "9907", hhid)]
+idf[grepl("kosk|koach", village) & grepl(3115, hhid), 
+	hhid := gsub("9807", "9907", hhid)]
+idf[grepl("hasd", village) & grepl(71010, hhid), 
+	hhid := gsub("9807", "9907", hhid)]
+idf[grepl("harud", village) & grepl("60|61", hhid), 
+	hhid := gsub("311", "911", hhid)]
+idf[grepl("bill", village) & grepl("240|241", hhid), 
+	hhid := gsub("817", "819", hhid)]
+idf[, hhid := asn(hhid)]
+@

@@ -1,0 +1,22 @@
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_knit$set(base.dir = 'c:/data/GUK/analysis/program/')
+opts_chunk$set(fig.path='figure/ImpactEstimationOriginal1600Memo/', cache.path='cache/ImpactEstimationOriginal1600Memo/', 
+cache = F, echo = F, results = 'markup', 
+tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+pathsave <- paste0(path, "save/")
+pathprogram <- paste0(path, "program/")
+pathsaveOriginal1600Memo <- paste0(pathsave, "Original1600Memo/")
+pathsaveHere <- pathsaveOriginal1600Memo
+pathsaveNoFlood <- paste0(pathsave, "NoFlood/")
+pathcleaned <- paste0(path0, "/received/cleaned_by_RA/")
+path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
+path234 <- paste0(pathcleaned, "only_panel_2_3_4/")
+path234E <- paste0(path234, "only_endline/")
+source(paste0(pathprogram, "tabulate_est_for_GUK_data.R"))
+source(paste0(pathprogram, "SubstTable.R"))
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+RMDenomination <- 1000
+@

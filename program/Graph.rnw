@@ -1,0 +1,123 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/Graph/"); library(knitr); knit("Graph.rnw", "Graph.tex"); system("platex Graph"); system("pbibtex Graph"); system("dvipdfmx Graph")
+
+
+
+
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
+\newcounter{armindex}
+\renewcommand\Routcolor{\color{gray30}}
+\newcommand{\SetLengthSkip}[1]{\setlength{\baselineskip}{#1}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newcommand{\gettikzxy}[3]{%
+  \tikz@scan@one@point\pgfutil@firstofone#1\relax
+  \edef#2{\the\pgf@x}%
+  \edef#3{\the\pgf@y}%
+}
+\def\BibTeX{{\textrm{B}\kern-.05em{\textsc{i}\kern-.025em \textsc{b}}\kern-.08em
+    \textrm{T}\kern-.1667em\lower.7ex\hbox{\textrm{E}}\kern-.125em\textrm{X} }}
+\def\BGColour{green!10}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\usepackage[framemethod=TikZ]{mdframed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{intersections, calc, arrows, decorations, decorations.pathreplacing, backgrounds, positioning, fit, shadows}
+\usepackage{pgfplots, pgfplotstable}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.3}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+\mdfsetup{
+linecolor=black!40,
+outerlinewidth=1pt,
+roundcorner=.5em,
+innertopmargin=1ex,
+innerbottommargin=.5\baselineskip,
+innerrightmargin=1em,
+innerleftmargin=1em,
+backgroundcolor=blue!10,
+%userdefinedwidth=1\textwidth,
+shadow=true,
+shadowsize=6,
+shadowcolor=black!20,
+frametitlebackgroundcolor=cyan!40,
+frametitlerulewidth=10pt,
+splittopskip=2\topsep
+}
+\global\mdfdefinestyle{SecItemize}{%
+linecolor=black!40,
+outerlinewidth=1pt,
+roundcorner=1em,
+innertopmargin=1ex,
+innerbottommargin=.5\baselineskip,
+innerrightmargin=1em,
+innerleftmargin=1em,
+backgroundcolor=blue!10,
+%userdefinedwidth=1\textwidth,
+shadow=true,
+shadowsize=2,
+shadowcolor=black!20,
+frametitlebackgroundcolor=cyan!10,
+frametitlerulewidth=10pt
+}
+
+\newcommand{\myquote}[1]{\begin{quotation}#1\end{quotation}}
+\newcommand{\BGbox}[1]{\par\noindent\colorbox{lightblue}
+{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{#1}}}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+\begin{figure}
+\hspace{-3em}\mpage{\linewidth}{
+\hfil\textsc{\normalsize Figure \refstepcounter{figure}\thefigure: A poverty trap with goats and cattle\label{fig poverty trap}}\\
+
+\noindent\begin{adjustbox}{width=\linewidth}
+\input{GoatCowProdFunctions3.tkz}\hspace{-2em}
+\input{poverty_trapCompoundScurve3.tkz}
+\end{adjustbox}
+
+\noindent\hfil\mpage{12cm}{\footnotesize Note: The current period per capita capital $k_{t}$ is on the horizontal axis, the next period per capita capital $k_{t+1}$ is on the vertical axis. The production function of cattle $f(k_{t})$ is multiplied with a fixed saving rate $s$ and is added per capita capital net of depreciation $(1-\delta)k_{t}$ that is passed on to the next period. Depreciation rate is constant for all the levels of capital. Similar description applies to the goat production. The left figure shows each production sets, the right figure shows the contour of two production sets and the capital depreciation schedule. Red points are stable equilibria, blue points are unstable equilibria. \setlength{\baselineskip}{8pt} }
+}
+\end{figure}
+
+
+\end{document}

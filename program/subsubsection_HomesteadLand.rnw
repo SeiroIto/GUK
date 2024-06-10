@@ -1,0 +1,354 @@
+<<>>=
+# merge AmountFilled stored in Z
+Z <- readRDS(paste0(path1234, "data_read_in_a_list_with_treatment_patched.rds"))
+hass3 <- Z[[grep("MergedA", names(Z))]]
+hass3[, SvyTee := 1:.N, by = .(hhid, survey)]
+assL0 <- hass3[SvyTee==1 & AmountFilled > 0, .(hhid, survey, AmountFilled, Added)]
+# create base data for merge: o800 and rd1-4
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+arA. <- unique(arA[o800 == 1L, .(Arm, hhid, o800, ObPattern, BStatus, TradGroup)])
+arA.[, (paste0("rd.", 1:4)) := 1]
+arA.[, Arm := factor(Arm, labels = armsC)]
+arA.L <- reshape(arA., direction = "long", idvar = c("Arm", "hhid", "BStatus"),
+  varying = grepout("rd", colnames(arA.)))
+arA.L[, rd := NULL]
+setnames(arA.L, "time", "survey")
+setkey(arA.L, hhid, survey)
+assL1 <- merge(assL0, arA.L, by = c("hhid", "survey"), all.y = T)
+# only borrowers (and three time loan receivers in Trad)
+assL <- assL1[!grepl("tw|do", TradGroup) & grepl("borr", BStatus), ]
+assL[is.na(AmountFilled), AmountFilled := 0]
+saveRDS(assL, paste0(pathsaveHere, "assL.rds"))
+@
+Nonzero reported residential land holding among 800 (776) HHs. Around 40-50\% of respondents report nonzero residential land holding. 
+<<>>=
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+assL[o800 == 1L & !grepl("tw|dou", TradGroup), .(NonZero = sum(AmountFilled > 0)/.N), 
+  by = .(Arm, survey)][order(Arm, survey)]
+@
+HHs reporting zero residential land holding are, except for the \textsf{traditional} arm, substantially poorer than HHs who report nonzero residential land holding.
+<<>>=
+assL0 <- assL[o800 == 1L & !grepl("tw|dou", TradGroup), ]
+assL0[, ZeroLand := mean(AmountFilled) == 0, by = hhid]
+NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
+NeA1[, ZeroLandHolding := F]
+NeA1[hhid %in% assL0[(ZeroLand), hhid], ZeroLandHolding := T]
+NeA1[tee == 2, .(MeanNetValue = mean(NetValue, na.rm = T)), by = .(Arm, ZeroLandHolding)][
+  order(Arm, ZeroLandHolding)]
+@
+
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Abu-san's email on Jan 30, 2020]	I checked the questionnaire and found that from round 2, landholding information has been included in the asset information, which made the asset data inflated from round 2. Since landholding is something that is time-invariant for the ultra-poor households, either we can add the landholding information in round 1 or create an asset holding information deleting the landholding information from round 2 onwards, to make the valid comparison. $\Rightarrow$ This is done and saved as \textsf{AmountFilled}.
+\end{description}
+
+
+<<land holding scatter with zero, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Land holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+# mean with zero and without zero
+MeanW0 <- assL[, .(
+  mean.with0 = mean(AmountFilled, na.rm = T),
+  median.with0 = median(AmountFilled, na.rm = T)
+  ), by = .(Arm, survey)]
+MeanWO0 <- assL[AmountFilled > 0, .(
+  mean.without0 = mean(AmountFilled, na.rm = T),
+  median.without0 = median(AmountFilled, na.rm = T)
+  ), by = .(Arm, survey)]
+setkey(MeanW0, Arm, survey)
+setkey(MeanWO0, Arm, survey)
+mm <- MeanW0[MeanWO0]
+mmL <- reshape(mm, direction = "long", idvar = c("Arm", "survey"),
+  varying = grepout("with", colnames(mm)))
+setnames(mmL, c("time", "mean", "median"), c("IncludeZero", "val.mean", "val.median"))
+mmLL <- reshape(mmL, direction = "long", idvar = c("Arm", "survey", "IncludeZero"),
+  varying = grepout("val", colnames(mmL)))
+setnames(mmLL, c("time", "val"), c("stat", "AmountFilled"))
+# scatters with means
+g <- ggplot(data = assL,
+    aes(x = 1+AmountFilled, y = Arm, colour = Arm)) + 
+  geom_point(size = .25, position = position_jitter(width = .2, height = 0.25, seed = 123))+
+  geom_point(data = subset(mmLL, stat == "mean" & IncludeZero == "with0"), 
+    size = 1.5, color = "red", shape = "square",
+    aes(x = 1+AmountFilled, y = Arm))+
+  geom_point(data = subset(mmLL, stat == "mean" & IncludeZero == "without0"), 
+    size = 1.5, color = "blue", shape = "square",
+    aes(x = 1+AmountFilled, y = Arm))+
+  #geom_density() + 
+  #scale_x_continuous(label = lclass[, LCval], breaks = 0:10, name = "land holding deciles") +
+  scale_x_log10(breaks = c(1, 1000, 5000, 50000, 200000), limits = c(1, 200000)) +
+  theme(
+    axis.text.x = element_text(size = 6, angle = 30, vjust = .5, hjust = 1), 
+    axis.text.y = element_text(size = 6, angle = 45, vjust = .5, hjust = 1), 
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    legend.position = "none"
+   )+
+  facet_grid(. ~ survey)
+# # land holding quantile for all sample periods
+# assL[, quantile(AmountFilled, probs=seq(0, 1, .1))]
+# assL[AmountFilled > 0, LandClass := as.integer(cut(AmountFilled, 
+#   unique(quantile(AmountFilled, probs=seq(.1, 1, .1))), include.lowest=TRUE))]
+# assL[is.na(LandClass), LandClass := 0] 
+# lclass <- data.table(LandClass = 0:10, 
+#   LCval = c(0, as.integer(quantile(assL[AmountFilled > 0, AmountFilled], probs=seq(.1, 1, .1)))))
+# setkey(lclass, LandClass); setkey(assL, LandClass)
+# assL0 <- lclass[assL]
+# assl <- assL0[, .(LCval, num = .N), by = .(Arm, LandClass, survey)]
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "LandHoldingScatterWithZero.png")
+    , g,
+    width = 13, height = 4, units = "cm", dpi = 300
+ )
+<<land holding scatter without zero, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Land holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+# scatters with means
+g <- ggplot(data = subset(assL, AmountFilled > 0),
+    aes(x = AmountFilled, y = Arm, colour = Arm)) + 
+  geom_point(size = .25, position = position_jitter(width = .2, height = 0.25, seed = 123))+
+  geom_point(data = subset(mmLL, stat == "mean" & IncludeZero == "with0"), 
+    size = 1.5, color = "red", shape = "square",
+    aes(x = AmountFilled, y = Arm))+
+  geom_point(data = subset(mmLL, stat == "mean" & IncludeZero == "without0"), 
+    size = 1.5, color = "blue", shape = "square",
+    aes(x = AmountFilled, y = Arm))+
+  #geom_density() + 
+  #scale_x_continuous(label = lclass[, LCval], breaks = 0:10, name = "land holding deciles") +
+  scale_x_log10(breaks = c(1000, 5000, 50000, 200000), limits = c(1000, 200000)) +
+  theme(
+    axis.text.x = element_text(size = 6, angle = 30, vjust = .5, hjust = 1), 
+    axis.text.y = element_text(size = 6, angle = 45, vjust = .5, hjust = 1), 
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    legend.position = "none"
+   )+
+  facet_grid(. ~ survey)
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "LandHoldingScatterWithoutZero.png")
+    , g,
+    width = 13, height = 4, units = "cm", dpi = 300
+ )
+@
+<<land holding AmountFilled histogram, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Land holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+MeanW0 <- assL[BStatus == "borrower", .(
+  mean.with0 = mean(AmountFilled, na.rm = T),
+  median.with0 = median(AmountFilled, na.rm = T)
+  ), by = .(Arm, survey)]
+#FilledAmountQuantiles <- 
+#  unique(quantile(assL[!is.na(AmountFilled), AmountFilled], probs=seq(0, 1, .1), 
+#    include.lowest=TRUE))
+#assL[, LAssetClass := as.integer(cut(AmountFilled, FilledAmountQuantiles))]
+#assL[is.na(LAssetClass), LAssetClass := 0L]
+g <- ggplot(data = subset(assL, AmountFilled > 0 & BStatus == "borrower"), 
+  aes(x=log(AmountFilled))) + 
+  geom_histogram(breaks = 1:14) + 
+  scale_x_continuous(
+    lim = c(5, 14), breaks = 5:14,
+    name = "log (AmountFilled)") +
+  geom_vline(data = MeanW0, 
+    aes(xintercept=log(mean.with0), colour = "mean"), 
+    colour = "blue", linetype = "dashed") +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(size = 6, angle = 30, vjust = .5, hjust = 1), 
+    axis.text.y = element_text(size = 6, vjust = .5, hjust = 1), 
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(t=0, r=.0, b=0, l=.0, "cm"))) + 
+  facet_grid(Arm ~ survey)
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "LandHoldingHistogramByRound.png")
+    , g,
+    width = 13, height = 8, units = "cm", dpi = 300
+ )
+<<land holding real AmountFilled histogram, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Land holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+MeanW0 <- assL[BStatus == "borrower", .(
+  mean.with0 = mean(AmountFilled, na.rm = T),
+  median.with0 = median(AmountFilled, na.rm = T)
+  ), by = .(Arm, survey)]
+#FilledAmountQuantiles <- 
+#  unique(quantile(assL[!is.na(AmountFilled), AmountFilled], probs=seq(0, 1, .1), 
+#    include.lowest=TRUE))
+#assL[, LAssetClass := as.integer(cut(AmountFilled, FilledAmountQuantiles))]
+#assL[is.na(LAssetClass), LAssetClass := 0L]
+g <- 
+ggplot(data = subset(assL, AmountFilled > 0 & BStatus == "borrower"), 
+  aes(x=AmountFilled)) + 
+  geom_histogram(bins = 10) + 
+  scale_x_continuous(
+    lim = c(0, 40000),
+    name = "AmountFilled") +
+  geom_vline(data = MeanW0, 
+    aes(xintercept=mean.with0, colour = "mean"), 
+    colour = "blue", linetype = "dashed") +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(size = 6, angle = 30, vjust = .5, hjust = 1), 
+    axis.text.y = element_text(size = 6, vjust = .5, hjust = 1), 
+    strip.text.x = element_text(color = "blue", size = 6, 
+      margin = margin(0, .5, 0, .5, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 6, 
+      margin = margin(t=0, r=.0, b=0, l=.0, "cm"))) + 
+  facet_grid(Arm ~ survey)
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "LandHoldingHistogramByRoundRealValues.png")
+    , g,
+    width = 13, height = 8, units = "cm", dpi = 300
+ )
+@
+<< histogram of land holding ObPattern 1111, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.lp = 'Figure '>>=
+library(ggplot2)
+assL <- readRDS(paste0(pathsaveHere, "assL.rds"))
+assL1 <- assL[o800==1L & AmountFilled > 0  & 
+  grepl("1111", ObPattern) & grepl("bor", BStatus), ]
+assL1[, Arm := factor(Arm, labels = armsC)]
+assL1[, teeArm := factor(paste0(Arm, survey), levels = (paste0(armsC, rep(1:4, each = 4))))]
+g <- ggplot(data = assL1, 
+  aes(y = AmountFilled+1, fill = Arm, col = Arm, group = Arm)) + 
+  geom_boxplot(outlier.size = 0, fill = NA, notch = T, notchwidth = .4, size = .25,
+    aes(x = survey, group = teeArm)) +
+  scale_y_log10(breaks = c(200, 1000, 5000, 10000, 20000, 50000, 100000, 200000)) +
+  geom_point(aes(x = survey, colour = Arm), size = .5, alpha = .7, 
+    position=position_jitterdodge(jitter.width = .3, dodge.width = .75))+
+  scale_colour_manual(values = c("red", "blue", "purple", "green")) +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"), 
+    legend.position = "bottom")
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/HomesteadLand.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+@
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients\label{fig HomesteadLandHolding}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/HomesteadLand.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Loan recipients only.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, including zero holding\label{fig LandWithZero}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/LandHoldingScatterWithZero.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Log of 1+land holding is displayed on horizontal axises. Red squares are means including zero holding for respective Arm-round. Blue squares are means excluding zero holding for respective Arm-round. Loan recipients only.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, excluding zero holding\label{fig LandWithoutZero}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/LandHoldingScatterWithoutZero.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Log of land holding is displayed on horizontal axises. Zero land holders are excluded. Red squares are means including zero holding for respective Arm-round. Blue squares are means excluding zero holding for respective Arm-round. Loan recipients only.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero\label{fig LandClass}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/", "LandHoldingHistogramByRound.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:&  Loan recipients only. Logarithm of land holding is displayed on horizontal axises. Zero land holding is excluded from the graph. Mean including zero holding is shown as a dotted line in each panel.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero, real values\label{fig LandClass real}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/", "LandHoldingHistogramByRoundRealValues.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:&  Loan recipients only. Land holding is displayed on horizontal axises. Zero land holding is excluded from the graph. Mean including zero holding is shown as a dotted line in each panel.\\[1ex]
+\end{tabular}
+}
+
+Land holding distributions look different between arms at the baseline (\textsc{\small Figure \ref{fig LandClass}}). This can be a consequence of copying the round 2 values which was justified under the assumption that all the round 1 land acquisition is reported in round 2 when our interviewer asks about it. %Even with this caveat, \textsf{traditional} arm has more uniform distribution than the other arms. 
+By round 4, distributions become more skewed to left in all arms, indicating that some members have increased their land holding, only that such a tendency is weakest among the \textsf{traditional} arm. 
+
+%Land holding before copying values from the 2nd round shows the same picture but only from 2014 onwards (\textsc{\small Figure \ref{fig RawLandClass}}). This is because we copied values from 2014 to construct values in 2013. The assumption there was that new land acquisition is all reported. There are only 8 cases of new land acquisition, so the 2013 distributions are almost identically copied from 2014 distributions. However, the distributions in 2015 and 2017 look very different. It suggests that land holding is not invariant and we are assuming that all the variations are due to the intervention. So long as our assumption of complete and accurate new land acquisition is true, then the wealth variations after the intervention should reveal its wealth impacts.
+
+
+<<NA in land holding info, echo = F>>=
+ass0 <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+if (Only800) ass0 <- ass0[o800 == 1L, ]
+ass0[, grepout("Loan|Forced|00|^Time$|\\.before|\\.after", colnames(ass0)) := NULL]
+ass0 <- ass0[!(hhid == 7043715 & NLHAssetAmount == 0), ]
+ass0[, Tee := .N, by = hhid]
+#destat(ass0[, grepout("UD", colnames(ass0)), with = F])
+#destat(ass0[, grepout("^(?=^dummy)", colnames(ass0)), with = F])
+setkey(ass0, survey, Arm)
+# merge imputed/filled-in land holding info
+hasL <- readRDS(paste0(pathsaveHere, "LandNAFilled.rds"))
+hasL <- hasL[, .(hhid, year, purchase_in_last_1_year)]
+setnames(hasL, "year", "Year")
+ass. <- merge(ass0, hasL, by = c("hhid", "Year"), all.x = T)
+<<tabulate NA in land holding info>>=
+# land information is severely imperfect. Almost 1/2 of respondents do no reply.
+cbind(tb <- dcast(ass.[,.(num=length(unique(hhid))), by = .(tee, Arm)], tee ~ Arm, value.var = "num"), 
+  Sum = apply(tb[, -1], 1, sum))
+lown <- ass.[, .("NA"=sum(is.na(AmountFilled)), "NonNA"=sum(!is.na(AmountFilled))), by = .(Arm, survey)]
+lownW <- reshape(lown, direction = "wide", idvar = "Arm", timevar = "survey", 
+  v.names = grepout("NA", colnames(lown)))
+setcolorder(lownW, c("Arm", paste0(rep(c("NA.", "NonNA."), each = 4), 1:4)))
+lownW <- rbind(lownW, t(c("Arm"="Total", apply(lownW[, -1], 2, sum))), use.names = T, fill = T)
+@
+Land entries by arm and round:
+<<>>=
+lownW
+<<land set parameters, warning = F>>=
+source(paste0(pathprogram, "ReadTrimLandANCOVA.R"))
+FileName <- "Land"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes", 
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+# regression specifications
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("ld", regsuffixes)
+# DataToUse: 
+#  DataToUse1: "",  P, a, T, Ta
+#  DataToUse2: TP, TPa
+# Each data uses HAssetAmount*3, PAssetAmount*3 regressions + dummy regression
+DataToUse1 <- DataToUse2 <- rep("ass.1", 7)
+Regressands <- rep("AmountFilled", 7)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<land select covariates, cache = F, warning = F, eval = T>>=
+source(paste0(pathprogram, "LandCovariateSelectionANCOVA2.R"))
+@
+<<estimate land ancova, cache = F, warning = F, eval = T>>=
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+jay
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVALandResults.rnw"))}
+
+\textsc{\normalsize Table \ref{tab ANCOVA land period}} shows that, compared to \textsf{traditional} arm, land holding is larger for \textsf{large}, \textsf{large grace}, and \textsf{cattle} arms in round 2. The difference with \textsf{traditional} arm is maintained only for \textsf{large} arm throughout the rounds, and become negligible for \textsf{large grace} and \textsf{cattle} arms. 
+

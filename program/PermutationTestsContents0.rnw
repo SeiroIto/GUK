@@ -1,0 +1,318 @@
+<<ReadTrimSchoolingFDData, eval = F, cache = F, child='c:/data/GUK/analysis/program/ReadTrimSchoolingFDData.rnw'>>=
+<<ReadTrimAssetFDData, eval = F, cache = F, warning = F, child='c:/data/GUK/analysis/program/ReadTrimAssetFDData.rnw'>>=
+<<ReadTrimLivestockFDData, eval = F, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockFDData.rnw'>>=
+<<echo = F, warning = F, results = "hide">>=
+PermRepTimes <- 100000
+#Dr0 <- readRDS(paste0(pathsaveHere, "DataInList_UsedInEstimation.rds"))
+#Dr0[["schooling"]][, .(Arm, groupid, hhid, HHMid, tee, HeadLiteracy, HeadAge, 
+#  EldestSon, EldestDaughter, HHsize, FloodInRd1, Enrolled, Age_1, sex)]
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+#ps1 <- s01[, .(Arm, groupid, hhid, mid, tee, HeadLiteracy, HeadAge, 
+#  EldestSon, EldestDaughter, HHsize, FloodInRd1, Enrolled, Age_1, sex)]
+ps0 <- s1x[, .(Arm, o800, groupid, HHMid, tee, HeadLiteracy, HeadAge, 
+  EldestSon, EldestDaughter, HHsize, FloodInRd1, Enrolled, 
+  AgeComputed, Female)]
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))
+#ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
+#lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
+NeA1R <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
+rsk <- readRDS(paste0(pathsaveHere, "RiskPreferences.rds"))
+<<>>=
+ps0 <- ar[o800 == 1 & tee == 1 & !grepl("tw|do", TradGroup), 
+  .(Arm, o800, groupid, tee, HeadLiteracy, HeadAge, HHsize, FloodInRd1)]
+pslv0 <- lvo[o800 == 1 & tee == 1 & !grepl("tw|do", TradGroup), 
+  .(Arm, o800, groupid, hhid, tee, TotalImputedValue, NumCows)]
+psas0 <- ass[o800 == 1 & tee == 1 & !grepl("tw|do", TradGroup), 
+  .(Arm, o800, groupid, hhid, tee, HAssetAmount, PAssetAmount)]
+neass0 <- NeA1R[o800 == 1 & tee == 1 & !grepl("tw|do", TradGroup), 
+  .(Arm, groupid, hhid, NarrowNetValue, NetValue, BStatus, AttritIn)]
+neass0[, Attrited := 0L]
+neass0[hhid %in% hhid[AttritIn < 9], Attrited := 1L]
+neass0[, c("Rejected", "GRejected", "IRejected") := 0L]
+neass0[grepl("^i.*rej", BStatus), IRejected := 1L]
+neass0[grepl("^g.*rej", BStatus), GRejected := 1L]
+neass0[IRejected == 1L | GRejected == 1L, Rejected := 1L]
+neass0[, NonAttBorrower := 1L]
+neass0[Attrited == 1 | Rejected == 1, NonAttBorrower := 0L]
+rsk0 <- merge(
+  ar[o800 == 1 & tee == 1 & !grepl("tw|do", TradGroup), .(Arm, o800, groupid, hhid)],
+  rsk, by = "hhid", all.x = T)
+<<>>=
+ps1 <- ps0[, .(
+  MeanHeadLiteracy = mean(HeadLiteracy), 
+  MeanHeadAge = mean(HeadAge, na.rm = T), 
+  MeanHHsize = mean(HHsize), 
+  MeanFloodInRd1 = mean(FloodInRd1, na.rm = T)#, 
+#  MeanFemale = mean(Female),
+#  MeanEnrolled = mean(Enrolled)
+  ), by = .(Arm, groupid)]
+psas <- psas0[, .(
+  MeanHAssetAmount = mean(HAssetAmount), 
+  MeanPAssetAmount = mean(PAssetAmount)), 
+  by = .(Arm, groupid)]
+neass <- neass0[, .(
+  MeanNarrowNetValue = mean(NarrowNetValue), 
+  MeanNetValue = mean(NetValue),
+  MeanAttrition = mean(Attrited),
+  MeanIRejected = mean(IRejected),
+  MeanGRejected = mean(GRejected),
+  MeanNonAttBorr = mean(NonAttBorrower)),
+  by = .(Arm, groupid)]
+pslv <- pslv0[, .(
+  MeanTotalImputedValue = mean(TotalImputedValue),
+  MeanNumCows = mean(NumCows, na.rm = T)), 
+  by = .(Arm, groupid)]
+pref <- rsk0[, .(
+  MeanRiskPrefVal = mean(RiskPrefVal, na.rm = T),
+  MeanTimePref1Val = mean(TimePref1Val, na.rm = T),
+  MeanTimePref2Val = mean(TimePref2Val, na.rm = T),
+  MeanPresentBias = mean(PresentBias, na.rm = T)), 
+  by = .(Arm, groupid)]
+psobj <- list(ps1, psas, neass, pslv, pref)
+psdata <- Reduce( function(...) merge(..., all=T), psobj)
+@
+Group level mean as a unit of observation. Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling \Sexpr{PermRepTimes} times.
+<<perm at group level, warning = F>>=
+library(coin)
+source(paste0(pathprogram, "AttritionPermutationTableHeaders5.R"))
+vartobetestedM <- paste0("Mean", vartobetested)
+vartobetestedM <- c(vartobetestedM,  "MeanAttrition")
+vartobetestedM <- vartobetestedM[!grepl("Arm|Impu|Index", vartobetestedM)]
+pmresults <- tabresults <- vector(mode = "list", length(vartobetestedM))
+set.seed(20180802)
+for (i in 1:length(vartobetestedM)) {
+  pmresults[[i]] <- independence_test(eval(parse(text=
+    paste(vartobetestedM[i], "~ Arm"))), data = psdata,
+    distribution = approximate(B=PermRepTimes))
+  tabresults[[i]] <- psdata[, 
+    .(mean(eval(parse(text=vartobetestedM[i])), na.rm = T)), by = Arm]
+  }
+#pmresults[[1]]@statistic@teststatistic
+#  step-down method of multiple testing adjustments:
+#  http://www.pmean.com/05/MultipleComparisons.asp
+# The Holm step-down procedure is the easiest to understand. First, sort your 1000 p-values from small to large. Multiply the smallest p-value by 1000. If that adjusted p-value is less than 0.05, then that gene shows evidence of differential expression.
+# This looks like step-up (small to large) procedure...? 
+# Wikipedia: https://en.wikipedia.org/wiki/False_discovery_rate
+# A procedure that goes from a small p-value to a large one will be called a step-up procedure. In a similar way, in a "step-down" procedure we move from a large corresponding test statistic to a smaller one.
+names(pmresults) <- names(tabresults) <- vartobetestedM
+tabres <- rbindlist(lapply(tabresults, 
+  function(x) {tx <- data.table(t(x[, 2])); setnames(tx, as.character(unlist(x[,1]))); tx}))
+tabres <- formatC(as.matrix(tabres), digits = 4, format = "f")
+tabres <- cbind(variable = vartobetestedM, tabres)
+Pmtresults <- NULL
+for (i in 1:length(vartobetestedM)) 
+  Pmtresults <- rbind(Pmtresults, 
+    c(vartobetestedM[i], #pvalue(pmresults[[i]])[1], 
+    #above is min(pvalue(pmresults[[i]], method = "step-down"))
+      "mean", tabres[i, -1]),
+    c("", "$p$ values",  
+      formatC(pvalue(pmresults[[i]], method = "step-down"), digits = 4, format = "f") 
+      ))
+Pmtresults <- data.table(Pmtresults)
+setnames(Pmtresults, paste0("V", 1:2), c("variables", "statistic"))
+setnames(Pmtresults, tolower(c("traditional", "large", "large grace", "cow")), c(Arms[-4], "Cattle"))
+setcolorder(Pmtresults, c("variables", "statistic", Arms[-4], "Cattle"))
+Pmtresults[, variables := gsub("Mean", "", variables)]
+cols <- grepout("Tr|La|Ca", colnames(Pmtresults))
+Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+Pmtresults[,  (cols) := lapply(.SD, round, 3), .SDcols = cols]
+Pmtresults[,  
+  (cols) := lapply(.SD, function(x) formatC(x, digits = 3, format = "f")), .SDcols = cols]
+Pmtresults[grep("^[A-Z]", variables)+1,  
+  (cols) := lapply(.SD, 
+    function(x) paste0("(", formatC(as.numeric(x)*100, digits = 1, format = "f"), ")")), .SDcols = cols]
+Pmtresults[grepl("Ass|Liv|Net", variables),  
+  (cols) := lapply(.SD, 
+    function(x) formatC(as.numeric(x), digits = 0, format = "f")), .SDcols = cols]
+if (DropMeanRows <- T) {
+  pmvarnames <- Pmtresults[grepl("^[A-Z]", variables), variables]
+  Pmtresults <- Pmtresults[!grepl("^[A-Z]", variables), ]
+  Pmtresults[, variables := pmvarnames]
+  Pmtresults[,  (cols) := lapply(.SD, function(x) gsub("\\((.*)\\)", "\\1", x)), .SDcols = cols]
+}
+Pmtresults <- rbind(Pmtresults, 
+  t(c("N", "", as.data.frame.table(table(ps0[, Arm]))[, 2]))
+  , use.names = F)
+Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill\\textsf{ ", variables, "}}")]
+setnames(Pmtresults, c("variables", "statistic"), c("", ""))
+if (DropStatCol <- T)
+{
+  Pmtresults <- Pmtresults[, -2]
+  if (DropMeanRows) 
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = rep("\\scriptsize\\hfil$", ncol(Pmtresults)), 
+      hcenter = c(3, rep(1.1, ncol(Pmtresults)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90") else
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = rep("\\scriptsize\\hfil$", ncol(Pmtresults)), 
+      hcenter = c(3, rep(1.1, ncol(Pmtresults)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor2 = "gray90")
+  pmt <- matrix(c(pmt[1, ], 
+    "\\makebox[3cm]{\\hfil\\footnotesize\\cellcolor{gray80} Variables} & \\multicolumn{4}{c}{\\footnotesize\\cellcolor{gray80}Means and $p$ values (\\%)}\\\\",
+    pmt[-1, ]))
+} else {
+  if (DropMeanRows) 
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = c("\\scriptsize\\hfil$", "\\scriptsize\\hfil ", rep("\\scriptsize\\hfil$", ncol(Pmtresults)-2)), 
+      hcenter = c(3, rep(1.1, ncol(Pmtresults)-1)), 
+      hright = c("$", "", rep("$", ncol(Pmtresults)-2)), 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor2 = "gray90") else
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = c("\\scriptsize\\hfil$", "\\scriptsize\\hfil ", rep("\\scriptsize\\hfil$", ncol(Pmtresults)-2)), 
+      hcenter = c(3, rep(1.1, ncol(Pmtresults)-1)), 
+      hright = c("$", "", rep("$", ncol(Pmtresults)-2)), 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90")
+  pmt <- matrix(c(pmt[1, ], 
+    "\\makebox[3cm]{\\hfil\\footnotesize\\cellcolor{gray80} Variables} & \\makebox[1.1cm]{\\hfil\\footnotesize\\cellcolor{gray80} Statistics} & \\multicolumn{4}{c}{\\footnotesize\\cellcolor{gray80}Adjusted $p$ values}\\\\",
+    pmt[-1, ]))
+}
+if (DropMeanRows) pmt[2, ] <- gsub("Means and \\$p\\$", "$P$", pmt[2, ])
+write.tablev(pmt,  paste0(pathsaveHere, "PermutationTestResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1.0cm}\begin{minipage}[t]{15cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results\label{tab perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "PermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{13cm}<{\hfill}}
+Source:& \scriptsize Estimated with GUK administrative and survey data.\\
+Notes: & \textsf{R}'s package \textsf{coin} is used on the baseline group mean covariates to conduct approximate permutation tests at the group level. For each variable, the first row indicates means and the second row indicates $p$ values in percentages of permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Number of groups is 72. Holm's step-down method is used to adjust for multiple testing of a multi-factor grouping variable. For example, for the \textsf{traditional} arm, comparisons are made against other three arms, while the same comparisons are made in other arms against \textsf{traditional}. Specifically, \textsf{independence\_test} function is used for permutation tests and \textsf{pvalue} function is applied with an option \textsf{method = ``step-down''}.\setlength{\baselineskip}{7pt}
+\end{tabular}
+\end{minipage}
+
+Household as a unit of observation. 
+<<perm at hh level, warning = F>>=
+asv <- readRDS(paste0(pathsaveHere, "DestatData.rds"))
+library(coin)
+var0tobetested <- c("HeadLiteracy", "HeadAge", 
+  "HHsize", "FloodInRd1", #"Female", "Enrolled",
+  "HAssetAmount", "PAssetAmount",
+  "NarrowNetValue", "NetValue", "Attrited",
+  "TotalImputedValue", "NumCows")
+pm0results <- tab0results <- vector(mode = "list", length(var0tobetested))
+set.seed(20180802)
+for (i in 1:length(var0tobetested)) {
+  pm0results[[i]] <- independence_test(eval(parse(text=
+    paste(var0tobetested[i], "~ Arm"))), data = asv,
+    distribution = approximate(B=PermRepTimes))
+  tab0results[[i]] <- 
+  asv[, 
+    .(mean(eval(parse(text=var0tobetested[i])), na.rm = T)), by = Arm]
+}
+names(pm0results) <- names(tab0results) <- var0tobetested
+tab0res <- rbindlist(lapply(tab0results, 
+  function(x) {tx <- data.table(t(x[, 2])); setnames(tx, as.character(unlist(x[,1]))); tx}))
+tab0res <- formatC(as.matrix(tab0res), digits = 4, format = "f")
+tab0res <- cbind(variable = var0tobetested, tab0res)
+#pmresults[[1]]@statistic@teststatistic
+Pmt0results <- NULL
+for (i in 1:length(var0tobetested)) 
+  Pmt0results <- rbind(Pmt0results, 
+    c(var0tobetested[i], "mean", tab0res[i, -1]),
+    c("", "$p$ values",  
+      formatC(pvalue(pm0results[[i]], method = "step-down"), digits = 4, format = "f") 
+      ))
+Pmt0results <- data.table(Pmt0results)
+setnames(Pmt0results, paste0("V", 1:2), c("variables", "statistic"))
+setcolorder(Pmt0results, c("variables", "statistic", paste0("", levels(psdata[, Arm]))))
+Pmt0results[grepl("Impute", variables), 
+  variables := gsub("To.*", "LivestockValue", variables)]
+cols <- grepout("tr|lar|cow", colnames(Pmt0results))
+Pmt0results[,  
+  (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 3, format = "f")), .SDcols = cols]
+Pmt0results[grepl("Ass|Liv|Net|Val", variables),  
+  (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+  .SDcols = cols]
+Pmt0results[grepl("Age", variables),  
+  (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 2, format = "f")), 
+  .SDcols = cols]
+Pmt0results[grep("^[A-Z]", variables)+1,  
+  (cols) := lapply(.SD, 
+    function(x) paste0("(", formatC(as.numeric(x)*100, digits = 1, format = "f"), ")")), .SDcols = cols]
+if (DropMeanRows <- F) {
+  pm0varnames <- Pmt0results[grepl("^[A-Z]", variables), variables]
+  Pmt0results <- Pmt0results[!grepl("^[A-Z]", variables), ]
+  Pmt0results[, variables := pm0varnames]
+  Pmt0results[,  (cols) := lapply(.SD, function(x) gsub("\\((.*)\\)", "\\1", x)), .SDcols = cols]
+}
+Pmt0results <- rbind(Pmt0results, 
+  t(c("N", "", as.data.frame.table(table(ps0[, Arm]))[, 2]))
+  , use.names = F)
+Pmt0results[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+setnames(Pmt0results, c("", "", Arms[-4], "Cattle"))
+if (DropStatCol <- T)
+{
+  Pmt0results <- Pmt0results[, -2]
+  if (DropMeanRows)
+    pmt0 <- latextab(as.matrix(Pmt0results), 
+      hleft = rep("\\scriptsize\\hfil$", ncol(Pmt0results)), 
+      hcenter = c(3, rep(1.1, ncol(Pmt0results)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90") else
+    pmt0 <- latextab(as.matrix(Pmt0results), 
+      hleft = rep("\\scriptsize\\hfil$", ncol(Pmt0results)), 
+      hcenter = c(3, rep(1.1, ncol(Pmt0results)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor2 = "gray90")
+  pmt0 <- matrix(c(pmt0[1, ], 
+    "\\makebox[3cm]{\\hfil\\footnotesize\\cellcolor{gray80} Variables} & \\multicolumn{4}{c}{\\footnotesize\\cellcolor{gray80}Means and $p$ values (\\%)}\\\\",
+    pmt0[-1, ]))
+} else {
+  if (DropMeanRows)
+    pmt0 <- latextab(as.matrix(Pmt0results), 
+      hleft = c("\\scriptsize\\hfil$", "\\scriptsize\\hfil ", rep("\\scriptsize\\hfil$", ncol(Pmt0results)-2)), 
+      hcenter = c(3, rep(1.1, ncol(Pmt0results)-1)), 
+      hright = c("$", "", rep("$", ncol(Pmt0results)-2)), 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90") else
+    pmt0 <- latextab(as.matrix(Pmt0results), 
+      hleft = c("\\scriptsize\\hfil$", "\\scriptsize\\hfil ", rep("\\scriptsize\\hfil$", ncol(Pmt0results)-2)), 
+      hcenter = c(3, rep(1.1, ncol(Pmt0results)-1)), 
+      hright = c("$", "", rep("$", ncol(Pmt0results)-2)), 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor2 = "gray90")
+  pmt0 <- matrix(c(pmt0[1, ], 
+    "\\makebox[3cm]{\\hfil\\footnotesize\\cellcolor{gray80} Variables} & \\makebox[1.1cm]{\\hfil\\footnotesize\\cellcolor{gray80} Statistics} & \\multicolumn{4}{c}{\\footnotesize\\cellcolor{gray80}Adjusted $p$-values}\\\\",
+    pmt0[-1, ]))
+}
+write.tablev(pmt0,  
+  paste0(pathsaveHere, "HHLevelPermutationTestResults.tex")
+  , colnamestrue = F)
+@
+
+\hspace{-1.0cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results at household level\label{tab permHH}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "HHLevelPermutationTestResults.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{13cm}<{\hfill}}
+Source:& stimated with GUK administrative and survey data.\\
+Notes: & \textsf{R}'s package \textsf{coin} is used on baseline covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable.
+\end{tabular}
+\end{minipage}
+
+

@@ -1,0 +1,256 @@
+Net assets = Assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors). 
+
+<<net assets merge assets livestock saving data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+@
+<<Net asset set parameters original HHs>>=
+FileName <- "NetAssets"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nea", regsuffixes)
+<<net asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
+<<get jay from net assets covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+NeA1[, grepout("Net2|Na|Br|^R|Pro|PAss", colnames(NeA1)) := NULL]
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+# Previously, Rd 1-4 diff: DataToUse2 <- rep("NeA2", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NetValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<display covariates net asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<net assets ANCOVA estimation>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<figure net asset values at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+d2 <- subset(NeAfig, !is.na(Arm))
+ColourForPoints <- c("darkblue", "darkred")
+g <- ggplot(data = subset(d2, tee == 2 & 0 <= NetValue & NetValue < 100000), 
+  aes(x=NarrowNetValue, fill = povertystatus)) + 
+  geom_histogram(bins=50, alpha=.5, position="identity",
+    aes(x = NetValue, y = ..density..)) +
+  scale_x_log10() +
+  theme(
+    axis.text.x = element_text(size = 6), 
+    axis.text.y = element_text(size = 6), 
+    axis.title = element_text(size = 7), 
+    legend.key.size = unit(.15, "cm"),
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 6),
+    legend.position = "bottom")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+# postscript does not support transparency.
+# setEPS()
+# postscript(file =  
+#   paste0(pathprogram, 
+#     "figure/ImpactEstimationOriginal1600Memo3/NetAssetsAtRd1.eps"),
+#   , width = 5, height = 2.5, horizontal = F) # unit: inch
+# print(g)
+# dev.off()
+pdf(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssetsAtRd1.pdf"),
+  , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+<<figure net asset values by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+d2 <- subset(NeAfig, !is.na(Arm))
+d2[, Type := "net assets"]
+g <- ggplot(data = d2) + 
+  geom_boxplot(aes(x= factor(tee), y = NetValue, colour = povertystatus), 
+    outlier.alpha = 0.1)+
+  scale_x_discrete(name = "survey round") +
+  scale_y_continuous(name = "asset values (Tk.)",
+    breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(
+   axis.text.x = element_text(size = 6), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 7), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(.5, 0, .5, 0, "cm")),
+   legend.position = "bottom") +
+  facet_grid(. ~ Arm)
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssets.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssets.eps"),
+  , horizontal = F)
+print(g)
+whatever <- dev.off()
+pdf(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssets.pdf"),
+  , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+<<figure net asset dynamics, eval = F, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset equation of motion", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+assC <- NeAFig[!grepl("^bo", BStatus), .(hhid, tee, povertystatus, BStatus, NetValue)]
+for (i in 1:3) 
+  for (j in (i+1):4) {
+    assC1 <- reshape(assC[tee == i|tee == j, ], direction = "wide", 
+          idvar = c("hhid", "povertystatus"), 
+          timevar = "tee", v.names = "NetValue")
+    assC1[, c("before", "after") := .(i, j)]
+    assign(paste0("a", i, j), assC1)
+  }
+d2W <- rbindlist(list(a12, a13, a14, a23, a24, a34),  use.names = F)
+setnames(d2W, c("NetValue.1", "NetValue.2"), 
+  c("NetValue.before", "NetValue.after"))
+d2W <- d2W[!is.na(povertystatus), ]
+ColourForPoints <- c("darkblue", "darkred")
+CapitalType <- c("NonborrowerGrossAssets", "GrossAssets", "NetAssets")
+j <- CapitalType[3]
+g <- ggplot(data = d2W, 
+  aes(x= NetValue.before, y = NetValue.after, 
+    colour = povertystatus, group = povertystatus)) + 
+  geom_point(aes(fill = povertystatus), size = .01, 
+    position = position_dodge(width = .5), #colour = "transparent",
+    alpha = .6) +
+  geom_smooth(span = .5, size = .75,
+    aes(colour = povertystatus, group = povertystatus)) +
+  geom_abline(intercept = 0, slope = 1, 
+    aes(colour = "yellow", size = .75)) +
+  scale_colour_manual(values = ColourForPoints) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_x_continuous(name = "net assets in t (Tk)")+
+  scale_y_continuous(name = "net assets in t+1 (Tk)")+
+  theme(
+   axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 5), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 4, 
+     margin = margin(.5, 0, .5, 0, "cm")),
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 7),
+    legend.key = element_rect(fill = "white"),
+    legend.key.size = unit(.5, "cm"),
+   legend.position = "bottom")
+g1 <- g + facet_wrap(before ~ after, scales = "free")
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NonborrowerNetAssetsDynamicsByPovertyStatus.png")
+  , g1, width = 12, height = 8, units = "cm", dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NonborrowerNetAssetsDynamicsByPovertyStatus.eps")
+  , horizontal = F)
+print(g1)
+whatever <- dev.off()
+<<figure net asset dynamics by povertystatus, eval = F, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset equation of motion", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+d2 <- subset(NeAfig, !is.na(Arm))
+d2 <- d2[, .(Arm, hhid, tee, povertystatus, NetValue)]
+d2[, ArmSize := "large size"]
+d2[grepl("tra", Arm), ArmSize := "small size"]
+d2W <- reshape(d2, direction = "wide", idvar = c("hhid", "povertystatus"), 
+  timevar = "tee", v.names = "NetValue")
+for (i in 1:2) {
+  g <- ggplot(data = d2W, 
+    aes(x= !!sym(paste0("NetValue.", i)), y = !!sym(paste0("NetValue.", i+1)), 
+      colour = povertystatus, group = povertystatus)) + 
+    geom_point(aes(fill = povertystatus), size = .01, 
+      position = position_dodge(width = .5), #colour = "transparent",
+      alpha = .6) +
+    geom_smooth(span = .5, size = .75,
+      aes(colour = povertystatus, group = povertystatus)) +
+    geom_abline(intercept = 0, slope = 1, 
+      aes(colour = "yellow", size = .75)) +
+    scale_colour_manual(values = ColourForPoints) +
+    scale_fill_manual(values = c("blue", "red")) +
+    scale_x_continuous(name = paste0("net assets in round", i, " (Tk)"),
+      limits = c(0, 20000))+
+  #        breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+    scale_y_continuous(name = paste("net assets in round", i+1, "(Tk)"),
+      limits = c(0, 20000))+
+  #        breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+    theme(
+     axis.text.x = element_text(size = 6), 
+     axis.text.y = element_text(size = 6), 
+     axis.title = element_text(size = 7), 
+     strip.text.x = element_text(color = "blue", size = 6, 
+       margin = margin(0, .5, 0, .5, "cm")), 
+     strip.text.y = element_text(color = "blue", size = 6, 
+       margin = margin(.5, 0, .5, 0, "cm")),
+     legend.position = "none")
+  g1 <- g + facet_grid(. ~ povertystatus)
+  g2 <- g + facet_grid(povertystatus ~ Arm)
+  g3 <- g + facet_grid(povertystatus ~ ArmSize)
+  ggsave(
+    paste0(pathprogram, 
+      "figure/EstimationMemo/NetAssetsDynamicsByPovertyStatusBaseRound", i, ".png")
+    , g1, width = 12, height = 8, units = "cm", dpi = 300
+   )
+  ggsave(
+    paste0(pathprogram, 
+      "figure/EstimationMemo/NetAssetsDynamicsByArmAndPovertyStatusBaseRound", i, ".png")
+    , g2, width = 12, height = 6, units = "cm", dpi = 300
+   )
+  ggsave(
+    paste0(pathprogram, 
+      "figure/EstimationMemo/NetAssetsDynamicsByArmSizeAndPovertyStatusBaseRound", i, ".png")
+    , g3, width = 6, height = 6, units = "cm", dpi = 300
+   )
+}
+<<>>=
+# dummy chunk
+@
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Total and net asset values\label{fig TotalAndNetAssetValues}}\\
+\hfil\includegraphics[height = 6cm]{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/NetAssets.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Top panel shows total gross asset values. Bottom panel shows total net asset values = total gross asset values - debt outstanding. Debt outstanding takes the value of the month immediately after the respective survey round interview. Net assets uses only assets observed for all 4 rounds in household assets.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Net asset values at round 1\label{fig NetAssetValuesAtRd1}}\\
+\hfil\includegraphics[width = 10cm]{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.pdf")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Net asset values = total gross asset values - debt outstanding. Debt outstanding takes the value of the month immediately after the respective survey round interview. Net assets uses only assets observed for all 4 rounds in household assets.\\[1ex]
+\end{tabular}
+}
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults.rnw"))}

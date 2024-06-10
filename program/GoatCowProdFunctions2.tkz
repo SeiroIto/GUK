@@ -1,0 +1,76 @@
+%\setbeamercovered{invisible}
+\begin{tikzpicture}[ 
+axis/.style={very thick, ->, >=stealth'},
+dashed line/.style={dashed, thin},
+every node/.style={color=black},
+background rectangle/.style = {fill = gray90},
+]
+\begin{axis}[
+  scale = 1.0,
+  axis equal image, % forces a square plot
+  clip = false, % allows plotting outside axis bounds
+  axis x line=center, axis y line=center,
+  xlabel = {$k_{t}$}, ylabel = {$k_{t+1}$},
+  xtick={100}, ytick={100}, % effectively drops axis ticks
+  xlabel style={below right}, ylabel style={above left},
+  xmin=0, xmax=11,
+  ymin=0, ymax=10]
+\path[name path=xaxis] (0, 0) -- (axis cs: 10, 0);
+\path[name path=yaxis] (0, 0) -- (axis cs: 0, 10);
+\addplot+ [name path=SSline, black, no marks, line width = .5pt] plot coordinates {(0, 0) (9, 9)};
+\node[above] at (axis cs: 9, 9) {\small $k_{t+1}=k_{t}$};
+% \addplot+ [name path=goat, green, no marks, smooth, line width=1.5pt] table {
+% 0 0
+% .2 .6
+% .8 1.5
+% 1.2 1.8
+% 3 2.5
+% 6 3
+% };
+% \path [name intersections={of=SSline and goat, by={gone, gtwo}}];
+\coordinate (origin) at (axis cs: 0, 0) ;
+\coordinate (mone) at (axis cs: .5, 0.3) ;
+\coordinate (mtwo) at (axis cs: .5, 1.25);
+\coordinate (mthree) at (axis cs: 1.5, 2);
+\coordinate (mfour) at (axis cs: 1.75, 2.5);
+\coordinate (mfive) at (axis cs: 5, 3);
+\draw[name path=GoatFlexzero, darkgreen, very thick] (origin) -- (mone) node[below, yshift = -.3cm]{$k_{1}$};
+\draw[name path=GoatFlexvisible, darkgreen, very thick] 
+  (mone) .. controls ($(mtwo) + (-1, 0)$) and ($(mfour) + (-1, -1)$) .. 
+  (mfive) node[right]{\small $sg(k)+(1-\delta)k$: goats};
+\path[name path=GoatFlexinvisible, darkgreen, very thick, fill = green!40, fill opacity = .2] 
+  (mone) .. controls ($(mtwo) + (-1, 0)$) and ($(mfour) + (-1, -1)$) .. 
+  (mfive) -- (axis cs: 5, 0) -- cycle;
+\path [name intersections={of=SSline and GoatFlexvisible, by={gfone, gftwo}}];
+\fill[green] (gfone) circle (3pt);
+\fill[red] (origin) circle (3pt) (gftwo) circle (3pt) node[above, yshift = .1cm] {\small $G$};
+%\node[right] at (axis cs: 6, 3) {\small $sg(k)$: goats};
+% \path[name path=GoatFlexinvisible, darkgreen, very thick, fill = green!40, fill opacity = .2] 
+%   (mone) .. controls ($(mtwo) + (2.5, 0)$) and ($(mfour) + (-15, 3)$) .. 
+%   (gmfour -| UBfarright) -- (UBfarright |- origin) -- cycle;
+% \addplot+ [green!30, fill opacity = .5] fill between [
+%     of=goat and xaxis, soft clip={domain=0:6}];
+\addplot+ [name path=cowszero, blue, no marks, line width=1.5pt] table {
+0 0
+4 2.2
+};
+\addplot+ [name path=cows, blue, no marks, smooth, line width=1.5pt] table {
+4 2.2
+4.5 4
+5 5.5
+6 6.75
+7 7
+8 7.1
+9.5 7.2
+};
+\node[above] at (axis cs: 10.5, 7.2) {\small $sf(k)+(1-\delta)k$: cattle};
+\addplot+ [blue!30, fill opacity = .5] fill between [
+    of=cows and xaxis, soft clip={domain=4:10}];
+\path [name intersections={of=SSline and cows, by={cone, ctwo}}];
+\fill[blue] (cone) circle (3pt);
+\fill[red] (ctwo) circle (3pt) node[above left] {\small $C$};
+\draw (cone |- origin) node [below] {\small $k_{2}$};
+\end{axis}
+
+\end{tikzpicture}
+%\setbeamercovered{transparent}

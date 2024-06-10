@@ -1,0 +1,65 @@
+<<>>=
+#ass <-  readRDS(paste0(pathsaveHere, "RosterAssetAdminOriginalHHsDataUsedForEstimation.rds"))
+ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+if (Only800) ass <- ass[o800 == 1L, ]
+ass[, grepout("Loan|UD|Forced", colnames(ass)) := NULL]
+assstrings <- "^Arm$|^groupid$|hhid|tee|^.Asse|^dummy.*[a-z]$|Floo|Time\\.?.|Head|With|.Size|BSta"
+lvostrings <- "^groupid$|hhid|tee|^TotalIm|Cows|^Arm$|BSta"
+ass1 <- ass[, grepout(assstrings, colnames(ass)), with = F]
+ass1R <- ass[, grepout(paste0(assstrings, "|RM"), colnames(ass)), with = F]
+# before-after style 2 time point data. Choose tee == 2 as baseline because there are many zeros in tee == 1.
+#ass <-  readRDS(paste0(pathsaveHere, "RosterAssetAdminOriginalHHsDataUsedForEstimation.rds"))
+#lvo <-  readRDS(paste0(pathsaveHere, "RosterLivestockAdminOriginalHHsDataUsedForEstimation.rds"))
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+if (Only800) lvo <- lvo[o800 == 1L, ]
+lvo[, grepout("Loan|UD|Forced", colnames(lvo)) := NULL]
+lvo1 <- lvo[, grepout(lvostrings, colnames(lvo)), with = F]
+# merge
+#commonstrings <- "^groupid$|hhid|^Arm|tee|Floo|Time\\.?.|Head"
+commoncols <- intersect(colnames(ass1), colnames(lvo1))
+AL1 <- merge(ass1, lvo1, by = commoncols, ALl = T)
+AL1[is.na(TotalImputedValue), TotalImputedValue := 0]
+AL1[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+AL1[, c("TotalImputedValue", "HAssetAmount", "PAssetAmount") := NULL]
+AL1 <- unique(AL1)
+AL2 <- AL1[tee == 2 | tee == 4, ]
+AL2[, grepout("Time", colnames(AL2)) := NULL]
+
+commoncols <- intersect(colnames(ass1R), colnames(lvo1))
+AL1R <- merge(ass1R, lvo1, by = commoncols, ALl = T)
+AL1R[is.na(TotalImputedValue), TotalImputedValue := 0]
+AL1R[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+ALfig <- AL1R[, .(Arm, groupid, hhid, dummyUltraPoor, tee, TotalValue)]
+setnames(ALfig, "dummyUltraPoor", "UltraPoor")
+ALfig[, povertystatus := "ultra poor"]
+ALfig[UltraPoor == 0L, povertystatus := "moderately poor"]
+ALfig[, povertystatus := factor(povertystatus, 
+  levels = c("ultra poor","moderately poor"))]
+ALfig[, UltraPoor := NULL]
+AL1R[, c("TotalImputedValue", "HAssetAmount", "PAssetAmount") := NULL]
+AL1R <- unique(AL1R)
+AL2R <- AL1R[tee == 2 | tee == 4, ]
+AL2R[, grepout("Time", colnames(AL2)) := NULL]
+
+datas <- c(paste0("AL", 1:2), paste0("AL", 1:2, "R"))
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+  dl <- prepFDData(get(datas[i]), Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+    LevelCovariates = "^dummy|^Arm|Floo|^Time\\..$|Head|Cows|BSta", 
+    drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+    use.var.name.for.dummy.prefix = F, print.messages = F)
+  dat <- dl$diff
+  if (i == 1) {
+    # Recreate Time.4 which is dropped when kept only 1:(T-1) obs.
+    #dat[, c("Time.2", "Time.3", "Time.4") := 0L]
+    #dat[tee == 1, Time.2 := 1L]
+    #dat[tee == 2, Time.3 := 1L]
+    #dat[tee == 3, Time.4 := 1L]
+    dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  }
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dAL1Rd <- dAL1Rd[tee > 2, ]
+@

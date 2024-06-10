@@ -1,0 +1,1210 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/AttritionTests4/"); library(knitr); knit("AttritionTests4.rnw", "AttritionTests4.tex"); system("platex AttritionTests4"); system("dvipdfmx AttritionTests4")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+
+
+
+
+
+
+\hfil Permutation tests\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+Use the `trimmed' sample (has all 800 members) rather than the `initial' sample (has only 776 members after dropping members who received loans only twice). To set to the trimmed sample, set the parameter \textsf{UseTrimmedSample} to T.
+\begin{Schunk}
+\begin{Sinput}
+UseTrimmedSample <- T
+TestMedian <- F
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
+ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
+NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
+rkL <- readRDS(paste0(pathsaveHere, "RiskPreferences.rds"))
+if (Only800) ar <- ar[o800 == 1L, ]
+\end{Sinput}
+\end{Schunk}
+There are 92 members who attrited.
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(ar[tee==1 & o800==1 & AttritIn<9, .(BStatus,AttritIn)]))
+\end{Sinput}
+\begin{Soutput}
+                      AttritIn
+BStatus                 2  3  4 Sum
+  borrower              8  6  8  22
+  pure saver            0  0  0   0
+  individual rejection 10  4  1  15
+  group rejection      11  4  0  15
+  rejection by flood   12  0 28  40
+  Sum                  41 14 37  92
+\end{Soutput}
+\begin{Sinput}
+#addmargins(table(ar[mid == 1 & Time == 1, .(BStatus, Arm)]), 1:2, sum, T)
+#addmargins(table(ar[mid == 1 & Time == 4, .(BStatus, Arm)]), 1:2, sum, T)
+# "ar" is roster
+# AttritIn is created as below in read_cleaned_data.rnw
+# (465): xid[, AttritIn := 9L]
+# (466): xid[grepl("^En|^2nd and 4", missing_followup), AttritIn := 4L]
+# (467): xid[grepl("^3rd and 4", missing_followup), AttritIn := 3L]
+# (468): xid[grepl("^2.*3.*4", missing_followup), AttritIn := 2L]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+ar[, Tee := max(survey), by = hhid]
+arA[, Tee := max(survey), by = hhid]
+ass[, Tee := max(survey), by = hhid]
+lvo[, Tee := max(survey), by = hhid]
+\end{Sinput}
+\end{Schunk}
+Correct \textsf{AttritIn} for these 24 members. Keep only the 1st obs for all members.
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table(ar[tee == 1 & grepl("tw|dou", TradGroup), AttritIn]))
+\end{Sinput}
+\begin{Soutput}
+
+  9 Sum 
+ 24  24 
+\end{Soutput}
+\begin{Sinput}
+#ar[Tee == 1 & AttritIn == 9 & grepl("tw|dou", TradGroup), AttritIn := 2L]
+\end{Sinput}
+\end{Schunk}
+There are 24 members with TradGroup = twice, double. They were dropped from estimation sample. If \textsf{UseTrimmedSample==T}, attrition is based on all 800 members, if \textsf{F}, attrition is analysed using 786 members.
+\begin{Schunk}
+\begin{Sinput}
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# psas: asset data
+psas <- ass[tee == 1, .(hhid, tee, HAssetAmount, PAssetAmount)]
+pslv <- lvo[tee == 1, .(hhid, tee, TotalImputedValue, NumCows)]
+pne <- NeA[tee == 1, .(hhid, tee, NetValue)]
+setkey(pslv, hhid, tee)
+setkey(pne, hhid, tee)
+# pslv: livestock data + net assets data
+pslv <- pne[pslv]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+source(paste0(pathprogram, "AttritionPermutationTableHeaders.R"))
+armerge <- ar[, c("hhid", "mid", "o800", "TradGroup", "BStatus", "AttritIn", "survey", "tee", "Time", 
+  vartobetested[1:5]), with = F]
+armerge[, En := 1:.N, by = .(hhid, Time)]
+armerge[, Tee := .N, by = .(hhid, mid, Time)]
+armerge <- armerge[En == 1 & Time == 1 & o800 == 1, ]
+as <- merge(armerge, psas, by = c("hhid", "tee"), all.x = T)
+asv0 <- merge(as, pslv, by = c("hhid", "tee"), all.x = T)
+addmargins(table0(asv0[!grepl("tw|dou", TradGroup), .(Arm, AttritIn)]))
+\end{Sinput}
+\begin{Soutput}
+             AttritIn
+Arm             2   3   4   9 Sum
+  traditional   8   4  20 144 176
+  large         5   2   1 192 200
+  large grace  23   3   3 171 200
+  cow           5   5  13 177 200
+  Sum          41  14  37 684 776
+\end{Soutput}
+\begin{Sinput}
+# add risk preferences
+rsk <- rkL[, c("hhid", "respondent_mid", grepout("Ch|Val", colnames(rkL))), with = F]
+setnames(rsk, c("respondent_mid", grepout("Ch", colnames(rsk))), 
+  c("rskmid", gsub("Change.", "", grepout("Ch", colnames(rsk)))))
+ToNum <- grepout("^.p", colnames(rsk))
+rsk[, (ToNum) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = ToNum]
+setnames(rsk, ToNum, c("RiskPrefIndex", "TimePref1Index", "TimePref2Index"))
+# keep only rational respondents of risk preferences
+rsk <- rsk[RiskPref >= 0, ]
+\end{Sinput}
+\begin{Soutput}
+Error:  オブジェクト 'RiskPref' がありません 
+\end{Soutput}
+\begin{Sinput}
+asv <- merge(asv0, rsk, "hhid", all.x = T)
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# use tee==4 to define attrition, where tee is survey round in asset and livestock 
+# while tee in roster is meeting number (must rename survey to tee)
+asv[, Attrited := 0L]
+asv[hhid %in% hhid[AttritIn < 9], Attrited := 1L]
+addmargins(table0(asv[!grepl("tw|dou", TradGroup), .(Arm, Attrited)]))
+\end{Sinput}
+\begin{Soutput}
+             Attrited
+Arm             0   1 Sum
+  traditional 144  32 176
+  large       192   8 200
+  large grace 171  29 200
+  cow         177  23 200
+  Sum         684  92 776
+\end{Soutput}
+\begin{Sinput}
+asv[, c("Rejected", "GRejected", "IRejected") := 0L]
+asv[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+asv[grepl("^i.*rej", BStatus), IRejected := 1L]
+asv[grepl("^g.*rej", BStatus), GRejected := 1L]
+asv[, Survived := 1L]
+asv[Attrited == 1 | Rejected == 1, Survived := 0L]
+\end{Sinput}
+\end{Schunk}
+Attrition of members who were not affected by floods.
+\begin{Schunk}
+\begin{Sinput}
+addmargins(table0(asv[!grepl("flo", BStatus) & Rejected == 0, .(Attrited, Arm)]))
+\end{Sinput}
+\begin{Soutput}
+        Arm
+Attrited traditional large large grace cow Sum
+     0           107   164         160 147 578
+     1             2     7           7   6  22
+     Sum         109   171         167 153 600
+\end{Soutput}
+\begin{Sinput}
+# these are HHs with two disbursements under traditional; read_admin_data.rnw(472)
+# adw[(loanamount1st == 5600 & loanamount2nd == 5600 & loanamount3rd == 5600) |
+#   (!is.na(DisDate1) & !is.na(DisDate2) & !is.na(DisDate3)), 
+#   TradGroup := "planned"]
+# adw[loanamount1st == 5600 & loanamount2nd == 11200, 
+#   TradGroup := "double"]
+# adw[(loanamount1st == 7840 & loanamount2nd == 8960) | 
+#   (!is.na(DisDate1) & !is.na(DisDate2) & is.na(DisDate3)), 
+#   TradGroup := "twice"]
+# adw[, TradGroup := factor(TradGroup, levels = c("planned", "twice", "double"))]
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# data to use in each tests: TradNonTradAttrited, AttritedInTrad, TradNonTradRejected, IRejected, RejectedInTrad, RejectedInNonTrad
+# drop 2 loan receivers
+asv1 <- asv[!grepl("tw|dou", TradGroup), ]
+# drop group rejecters
+asv2 <- asv[!grepl("gr", BStatus), ]
+# drop 2 loan receivers and group rejecters
+asv3 <- asv[!grepl("gr", BStatus) & !grepl("tw|dou", TradGroup), ]
+asvT <- asv[grepl("tra", Arm), ]
+asvNT <- asv[!grepl("tra", Arm), ]
+# data to be used for each tested variable
+datalist <- rep("asv", length(vartobetested))
+datalist1 <- paste0(datalist, 1) # drop 2 loan receivers
+datalist2 <- paste0(datalist, 2) # drop group rejecters
+datalist3 <- paste0(datalist, 3) # drop 2 loan receivers and group rejecters
+datasets <- "asv"
+datasets1 <- paste0(datasets, 1)
+datasets2 <- paste0(datasets, 2)
+datasets3 <- paste0(datasets, 3)
+for (k in 1:3) {
+  addchar <- c("f", "t", "j")[k]
+  Datasets <- get(paste0("datasets", c("", 1, 2)[k]))
+  for (dd in Datasets) {
+    xdd <- get(dd)
+    # all members all arms: attrited vs. nonattrited
+    xa <- xdd
+    assign(paste0(dd, "a", addchar), xa)
+    # all in trad: attrition vs. nonattrition
+    xTa <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Ta", addchar), xTa)
+    # all in nontrad: attrition vs. nonattrition
+    xNTa <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTa", addchar), xNTa)
+    # attrited members in all arms: trad vs. nontrad
+    xTNTa <- xdd[Attrited == 1L, ]
+    xTNTa[, TradArm := 1L]; xTNTa[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTa", addchar), xTNTa)
+    # all members except flood victims: attrited vs. nonattrited
+    xNFa <- xdd[!grepl("floo", BStatus), ]
+    assign(paste0(dd, "NFa", addchar), xNFa)
+    # all except flood victims in trad: attrition vs. nonattrition
+    xNFTa <- xdd[!grepl("floo", BStatus) & grepl("trad", Arm), ]
+    assign(paste0(dd, "NFTa", addchar), xNFTa)
+    # all except flood victims in nontrad: attrition vs. nonattrition
+    xNFNTa <- xdd[!grepl("floo", BStatus) & !grepl("trad", Arm), ]
+    assign(paste0(dd, "NFNTa", addchar), xNFNTa)
+    # attrited members except flood victims in all arms: trad vs. nontrad
+    xNFTNTa <- xdd[!grepl("floo", BStatus) & Attrited == 1L, ]
+    xNFTNTa[, TradArm := 1L]; xNFTNTa[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "NFTNTa", addchar), xNFTNTa)
+    # attrited members except flood victims in all arms: cow vs. noncow
+    xNFCNCa <- xdd[!grepl("floo", BStatus) & Attrited == 1L, ]
+    xNFCNCa[, CowArm := 1L]; xNFCNCa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "NFCNCa", addchar), xNFCNCa)
+    # attrited members except flood victims: cow vs. large grace
+    xNFCGa <- xdd[!grepl("floo", BStatus) & grepl("cow|gr", Arm) & Attrited == 1L, ]
+    xNFCGa[, CowArm := 1L]; xNFCGa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "NFCGa", addchar), xNFCGa)
+    # surviving (neither attrited nor rejected) members except flood victims 
+    # (these people are considered not fit for the offered program)
+    # survival in all arms
+    xs <- xdd
+    assign(paste0(dd, "s", addchar), xs)
+    # survival in trad: attrition vs. nonattrition
+    xTs <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Ts", addchar), xTs)
+    # survival in nontrad: attrition vs. nonattrition
+    xNTs <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTs", addchar), xNTs)
+    # survived members in all arms: trad vs. nontrad
+    xTNTs <- xdd[Survived == 1L, ]
+    xTNTs[, TradArm := 1L]; xTNTs[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTs", addchar), xTNTs)
+    # survived members: cow vs. noncow
+    xCNCs <- xdd[!grepl("floo", BStatus) & Survived == 1L, ]
+    xCNCs[, CowArm := 1L]; xCNCs[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCs", addchar), xCNCs)
+    # survived members: cow vs. lsge grace
+    xCGs <- xdd[!grepl("floo", BStatus) & grepl("cow|gr", Arm) & Survived == 1L, ]
+    xCGs[, CowArm := 1L]; xCGs[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CGs", addchar), xCGs)
+    # all rejection all arms: rejected vs. nonrejected
+    xr <- xdd
+    assign(paste0(dd, "r", addchar), xr)
+    # all rejection in trad: rejected vs. nonrejected
+    xTr <- xdd[grepl("trad", Arm), ]
+    assign(paste0(dd, "Tr", addchar), xTr)
+    # all rejection in nontrad: rejected vs. nonrejected
+    xNTr <- xdd[!grepl("trad", Arm), ]
+    assign(paste0(dd, "NTr", addchar), xNTr)
+    # all rejection: trad rejecetd vs. nontrad rejected
+    xTNTr <- xdd[Rejected == 1L, ]
+    xTNTr[, TradArm := 1L]; xTNTr[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTr", addchar), xTNTr)
+    # all rejection: cow rejecetd vs. noncow rejected
+    xCNCr <- xdd[Rejected == 1L, ]
+    xCNCr[, CowArm := 1L]; xCNCr[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCr", addchar), xCNCr)
+    # all rejection: cow rejecetd vs. large grace rejected
+    xCLGr <- xdd[grepl("cow|gr", Arm) & Rejected == 1L, ]
+    xCLGr[, CowArm := 1L]; xCLGr[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CLGr", addchar), xCLGr)
+    # all acceptance: cow accepted vs. noncow accepted
+    xCNCa <- xdd[Rejected == 0L, ]
+    xCNCa[, CowArm := 1L]; xCNCa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CNCa", addchar), xCNCa)
+    # all acceptance: cow accepted vs. large grace accepted
+    xCLGa <- xdd[grepl("cow|gr", Arm) & Rejected == 0L, ]
+    xCLGa[, CowArm := 1L]; xCLGa[!grepl("cow", Arm), CowArm := 0L]
+    assign(paste0(dd, "CLGa", addchar), xCLGa)
+    # group rejection in all arms: rejected vs. nonrejected
+    xgr <- xdd
+    assign(paste0(dd, "gr", addchar), xgr)
+    # group rejection in trad: rejecters vs. nonrejecters
+    xTgr <- xdd[grepl("tra", Arm), ]
+    assign(paste0(dd, "Tgr", addchar), xTgr)
+    # group rejection in nontrad: rejecters vs. nonrejecters
+    xNTgr <- xdd[!grepl("tra", Arm), ]
+    assign(paste0(dd, "NTgr", addchar), xNTgr)
+    # group rejection: trad rejecters vs. nontrad rejecters
+    xTNTgr <- xdd[GRejected == 1L, ]
+    xTNTgr[, TradArm := 1L]; xTNTgr[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTgr", addchar), xTNTgr)
+    # individual rejection in all arms: rejected vs. nonrejected
+    # individual rejecters vs. all except group rejecters
+    # group rejecters are excluded because they preceded indiv rejection
+    xir <- xdd[!grepl("gr", BStatus), ]
+    assign(paste0(dd, "ir", addchar), xir)
+    # individual rejection in trad: rejecters vs. nonrejecters
+    xTir <- xdd[grepl("tra", Arm) & !grepl("gr", BStatus), ]
+    assign(paste0(dd, "Tir", addchar), xTir)
+    # individual rejection in nontrad: rejecters vs. nonrejecters
+    xNTir <- xdd[!grepl("tra", Arm) & !grepl("gr", BStatus), ]
+    assign(paste0(dd, "NTir", addchar), xNTir)
+    # individual rejection: trad rejecters vs. nontrad rejecters
+    xTNTir <- xdd[!grepl("gr", BStatus) & Rejected == 1L, ]
+    xTNTir[, TradArm := 1L]; xTNTir[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTir", addchar), xTNTir)
+    # trad group rejecters vs. nontrad participants
+    xTNTgrp <- xdd[(grepl("gr", BStatus) & grepl("trad", Arm) & Rejected == 1L) |
+      (grepl("bo", BStatus) & !grepl("trad", Arm)), ]
+    xTNTgrp[, TradArm := 1L]; xTNTgrp[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTgrp", addchar), xTNTgrp)
+    # trad group vs. nontrad group
+    xTNTrandom <- xdd
+    xTNTrandom[, TradArm := 1L]; xTNTrandom[!grepl("trad", Arm), TradArm := 0L]
+    assign(paste0(dd, "TNTrandom", addchar), xTNTrandom)
+  }
+}
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# data names: ..af, ..rf  (full), ..at, ..rt (drop 2 loan receivers), ..aj, ..rj (drop group rejeceters)
+# data to use: datalist (full), datalist1 (drop 2 loan receivers), datalist2 (drop group rejeceters)
+library(coin)
+PM <- vector(mode = "list", length = 3)
+for (k in 1:3) {
+  addchar <- c("f", "t", "j")[k]
+  dataList <- eval(parse(text=paste0("datalist", c("", 1:2))[k]))
+  if (addchar == "j") M <- 9 else M <- length(selection.criteria)
+  Pm <- vector(mode = "list", length = M)
+  for (m in 1:M) {
+    set.seed(100+m)
+    if (grepl("^Attrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("a", addchar), dataList) else
+    if (grepl("^AttritedInTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Ta", addchar), dataList) else
+    if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTa", addchar), dataList) else
+    if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else
+    if (grepl("^NonFloodAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedInTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedInNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else
+    if (grepl("^NonFloodTradNonTradAttrited$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else
+    if (grepl("^NonFloodAttritedCowL", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else
+    if (grepl("^Survived$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("s", addchar), dataList) else
+    if (grepl("^SurvivedInTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Ts", addchar), dataList) else
+    if (grepl("^SurvivedInNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTs", addchar), dataList) else
+    if (grepl("^SurvivingTradNonTrad", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else
+    if (grepl("^SurvivingCowN", addtofilename[m]))
+      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else
+    if (grepl("^SurvivingCowL", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CGs", addchar), dataList) else
+    if (grepl("^Random", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else
+    if (grepl("^Rejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("r", addchar), dataList) else
+    if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tr", addchar), dataList) else
+    if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTr", addchar), dataList) else
+    if (grepl("^TradNonTradR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else
+    if (grepl("^GRejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("gr", addchar), dataList) else
+    if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else
+    if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else
+    if (grepl("^TradNonTradGR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else
+    if (grepl("^IRejected$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("ir", addchar), dataList) else
+    if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("Tir", addchar), dataList) else
+    if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+      DataList <- gsub("$", paste0("NTir", addchar), dataList) else
+    if (grepl("^TradNonTradIR", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else
+    if (grepl("^GRejectedTradPar", addtofilename[m])) 
+      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else
+    if (grepl("^RejectedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else
+    if (grepl("^RejectedCowLa", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else
+    if (grepl("^AcceptedCowN", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else
+    if (grepl("^AcceptedCowLa", addtofilename[m])) 
+      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else
+      DataList <- gsub("$", addchar, dataList)
+    pmresults <- permmedian <- vector(mode = "list", length(vartobetested))
+    for (i in 1:length(vartobetested)) {
+      # if specific arm is selected, Arm is not compared in permutation
+      if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+        vartobetested[i] == "Arm") next
+      pmdata <- get(DataList[i])
+      # drop NAs in vartobetested[i]
+      pmdata <- pmdata[!is.na(eval(parse(text=vartobetested[i]))), ]
+      # NULL if vartobetested[i] has uniform values (otherwise returns an error)
+      if (length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1) 
+        pmresults[[i]] <- NULL else
+        pmresults[[i]] <- independence_test(eval(parse(text=
+          paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")")
+          )), 
+          data = pmdata, 
+          distribution = approximate(nresample=PermRepTimes))
+      if (!TestMedian) next
+      if (vartobetested[i] == "Arm" | length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1) 
+        permmedian[[i]] <- NULL else 
+        permmedian[[i]] <- median_test(eval(parse(text=
+          paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+          data = pmdata,
+          mid.score = "0.5",
+          distribution = approximate(nresample=PermRepTimes))
+    }
+    #pmresults[[1]]@statistic@teststatistic
+    Pmtresults <- NULL
+    for (i in 1:length(vartobetested)) 
+    {
+      if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+        vartobetested[i] == "Arm") next
+      z <- get(DataList[i])
+      z <- z[!is.na(eval(parse(text=vartobetested[i]))), ]
+      if (vartobetested[i] == "Arm") {
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+              vartobetested[i], with = F])))/
+              nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+            sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+              vartobetested[i], with = F])))/
+              nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]])))
+      } else if (length(unique(unlist(z[, vartobetested[i], with = F]))) == 1) 
+      {
+        # if both groups have no different values, 
+        # use 0 for all zero entries or 1 for unique nonzero entries
+        if (allzerovalues <- unique(unlist(z[, vartobetested[i], with = F])) == 0)
+          Pmtresults <- rbind(Pmtresults, 
+            c(vartobetested[i], 0, 0, rep(NA, 3))) else
+          Pmtresults <- rbind(Pmtresults, 
+            c(vartobetested[i], 1, 1, rep(NA, 3)))
+      } else {
+        Pmtresults <- rbind(Pmtresults, 
+          c(vartobetested[i], 
+            mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+              vartobetested[i], with = F]), na.rm = T),
+            mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+              vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+            pvalue_interval(pmresults[[i]])))
+        if (TestMedian)
+          Pmtresults <- rbind(Pmtresults, 
+            c("", 
+              median(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+                vartobetested[i], with = F]), na.rm = T),
+              median(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+                vartobetested[i], with = F]), na.rm = T),
+              midpvalue(permmedian[[i]]), 
+              pvalue_interval(permmedian[[i]]) 
+            ))
+       }
+    }
+    Pmtresults <- data.table(Pmtresults)
+    setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.mid", "p-value.lower", "p-value.upper"))
+    Pmtresults[grepl("Impute", variables), 
+      variables := gsub("To.*", "LivestockValue", variables)]
+    cols <- grepout("p|er|ttr|eje|TradArm|CowA|Surv", colnames(Pmtresults))
+    Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+    Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+    cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+    Pmtresults[grepl("Ass|Liv|NetV", variables),  
+      (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+      .SDcols = cols]
+    setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+      "p-value.lower", "p-value.mid", "p-value.upper"))
+    obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+    obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+    nobs <- t(c(NA, obs0L, obs1L, NA, obs1L/(obs0L+obs1L), NA))
+    Pmtresults[, variables := paste0("\\makebox[2.5cm]{\\hfill ", variables, "}")]
+    Pmtresults0 <- rbind(Pmtresults, nobs, use.names = F)
+    Pmtresults0[nrow(Pmtresults0), variables := "\\makebox[2.5cm]{\\hfill n}"]
+    Pm[[m]] <- Pmtresults0
+    if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+      Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+    pmt <- latextab(as.matrix(Pmtresults), 
+      hleft = "\\scriptsize\\hfil$", 
+      hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+      hright = "$", 
+      headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+      alternatecolor = "gray90")
+    pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+        paste(c("\\makebox[2.5cm]{\\hfill n}", 
+         obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+         formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+         collapse = " & "),
+        pmt[nrow(pmt), , drop = F] 
+      )
+    write.tablev(pmt,  
+      paste0(pathsaveHere, addtofilename[m], 
+        c("Full", "", "DropGroupRejecters")[k], "PermutationTestResultso800.tex")
+    , colnamestrue = F)
+  }
+  names(Pm) <- addtofilename[1:M]
+  PM[[k]] <- Pm
+}
+names(PM) <- c("Full", "Drop2LoanReceivers", "DropGroupRejecters")
+saveRDS(PM, paste0(pathsaveHere, "AllPermutationTestResults.rds"))
+PM <- readRDS(paste0(pathsaveHere, "AllPermutationTestResults.rds"))
+# indiv rejecters
+Irej <- c("IRejectedInTrad", "IRejectedInNonTrad", "^IRejected$")
+ir12 <-  cbind(
+    PM[[2]][[grep(Irej[1], addtofilename)]][, c(1:3, 5)],
+    PM[[2]][[grep(Irej[2], addtofilename)]][, c(2:3, 5)])
+setnames(ir12, c("variables", 1:(ncol(ir12)-1)))
+ir3 <- PM[[2]][[grep(Irej[3], addtofilename)]][, c(1:3, 5)]
+setnames(ir3, c("variables", 10+1:(ncol(ir3)-1)))
+ir3rows <- data.table(variables = ir3[, variables])
+setkey(ir12, variables)
+setkey(ir3, variables)
+ir123 <- ir12[ir3]
+ir123 <- ir123[ir3rows]
+setnames(ir123, c("variables", paste0("v", 1:(ncol(ir123)-1))))
+for (i in paste0("v", c(3, 6, 9))) 
+  ir123[nrow(ir123), (i) := 
+    paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
+#cnm <- t(c("\\makebox[3cm]{\\hfil variables}", 
+#  paste0("\\makebox[1.5cm]{\\hfil ", rep(c("Yes", "No", "$p$ value"), 3), "}")))
+cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+  paste0("\\makebox[1.2cm]{(", 1:(ncol(ir123)-1), ")}")))
+irj <- as.matrix(rbind(cnm, ir123, use.names = F))
+irj[is.na(irj)] <- ""
+colnames(irj) <- c("variables", rep(c("Not rejected", "Rejected", "$p$ value"), 3))
+irj <- latextab(irj, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(2.5, rep(1.2, ncol(Pmtresults)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = c(3, 6), 
+  separatingcolwidth = rep(.1, 2),
+  separatingcoltitle = c("\\textsf{Traditional} arm", "non-\\textsf{Traditional} arms", "All arms"),
+  addsubcoltitlehere = T
+  )
+write.tablev(irj,  
+  paste0(pathsaveHere, "IndividualRejectionTestResults.tex")
+, colnamestrue = F)
+# survivors
+Suv <- c("Ac.*NonCow", "Sur.*NonCow")
+sv12 <-  cbind(
+    PM[[2]][[grep(Suv[1], addtofilename)]][, c(1, 3, 2, 5)],
+    PM[[2]][[grep(Suv[2], addtofilename)]][, c(3, 2, 5)])
+setnames(sv12, c("variables", paste0("v", 1:(ncol(sv12)-1))))
+for (i in paste0("v", c(3, 6))) 
+  sv12[nrow(sv12), (i) := 
+    paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
+cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+  paste0("\\makebox[1.2cm]{(", 1:(ncol(sv12)-1), ")}")))
+suv <- as.matrix(rbind(cnm, sv12, use.names = F))
+colnames(suv) <- c("variables", rep(c("Cattle arm", "Other arms", "$p$ value"), 2))
+suv <- latextab(suv, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(2.5, rep(1.2, ncol(suv)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 3, 
+  separatingcolwidth = .1, 
+  separatingcoltitle = c("Borrowers", "Non-attriting borrowers"),
+  addsubcoltitlehere = T
+  )
+write.tablev(suv,  
+  paste0(pathsaveHere, "CowVsNonCowTestResults.tex")
+, colnamestrue = F)
+\end{Sinput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Sinput}
+# data names: ..af, ..rf 
+# data to use: datalist
+library(coin)
+for (m in 1:length(selection.criteria)) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "af", datalist) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Taf", datalist) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTaf", datalist) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTaf", datalist) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomf", datalist) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rf", datalist) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trf", datalist) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrf", datalist) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrf", datalist) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grf", datalist) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrf", datalist) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrf", datalist) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrf", datalist) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irf", datalist) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirf", datalist) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirf", datalist) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirf", datalist) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpf", datalist) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCaf", datalist) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGaf", datalist) else
+    DataList <- gsub("$", "f", datalist)
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "FullPermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+\end{Sinput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Sinput}
+# data names: ..aj, ..rj
+# data to use: datalist2
+library(coin)
+for (m in 1:7) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "aj", datalist2) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Taj", datalist2) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTaj", datalist) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTaj", datalist2) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomj", datalist2) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rj", datalist2) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trj", datalist2) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrj", datalist2) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrj", datalist2) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grj", datalist2) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrj", datalist2) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrj", datalist2) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrj", datalist2) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irj", datalist2) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirj", datalist2) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirj", datalist2) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirj", datalist2) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpj", datalist2) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCaj", datalist2) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGaj", datalist2) else
+    DataList <- datalist2
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "DropGroupRejectersPermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+\end{Sinput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Sinput}
+# data names: ..at, ..rt
+# data to use: datalist1
+library(coin)
+for (m in 1:length(selection.criteria)) {
+  set.seed(100+m)
+  if (grepl("^Attrited$", addtofilename[m])) 
+    DataList <- gsub("$", "at", datalist1) else
+  if (grepl("^AttritedInTrad", addtofilename[m])) 
+    DataList <- gsub("$", "Tat", datalist1) else
+  if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
+    DataList <- gsub("$", "TNTat", datalist1) else
+  if (grepl("^AttritedInNonTrad", addtofilename[m])) 
+    DataList <- gsub("$", "NTat", datalist) else
+  if (grepl("^Random", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrandomt", datalist1) else
+  if (grepl("^Rejected$", addtofilename[m])) 
+    DataList <- gsub("$", "rt", datalist1) else
+  if (grepl("^Rej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Trt", datalist1) else
+  if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTrt", datalist1) else
+  if (grepl("^TradNonTradR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTrt", datalist1) else
+  if (grepl("^GRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "grt", datalist1) else
+  if (grepl("^GRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tgrt", datalist1) else
+  if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTgrt", datalist1) else
+  if (grepl("^TradNonTradGR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrt", datalist1) else
+  if (grepl("^IRejected$", addtofilename[m])) 
+    DataList <- gsub("$", "irt", datalist1) else
+  if (grepl("^IRej.*InTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "Tirt", datalist1) else
+  if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
+    DataList <- gsub("$", "NTirt", datalist1) else
+  if (grepl("^TradNonTradIR", addtofilename[m])) 
+    DataList <- gsub("$", "TNTirt", datalist1) else
+  if (grepl("^GRejectedTradPar", addtofilename[m])) 
+    DataList <- gsub("$", "TNTgrpt", datalist1) else
+  if (grepl("^AcceptedCowN", addtofilename[m])) 
+    DataList <- gsub("$", "CNCat", datalist1) else
+  if (grepl("^AcceptedCowLa", addtofilename[m])) 
+    DataList <- gsub("$", "CLGat", datalist1) else
+    DataList <- datalist1
+  pmresults <- vector(mode = "list", length(vartobetested))
+  for (i in 1:length(vartobetested)) {
+    # if specific arm is selected, Arm is not compared in permutation
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    pmresults[[i]] <- independence_test(eval(parse(text=
+      paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")"))), 
+      data = get(DataList[i]), 
+      distribution = approximate(nresample=PermRepTimes))
+  }
+  #pmresults[[1]]@statistic@teststatistic
+  Pmtresults <- NULL
+  for (i in 1:length(vartobetested)) 
+  {
+    if (grepl("Trad$|TradArm|Cow", addtofilename[m]) & 
+      vartobetested[i] == "Arm") next
+    z <- get(DataList[i])
+    if (vartobetested[i] == "Arm")
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 0L, ]),
+          sum(!grepl("trad", unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F])))/
+            nrow(z[eval(parse(text = selection.criteria[m])) == 1L, ]),
+          midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          )) else
+      Pmtresults <- rbind(Pmtresults, 
+        c(vartobetested[i], 
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 0L, 
+            vartobetested[i], with = F]), na.rm = T),
+          mean(unlist(z[eval(parse(text = selection.criteria[m])) == 1L, 
+            vartobetested[i], with = F]), na.rm = T),
+            midpvalue(pmresults[[i]]), 
+          pvalue_interval(pmresults[[i]]) 
+          ))
+  }
+  Pmtresults <- data.table(Pmtresults)
+  setnames(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.mid", "p-value.lower", "p-value.upper"))
+  Pmtresults[grepl("Impute", variables), 
+    variables := gsub("To.*", "LivestockValue", variables)]
+  cols <- grepout("p|er|ttr|eje|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[,  (cols) := lapply(.SD, as.numeric), .SDcols = cols]
+  Pmtresults[,  (cols) := lapply(.SD, formatC, digits = 3, format = "f"), .SDcols = cols]
+  cols <- grepout("ed$|TradArm|CowA", colnames(Pmtresults))
+  Pmtresults[grepl("Ass|Liv|NetV", variables),  
+    (cols) := lapply(.SD, function(x) formatC(as.numeric(x), digits = 0, format = "f")), 
+    .SDcols = cols]
+  setcolorder(Pmtresults, c("variables", paste0(c("Non", ""), selection.criteria[m]), 
+    "p-value.lower", "p-value.mid", "p-value.upper"))
+  Pmtresults[, variables := paste0("\\makebox[3cm]{\\hfill ", variables, "}")]
+  if (grepl("InNon|InTra|^TradNon|Cow", addtofilename[m]))
+    Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
+  pmt <- latextab(as.matrix(Pmtresults), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3, rep(1.5, ncol(Pmtresults)-1)), 
+    hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  obs0L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 0L, ])
+  obs1L <- nrow(get(DataList[1])[eval(parse(text = selection.criteria[m])) == 1L, ])
+  pmt <- rbind(pmt[1:(nrow(pmt)-1), , drop = F], 
+      paste(c("\\makebox[3cm]{\\hfill n}", 
+       obs0L, obs1L, paste0("\\multicolumn{3}{l}{\\makebox[4.5cm]{\\scriptsize (rate: ", 
+       formatC(obs1L/(obs0L+obs1L), digits = 3, format = "f"), ")\\hfill}}")), 
+       collapse = " & "),
+      pmt[nrow(pmt), , drop = F] 
+    )
+  write.tablev(pmt,  
+    paste0(pathsaveHere, addtofilename[m], "PermutationTestResultso800.tex")
+  , colnamestrue = F)
+}
+\end{Sinput}
+\end{Schunk}
+
+
+\begin{Schunk}
+\begin{Sinput}
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+if (Only800) ar <- ar[o800 == 1L, ]
+# "ar" is roster
+# below is what was processed in AttritionTestsContents2.rnw
+ar[, Attrited := 1L]
+ar[hhid %in% hhid[Time == 4], Attrited := 0L]
+ar[, c("Rejected", "GRejected", "IRejected") := 0L]
+ar[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+ar[grepl("^i.*rej", BStatus), IRejected := 1L]
+ar[grepl("^g.*rej", BStatus), GRejected := 1L]
+ar[, En := 1:.N, by = .(hhid, Time)]
+ar[, Tee := .N, by = .(hhid, mid, Time)]
+ar <- ar[En == 1 & Time == 1, ]
+\end{Sinput}
+\end{Schunk}
+Among 800 observations, there are 4 whose villages are washd away and 70 who by group rejected the assigned arms which are traditional, large, large grace with 40, 20, 10, 0 individuals, respectively. There are 31, 9, 13, 37 individuals who individually rejected traditional, large, large grace, cow, respectively. Among attrited HHs, when were they lost?
+\begin{Schunk}
+\begin{Sinput}
+table(ar[Attrited == 1L, Tee])
+\end{Sinput}
+\begin{Soutput}
+
+ 1 
+92 
+\end{Soutput}
+\end{Schunk}
+Reasons for attrition and relation to flood damage.
+\begin{Schunk}
+\begin{Sinput}
+table0(ar[Attrited == 1L, .(FloodInRd1, BStatus)])
+\end{Sinput}
+\begin{Soutput}
+          BStatus
+FloodInRd1 borrower individual rejection group rejection rejection by flood
+      0          11                    7               2                 23
+      1          11                    7              13                 17
+      <NA>        0                    1               0                  0
+\end{Soutput}
+\begin{Sinput}
+table0(ar[Attrited == 1L, .(AssignOriginal, BStatus)])
+\end{Sinput}
+\begin{Soutput}
+              BStatus
+AssignOriginal borrower individual rejection group rejection rejection by flood
+   traditional        2                    6               0                  0
+   large              7                    0               0                  0
+   large grace        7                    2               0                  0
+   cow                6                    7               0                  0
+   <NA>               0                    0              15                 40
+\end{Soutput}
+\end{Schunk}
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling 100000 times.
+
+% below form permutation tables for all groups examined in AttritionTestContents2.rnw
+
+\begin{Schunk}
+\begin{Sinput}
+tb1 <- "\\hfil\\begin{minipage}[t]{14cm}\\hfil\\textsc{\\normalsize Table \\refstepcounter{table}\\thetable: "
+tb2 <- "}\\\\\\setlength{\\tabcolsep}{.5pt}\\setlength{\\baselineskip}{8pt}\\renewcommand{\\arraystretch}{.50}\\hfil\\begin{tikzpicture}\\node (tbl) {\\input{"
+tb3 <- "}};\\end{tikzpicture}\\\\\\begin{tabular}{>{\\hfill\\scriptsize}p{1cm}<{}>{\\hfill\\scriptsize}p{.25cm}<{}>{\\scriptsize}p{12cm}<{\\hfill}}Source:& \\multicolumn{2}{l}{\\scriptsize Estimated with GUK administrative and survey data.}\\\\ Notes: & 1. & \\textsf{R}'s package \\textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to "
+#tb4 <- ". Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \\textsf{Attrited} and \\textsf{Nonattrited} columns show means of each group. For \\textsf{Arm}, proportions of non-traditional arm are given. \\\\& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\\%, 5\\%, 10\\%, respetively. Standard errors are clustered at group (village) level.  \\\\& 3. & See the footnote of \\textsc{Table \\ref{tab MainTextIRjecters}} for description of variables. \\end{tabular}\\end{minipage}\\\\\\vspace{2ex}"
+tb41 <- ". Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. \\\\& 2. & Standard errors are clustered at group (village) level. \\textsf{p-value.lower}, \\textsf{p-value.mid}, \\textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution.  \\\\& 3. & See the footnote of \\textsc{Table \\ref{tab MainTextIRjecters}} for description of variables. \\end{tabular}\\end{minipage}\\\\\\vspace{2ex}"
+tb42 <- ". Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. For \\textsf{Arm}, proportions of non-traditional arm between two groups are tested. \\\\& 2. & Standard errors are clustered at group (village) level. \\textsf{p-value.lower}, \\textsf{p-value.mid}, \\textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution. \\\\& 3. & See the footnote of \\textsc{Table \\ref{tab MainTextIRjecters}} for description of variables. \\end{tabular}\\end{minipage}\\\\\\vspace{2ex}"
+tb43 <- ".\\\\& 2. &  See footnotes of \\textsc{Table \\ref{tab1 Permutation test results of rejection}}. \\end{tabular}\\end{minipage}\\\\\\vspace{2ex}"
+tb44 <- ".\\\\& 2. &  See footnotes of \\textsc{Table \\ref{tab1 Permutation test results of rejection among traditional arm}}. \\end{tabular}\\end{minipage}\\\\\\vspace{2ex}"
+for (k in 1:3) 
+  for (i in 1:length(HeaderDescription))
+    assign(paste0("Tb", k, i), 
+      paste0(
+        tb1
+        , 
+        HeaderDescription[i]
+        ,
+        paste0("\\label{", get(paste0("TabLabel", k))[i], "}")
+        ,
+        tb2
+        , 
+        paste0(pathsaveHere, addtofilename[i], c("", "Full", "DropGroupRejecters")[k],
+          "PermutationTestResultso800.tex")
+        , 
+        tb3
+        ,
+        PermRepTimes
+        ,
+        #if (i %in% c(1, 5, 11, 17, 21, 25)) tb42 else tb41
+        if (i==17) tb42 else if (i==18) tb41 else if (i %in% c(1, 5, 11, 21, 25)) tb43 else tb44
+        )
+      )
+\end{Sinput}
+\end{Schunk}
+
+
+\subsection{Trimmed sample}
+\begin{Sinput}
+for (i in 1:length(HeaderDescription)) 
+cat(eval(parse(text=paste0("Tb1", i))))
+\end{Sinput}
+\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab1 Permutation test results of attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among traditional arm\label{tab1 Permutation test results of attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among non-traditional arm\label{tab1 Permutation test results of attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters of traditional and non-traditional arms\label{tab1 Permutation test results of attriters of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradAttritedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition\label{tab1 Permutation test results of non-flood attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among traditional arm\label{tab1 Permutation test results of non-flood attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among non-traditional arm\label{tab1 Permutation test results of non-flood attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of traditional and non-traditional arms\label{tab1 Permutation test results of non-flood attriters of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodTradNonTradAttritedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of cattle and all other arms\label{tab1 Permutation test results of non-flood attriters of cattle and all other arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedCowNonCowPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of cattle and large grace\label{tab1 Permutation test results of non-flood attriters of cattle and large grace}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedCowLargeGracePermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival\label{tab1 Permutation test results of survival}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival among traditional arm\label{tab1 Permutation test results of survival among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival among non-traditional arms\label{tab1 Permutation test results of survival among non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of traditional and non-traditional arms\label{tab1 Permutation test results of surviving members of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingTradNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of cattle and all other arms\label{tab1 Permutation test results of surviving members of cattle and all other arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingCowNonCowPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of cattle and large grace arms\label{tab1 Permutation test results of surviving members of cattle and large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingCowLargeGracePermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection\label{tab1 Permutation test results of rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm between two groups are tested. \\& 2. & Standard errors are clustered at group (village) level. \textsf{p-value.lower}, \textsf{p-value.mid}, \textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution. \\& 3. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among traditional arm\label{tab1 Permutation test results of rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. \\& 2. & Standard errors are clustered at group (village) level. \textsf{p-value.lower}, \textsf{p-value.mid}, \textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution.  \\& 3. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among non-traditional arm\label{tab1 Permutation test results of rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, traditional vs. non-traditional arm\label{tab1 Permutation test results of rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradRejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection\label{tab1 Permutation test results of group rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among traditional arm\label{tab1 Permutation test results of group rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among non-traditional arm\label{tab1 Permutation test results of group rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejecters, traditional vs. non-traditional arm\label{tab1 Permutation test results of group rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradGRejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection\label{tab1 Permutation test results of individual rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among traditional arm\label{tab1 Permutation test results of individual rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedInTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among non-traditional arm\label{tab1 Permutation test results of individual rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedInNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejecters, traditional vs. non-traditional arm\label{tab1 Permutation test results of individual rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradIRejectedPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm\label{tab1 Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedTradParticipatedNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, cattle vs. non-cattle arms\label{tab1 Permutation test results of rejecters, cattle vs. non-cattle arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedCowNonCowPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, cattle vs. large grace arms\label{tab1 Permutation test results of rejecters, cattle vs. large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedCowLargeGracePermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borrowers, cattle vs. non-cattle arms\label{tab1 Permutation test results of borrowers, cattle vs. non-cattle arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AcceptedCowNonCowPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borowers, cattle vs. large grace arms\label{tab1 Permutation test results of borowers, cattle vs. large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AcceptedCowLargeGracePermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of arm assignment, traditional vs. non-traditional arms\label{tab1 Permutation test results of arm assignment, traditional vs. non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RandomAssignmentTradNonTradPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}
+\subsection{Full sample}
+\begin{Sinput}
+for (i in 1:length(HeaderDescription)) 
+cat(eval(parse(text=paste0("Tb2", i))))
+\end{Sinput}
+\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab2 Permutation test results of attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among traditional arm\label{tab2 Permutation test results of attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among non-traditional arm\label{tab2 Permutation test results of attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters of traditional and non-traditional arms\label{tab2 Permutation test results of attriters of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradAttritedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition\label{tab2 Permutation test results of non-flood attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among traditional arm\label{tab2 Permutation test results of non-flood attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among non-traditional arm\label{tab2 Permutation test results of non-flood attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of traditional and non-traditional arms\label{tab2 Permutation test results of non-flood attriters of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodTradNonTradAttritedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of cattle and all other arms\label{tab2 Permutation test results of non-flood attriters of cattle and all other arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedCowNonCowFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attriters of cattle and large grace\label{tab2 Permutation test results of non-flood attriters of cattle and large grace}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedCowLargeGraceFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival\label{tab2 Permutation test results of survival}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival among traditional arm\label{tab2 Permutation test results of survival among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of survival among non-traditional arms\label{tab2 Permutation test results of survival among non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of traditional and non-traditional arms\label{tab2 Permutation test results of surviving members of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingTradNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of cattle and all other arms\label{tab2 Permutation test results of surviving members of cattle and all other arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingCowNonCowFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of surviving members of cattle and large grace arms\label{tab2 Permutation test results of surviving members of cattle and large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/SurvivingCowLargeGraceFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection\label{tab2 Permutation test results of rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm between two groups are tested. \\& 2. & Standard errors are clustered at group (village) level. \textsf{p-value.lower}, \textsf{p-value.mid}, \textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution. \\& 3. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among traditional arm\label{tab2 Permutation test results of rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. The second and third columns show means of each group. \\& 2. & Standard errors are clustered at group (village) level. \textsf{p-value.lower}, \textsf{p-value.mid}, \textsf{p-value.upper} indicate lower-bound, mid $p$ value, and upper-bound of the observed test statistic and the null distribution.  \\& 3. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among non-traditional arm\label{tab2 Permutation test results of rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, traditional vs. non-traditional arm\label{tab2 Permutation test results of rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradRejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection\label{tab2 Permutation test results of group rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among traditional arm\label{tab2 Permutation test results of group rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among non-traditional arm\label{tab2 Permutation test results of group rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejecters, traditional vs. non-traditional arm\label{tab2 Permutation test results of group rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradGRejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection\label{tab2 Permutation test results of individual rejection}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among traditional arm\label{tab2 Permutation test results of individual rejection among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedInTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among non-traditional arm\label{tab2 Permutation test results of individual rejection among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/IRejectedInNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejecters, traditional vs. non-traditional arm\label{tab2 Permutation test results of individual rejecters, traditional vs. non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradIRejectedFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm\label{tab2 Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/GRejectedTradParticipatedNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, cattle vs. non-cattle arms\label{tab2 Permutation test results of rejecters, cattle vs. non-cattle arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedCowNonCowFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, cattle vs. large grace arms\label{tab2 Permutation test results of rejecters, cattle vs. large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RejectedCowLargeGraceFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borrowers, cattle vs. non-cattle arms\label{tab2 Permutation test results of borrowers, cattle vs. non-cattle arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AcceptedCowNonCowFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borowers, cattle vs. large grace arms\label{tab2 Permutation test results of borowers, cattle vs. large grace arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AcceptedCowLargeGraceFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of arm assignment, traditional vs. non-traditional arms\label{tab2 Permutation test results of arm assignment, traditional vs. non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/RandomAssignmentTradNonTradFullPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}
+\subsection{Without group rejection sample}
+\begin{Sinput}
+for (i in 1:7) 
+cat(eval(parse(text=paste0("Tb3", i))))
+\end{Sinput}
+\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab3 Permutation test results of attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among traditional arm\label{tab3 Permutation test results of attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInTradDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition among non-traditional arm\label{tab3 Permutation test results of attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/AttritedInNonTradDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters of traditional and non-traditional arms\label{tab3 Permutation test results of attriters of traditional and non-traditional arms}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/TradNonTradAttritedDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition\label{tab3 Permutation test results of non-flood attrition}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among traditional arm\label{tab3 Permutation test results of non-flood attrition among traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInTradDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}\hfil\begin{minipage}[t]{14cm}\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of non-flood attrition among non-traditional arm\label{tab3 Permutation test results of non-flood attrition among non-traditional arm}}\\\setlength{\tabcolsep}{.5pt}\setlength{\baselineskip}{8pt}\renewcommand{\arraystretch}{.50}\hfil\begin{tikzpicture}\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/NonFloodAttritedInNonTradDropGroupRejectersPermutationTestResultso800.tex}};\end{tikzpicture}\\\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\ Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000.\\& 2. &  See footnotes of \textsc{Table \ref{tab1 Permutation test results of rejection among traditional arm}}. \end{tabular}\end{minipage}\\\vspace{2ex}
+
+	\noindent\textsc{\normalsize Table \ref{tab1 Permutation test results of attrition}} to \textsc{\normalsize Table \ref{tab1 Permutation test results of arm assignment, traditional vs. non-traditional arms}}: Trimmed sample.\\
+	\textsc{\normalsize Table \ref{tab2 Permutation test results of attrition}} to \textsc{\normalsize Table \ref{tab2 Permutation test results of arm assignment, traditional vs. non-traditional arms}}: Full sample.\\
+	\textsc{\normalsize Table \ref{tab3 Permutation test results of attrition}} to \textsc{\normalsize Table \ref{tab3 Permutation test results of non-flood attrition among non-traditional arm}}: Without group rejecter sample.\\
+
+	\textsc{\normalsize Table \ref{tab1 Permutation test results of attrition}} shows results from tests of independence between attriters and non-attriters. We see the moderate rate of attrition is not correlated with household level characteristics at the conventional $p$ value level. Productive asset amounts seem to differ between attriters and non-attriters, with the former being larger than the latter. This positive attrition selection can cause underestimation of impacts, if the asset values are positively correlated with entrepreneurial capacity. \textsc{\normalsize Table \ref{tab1 Permutation test results of attrition among traditional arm, tab1 Permutation test results of non-flood attrition among traditional arm}} shows attrition in the \textsf{traditional} arm. Household heads of attriters are relatively less literate than non-attriters. \textsc{\normalsize Table \ref{tab1 Permutation test results of attrition among non-traditional arm, tab1 Permutation test results of non-flood attrition among non-traditional arm}} compares attriters and non-attriters in the non-\textsf{traditional} arm. Unlike \textsf{traditional} arm attriters, non-\textsf{traditional} arm attriters have more literate household heads, have a larger household size, are more exposed to floods, and have larger productive assets. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the impacts of non-\textsf{traditional} arm. These are explicitly shown in \textsc{\normalsize Table \ref{tab1 Permutation test results of attriters of traditional and non-traditional arms, tab1 Permutation test results of non-flood attriters of traditional and non-traditional arms, tab1 Permutation test results of non-flood attriters of cattle and all other arms, tab1 Permutation test results of non-flood attriters of cattle and large grace}} where we compare attriters of \textsf{traditional} and non-\textsf{traditional} arms. Overall, attrition may have attenuated the impacts but is not likely to have inflated them.\footnote{So one can employ the Lee bounds for stronger results, but doing so will give us less precision and require more assumptions. We will not use the Lee bounds \textcolor{red}{[we can show them if necessary]}. }
+
+	
+	\textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on the analysis sample of 776 members. It shows that lower head literacy, smaller household size, being affected by flood at the baseline, smaller livestock holding, and smaller net assets are correlated with opting out the offered type of lending. \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection among traditional arm}} indicates that lower asset and livestock holding is more pronounced among \textsf{traditional} rejecters relative to loan receivers. It also shows that flood exposure is less frequent, contrary to \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}}, among the rejecters. \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection among non-traditional arm}} indicates that lower head literacy, smaller household size, higher flood exposure, are more pronounced among non-\textsf{traditional} rejecters relative to loan receivers. It also shows that asset and livestock holding is no different relative to the receivers. Comparing rejecters of \textsf{traditional} arm, lower flood exposure may be the only stark difference against non-\textsf{traditional} arm members, and smaller asset and livestock holding is merely suggestive (\textsc{\normalsize Table \ref{tab1 Permutation test results of rejecters, traditional vs. non-traditional arm, tab1 Permutation test results of rejecters, cattle vs. non-cattle arms, tab1 Permutation test results of rejecters, cattle vs. large grace arms}}). 
+	
+	Group rejecters and non-group rejecters are compared in \textsc{\normalsize Table \ref{tab1 Permutation test results of group rejection}}. Marked differences are found in arm (\textsf{traditional} vs. non-\textsf{traditional}) and net asset values and head literacy are noted. \textsc{\normalsize Table \ref{tab1 Permutation test results of group rejection among traditional arm}} compares group rejecters in \textsf{traditional} arm and finds smaller flood exposure and lower livestock and net asset holding are associated with group rejection. Group rejecters in non-\textsf{traditional} arm are examined in \textsc{\normalsize Table \ref{tab1 Permutation test results of group rejection among non-traditional arm}} and younger head age, flood at baseline, and smaller household asset holding are correlated with rejection. Comparing group rejecters between \textsf{traditional} and non-\textsf{traditional} arms in \textsc{\normalsize Table \ref{tab1 Permutation test results of group rejecters, traditional vs. non-traditional arm}}, younger head age, higher flood exposure, larger net asset values and livestock holding are noted among the non-\textsf{traditional} group rejecters. These hint that for non-\textsf{traditional} arm group rejecters, it is the smaller household size and the baseline flood that may have constrained them from participation, and for \textsf{traditional} group rejecters, it is the low asset levels.
+
+	Acknowledging the reasons for rejection can be different, we tested the independence of each characteristics for individual rejecters (vs. non-individual rejeceters) in \textsc{\normalsize Table \ref{tab1 Permutation test results of individual rejection}}. Smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{LivestockValue}, \textsf{NumCows}, and \textsf{NetValue} are associated with individual rejecters. Individual decisions not to participate may be more straightforward: Smaller household size may indicate difficulty in securing the cattle production labour in a household, being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+
+	\textsc{\normalsize Table \ref{tab1 Permutation test results of individual rejection among traditional arm}} and \textsc{\normalsize Table \ref{tab1 Permutation test results of individual rejection among non-traditional arm}} compare individual rejecters and nonrejecters in \textsf{traditional} arm and non-\textsf{traditional} arms, respectively. For \textsf{traditional} rejecters, livestock and other asset values are not correlated with rejection, but the values are similar to non-\textsf{traditional} and higher $p$ values may be due to smaller sample size. For non-\textsf{traditional} arm rejecters, household size and flood exposure are correlated. Comparison of individual rejecters between \textsf{traditional} and non-\textsf{traditional} arms show no detectable difference (\textsc{\normalsize Table \ref{tab1 Permutation test results of individual rejecters, traditional vs. non-traditional arm}}). This suggests that indvidual rejecters in all arms were constrained with small household size and small asset holding.
+
+	%	A closer look at the nonparticipation correlates among \textsf{traditional} arm mebers in \textsc{\normalsize Table \ref{tab reject trad perm}} and non-\textsf{traditional} arm members in \textsc{\normalsize Table \ref{tab reject nontrad perm}} reveal possible differences in the causes. Rejection among \textsf{traditional} members tend to be associated with lower livestock holding but not with higher flood exposure nor smaller household size, while rejecters among non-\textsf{traditional} members are more likely to have suffered from flood in baseline and have smaller household size. Since the offered arms were randomised, rejecters of \textsf{traditional} arm, who were not more exposed to flood and have similar household size at the mean, may have accepted the offer had they been offered non- \textsf{traditional} lending. Henceforth, we conjecture that flood exposure and household size are the potential impediments in larger size loans. This implies that there may not be minimum livestock and asset holding levels to partake the larger loans, and a poverty trap at this level may be overcome.
+
+	\textsc{\normalsize Table \ref{tab1 Permutation test results of survival}} picks up only program surviving members (nonattrited and loan recepients) have greater asset values than non-survivors. Comparing the surviving members, characteristics are similar except that the \textsf{traditional} members are more exposed to the flood than the non-\textsf{traditional} members. Comparing against the large grace arm, survivors in the cattle arm are more exposed to the flood, have fewer productive assets, and have less livestock with $p$ value at .124 (\textsc{\normalsize Table \ref{}}). This shows that the smaller livestock holders are encouraged to participate and continue to operate in the cattle arm that has a managerial support program with all other features being equal. This underscores our intrepretation that the current impact estimates may be downward biased, if any, as people who would otherwise attrit or reject in cattle arm stayed on.
+
+\begin{table}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual rejecters\label{tab IRjecters}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\input{c:/data/GUK/analysis/save/EstimationMemo/IndividualRejectionTestResults.tex}
+\vspace{2ex}
+\end{minipage}
+
+\footnotesize Note: \mpage{12cm}{\footnotesize }
+\end{table}
+
+\begin{table}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Contrasting \textsf{cattle} arm and other arms, borrowers and non-attriting borrowers\label{tab cownoncow}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\input{c:/data/GUK/analysis/save/EstimationMemo/CowVsNonCowTestResults.tex}
+\vspace{2ex}
+\end{minipage}
+
+\footnotesize Note: \mpage{12cm}{\footnotesize }
+\end{table}
+
+
+\end{document}

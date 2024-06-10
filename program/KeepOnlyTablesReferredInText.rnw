@@ -1,0 +1,113 @@
+% This file copies latex tables that are chosen by StrTablesToDisplay (see <<print est results sample, results = "asis">>= section ) in estimation_memo.rnw and ShortfallRegressionAtIndivLevelAndGroupLevel.rnw and print it in the draft tex file.
+<<read all results files>>=
+#% read all tables in estimated results tables. E.g., if Net assets by experience, read tables in \Sexpr{knit_child(paste0(pathprogram, "ANCOVANarrowNetAssetsByExperienceResults.rnw"))} used in EstimationMemo_ANCOVA2.rnw
+outfilenames <- c(
+  "ANCOVARepayment", 
+  "ShortfallRegression", # Not ANCOVA, village and time FE with lagged dependent variable
+  "ANCOVASchooling", 
+  "ANCOVAAssets", 
+  "ANCOVAAssetsRobustness", 
+  "ANCOVALand", 
+  "ANCOVALivestock", 
+  "ANCOVANumCows", 
+  "ANCOVANarrowNetAssets", # net assets in text
+  "ANCOVANetAssets", # broad net assets in text
+  "ANCOVANarrowNetNLAssets", # net non livestock assets
+  #"ANCOVANarrowNetAssetsExperience", # use adi, own covariate
+  "ANCOVANarrowNetAssetsByExperience", # run reg separately for adi, own, none
+  "ANCOVAConsumption", 
+  "ANCOVAIncome"
+)
+# get latex tables from results tex-input files
+restexts <- lapply(as.list(outfilenames), 
+  function(x) readLines(paste0(pathprogram, x, "Results.rnw")))
+TitleLabel <- lapply(restexts, 
+  function(x) gsub(".*thetable: (.*)}\\\\\\\\", "\\1", grepout("thetable:.*", x)))
+TitleLine <- lapply(restexts, function(x) grepout("thetable:.*", x))
+TableFileName <- lapply(restexts, 
+  function(x) grepout("paste0\\(pathsaveHere.*?.tex\"\\)", x))
+TableFileName <- lapply(restexts, 
+  function(x) gsub(".*(paste.*?\\)).*", "\\1", grepout("paste0\\(pathsaveHere.*?.tex\"\\)", x)))
+names(TitleLine) <- names(TitleLabel) <- names(TableFileName) <- 
+  gsub("ANCOVA", "", outfilenames)
+# drop farm incomes from file names
+TableFileName$Income <- 
+  TableFileName$Income[grepl("Lab", TableFileName$Income)]
+# get TabTableContents (table footnote contents) as a list
+source(paste0(pathprogram, "TabTableContents2.R"))
+<<read reg table header footer footnotetables>>=
+head1 <- "\\hspace{-1cm}\\begin{minipage}[t]{14cm}"
+head2 <- "\\setlength{\\tabcolsep}{1pt}
+  \\setlength{\\baselineskip}{8pt}
+  \\renewcommand{\\arraystretch}{.55}
+  \\hfil\\begin{tikzpicture}
+  \\node (tbl) {\\input{"
+foot <- "}};
+%\\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\\end{tikzpicture}\\\\
+\\renewcommand{\\arraystretch}{.8}
+\\setlength{\\tabcolsep}{1pt}"
+tabhead <- "\\begin{tabular}{>{\\hfill\\scriptsize}p{1cm}<{}>{\\hfill\\scriptsize}p{.25cm}<{}>{\\scriptsize}p{12cm}<{\\hfill}}"
+tabfoot <- "\\end{tabular}
+\\end{minipage}"
+<<print est results sample, results = "asis">>=
+StrTablesToDisplay <- c(
+  "narrow net assets timevarying}", 
+  "narrow net ass.*g attributes}", 
+  "A net assets timevarying}", 
+  "A net ass.*g attributes}", 
+  "A nar.*Exp.*g 1}", # narrow net assets Experience timevarying 1
+  "A nar.*Exp.*g 2}",
+  "A nar.*Exp.*g attributes 1}", # narrow net assets Experience timevarying attributes 1
+  "A nar.*Exp.*g attributes 2}",
+  "Na.*NL timevarying}", 
+  "Na.*NL.*g attributes}", 
+  "cow time", 
+  "cons.*time",
+  "income.*time",
+  "school.*ying.}",
+  "school.*ying attributes.}",
+  "shortfall indiv o800}", # individual, o800
+  "shortfall indiv o800 2}", # individual, o800, continued
+  "shortfall indiv o800 3}" # individual, o800, continued 2
+    )
+TitlesToDisplay <- 
+  unlist(lapply(as.list(StrTablesToDisplay), function(x) grepout(x, unlist(TitleLine))))
+PosToDisplay <- 
+  unlist(lapply(as.list(StrTablesToDisplay), function(x) grep(x, unlist(TitleLine))))
+TabContents <- gsub(".$", "", names(TitlesToDisplay))
+# First table of each category: E.g., NetAssets3 in {NetAssets3, NetAssets4, NetAsset5, ...}
+TabCategory <- paste0("^", unique(gsub(".$", "", names(TitlesToDisplay))))
+FirstOfTabCategory <- unlist(lapply(1:length(TabCategory), 
+  function(i) min(grep(TabCategory[i], names(TitlesToDisplay)))))
+for (i in 1:length(PosToDisplay)){
+  if (i == 22) cat("\\section{Correlates of repayment shortfall}\\label{Sec App Repay}")
+  # for continued table, subtract 1 from counter. Checked with grep("continued", TitlesToDisplay)
+  #if (i == 14 | i == 15 | i == 17 | i == 18 | i == 19 | i == 20 | i == 21) cat("\\addtocounter{table}{-1}")
+  if (i %in% grep("continued", TitlesToDisplay)) cat("\\addtocounter{table}{-1}")
+  cat(head1, unlist(TitleLine)[PosToDisplay[i]], head2, 
+    eval(parse(text=unlist(TableFileName)[PosToDisplay[i]]))
+    , foot
+    , tabhead
+    , 
+    #if (i == 1 | i == 3 | i == 4 | i == 5 | i == 7 | i == 9 | i == 13 | i == 19) {
+    if (i %in% FirstOfTabCategory) {
+      # if regression uses attributes, replace table footnotes
+      if (grepl("attributes", unlist(TitleLine)[PosToDisplay[i]])) 
+        eval(parse(text=paste0("Tab", TabContents[i], "A"))) else
+        eval(parse(text=paste0("Tab", TabContents[i])))
+    } else 
+    if (i == 18) 
+      TabFNAncovaSeeFirstSchoolingImpacts else
+    #if (i == 11 | i == 12 | i == 14 | i == 15 | i == 17 | i == 18) 
+    if (i %in% FirstOfTabCategory) 
+      " " 
+      else
+      paste0("Notes : & \\multicolumn{2}{l}{\\scriptsize See footnotes of \\textsc{Table D", i-1, "}.}")
+      #if (grepl("attributes", unlist(TitleLine)[PosToDisplay[i]]))
+      #  TabFNAncovaATopRep else
+      #  TabFNAncovaTopRep
+    , tabfoot
+    , "\\\\\\\\")
+}
+@

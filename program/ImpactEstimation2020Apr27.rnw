@@ -1,0 +1,408 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ImpactEstimation2020Apr27/"); library(knitr); knit("ImpactEstimation2020Apr27.rnw", "ImpactEstimation2020Apr27.tex"); system("platex ImpactEstimation2020Apr27"); system("pbibtex ImpactEstimation2020Apr27"); system("dvipdfmx ImpactEstimation2020Apr27")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newcommand{\gettikzxy}[3]{%
+  \tikz@scan@one@point\pgfutil@firstofone#1\relax
+  \edef#2{\the\pgf@x}%
+  \edef#3{\the\pgf@y}%
+}
+\def\BibTeX{{\textrm{B}\kern-.05em{\textsc{i}\kern-.025em \textsc{b}}\kern-.08em
+    \textrm{T}\kern-.1667em\lower.7ex\hbox{\textrm{E}}\kern-.125em\textrm{X} }}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\usepackage[framemethod=TikZ]{mdframed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{intersections, calc, arrows, decorations, decorations.pathreplacing, backgrounds, shadows}
+\usepackage{pgfplots, pgfplotstable}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.3}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+\mdfsetup{
+linecolor=black!40,
+outerlinewidth=1pt,
+roundcorner=.5em,
+innertopmargin=1ex,
+innerbottommargin=.5\baselineskip,
+innerrightmargin=1em,
+innerleftmargin=1em,
+backgroundcolor=blue!10,
+%userdefinedwidth=1\textwidth,
+shadow=true,
+shadowsize=6,
+shadowcolor=black!20,
+frametitlebackgroundcolor=cyan!40,
+frametitlerulewidth=10pt,
+splittopskip=2\topsep
+}
+\global\mdfdefinestyle{SecItemize}{%
+linecolor=black!40,
+outerlinewidth=1pt,
+roundcorner=1em,
+innertopmargin=1ex,
+innerbottommargin=.5\baselineskip,
+innerrightmargin=1em,
+innerleftmargin=1em,
+backgroundcolor=blue!10,
+%userdefinedwidth=1\textwidth,
+shadow=true,
+shadowsize=2,
+shadowcolor=black!20,
+frametitlebackgroundcolor=cyan!10,
+frametitlerulewidth=10pt
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil An empirical investigation into a financial poverty trap\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+
+\hfil\mpage{10cm}{\footnotesize
+\textsc{\textbf{Abstract}} \hspace{1em} Despite the claimed target to the poor, the existing microcredits rarely cover the ultra poor people. Using a randomised controlled trial in a rural, low income setting of northern Bangladesh, we assess the creditworthiness of the ultra poor and a suitable microcredit scheme to help them escape from the poverty trap. We use a stepped-wedge design over the key features of loans, i.e., small-scale sequential disbursement vs lumpy upfront disbursement, with vs without grace period, and cash vs in-kind loans with managerial training programs. Compared with the traditional, Grameen-style microcredit, the provision of upfront liquidity increases both repayment rates and asset levels. This is consistent with the existence of asset-based poverty traps which can be overcome by increasing the loan size. It is also shown that entrepreneurship supports induce participation to microfinance of less experienced and poorer households, but a grace period does not change asset levels. These are accompanied with increased labour income growth towards the end of loan cycle. We interpret this as evidence of repayment discipline. Given the lack of alternative lenders in the area, we argue that high repayment rates need not generalise to other contexts. Our main findings, managerial support programs induces the participation of the ultra poor and upfront liquidity with a large sum results in faster asset accumulation that is suggestive of an escape from a poverty trap, are generalisable to other rural areas that are suited to cattle and goat production.%We estimate the impacts of entrepreneurship in microfinance under a rural, low income setting of northern Bangladesh using a randomised controlled trial. We provided a packaged loan that bundles an asset lending with managerial support programs which is intended to render entrepreneurship unnecessary. Following the cash flow of the asset, the packaged loan has a loan maturity of three years with one year of grace period. In comparing with a classic Grameen style loan that is a third in amount and has no grace period, we add two more treatment arms which jointly serve as a bridge between the two, large loan size arms with and without a grace period. For the Grameen style loans which serves as a control group, we repeat loan disbursement twice so the total loan size becomes equivalent. We thereby obtain a stepped-wedge design over the key features of loans, i.e., upfront liquidity, grace period, and in-kind loans with support programs. It is shown that entrepreneurship supports and a grace period do not change asset levels. It is also found that upfront liquidity increases both repayment rates and asset levels. We take these results as evidence of a poverty trap which can be overcome by increasing the loan size. These are accompanied with increased labour income growth towards the end of loan cycle. We interpret this as evidence of repayment discipline. Given the relative simplicity and lack of alternative lenders in the area, we argue that irrelevance of entrepreneurial skills and high repayment rates need not generalise in other contexts. Our main finding, upfront liquidity with a large sum results in faster asset accumulation that is suggestive of an escape from a poverty trap, remains generalisable to other rural areas that are suited to cattle and goat production.
+
+}
+
+\newpage
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
+<<echo = F>>=
+Di <- readRDS(paste0(pathsaveHere, "NumObs.rds"))
+Dr <- readRDS(paste0(pathsaveHere, "NumObsUsedInEstimation.rds"))
+@
+\renewcommand{\thefootnote}{*\arabic{footnote}}
+\setcounter{footnote}{0}
+
+\section{Introduction}
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Introduction}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	Credit outreach to the ultra poor is slower than the moderately poor.
+% 	\begin{itemize}
+% 	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% 	\item	Demand side: The ultra poor lack entrepreneurship, access to more efficient production possibility given the small credit size. 
+% 	\item	Supply side: The ultra poor may be riskier, its loan size is too small to justify the fixed costs.
+% 	\end{itemize}
+% \item	We supply credits to test the demand side constraints.
+% \item	Test if entrepreneurship is a constraint.
+% 	\begin{itemize}
+% 	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% 	\item	Entrepreneurship: Packaged loan vs. cash loan.
+% 	\item	In comparing with classic Grameen style loans, Large and LargeGrace loans are also offered, forming a stepped wedge design in \textsf{Upfront}, \textsf{WithGrace}, and \textsf{InKind} attributes.
+% 	\end{itemize}
+% \item	Test if nonconvexity is a constraint.
+% 	\begin{itemize}
+% 	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% 	\item	Test the existence of a poverty trap: Exists if the upfront attribute exhibits a faster asset accumulation at a no smaller repayment rate. A poverty trap is casued, in theory, production set nonconvexity, in practice, heifer-cattle production set nonconvexity.
+% 	\end{itemize}
+% \end{itemize}
+% \end{mdframed}
+
+	According to over 3700 microfinance institutions (MFIs), there are estimated 204 million borrowers around the world in 2013, of which 110 million are the poor borrowers whose incomes are below the national poverty line \citep{MFGateway2015}. The outreach to the extremely poor population or the \textit{ultra poor}, however, is arguably slow in comparison.\footnote{MF is not successful in reaching out to the poorest of the poor, or the ultra poor \citep[][]{Scully2004}. Empirical evidence in \citet{Yaron1994, Navajas2000, RahmanRazzaque2000, AghionMorduch2007} supports this claim. Some authors discuss the tradeoff between sustainability and outreach for microfinance institutions (MFIs) \citet{HermesLensink2011, HermesLensinkMeesters2011, Cull2011}. } This is in contrast with the idea that ``everyone is an entrepreneur'' where MFIs provide credits to the people of any income levels.\textcolor{red}{[Abu-san: Can you get a reference for this in the \BibTeX format? I have a 2017 Guardian article quoting \href{we are all entrepreneurs}{https://www.theguardian.com/sustainable-business/2017/mar/29/we-are-all-entrepreneurs-muhammad-yunus-on-changing-the-world-one-microloan-at-a-time}]}
+
+	The potential reasons behind the slow outreach to the ultra poor can be classified into demand and supply sides. On the demand side, the ultra poor borrowers may not be entrepreneurial enough to demand credits for production, or may face an inferior production possibility than wealthier borrowers. On the supply side, MFIs may perceive the ultra poor as riskier than the moderately poor, or the loan size may be too small to justify the fixed transaction costs while the lender is constrained to keep the interest rate low to avoid adverse selection and moral hazard. However, the creditworthiness of the ultra poor and the resultant welfare dynamics have been rarely examined empirically. The existing program targeting the ultra poor, exemplified by BRAC graduation program, is based on grants, rather than loans, and the sustainability of such a program may be questionable given the limited governmental budgets.
+
+	In assessing the creditworthiness and suitable credit scheme for the ultra poor on a quasi-commercial basis, we ran a randomised controlled trial on the poorest population in the river island areas of northern Bangladesh. By changing the conditions on the credit supply, we estimate and test the effects of demand side constraints. Specifically, by collaborating with a local NGO operating microcredit,  we assign the following four arms that have the equivalent loan size with different characteristics in frontloaded liquidity, grace period, the lending vehicle, and bundling of support programs: (1) A traditional Grameen-style microcredit programme with a small loan amount, which requires clients to start repayment within two weeks after receiving the loan, with one-year maturity. Loan disbursement is repeated twice so the total loan size becomes the same with other schemes; (2) A loan that is three times larger than the regular programme with three-year maturity; (3) A loan that equivalent to the second one, except that it comes with a one-year grace period before they start to repay; (4) An in-kind loan equivalent to the third one bundled with services to implement a microenterprise project. Hence, we take a stepped-wedge design over the key attributes of loans: small-scale credit vs upfront lumpy credit; with vs without a grace period; and cash vs in-kind loans with support programs. By comparing the additional traits assigned to each treatment arm, this study aims to identify the demand-side constraints as well as welfare and asset dynamics of alternative credit schemes. 
+	%we test the necessity of entrepreneurial skills in successfully completing a loan cycle. To do so, we offered a packaged loan that bundles an asset lease with managerial support programs which is intended to render entrepreneurship unnecessary. Provided that our managerial support program covers a sufficiently wide range of issues, the package is expected to achieve a return that is no smaller than a regular credit, even when the entrepreneurial skills are essential. As we track all --- barring the flood victims whose villages were washed away --- the potential borrowers including who eventually opted out the borrowing, we are able to estimate the intention-to-treat effects of offering loans and their implied necessity for entrepreneurial skills. 
+	
+	The leased out asset, a heifer, is a prime investment choice in the studied area. where periodic floods and land erosion frequently threaten the livelihoods of its dwellers. A heifer needs to be at least two years old to start lactation. The maximum amount households can borrow is set at the affordable level to purchase a one-year old heifer except for the traditional Grameen-style credit arm. We explore the investment decisions and welfare consequences induced by relaxing liquidity constraints in comparison between (1) and others.  Since  households with a one-year old heifer must wait for another one year before it starts to lactate, we give one year grace period to match the cash flow profile of presumed (dairy cattle) production in treatment (3) and (4).  
+
+	An in-kind offer in treatment (4) is generally thought to be less efficient than a cash offer as it takes away a choice from the borrower. In addition, only the borrowers of cash lending have a chance to misuse the cash unproductively. However, the local microfinance practitioners widely agree that other production opportunities are limited in our setting given environmental constraints.\footnote{I is also notable that a closely related project in the neighbouring areas transfers an asset in the form of a cow\citep{BandieraBRAC2017}. }  
+	%It is generally thought in practice that an in-kind offer, with only a single asset to lease out, is less efficient than a cash offer as it takes away a choice from the borrower. However, the local microfinance practitioners widely agree that little is lost in a production opportunity even when the loan takes an in-kind form in a heifer, because a heifer is almost the only investment choice in our study area.\footnote{I is also notable that a closely related project in the neighbouring areas transfers an asset in the form of a cow\citep{BandieraBRAC2017}. } If this presumption is correct, it gives a unique chance to compare cash lending with in-kind lending, even without controlling for the different choice set of projects. In the later section examining the income generating activities, we show that this is actually the case.
+	We also found in our data that most of cash borrowers started to invest in cattle, hence we find no evidence of misuse. Consequently, in our study, the cash-grace period and in-kind-grace-period lending differ only in the bundled services provided in the latter. Given the small set of the productive investment choices in our setting, our experiment gives a unique chance to compare cash lending with in-kind lending, even without controlling for the different choice set of projects. Moreover, a packaged loan that bundles an asset lease (one-year old heifer) with managerial support programs is intended to render entrepreneurship unnecessary, which is thought to be one of the major constraints for the ultra poor to access the microcredit. Provided that our managerial support program offers a sufficiently wide range of services, the package is expected to achieve a return that is no smaller than a regular credit, even when the entrepreneurial skills are essential. 
+	As we track all --- barring the flood victims whose villages were washed away --- the potential borrowers including who eventually opted out the borrowing, we are able to estimate the intention-to-treat effects of offering loans and their implied necessity for entrepreneurial skills.
+	%A heifer needs to be at least 2 years old to start lactation. As the packaged loan provides a heifer of one year old, we give one year of grace period. In comparing with the classic Grameen style loan that is smaller in amount and has no grace period, we add two more treatment arms which jointly serve as a bridge between the two, large loan arms with and without a grace period. For the Grameen style loans which serves as a control group, we repeat loan disbursement twice so the total loan size becomes the same for all arms. We thereby obtain a stepped-wedge design over the key attributes of loans, i.e., frontloaded liquidity, a grace period, and in-kind loans with support programs.
+
+	Our study closely follows the literature of microfinance design as hallmarked in \citet{Field2013} who found a grace period induces more risk taking and subsequent loan delinquency. Similar to their study, we allow selected borrowers a grace period in repayment. Under our setting, however, it is irrational to invest in riskier assets when the designed grace period suits the actual cash flow, provided that a heifer has a Pareto-dominant risk-return investment profile. A strategic default is also more difficult in our setting because the number of alternative credit suppliers is limited, which is probably zero.\footnote{As we surveyed the area before the study, we note several NGOs provide a relief credit to flood victims, not regular finance. We also choose population without access to any financial institution.\textcolor{red}{[Abu-san: A better description for this?]} } We therefore expect a larger loan size, longer maturity, and a grace period would not directly result in moral hazard both in \textit{ex ante} and \textit{ex post} sense. 
+
+	Our study is closely related to a large scale cattle transfer study conducted in the neighbouring area \citep{BandieraBRAC2017, Balboni2020}. The targeted population of their study is similar to ours, yet our study population resides on less stable terrain, are more exposed to flood and water logging, are considered to be less well connected to the market, are equally less trained, and are probably poorer. The chance of survival for each investment is expected to be no higher. The difference in experimental design is that they use a transfer while we use loans and leases, and charge a market-rate fee to everything we provide. Our experiment is designed to be financially viable if the repayment is made. 
+
+	Our study is also related to the poverty trap literature. With the stepped-wedge design, the difference in the loan size allows us to test if there is an increasing returns to scale, or nonconvexity in the production set. A nonconvex production set is considered as the leading cause of a poverty trap in development economics \citep{GalorZeira1993}. In our study area, a regular, small scale loan is just the size of acquiring a goat or a sheep, while a larger sized arm allows a purchase of a heifer. When the return to a heifer is higher than to a goat/sheep, there is a scope of poverty trap because a heifer cannot be acquired in parts and the borrower is facing a binding credit constraint. Our study therefore serves to provide micro-level evidence of a poverty trap that is frequently studied in macroeconomics.
+	
+	We found that having large liquidity in upfront leads to faster asset accumulation and higher loan repayment rates. We consider this as evidence of a poverty trap which is formed by the nonconvex production set of a heifer, consistent with the recent study by \citet{Balboni2020}. There is little difference in the outcomes between cash and in-kind lending as well as with and without a grace period. This implies they have no ITT effects. We interpret this as due to a more homogenous investment opportunity in the area compared with the urban setting of \citet{Field2013}. Looking closely at the participant characteristics, however, we found that in-kind lending attracted the borrowers with less cattle rearing experiences and lower asset values. In interpretation, people who are not entrepreneurial enough to overcome less cattle rearing experiences and not entrepreneurial enough to take risks at a lower asset level did not participate in the cash lending arms, while did so in the in-kind lending arm. This hints some entrepreneurship is required for microfinance participation and repayments, and the managerial support program might have closed such gaps in entrepreneurial skills. 
+	
+	%We found that entrepreneurship is not a prerequisite for microfinance lending and repayments. There is little difference in the outcomes between the in-kind lending and cash lending. We intepret this as due to a more homogenous investment opportunity in the area compared with the urban setting of \citet{Field2013}. We found that having upfront liquidity is the key to faster asset accumulation and higher loan repayment rates. We consider this as evidence of a poverty trap which is formed by the nonconvex production set of heifer. 
+
+	In the following section, we summarise the existing literature. Section \ref{SecBackground} gives the brief account of background of study site. Section \ref{SecTheory} shows a possible mechanism of poverty trap that our target population is under. Section \ref{SecExperimentalDesign} lays out the details of experimental design. Section \ref{SecEmpiricalStrategy} explains the estimation strategy. In section \ref{SecResults}, we provide a brief overview of the experimental results. Section \ref{SecConclusion} discusses the interpretation of results.
+
+\section{A brief review of existing studies}
+\label{SecExistingStudies}
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Existing studies}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	A relatively high uptake rate (among members) of our study poses less of the statistical power issue that plagues the benchmark study of \citet{BanerjeeKarlanZinman2015}
+% \item	Heterogenous impacts of microcredits: Experiences/skills matter. Our study shows that skills do not matter for the impacts on the extensive margins.
+% \item	Mixed and weak impacts of MFI training programs: Entrepreneurial skills are not trained easily, implying entrepreneurial skills, if required, may have to be outsourced in production processes. Our study shows entrepreneurial skills may not be required for production at this micro level of production.
+% \item	Grace period: Our study is marked to actual cash flow profile, thereby easing the term mismaych, which explains the reduction of defaults
+% \item	Lending suffices: We also observe sustained asset level increase as in asset transfer programs
+% \end{itemize}
+% \end{mdframed}
+
+	Much has been discussed about the poverty reduction impacts of microfinance in the early days of microfinance studies \citep{Morduch1999}. Recently, doubts are cast on the magnitude of microfinance impacts \citep{BanerjeeKarlanZinman2015, DuvendackMader2019, Meager2019} while asset grants (capital injection) remain to show high returns \citep{deMel2008, DeMel2014, FafchampsFlypaper2014, BandieraBRAC2017}. \footnote{This is due partly to insufficient statistical power \citep{MckenzieWoodruff2013}. \citet{BanerjeeKarlanZinman2015} collects five studies of microfinance lending impacts. They raise lack of statistical power due to low take up. This naturally gives way to erroneously large impacts. \citet{BanerjeeKarlanZinman2015} point that more able and experienced borrowers saw larger, ``transformative effects.'' In the current study, in contrast, the up take rate is relatively high at \Sexpr{Di[grep("^Repay", File)+0:4, ][, .(sum/sum[grepl("sum", BStatus)])][1]*100}\%, of which \Sexpr{Di[grep("^Repay", File)+0:4, ][, .(rate = sum/sum[grepl("sum", BStatus)])][4]*100}\% is lost to flood.  } Lack of mean impacts led researchers to look for a particular subgroup which shows impacts, or impact heterogeneity \citep{Banerjee2017HyderabadFollowup}: Borrowers with prior experiences or high ability are shown to have higher returns \citep{Banerjee2015Miracle, Mckenzie2017Spurring, Buera2017}. The studies with a focus on experienced members or existing firms can be considered as looking at impacts on the intensive margins. In contrast, our study is targeted to an isolated greenfield population. We look at impacts on the extensive margins which are relatively less studied.
+
+	The fact that experienced members gain larger benefits from microcredit is consistent with the positive impacts of capital grant programs on existing firm owners. Whether such experience is trainable for novice entrepreneurs remains unsettled. A growing body of management capital literature in developing countries is insightful yet most of the research is necessarily geared to existing firms, so it does not inform much on how one can assist novice entrepreneurs.\footnote{\citet{BruhnKarlanSchoar2018} shows intensive management consulting services to the small scale firms in Mexico resulted in sustained improvements in management practices which led to higher TFP and larger employment. Others also show effectiveness \citep{Calderon2011, Berge2012, Bloometal2013} while others do not \citep{Bruhn2012, KarlanKnightUdry2015}. \citet{MckenzieWoodruff2013} put them as: These managerial impacts studies are too different to compare, in terms of population, interventions, measurement (variables, timing), and most importantly, implied statistical power in the design. } \citet{KarlanValvidia2011, BruhnZia2011, Argent2014} are the exceptions, but results and quality of evidence are mixed and inconclusive. The current study explicitly tests if the entrepreneurship matters in microfinance outcomes for an isolated greenfield population, which is still relatively less studied. %Entrepreneurship and training components in the current study are to provide basic knowledge of dairy cattle production which can easily be written down. They, the cristalised intelligence, are outsourceable in nature. We consider it is the skills to deploy services in a timely manner, rather than the knowledge contents \textit{per se}, that we provide to help borrowers in increasing efficiency.
+
+	Another strand of the literature links capital grant effectiveness with production set nonconvexity. Theories base lumpiness and credit market imperfection as keys to a povety trap \citep[e.g., ][]{GalorZeira1993} but its empirical application is scant. When the production set is convex, a small scale transfer may not lead to a sustained increase in income, as it can be either consumed or invested to a technology with decreasing marginal returns that brings back to the original income level (i.e., the lower equilibrium of poverty trap). A few studies of transfer programs report sustained increase in assets and incomes. A transfer program in northern Bangladesh that is closely related to this study shows an occupational change and an income increase \citep{BandieraBRAC2017}. Other transfer programs to the ultra poor also show increases in incomes and assets \citep{Blattman2014, BanerjeeetalScience2015, Blattmanetal2016, HaushoferShapiro2016}. \citet{BanerjeeetalScience2015} reports increased consumption, asset levels, saving, various incomes of the ultra poor after receiving a large transfer. %\citet{Kaboski2018Indivisibility} uses a lab-in-the-field experiment to show the link between investment indivisibility, saving, and patience. 
+	Similar to these studies, our study our study examines the nonconvexity of higher-return production set.
+	finds evidence consistent with the nonconvexity of higher-return production set. Our study incorporates a heifer lease. As a heifer requires a lead time before producing milk, we introduced a grace period in the cash lending to make the comparison with the heifer lease more straightforward. Previous research  in the urban setting has shown that a grace period induces more aggressive risk-taking \citep{Field2013}. %shows that a two-month grace period increases the investment size, raises profitability, but also increases the default rates. They discuss how it influences the investment riskiness that varies along risk preference heterogeneity. 
+	The experimental setting of the current study has much a smaller choice set that limits the scope of risk taking. The design of this study is in line with \citet{Beaman2015} who redesigned the repayment schedule adopted to the borrower's cash flow profile (repay after harvest), thus, on a good faith, a grace period is expected to reduce delinquency because the term mismatch is eased. 
+
+
+\section{Background}
+\label{SecBackground}
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Background}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	Lowest income area with high annual flood risks
+% \item	No NGO/MFI presence
+% \item	Argue: Cattle $\succcurlyeq$ goat in risk-return if invested
+% \item	But: higher inputs and upfront fixed costs
+% \item	Goats: Can have higher returns (in developed countries, smaller inputs and higher fertility), but worse in mortality/morbidity risks, particularly to water logging
+% \item	Goat cash flow: Meat demand or kid sales require relatively high incomes, is infrequent
+% \item	Cows inputs: Vaccination, fodder
+% \item	Cow cash flow: Milk sales is more frequent, a calf sales requires even higher incomes
+% \end{itemize}
+% \end{mdframed}
+
+	he study area is in the river island, known as Chars in Bengali, of northern Bangladesh in Gaibandha and Kurigram districts. Chars are formed by sediments and silt depositions and are prone to cyclical river erosions and floods. Chars are not stable in size and even in existence, and episodes of their partial or complete erosion or submerging are quite common. Chars accommodate ultra-poor inhabitants who are forced, as a desperate attempt for survival, to relocate across islands due to river erosion and floods.
+
+	In the study area, cattle and goats/sheep are the main livestock that residents own. Rearing costs are higher for cattle as it requires fodder while a goat will eat the bushes. Cattle requires vaccination shots when a goat is usually left unvaccinated. Reproductive capacity of goats are high that parity size approaches to 2 at the third birth, and the birth interval is about 200 days \citep{Hasan2014goat}. An indigenous cow has a birth interval of 375 to 458 days \citep{Hasan2018}, resulting in about 2 years for gestation and calving interval \citep{Habib2012} with the mean lifetime births of 4 \citep[][Table 1]{Hasan2018}. 
+	
+	Goat kid's potentially higher reproductive capacity and lower rearing costs are, however, more than offset by the elevated morbidity and mortality risks, and a less frequent cash flow. Indeed, morbidity of goat kids ranges from 12\% \citep{Mahmud2015} to more than 50\% in some diseases \citep[][Table 5]{Nandi2011}, while cattle morbidity is around 22\% \citep{Bangar2013}. Goat kid mortality ranges from 6\% \citep{Mahmud2015} to 30\% \citep[][Table 5]{Paul2014} \citep{Ershaduzzaman2007}. Heifer mortality is between 5\% \citep[][p.332R]{Hossain2014} to 10\% \citep{Alauddin2018}. Higher morbidity of goat kids partly reflects their eating style that uses lips rather than tongues (as cattles do) and vulnerability to logging water. 
+
+	Lactation length is 227 days and milk yield is 2.2 kg per day \citep{Rokonuzzaman2009} while goat milk is seldom marketed. It is also worth noting that a meat market requires a cluster of relatively high income earners, which takes some efforts to get to from the river islands. Goat meat sales is seasonal and it does not provide a frequent cash flow. Residents also report that a goat herd is less mobile than single cattle when they are forced to evacuate during the flood. All of these considerations prompt residents to opt for cattle when they can afford it, and do not expand the herd size of goats, which are both confirmed in our data.
+
+\section{Experimental design}
+\label{SecExperimentalDesign}
+
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Experimental design}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	Stepped-wedge design allows us to test a series of contraints.
+% 	\begin{itemize}
+% 	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% 	\item	Cow vs. Large grace: Entrepreneurship constraint (\textsf{InKind})
+% 	\item	Large grace vs. Large: Saving constraint (\textsf{WithGrace})
+% 	\item	Large vs. Traditional: Liquidity constraint (\textsf{Upfront})
+% 	\end{itemize}
+% \item	Interpretation of entrepreneurship contsraint: Access to (textual) knowledge does not increase profits
+% \item	We track everyone except flood victims. This allows us to consistently estimate the ITT effects.
+% \end{itemize}
+% \end{mdframed}
+
+	To investigate the detailed demand-side constraints and suitable credit scheme for the ultra poor, we implemented the village-level clustered randomization across the four treatment arms as follows:
+
+	\begin{description}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item[T1]	Traditional microcredit. The design of this treatment arm is similar to that of the flagship Grameen-style microcredit lending, which is widespread in Bangladesh. Under this treatment arm, members of the group will receive 5600 taka credit, with loan repayment beginning two weeks after disbursement. Members repay with weekly installments and are required to attend weekly meetings as well as to regularly save an amoun	t decided jointly by the group members. The contract maturity is one year, and borrowers are allowed to make another two loan contracts of equivalent amounts over the next consecutive years. The weekly repayment is 125 taka payable in 50 installments.
+	\item[T2]	Upfront lumpy credit without a grace period. Under this treatment arm, group members receive 16,800 taka credit with a longer period of loan maturity, with loan repayments beginning two weeks after disbursement. The weekly repayment is the same amount as in the T1 arm. The compulsory saving applies as in the T1 arm. The loan maturity is three years. The required weekly repayment is 125 taka payable in 150 weekly instalments (for three years). 
+	\item[T3]	Upfront lumpy credit without a grace period. Under this treatment arm, group members receive 16,800 taka credit with loan repayments beginning one year after disbursement. During the first year grace period, members are required to meet weekly and follow group activities such as compulsory savings just as in other arms. The compulsory saving is the same as in the T1, T2 arms. The loan maturity is three years. The required weekly repayment is 190 taka payable in 100 weekly installments, starting after one year.
+	\item[T4]	In-kind credit with a one-year grace period and managerial support programs. Under this treatment arm, group members receive in-kind credit in the form of a one-year old heifer, within the price range of 16,000 taka with loan repayment beginning one year after disbursement. In comparison with smaller livestock such as goats, cows are more versatile in flood-prone areas. They typically need to be about 15 months old to be ready for insemination and takes about 9.5 months to deliver a calf as it starts lactation, or the total of about 2 years. This corresponds to the grace period length provided under the T3 and T4 arms when we acquire one year old heifers. In addition, the members receive fodder, training on cow rearing, regular veterinary and vaccination services, and marketing consultancy services from the local NGO, at the total fee of 800 taka charged over the three years. 
+	\end{description}
+
+	One of the aims of the study is to assess if the entrepreneurship matter in microfinance lending outcomes. Assuming that the economically most lucrative asset is a heifer, we bundle training with a heifer lease. At the start of a lease, our expert procures a heifer from the local market, so the leasee does not have to have the knowledge required for the quality purchase. We provide knowledge to a group of borrowers through training and disallow an investment choice by leasing out an asset, so some part of entrepreneurship will no longer be a prerequisite. It can be seen that we are offering a capacity to use the best practice or the \textit{cristalised intelligence} related to cattle production \citep{Cattell1963}. This is only a part of entrepreneurial skills. The remainder, a capacity to apply a suitable action to unforeseen events or the \textit{fluid intelligence} related to cattle production is left unchanged. Borrowers of other arms who are not provided the knowledge may opt out the loan or perform worse, if entrepreneurship raises productivity. One can measure impacts of entrepreneurship by comparing these two groups, in-kind credit vs. cash credit.
+	%So the estimated impacts may reflect a hightened awareness to the production knowledge that can be manipulated by outsiders. This characterisation suggests that the entrepreneurial skills we provide overlaps with what the professional consultants advise in the management capital literature. %If there is an impact of cristalised intelligence, then one can compute its net returns. We note that, in an attempt not to give any monetary subsidy, we are charging fees at market prices to all the services we provide at request: Fodder supply, milk marketing, veterinary, and insemination. What we do not charge is a form of consulting services that answer to the questions from members who may lack practical knowledge of cattle production. We also provided compulsory training. \footnote{This could have served as a levy on the members of in-kind arm if they already had the relevant knowledge, as we did not give a choice of nonparticipation had they agreed to receive an in-kind loan. Majority of households had no experience in dairy cattle production at the baseline, and we expect them to lack the practical knowledge. }  
+	
+	As a natural reference, we compare the in-kind packaged loan (T4) with the traditional regular microcredit, a classic Grameen style loan that is about a third in loan size and maturity with no grace period (T1). In order to make comparison feasible, we added two intermediate treatment arms to bridge them: Two arms with a large amount of cash lending that is equivalent of heifer price, one with a grace period (T3) and another without a grace period (T2). With the loan sizes that are three times the traditional microfinance loans, we extended the maturity to three years. The comparison arm, the traditional regular microcredit, has only one year maturity. We therefore provided the total of three loans in three loan cycles which are unconditionally disbursed annually so the total loaned amount will be aligned and there is no selection before three cycles are complete due to delinquency. 
+	
+	In these settings, frontloading liquidity without changing total loan size eases a liquidity constraint, attaching a grace period under the same loan size and disbursement timing eases a saving constraint prior to loan receipt, and offering an in-kind lease with managerial support without changing loan size, disbursement timing, and a grace period eases an entrepreneurship constraint. In effect, we constructed a stepped-wedge design over these key features of loans, namely, upfront liquidity (\textsf{Upfront}), a grace period (\textsf{WithGrace}), and in-kind with managerial supports (\textsf{InKind}), to assess respective impacts on the outcomes as indicated in \textsc{\normalsize Table \ref{tab factorial design}}.
+
+	Our sample is drawn from the population of river island villages in northern Bangladesh. We selected the areas of no NGO/MFI activity. 80 villages are randomly chosen and we formed a member committee of 10 households, of which 6 are ultra poor and 4 are moderately poor. The poverty status was determined by a participatory ranking process. We randomised the loan arms at the village level. All loan products are of individual liability and the committee was intended to serve as an activity platform for MFI operations.
+
+	Baseline data was collected in 2012 prior to the loan type randomisation. After offering the arms, three groups opted out as a group. This was unexpected as we have explained the loan types, the random assignment process, and have obtained everyone’s consent to participate before randomisation. Although they refused to receive a loan, they gave a consent to be surveyed so we track them in subsequent survey rounds. We further lost four groups to the flood in 2013. As they relocated, we had no choice but to drop them from the study. Counting other individual attriters, we have 116 subjects (14.5\%) who attrited by the final round. We find that attrition as random (\textsc{\small Table \ref{tab attrit perm MainText}}). In addition to group level rejection/attrition, we had \Sexpr{Di[grep("^Rep", File)+1, sum]} individual loan rejectors. They agreed to receive a loan before we offered it, and they changed their minds. We retain them in the study as they agreed to be surveyed even in the absence of loans. As a result, we have flood victims whom we do not track, group rejectors, individual rejectors and borrowers that we track. See \citet{GUK2016} for more details on the randomisation and acceptance process.
+
+
+
+\begin{table}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: A 4$\times$4 factorial, stepped wedge design\label{tab factorial design}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\vspace{2ex}
+\hfil\begin{tabular}{>{\footnotesize\hfill}p{2cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}}
+					& \cellcolor{paleblue}\textcolor{black}{large, grace} 			& \cellcolor{paleblue}\textcolor{black}{large} & \cellcolor{paleblue}\textcolor{black}{traditional} \\\cellcolor{paleblue}
+\textcolor{black}{cow} 				& \mpage{2.5cm}{\hfil entrepreneurship\\\hfil constraint\\\hfil (\textsf{InKind})} &\cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil saving\\\hfil constraint\\\hfil (\textsf{WithGrace})}} &\cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}}\\\cellcolor{paleblue}
+\textcolor{black}{large, grace} &\cellcolor{gray20} 	&  \mpage{2.5cm}{\hfil saving\\\hfil constraint\\\hfil (\textsf{WithGrace})} & \cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}}\\\cellcolor{paleblue}
+\textcolor{black}{large} 			&\cellcolor{gray20} 	&\cellcolor{gray20}& \mpage{2.5cm}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}%\\\cellcolor{pink}
+%\textcolor{black}{control} & \multicolumn{3}{c}{\cellcolor{green}\textcolor{black}{level \hspace{1em} impacts}}
+\end{tabular}
+\end{minipage}
+
+\footnotesize Note: \mpage{12cm}{\footnotesize Cell contents are hypothesised constraints on investments that exists in the column arm but are eased in the row arm. Contents in brackets are variable names of respective attributes.}
+\end{table}
+
+
+\section{Empirical strategy}
+\label{SecEmpiricalStrategy}
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Empirical strategy}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	We use ANCOVA estimates.
+% \item	We estimate both arm wise impacts and attribute wise impacts.
+% \end{itemize}
+% \end{mdframed}
+
+	We collect data in one baseline and three annual follow up surveys. With successful randomisation (see Section \ref{ResultsSectionParticipation} and Appendix \ref{AppSecRandomisation}), we use ANCOVA estimators to measure impacts of each experimental arms and loan attributes. ANCOVA estimators are more efficient than DID estimators \citep{FrisonPocock1992, McKenzie2012}. As we include loan rejecters, what we are estimating is intention-to-treat effects. For an ease of interpretation, we will also use indicator variables for each attribute, \textsf{Upfront, WithGrace, InKind}. Numerically, both are equivalent. Arms and attributes are just two ways of labeling the same data, so, in what follows, we will jointly refer to them as attributes for simplicity.
+	
+	The basic estimating equation for our intention-to-treat effects is:
+	\begin{equation}
+	y_{it}=b_{10}+\bfb'_{1}\bfdee_{i}+b_{2}y_{i0}+e_{it},
+	\end{equation}
+	where, for member $i$ in period $t$, $y_{it}$ is an outcome measure, $\bfdee_{i}$ is a vector of indicator variables in loan attributes that $i$ receives, $e_{it}$ is an error term. For the \textsf{traditional} arm, the conditional mean of outcome given covariates and baseline outcome variable is given by $b_{10}$. For an attribute $a$, the impact relative to the traditional arm is measured with $b_{1a}$. As we are interested in the time course of impacts, we allow for time-varying impacts as:
+	\begin{equation}
+	y_{it}=b_{10}+\bfb'_{1}\bfdee_{i}+b_{t0}c_{t}+\bfb'_{t}c_{t}\bfdee_{i}+b_{2}y_{i0}+e_{it},
+	\label{EstimatingEqTimeVarying}
+	\end{equation}
+	where $c_{t}$ is a period indicator variable for $t>1$ that takes the value of 1 at $t$, 0 otherwise. We use the second period (period 2 in most cases) as the reference for time dummies. $b_{t0}$ measures the period $t$ deviation from $b_{10}$ for the \textsf{traditional} arm, $\bfb'_{t}$ measures the period $t$ deviation from the concurrent \textsf{traditional} arm for each attribute. For the \textsf{traditional} arm, the conditional mean of outcome given covariates and baseline outcome variable is provided by $b_{10}+b_{t0}$. All the standard errors are clustered at the group (char) level as suggested by \citet{AbadieAtheyImbensWooldridge2017}.%\footnote{To aid the understanding if the data is more suited to the assumption of first-difference (FD) rather than fixed-effects (FE), we use a check suggested by \citet[][10.71]{Wooldridge2010}. It is an AR(1) regression using FD residuals. Most of results show low autocorrelations in FD residuals which is consistent with the assumption of FD estimator. The issue of choice between FD or FE is not of primary importance, as the use of cluster-robust standard errors gives consistent estimates of SEs in both estimators, and it boils down to efficiency.  }
+
+
+\section{Results}
+\label{SecResults}
+
+
+<<permutation test headers, echo = F>>=
+source(paste0(pathprogram, "AttritionPermutationTableHeaders.R"))
+<<Cumulative impacts main text file, echo = T, eval = T, cache = F, child='c:/data/GUK/analysis/program/MainText_ANCOVAImpacts.rnw'>>=
+@
+
+\section{Theory}
+\label{SecTheory}
+
+% \begin{mdframed}[style={SecItemize}, frametitle={Theory}]
+% \begin{itemize}
+% \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+% \item	Contour of two production functions, a nonconvex production set, gives rise to a poverty trap
+% \item	Goats relative to cows as an investment: Infrequent income stream, limited local consumption, vulnerability to logging water, a herd is less mobile
+% \item	Goat returns net of mortality are lower (not generally, only in this area) and one cannot scale up goats: Takes long to switch to cow ownership
+% %\item	No saving constraint required, saving = depreciation at equilibria
+% \item	The entire region depicted in the diagram represents poverty, so it shows a poverty trap within poverty (i.e., ultra poor and moderately poor)
+% \item	We are not going to show the production nonconvexity, instead we show lower repayment rates and smaller cattle holding for a smaller loan size, just as \citet{BandieraBRAC2017} did
+% \end{itemize}
+% \end{mdframed}
+
+\hspace{-3em}\mpage{\linewidth}{
+\hfil\textsc{\normalsize Figure \refstepcounter{figure}\thefigure: A poverty trap with goats and cows\label{fig poverty trap}}\\
+
+\noindent\mpage{\linewidth}{\input{GoatCowProdFunctions.tkz}\input{poverty_trapCompoundScurve.tkz}}}
+
+	In this section, we use a simplified version of \citet{GalorZeira1993} to illustrate a theoretical framework to aid the interpretation of the empirical finding that asset accumulation is faster while the repayment rate is higher for upfront lending. Let us consider that there are two production sets called `goat' and 'cow.' Both sets are nonconvex with fixed inputs. We note from the previous section that returns to goat net of mortality are lower in this area, and one cannot scale up goats as it takes a long period to reproduce to the herd size that is large enough to switch to cow ownership. We also note that a goat investment relative to a heifer has an infrequent income stream, limited local consumption, vulnerability to logging water, all pointing to lower returns. We will use these points to assume that the fixed costs and steady state production level are smaller for goats than cows. 
+	
+	When there is only a goat production technology, individuals eventually reaches the point $G$, a steady state where the capital-labour ratio is constant, or $k_{t+1}=k_{t}$. When the cow production technology is added to the picture, there is no change in the equlibrium for individuals whose initial assets are in $[k_{1}, k_{2})$. For individuals with initial assets in $[k_{2}, \infty)$, one chooses a cow, because the resulting income level is higher, and eventually arrive at the steady state $C$. 
+
+	For the economy as a whole, the production possibility frontier, or the contour of the union of two production sets, becomes M-shaped. Under the configuration depicted in the figure, there will be five equilibria of which three are stable. Ruling out the zero equilbrium as irrelevant, one is left with two stable equilibria, named as goats and cows in the figure. 
+	
+	Formally, one requires the production set $j=\{\mbox{goat, cow}\}$ to satisfy: there exists $\underline{k}_{j}>0$ that the production is zero for input $k<\underline{k}_{j}$ and strictly positive for $k\geqslant\underline{k}_{j}$. We assume the production set exhibits decreasing returns to scale for $k\geqslant\underline{k}_{j}$. Let the contour of the production set be $f(k)$. Assume for expositional simplcity that a fixed saving rate $s$ is such that the steady state saving $sf(k^{*})$ is net of capital depreciation. Further assume that there exists $k_{2}>\underline{k}_{j}$ such that $sf(k)>k$ for $k\in(k_{2}, k^{*})$, with $k^{*}>k_{2}$ is a fixed point $k^{*}=sf(k^{*})$. Under these assumptions, decreasing returns ensure there exists two intersections between the steady state line, one unstable and one stable equilibria.\footnote{In \textsc{Figure \ref{fig poverty trap}}, depreciation below $\underline{k}$ is not accounted as capital cannot be negative. Once the production starts for $k>\underline{k}$, the contour shows net of depreciation so $sf(k)-\delta k$. } 
+
+	In light of this argument, a loan that is larger than $\underline{k}$ allows individuals in the goat equilibrium to transition to cow production and arrive at the cow equilibrium. If the lending market is competitive, the interest rate is the same as the return on capital and thus lending, not a transfer, suffices for the transition. The entire region depicted in the diagram is considered as in the realm of poverty, so it shows a poverty trap within poverty (i.e., goat as ultra poor and cow as moderately poor). 
+
+	In the empirical section, we follow \citet{BandieraBRAC2017} and take the production nonconvexity as given and examine lower repayment rates and smaller cattle holding for a smaller loan size as evidence consistent with a poverty trap. 
+
+\section{Conclusion}
+\label{SecConclusion}
+
+\begin{mdframed}[style={SecItemize}, frametitle={Conclusion}]
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	No entrepreneurship is necessary for project success, due probably to a simpler production process.
+\item	Upfront liquidity increases asset holding and repayment rates, not the loan size \textit{per se}.
+\item	Cattle has higher returns and lower risks, resulting in higher repayment rates, but also has larger initial fixed costs, possibly generating a poverty trap.
+\item	Lending uptake is impeded by small household size and asset shocks.
+\item	If these are relaxed, a poverty trap may be overcome.
+\item	In the remote rural setting, larger upfront loan suited to project needs is shown to be Pareto improving, despite widely believed fears of inefficiency due to information asymmetry.
+\item	In the remote rural setting, slow pace of outreach may be explained by not sufficiently cracking the liquidity constraint.
+\item	Consumption and labour incomes were not affected in non-\textsf{traditional} arms. Labour income increased toward the end of repayment which can be a repayment effort.
+\item	Schooling was not affected in general. It finds a sign of a loss to college level women, hinting a domestic labour constraint in cattle production. But there was also a positive impact for women at the college level in \textsf{WithGrace} arm. While these are possibilities, cell sample sizes are too small to draw anything conclusive.
+\end{itemize}
+\end{mdframed}
+
+	The poverty reduction impacts of microfinance was a firm belief in the early days of microfinance. Yet it suffered from a puzzling weak spot that microfinance is slow to reach the ultra poor, which is still debated today. Recently, even the poverty reduction impacts are subject to doubts, and it has been shown that the only borrowers with experience or skills are able to leap benefits. In this study, we examined the role of entrepreneurship in leaping benefits. We showed, under the rural setting, experiences or entrepreneurship seem to matter for participation and resulting impacts. note the usefulness of having consulting services available for the prospective clients of MFIs when expanding the credit to the ultra poor. 
+
+	This study employs a stepped-wedge design of multiple arms to isolate different attributes of loan contract: Frontloading, a grace period, and in-kind lease with management supports. These map to a liquidity constraint, a saving constraint, and an entrepreneurship constraint. Only frontloading the disbursement matters in all outcomes, which signifies the importance of a liquidity constraint. With evidence that borrowers with frontloaded arms invested in cattle while the borrowers under incremental lending invested in multiple, smaller livestock, and the repayment rates are higher for the frontloaded arms, we conclude that there is a poverty trap which cannot be overcome by the traditional approach of microfinance. Under the study's setting, escaping from the poverty trap only requires frontloading the lending, not lending incrementally as practiced by the majority of microfinance institutions. In addition, lending rather than a transfer may suffice to support the transition. To expand the coverage to the ultra poor, it may be useful to have consulting services.
+	
+	We have witnessed that a binding domestic capacity constraint may impede potential borrowers from participation. This limits the potential benefit of lending a larger amount from the start of the program. While it in unclear why the outsourced labour cannot substitute the domestic labour, one can consider organising a day service run in each group, which can be tended by the group members by taking turns, to collectively graze the cattle during the daytime. This partly eases the domestic labour and/or space constraints faced by small households. 
+
+	We have seen that borrowers accumulated assets, increased labour supplies, but not increasing the consumption. This is consistent with high morale of repayment, which can be explained by the lack of alternative lenders in the study area. With stronger incentives to repay, the evidence on stronger repayment discipline of large sized arm members need not generalise in the areas outside the study site. On the other hand, the necessity of codifiable knowledge in participation even for a simple production process and the scope for escaping the poverty trap with larger lending may be more generalisable to other rural areas that are suited to cow and goat production.
+
+
+
+{\footnotesize\bibliographystyle{aer}
+\setlength{\baselineskip}{8pt}
+\bibliography{c:/docs/migrate/TeX/seiro}
+}
+
+\appendix
+\setcounter{section}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
+\renewcommand{\thetable}{\Alph{section}\arabic{table}}
+\renewcommand{\thesection}{\Alph{section}}
+
+
+<<appendix data description table file, echo = F, eval = T, cache = F, child='c:/data/GUK/analysis/program/Appendix_DataDescription.rnw'>>=
+<<appendix randomisation table file, echo = F, eval = T, cache = F, child='c:/data/GUK/analysis/program/Appendix_Randomisation.rnw'>>=
+<<appendix estimates table file, echo = F, eval = T, cache = F, child='c:/data/GUK/analysis/program/Appendix_EstimatesTables.rnw'>>=
+@
+
+
+\end{document}

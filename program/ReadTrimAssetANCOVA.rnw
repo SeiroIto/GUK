@@ -1,0 +1,3 @@
+<<ReadTrimAssetANCOVAData file contents>>=
+source(paste0(pathprogram, "ReadTrimAssetANCOVA.R"))
+@

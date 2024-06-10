@@ -1,0 +1,36 @@
+# Ignore these files and folders
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+.DS_Store
+program.7z
+paper/*
+slides/*
+save/*
+source/source.7z
+source/mar/1/*
+source/mar/2/*
+source/mar/3/*
+source/oct/1/*
+source/oct/2/*
+source/oct/3/*
+source/oct/4/*
+source/oct/source.7z
+program/*.eps
+program/*.log
+program/*.png
+program/*.aux
+program/*.bbl
+program/*.blg
+program/*.out
+program/*.toc
+program/*.dvi
+program/EstimationMemo/*
+program/cache/*
+program/figure/*
+program/table/*
+program/old/*
+# But not these files...
+!.gitignore

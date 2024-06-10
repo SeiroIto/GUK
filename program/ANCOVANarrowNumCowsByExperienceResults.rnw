@@ -1,0 +1,224 @@
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets, cattle rearing experiences\label{tab ANCOVA net assets experience 1}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience1ANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets, cattle rearing experiences (continued)\label{tab ANCOVA net assets experience 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience2ANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes, cattle rearing experiences\label{tab ANCOVA narrow net assets Experience attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere,"NumCowsByExperience1AttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes, cattle rearing experiences (continued)\label{tab ANCOVA narrow net assets Experience attributes 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere,"NumCowsByExperience2AttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by period, cattle rearing experiences\label{tab ANCOVA narrow net assets Experience timevarying}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by period, cattle rearing experiences (continued) \label{tab ANCOVA narrow net assets Experience timevarying 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience2TimeVaryingANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNRound234)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\textsc{\normalsize Table \ref{tab ANCOVA narrow net assets Experience timevarying}} and \textsc{\normalsize Table \ref{tab ANCOVA narrow net assets Experience timevarying 2} (continued)} show estimation after dividing into three subsamples, individuals who had a cattle lease contract (\textsf{Adi}, $n=92$) at the baseline, individuals who owned cattle at the baseline (\textsf{Own}, $n=182$), and individuals who had neither (\textsf{None}, $n=471$). The number of individuals with \textsf{Adi} is small that makes the estimates inprecise. Specifications (2) - (4) show that the individuals of \textsf{Own} responded well to the non-\textsf{Traditional} lending by round 2, particularly so under \textsf{Large} and \textsf{Large grace} arms. Individuals of \textsf{None} have the smallest net asset holding under \textsf{Traditional} as indicated by the intercept terms. They have excess positive returns under all non-\textsf{Traditional} arms relative to the \textsf{Traditional} arm. Among the individuals of \textsf{None}, or who had no prior cattle rearing experience at the baseline, the \textsf{Cattle} arm gives the higher mean returns than the \textsf{Large grace} arm. As argued in the main text, it strongly suggests that the effective difference of the two arms, the managerial support program, resulted in a higher return for the \textsf{None} group.
+%It is interesting that they had smaller excess returns to \textsf{Large} and \textsf{Large grace} arms relative to \textsf{Own} group, yet they had a greater excess returns to \textsf{Cattle} arm. In fact, returns to \textsf{Traditional} arm in \textsf{Own} group by round 2 is 17273.5 while the return to \textsf{Cattle} in \textsf{None} group is \Sexpr{10886+9666.7}. 
+
+The household size is positively correlated with the narrow net asset values in \textsf{Adi} and \textsf{None} groups while not in \textsf{Own} group. This implies that there may be selection into cattle ownership at the baseline that requires a certain household size, either labour and/or a barn, and \textsf{Own} group may already have a way to acquire them as they become necessary. Returns to baseline net asset holding is meaningful only among the \textsf{Own} group, and estimates on other groups are less precise. \textsf{Adi} group has a large point estimate, although the $p$ value is greater than .1, which is consistent with a conjecture that the skills acquired through Adi have high returns but they are cash constrained.
+
+
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes and period, cattle rearing experiences\label{tab ANCOVA narrow net assets Experience timevarying attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingAttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes and period, cattle rearing experiences (continued)\label{tab ANCOVA narrow net assets Experience timevarying attributes 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience2TimeVaryingAttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes, TabFNRound234)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by arm, poverty status, and period, cattle rearing experiences\label{tab ANCOVA narrow net assets Experience timevarying poverty status}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingPovertyStatusANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by arm, poverty status, and period, cattle rearing experiences (continued)\label{tab ANCOVA narrow net assets Experience timevarying poverty status 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience2TimeVaryingPovertyStatusANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNArm, TabFNRound234)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes, poverty status, and period, cattle rearing experiences\label{tab ANCOVA narrow net assets Experience timevarying poverty status attributes}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere,"NumCowsByExperience1TimeVaryingPovertyStatusAttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\addtocounter{table}{-1}
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of narrow net assets by attributes, poverty status, and period, cattle rearing experiences (continued) \label{tab ANCOVA narrow net assets Experience timevarying poverty status attributes 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere,"NumCowsByExperience2TimeVaryingPovertyStatusAttributesANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNAttributes, TabFNRound234)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{TabFNAncovaExperience} \\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+

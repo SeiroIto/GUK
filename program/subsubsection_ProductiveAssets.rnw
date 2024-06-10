@@ -1,0 +1,64 @@
+<<merge prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+@
+<<ProdAsset set parameters original HHs>>=
+FileName <- "ProdAsset"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TPa")
+listheader <- paste0("pa", regsuffixes)
+<<prod asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "ProdAssetCovariateSelectionANCOVA2.R"))
+<<get jay from pa covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("PAssetAmount", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+NeA1[, grepout("Value|Narrow", colnames(NeA1)) := NULL]
+<<display covariates prod asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<prod asset regression estimation original HHs>>=
+dig.depmean <- 0
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<prod asset values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- ggplot(data = subset(NeAfig, !is.na(Arm)), aes(group = tee)) + 
+#  geom_point(size = .1, position = position_dodge(width = .5)) +
+#  geom_smooth(span = .5, aes(colour = Arm, group = Arm)) +
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  geom_boxplot(aes(x= tee, y = PAssetAmount, colour = Arm))+
+  #scale_y_log10(breaks = c(1, 1000, 5000, 10000, 20000, 50000, 100000, 500000)) +
+  scale_y_continuous(breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+   strip.text.y = element_text(colour = "blue"), legend.position = "none") +
+  facet_grid(. ~ Arm)
+ggsave(
+  paste0(pathprogram, 
+    "EstimationMemo/figure/ProdAssets.png"),
+  g,
+  width = 10, height = 4, units = "cm",
+  dpi = 300
+ )
+<<>>=
+# dummy chunk
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig prod asset survey round}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/ProdAssets.png")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& \\[1ex]
+\end{tabular}
+}
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAProdAssetResults.rnw"))}

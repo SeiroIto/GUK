@@ -1,0 +1,58 @@
+<<>>=
+ass <-  readRDS(paste0(pathsaveHere, "AssetAdminDataUsedForEstimation.rds"))
+assstrings <- "^Arm$|^groupid$|hhid|tee|^.Asse|^dummy.*[a-z]$|Floo|Time\\.?.|Head|With|.Size"
+lvostrings <- "^groupid$|hhid|tee|^TotalIm|Cows"
+ass[, grepout("Loan|UD|Forced", colnames(ass)) := NULL]
+ass[hhid == 7043715, .(hhid, tee, HAssetAmount, PAssetAmount)]
+ass <- ass[!(hhid == 7043715 & HAssetAmount == 0), ]
+ass1 <- ass[, grepout(assstrings, colnames(ass)), with = F]
+ass1R <- ass[, grepout(paste0(assstrings, "|RM"), colnames(ass)), with = F]
+# before-after style 2 time point data. Choose tee == 2 as baseline because there are many zeros in tee == 1.
+ass <-  readRDS(paste0(pathsaveHere, "AssetAdminDataUsedForEstimation.rds"))
+ass <- ass[!(hhid == 7043715 & HAssetAmount == 0), ]
+ass[, grepout("Time|Loan", colnames(ass)) := NULL]
+lvo <-  readRDS(paste0(pathsaveHere, "LivestockAdminDataUsedForEstimation.rds"))
+lvo[, grepout("Loan|UD|Forced", colnames(lvo)) := NULL]
+lvo1 <- lvo[, grepout(lvostrings, colnames(lvo)), with = F]
+# merge
+#commonstrings <- "^groupid$|hhid|^Arm|tee|Floo|Time\\.?.|Head"
+commoncols <- intersect(colnames(ass1), colnames(lvo1))
+AL1 <- merge(ass1, lvo1, by = commoncols, ALL = T)
+AL1[is.na(TotalImputedValue), TotalImputedValue := 0]
+AL1[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+ALfig <- AL1[, .(Arm, groupid, hhid, tee, TotalValue)]
+AL1[, c("TotalImputedValue", "HAssetAmount", "PAssetAmount", "Arm") := NULL]
+AL1[, en := .N, by = hhid]
+duplicated(AL1[en > 4, ])
+ass1[hhid == 7043715, ]
+AL1 <- unique(AL1)
+AL2 <- AL1[tee == 2 | tee == 4, ]
+AL2[, grepout("Time", colnames(AL2)) := NULL]
+commoncols <- intersect(colnames(ass1R), colnames(lvo1))
+AL1R <- merge(ass1R, lvo1, by = commoncols, ALL = T)
+AL1R[is.na(TotalImputedValue), TotalImputedValue := 0]
+AL1R[, TotalValue := TotalImputedValue + HAssetAmount + PAssetAmount]
+ALfig <- AL1R[, .(Arm, groupid, hhid, tee, dummyHadCows, TotalValue)]
+AL1R[, c("TotalImputedValue", "HAssetAmount", "PAssetAmount", "Arm") := NULL]
+AL1R <- unique(AL1R)
+AL2R <- AL1R[tee == 2 | tee == 4, ]
+AL2R[, grepout("Time", colnames(AL2)) := NULL]
+datas <- c(paste0("AL", 1:2), paste0("AL", 1:2, "R"))
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+#   dl <- prepFDData(get(datas[i]), Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+#     LevelCovariates = "^dummy|^Arm|Floo|^Time\\..$|liv.*de$|Head|Cows", 
+#     drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+#     use.var.name.for.dummy.prefix = F, print.messages = F)
+   dl <- FirstDiffPanelData(X = get(datas[i]), 
+     Group = "^hhid$", TimeVar = "tee", Cluster = "groupid",
+     LevelCovariates = "^dummy|^Arm|Floo|^Time\\..$|liv.*de$|Head|Cows|Female$|Floo|Eldest|^cred.*s$|xid$|SchPa")
+  dat <- dl$diff
+  dat[, grepout("^en$", colnames(dat)) := NULL]
+  dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dAL1Rd <- dAL1Rd[tee > 2, ]
+@

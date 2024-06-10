@@ -1,0 +1,53 @@
+\section{Estimated results}
+\label{AppendixEstimationTables}
+\setcounter{table}{0}
+
+
+\subsection{Repayment}
+\subsubsection{Saving and repayment}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVARepaymentResults.rnw"))}
+\subsubsection{Shortfall}
+\label{AppendixShortfall}
+\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults.rnw"))}
+
+\subsection{Schooling}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVASchoolingResults.rnw"))}
+
+\subsection{Assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAAssetsResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAAssetsRobustnessResults.rnw"))}
+
+\subsection{Land}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVALandResults.rnw"))}
+
+\subsection{Livestock}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVALivestockResults.rnw"))}
+
+\subsection{Cattle holding}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsResults.rnw"))}
+
+\subsection{Net assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults.rnw"))}
+
+\subsection{Consumption}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAConsumptionResults.rnw"))}
+
+\subsection{Income}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAIncomeResults.rnw"))}
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on land, livestock, and net assets\label{fig LivestockEffects}}\\
+
+\vspace{2ex}
+\hspace{-2em}\includegraphics[height = 12cm, width = 14cm]{\Sexpr{      paste0(pathprogram, "figure/EstimationMemo/AssetRelativeToConcurrentTradEffects.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\setlength{\tabcolsep}{1pt}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12.5cm}<{\hfill}}
+Source: & Constructed from ANCOVA estimation results.\\
+Note:& \Sexpr{ConcurrentImpactText}\\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+

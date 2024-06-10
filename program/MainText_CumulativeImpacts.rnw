@@ -1,0 +1,243 @@
+<<table footnote text for cumulative impacts, echo = F, results = "hide">>=
+CumImpactText <- "For \\textsf{traditional} arm, additional impact in a period relative to period 1, or a second-order difference, is given by $\\Delta^{2}\\mbox{2nd period}=\\mbox{\\textsf{Period2}}$, $\\Delta^{2}\\mbox{3rd period}=\\mbox{\\textsf{Period3}}$. For attribute \\textsf{X}, $\\Delta^{2}_{X}\\mbox{1st period}=\\mbox{\\textsf{X}}$, $\\Delta^{2}_{X}\\mbox{2nd period}=\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{X.Period2}}$, $\\Delta^{2}_{X}\\mbox{3rd period}=\\mbox{\\textsf{Period3}}+\\mbox{\\textsf{X.Period3}}$. Per period changes in period 1 is $\\Delta\\mbox{1st period}=\\mbox{\\textsf{intercept}}$ for \\textsf{traditional}, $\\Delta_{X}\\mbox{1st period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}$ for other attributes, period 2 and 3 for \\textsf{traditional} are $\\Delta\\mbox{2nd period}=\\Delta\\mbox{1st period}+\\Delta^{2}\\mbox{2nd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{Period2}}$, $\\Delta\\mbox{3rd period}=\\Delta\\mbox{1st period}+\\Delta^{2}\\mbox{3rd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{Period3}}$. For other attributes, $\\Delta_{X}\\mbox{2nd period}=\\Delta_{X}\\mbox{1st period}+\\Delta^{2}_{X}\\mbox{2nd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}+\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{X.Period2}}$, $\\Delta_{X}\\mbox{3rd period}=\\Delta_{X}\\mbox{1st period}+\\Delta^{2}_{X}\\mbox{3rd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}+\\mbox{\\textsf{Period3}}+\\mbox{\\textsf{X.Period3}}$. Cumulative change sums are $\\Delta\\mbox{1st period}+\\Delta\\mbox{2nd period}=2\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{Period2}}$, $\\Delta\\mbox{1st period}+\\Delta\\mbox{2nd period}+\\Delta\\mbox{3rd period}=3\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{Period3}}$, $\\Delta_{X}\\mbox{1st period}+\\Delta_{X}\\mbox{2nd period}=2(\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}})+\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{X.Period2}}$, $\\Delta_{X}\\mbox{1st period}+\\Delta_{X}\\mbox{2nd period}+\\Delta_{X}\\mbox{3rd period}=3(\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}})+\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{X.Period2}}+\\mbox{\\textsf{Period3}}+\\mbox{\\textsf{X.Period3}}$. For each outcome, top panel shows cumulative sums. "
+SecondPanel <- "Second panel shows per period changes $\\Delta\\mbox{1st period}, \\Delta\\mbox{2nd period}, \\Delta\\mbox{3rd period}$.  "
+ThirdPanel <- "Third panel shows per period chanegs relative to period 1 change of \\textsf{traditional}, $\\Delta^{2}\\mbox{2nd period}, \\Delta^{2}_{X}\\mbox{2nd period}$, $\\Delta^{2}\\mbox{3rd period}, \\Delta^{2}_{X}\\mbox{3rd period}$ are plotted. For period 1, $\\Delta\\mbox{period 1}$ for \\textsf{traditional} and $\\Delta^{1}_{X}\\mbox{1st period}$ for other attributes are shown. Bars show 95\\% confidence intervals using cluster robust standard errors."
+CumImpactText2 <- "Top panel shows additional impacts by period which are obtained by $\\Delta\\mbox{1st period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}, \\Delta\\mbox{2nd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}+\\mbox{\\textsf{Period2}}+\\mbox{\\textsf{X.Period2}}$, $\\Delta\\mbox{3rd period}=\\mbox{\\textsf{intercept}}+\\mbox{\\textsf{X}}+\\mbox{\\textsf{Period3}}+\\mbox{\\textsf{X.Period3}}$. Second panel shows changes relative to \\textsf{traditional} which is obtained by $\\mbox{\\textsf{X}}$, $\\mbox{\\textsf{X.Period2}}$, $\\mbox{\\textsf{X.Period3}}$. Bars show 95\\% confidence intervals using cluster robust standard errors."
+TabRepay <- readRDS(paste0(pathprogram, 
+  "table/ImpactEstimationOriginal1600Memo3/RepaymentTable.rds"))
+@
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Randomisation went well at group level
+\item	Loan rejection is related to flood and smaller household size in nontraditional arm, smaller livestock values for traditional arm
+\item	Traditional arm rejecters have smaller livestock values but with similar household size as non-traditional rejecters, implying some unused capacity for them to raise more livestock, or participation to large sized lending if offered
+\item	This hints that once household size and risk are mitigated, poverty trap may be overcome
+\item	Less educated members attrited in traditional arm indicates there may be underestimation, if there is an attrition bias at all (so, no need to use Lee bounds, I think)
+\item	Greater accumulation of assets (livestock, productive assets, household assets) for \textsf{Upfront} attribute
+\item	No impacts of \textsf{InKind} on asset accumulation, rejecting the necessity of entrepreneurship, which is in contrast with the finding of existing studies that impacts are larger for the experienced borrowers ... everyone can be an entrepreneur at this level of skills? 
+\item	Lower repayment rates for \textsf{traditional}
+\item	Greater asset accumulation and higher repayment rates for \textsf{Upfront} suggests nonconvex production, a poverty trap
+\item	More diverse and smaller scale investment portfolio among \textsf{traditional}
+\item	Large consumption increase in period 2, smaller consumption increase and larger increase in labour incomes in period 3, interpreting these as repayment burden
+\item	Schooling of primary school aged girls increased but decreased for high school age girls for \textsf{Upfront}, nutrition/wealth effects for younger girls and stronger labour demand effects for older girls 
+\end{itemize}
+
+
+\subsection{Participation}
+
+	The reasons behind nonparticipation are fundamental in understanding the outreach. Selective attrition may bias the estimates so we need to know attriter's characteristics. In this section, we check how participation and attrition are different between arms. To do so, we test if the household characteristics are different between participants and nonpariticipants, or attriters and nonattriters. We use permutation tests to examine if there is a difference in mean characteristics between any two groups. We use \Sexpr{PermRepTimes} random draws from all admissible permutations.
+
+	Before examining participation decisions, we confirm randomisation balance. Despite there were rejections to participate at the group level, we see randomisation balance was reasonably achieved as there is no household characteristics whose $p$ value exceeding 10\% for the difference between intervention arms at the group level (\textsc{\normalsize Table \ref{tab perm}} in Appendix \ref{AppSecRandomisation}).
+
+	We examined the difference between various groups in Appendix \ref{AppSecAttritionRejection}. In summary, group rejecters of \textsf{traditional} and non-\textsf{traditional} differ. Baseline flood and younger household head are associated with group rejection for non-\textsf{traditional} while low livestock values for \textsf{traditional} (\textsc{\normalsize Table \ref{tab Greject trad perm}}, \textsc{\normalsize Table \ref{tab Greject nontrad perm}}). Non-\textsf{traditional} group rejecter have more livestock values than \textsf{traditional} group rejecters (\textsc{\normalsize Table \ref{tab Greject trad nontrad perm}}). In contrast to group rejecters, individual rejecters have similar characteristics between these two groups (\textsc{\normalsize Table \ref{tab Ireject trad nontrad perm}}), and the common factor associated with nonparticipation is small household size (\textsc{\normalsize Table \ref{tab Ireject trad perm}}), and for non-\textsf{traditional} arms, baseline flood exposure is also correlated (\textsc{\normalsize Table \ref{tab Ireject nontrad perm}}).
+
+\begin{table}
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[15]}\label{tab trad reject nontrad participate perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[15], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{TradArm} is group-rejecters in \textsf{traditional} arm \textsf{NonTradArm} is borrowers in non-\textsf{traditional} arms. Both columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+%	Group level rejection to participate is negatively correlated with literacy of household head (\textsc{\normalsize Table \ref{tab Greject perm MainText}}). Acknowledging the reasons for rejection can be different for individuals, we also tested the independence of each characteristics for individual rejecters (vs. non-individual rejecters) in \textsc{\normalsize Table \ref{tab Ireject perm MainText}}. One sees that smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{LivestockValues} and \textsf{NumCows} are associated with individual rejecters. We conjecture that individual decisions not to participate may be understood as: Smaller household size leaves a smaller capacity for cattle production labour in a household, and being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+%
+%	A closer look at the nonparticipation correlates among \textsf{traditional} arm members in \textsc{\normalsize Table \ref{tab reject trad perm MainText}} and non-\textsf{traditional} arm members in \textsc{\normalsize Table \ref{tab reject nontrad perm MainText}} reveals possible differences in the causes. Rejection among \textsf{traditional} members tend to be associated with lower livestock holding but not with higher flood exposure nor smaller household size, while rejecters among non-\textsf{traditional} members are more likely to have suffered from flood at the baseline and have smaller household size. \textsc{\normalsize Table \ref{tab reject trad nontrad perm MainText}} shows rejecters of \textsf{traditional} have less flood exposure, smaller livestock and cattle holding, but not necessarily poorer as indicated by head literacy and asset holding than non-\textsf{traditional} counterpart. Given \textsf{traditional} rejecters at the mean have smaller livestock while household size is similar, it hints some capacity to supply labour for cattle production if an opportunity arises.
+
+%	Since the offered arms were randomised, individual rejecters of \textsf{traditional} arm, who are similar in characteristcs to individual rejecters of non-\textsf{traditional} arm whose impediments are baseline flood and small household size, may have accepted the offer had their household size is larger and had they been offered non-\textsf{traditional} lending. Henceforth, we conjecture that flood exposure and household size are the potential impediments for uptake in larger size loans. 
+	As for group rejecters, we observed that lower livestock values are associated in \textsf{traditional} arm while it was mostly flood exposure for non-\textsf{traditional} arms. Given randomisation, we conjecture that it is lack of liquidity, or lack of \textsf{Upfront} attribute, prevented smaller livestock holders of \textsf{traditional} arm because they cannot purchase cattle due to insufficient saving or resale value of livestock, when members of similar characteristics partcipated in non-\textsf{traditional} arms. In \textsc{\normalsize Table \ref{tab trad reject nontrad participate perm MainText}}, group rejecters of \textsf{traditional} arm and borrowers of non-\textsf{traditional} arms are compared. It shows the former is less exposed to flood in baseline and has lower livestock values. This implies that, once large enough sum of loan is disbursed, %there is no minimum livestock and asset holding level to partake in the larger loans, and 
+a poverty trap at this level may be overcome once household size and negative asset shocks are accounted for.
+
+	We see that households lacking labour resources and with a recent flood damage may opt out the borrowing. %Even we are targeting the ultra poor and designed the loan products to help them rise above the poverty trap, we still find lacking minimum level of assets, despite at a very low level, had kept the ultra poor from participating in microfinance. In the results of lending we consider in the below, the bottom class of the ultra poor had not lept its benefits.
+This is in contrast to the asset transfer programs where everyone participates. As some households who did not meet the conditions to raise cattle withheld themselves from participating, it may have caused the repayment rates to be higher than other programs targeting the poor. %So long as there is a cost or a payment, albeit at a minimal level, involved, there may remain a group of households who would not take up the investment as suggested in the literature \citep{Ashraf2010, CohenDupas2010}. 
+
+\begin{table}
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[1], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters between traditional and non-traditional arms\label{tab attrit TNT perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[2], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{NonTradArm} and \textsf{TradArm} columns show means of each group. Attrition due to flood is dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+	The survey comes with a moderate rate of attrition. We checked for systematic differences between attriters and nonattriters in \textsc{\normalsize Table \ref{tab attrit perm MainText}} (see more detailed attrition examination in Appendix \ref{AppSecAttritionRejection}). The attrition is not correlated with household level characteristics. As attrition rates differ between \textsf{traditional} and non-\textsf{traditional} arms, we compare them in \textsc{\normalsize Table \ref{tab attrit TNT perm MainText}}. It shows that \textsf{traditional} arm attriters have a lower rate of head literacy while non-\textsf{traditional} arm attriters are more exposed to the flood. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the relative impacts of non-\textsf{traditional} arm. So one can employ Lee bounds for stronger results, but doing so will give us less precision and require more assumptions.
+
+
+\subsection{Impacts}
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative effects on livestock and net assets\label{fig LivestockCumulativeEffects}}\\
+
+\vspace{2ex}
+\hspace{-2em}\includegraphics[height = 12cm, width = 14cm]{\Sexpr{      paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/LivestockCumulativeEffects.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\setlength{\tabcolsep}{1pt}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12.5cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:& \Sexpr{CumImpactText} \Sexpr{SecondPanel} \Sexpr{ThirdPanel}\\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig LivestockCumulativeEffects}} summarises estimation results as cumulative impact sums and additional impacts (see Appendix tables for full estimation results). There are three stock outcome variables, livestock values, number of cattle, and net asset values. For each outcome, there are three panels. First panel shows cumulative impacts up to period 1 (between survey rounds 1-2), period 2 (rounds 2-3), and period 3 (rounds 3-4) which are displayed along the horizontal axis. In each period, there are several estimation specifications which are bunched side-by-side. This is intended to show robustness to specification changes at a glance. One sees that there is little variation across specifications. As we multiply the estimates when we compute cumulative sums, it widens standard error bands in the later periods which unnecessarily clouds impact estimates. To assess the estimates in a less noisy way, the second panel shows the changes in each period, $\Delta\mbox{1st period}, \Delta\mbox{2nd period}, \Delta\mbox{3rd period}$. In addition, to make comparison easier against the \textsf{traditional} arm, the third panel shows changes relative to concurrent changes of \textsf{traditional} arm. For \textsf{traditional} arm in the third panel, they show changes in period 1, period 2 - period 1, and period 3 - period 1.
+
+	\textsc{\footnotesize Figure \ref{fig LivestockCumulativeEffects}} shows impacts on livestock holding values, cattle holding, and net asset values. One sees in \textsf{livestock values, cumulative} a sustained increase of livestock holding values in all arms. Second panel \textsf{livestock values, changes}, showing per period changes, indicates positive impacts only in period 1 for all attributes which reflects the loan receipt. When we convert these impacts to contemporaneous relative-to-\textsf{traditional} impacts in the third panel \textsf{livestock values, contemporaneous}, one sees that changes in period 2 and 3 cannot be statistically distinguishable from \textsf{tradtional} arm. This may not be surprising that all arms are receiving the equivalent sums by the beginning of period 3. At the same time, we acknowledge that the price information used to convert livestock holding to values, the median reported prices among survey respondents, is expected to have measurement errors. This may bias the results to any direction, so we use number of cattle holding as a proxy of livestock holding values in the second three panels. It is a reasonable proxy as the largest share of livestock value comes from cattle and goats and sheep are less popular in the area. 
+
+	Expectedly, we see a sustained cumulative increase in all arms in \textsf{number of cattle, cumulative} panel. The relative additional impacts by period, shown in \textsf{number of cattle, concurrent} panel, are found to be large with the \textsf{Upfront} attribute especially in the first period. This is no surprise as a large liquid sum disbursed from the lender should face a relatively less obstacle in converting into livestock holding than in \textsf{traditional} arm while households may not have additional resource to buy more calf in period 2 or 3. The \textsf{traditional} arm members have increasing changes in the size of cattle holding in period 2 and 3, which can be explained by the second and third disbursements. \textsf{Upfront}-ness does not lead to constant additional increase in period 3 as one sees the error bands cross the zero line. \textsf{WithGrace} attribute and \textsf{InKind} attribute received sustained cumulative impacts, yet the increaments relative to \textsf{traditional} are statistically zero for all periods. 
+
+	Net assets, defined by asset and livestock holding values less debt values, shows similar patterns as in livestock holding values, a sustained increase in assets, only that net assets have larger increments. This reflects that loan recipients accumulate household and productive assets. Livestock values did not change in period 2 and 3 for \textsf{traditional} arm, but the net asset values continue to increase in period 2 and 3, indicating sales of livestock. \textsf{WithGrace} attribute has relatively large increments in period 2 when one compares with contemporaneous \textsf{traditional} arm increments while the opposite is true in period 1. The latter is expected because debt does not decrease in period 1 for \textsf{WithGrace} arm when they do not repay, and the cattle valuation remains at the price of purchase, hence no increase, during the first year. Relative increases were larger in period 2 and 3 for \textsf{WithGrace} than \textsf{traditional} although the $p$ values are around 10\%. This suggests that having a grace period helps accumulate assets. The \textsf{Upfront} attribute has the larger asset accumulation relative to \textsf{traditional} in period 1. In all arms, net asset increments are large during first two periods, and smallest in the last period. We conjecture that this is due to loan repayment burden, which is consistent with what we observe in consumption and labour income patterns. 
+
+	\textsf{Traditional} arm experienced a sustained increase in all outcomes. However, even they received an equivalent loan amount, the cumulative impacts on net assets are smaller than \textsf{Upfront} attribute. This is consistent with the nonconvex production technology for cattle under a liquidity constraint. 
+
+	Looking at impacts of the \textsf{InKind} attribute on cattle holding, livestock values and net asset values, entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake and successes among members. This is in contrast with the existing studies which observed larger impacts among the more experienced borrowers. Previous studies targeted the population with a richer set of investment possibilities in a more urbanised setting, which feeds impact heterogeneity. In the current study, the population resides in a remote area with cattle as the dominant production possibility, and this may drive impacts to be more homogenous. The dairy cattle farming that consists of feeding, grazing, pregnancy and calving may turn out not to be too demanding in terms of crystalised intelligence in comparison with micro scale production in urban areas. 
+
+\begin{figure}
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly repayment rates\label{fig weeklysavingrepayrate}}\\
+\hfil\includegraphics{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo2/CumulativeWeeklyRepaymentRateByPovertystatus.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows ratio of cumulative repayment sum to cumulative due amount sum, ratio of sum of cumulative repayment and cumulative net saving (saving - withdrawal) sum to cumulative due amount sum, both are plotted against weeks after first disbursement. Value of 1 indicates the member is at per with repayment schedule. Horizontal lines has a $Y$ intercept at 1. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: IGA choices\label{fig IGAChoices}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/IGAChoices.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices\label{fig AllIGAChoices}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/AllIGAChoices.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices\label{fig AllIGAChoicesCollapsed}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/AllIGAChoicesCollapsed.eps")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig weeklysavingrepayrate}} shows ratio of cumulative repayment to cumulative due amount, ratio of sum of cumulative repayment and cumulative net saving (saving - withdrawal) to cumulative due amount, both are plotted against weeks after first disbursement. Each dot represents a member at each time point. Value of 1, which is given by a horizontal line, indicates the member is at per with repayment schedule. One sees that repayment rates are above 1 at the beginning but stay below 1 for most of the time. The majority of borrowing members did not repay the loan by the 48th month with installments. One notes \textsf{traditional} arm has lower repayment rates of all arms. When a member does not reach the due amount with installments, they had to repay from net saving, an arrangement to which the lender and the borrowers agreed at the loan contract. Repayment rates after paying from net saving are \Sexpr{formatC(TabRepay[!grepl("over", Arm), FullRepayRate], digits = 2, format = "f")}\%, respectively, for \textsf{\Sexpr{TabRepay[!grepl("over", Arm), Arm]}} arms and \Sexpr{formatC(TabRepay[grepl("over", Arm), FullRepayRate], digits = 2, format = "f")}\% for overall. \textcolor{red}{[Abu-san: Why does the admin data continue up to the 48th month, not 36th?]}
+
+	There is little difference in repayment rates by poverty classes. \textsc{\footnotesize Figure \ref{fig weeklysavingrepayrate}} depicts both moderately poor and ultra poor. It is impossible to distinguish between them with eyeballs, and DID estimates also confirm this. This is in contrast to a popular belief that the ultra poor are the riskiest among all income classes. Poverty gradation through a participatory process, however, does not distinguish the moderately poor and the ultra poor on the observables. \textsc{\footnotesize Figure \ref{fig NetAssetValuesAtRd1}} shows net asset values at baseline by poverty class, and \textsc{\footnotesize Figure \ref{fig LivestockValuesAtRd1}} shows initial livestock values at baseline by poverty class. Both show little difference in these observable characteristics. \textcolor{red}{[Abu-san: Any ideas why?]}
+
+
+	Smaller cumulative impacts and lower repayment rates of \textsf{traditional} arm members stand out once we acknowledge that they are receiving an equivalent amount and their contract differs with other arms only in the attributes we focus. These differences arise partly from the difference in investment choices. \textsc{\small Figure \ref{fig IGAChoices}, \ref{fig AllIGAChoices}} show that almost no one of the \textsf{traditional} arm invested only in one project while only few members did so with the \textsf{Upfront} attribute. Goat/sheep and small trades are the top choices for the first income generating activities (IGAs) in \textsf{traditional}. This is consistent with convexity in the production technology of large domestic animals under a liquidity constraint. This also validates our supposition in experimental design that cattle production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive cattle. \textsc{\small Figure \ref{fig AllIGAChoicesCollapsed}} shows there are a significant number of cases in the \textsf{traditional} arm that members reportedly raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. 
+
+
+
+
+% \mpage{12cm}{
+% \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Repayments\label{fig Repayments}}\\
+% 
+% \vspace{2ex}
+% \hspace{-2em}\includegraphics[height = 10cm, width = 12cm]{\Sexpr{       paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/Repayments.eps") }}\\
+% \renewcommand{\arraystretch}{1}
+% \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{11cm}<{\hfill}}
+% Source: & Constructed from FD estimation results.\\
+% Note:& \Sexpr{CumImpactText2} \\[1ex]
+% \end{tabular}
+% }
+%
+%	Annualised repayment is depicted in \hfil\textsc{\footnotesize Figure \ref{fig Repayments}}. The top three panels show net saving. As in \textsc{\footnotesize Figure \ref{fig LivestockCumulativeEffects}}, each subpanel shows cumulative changes, per period changes, and differences in changes relative to concurrent changes of \textsf{traditional} arm. 
+%
+% \textsf{InKind} attribute does not increase repayment by itself. Repayment is highest with the \textsf{Upfront} attribute. It is driven by the initial year repayment and subsequent repayment is smaller than \textsf{traditional}. With \textsf{WithGrace} attribute, repayment is larger by more than Tk. 15000 in total during period 2 and 4 due to the accumulated saving in period 1 or the grace period. For net saving, there is a steady increase in all arms. \textsf{Upfront} and \textsf{WithGrace} attributes see a large boost in period 1 and the growth relative to \textsf{traditional} becomes negative subsequently.
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on labour incomes, consumption\label{fig IncomeConsumptionEffects}}\\
+
+\vspace{2ex}
+\hfil\includegraphics[height = 7cm, width = 12cm]{\Sexpr{      
+  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/IncomeConsumptionEffects.eps")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{11cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:& \Sexpr{CumImpactText2} \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig IncomeConsumptionEffects}} depicts estimates of consumption and labour incomes. As these are flow variables, we do not show cumulative impacts, and the top panel shows changes per period, the second panel shows changes relative to \textsf{traditional}. Consumption is not measured in the baseline, so we do not use it to understand welfare impacts but to understand how the members have dealt with the loan repayment. Consumption increased in period 3 and 4 except for \textsf{InKind} attribute. Increments were smaller in period 4 in all arms. As the repayment was delinquent after period 2, it is interesting that members increased the consumption while kept the loan repayment at sub-due level in period 3, but decreased the consumption and increased loan repayment in period 4. This hints na\"ivet\'e of members who are not used to borrowing yet still conforming with the repayment discipline at the end. Labour income follows a pattern consistent with this interpretation of consumption that members increase their labour supply towards the end of loan cycle to aid repayment. The increased repayment in period 4 may thus have been born out of reduced consumption and increased wage labour.
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on schooling\label{fig SchoolingEffects}}\\
+
+\vspace{2ex}
+\hfil\includegraphics[height = 7cm, width = 12cm]{\Sexpr{      
+  paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo3/SchoolingEffects.eps")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{11cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:&  \Sexpr{CumImpactText2} \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	In \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}, effects on child schooling are plotted. The impacts are on school enrollment probability changes, and concurrent panels are of interest as they show differences in enrollment changes between each attribute and \textsf{traditional}. One sees positive impacts on female primary school enrollments and negative impacts on female junior and high school enrollments with \textsf{Upfront} attribute. We interpret the former impact as nutrition/wealth effects of cattle rearing that children get to drink milk more. The reason, we conjecture, that only girls have positive impacts is that boys might have been drinking milk even in the absence of intervention. Negative impacts of elder girl's schooling may be due to stronger demand for cattle production in a household. Having cattle to take care of naturally shifts the relative prices in a household against child schooling, especially for elder girls as their returns on human capital are considered to be lower and task contents of cattle labour are less brawn intensive yet requires to be above primary school ages. This may be a downside of having more household production with cattle.
+
+

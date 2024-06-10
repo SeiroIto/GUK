@@ -1,0 +1,88 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ReadFilesMergeAdminRoster/"); library(knitr); knit("ReadFilesMergeAdminRoster.rnw", "ReadFilesMergeAdminRoster.tex"); system("platex ReadFilesMergeAdminRoster"); system("pbiblatex ReadFilesMergeAdminRoster"); system("dvipdfmx ReadFilesMergeAdminRoster")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+\ifdefined\knitrout
+\renewenvironment{knitrout}
+{\definecolor{warningcolor}{rgb}{0, 1, 0} \definecolor{errorcolor}{rgb}{1, 0, 0}}
+{  }
+\else
+\fi
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Read and trim files for original 800 HHs\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+
+<<all chunks0, eval = F, cache = F, child='c:/data/GUK/analysis/program/ReadFilesMergeAdminRoster_OptionSetting.rnw'>>=
+<<option setting child files, cache = F, child=paste0(pathprogram, "EstimationMemo_OptionSetting.rnw")>>=
+<<>>=
+# Only change the trimming conditions to switch between "1 or 4" to "NoFlood"
+ThisIsNoFlood <- F
+if (ThisIsNoFlood) pathsaveHere <- pathsaveNoFlood 
+# Below file reads from a list data_read_in_a_list_with_baseline_patched.rds,
+# admin_data_wide2.rds, CharRandomization2012.prn, RCT_village.dta and
+# saves RosterAdminSchoolingData.rds etc 
+# in folder pathsaveOriginal1600Memo2.
+<<all chunks1, eval = F, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo2_body1.rnw'>>=
+<<all chunks2, cache = F, child='c:/data/GUK/analysis/program/RFMARChildFile.rnw'>>=
+@
+\end{document}

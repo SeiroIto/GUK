@@ -1,0 +1,54 @@
+<<>>=
+con <-  readRDS(paste0(pathsaveHere, "ConsumptionAdminDataUsedForEstimation.rds"))
+con[, ConsumptionBaseline := 0L]
+con[as.Date(IntDate) < as.Date(DisDate1), ConsumptionBaseline := 1L]
+con[, ConsumptionBaseline := as.integer(any(ConsumptionBaseline == 1L)), 
+  by = hhid]
+@
+%Number of HHs with consumption before the loan is disbursed (\textsf{ConsumptionBaseline} == 1) is small.
+<<>>=
+table(con[, .(Arm, ConsumptionBaseline)])
+con <- con[,
+  grepout("groupid|hhid|tee|^dummy[A-Z]|Floo|Tim|Size|With|Poo|RM|Expen|Head|HH|credit", 
+  colnames(con)), with = F]
+expcol <- grepout("Exp", colnames(con))
+con[, (paste0("PC", expcol)) := .SD/HHsize, .SDcols = expcol]
+pcexpcol <- grepout("PC", colnames(con))
+con[, c("PCExpenditure", "TotalExpenditure") := 
+  .(eval(parse(text=paste(pcexpcol, collapse = "+"))), 
+    eval(parse(text=paste(expcol, collapse = "+"))))]
+con[, grepout("Loan|UD|^Tota|Food|Ener|Soc|^Hygi|^Time$", colnames(con)) := NULL]
+# drop Time 2 (period 1-2) and its iteractions, because data starts from t=2
+#conR[, grepout("Time.?2|Time.?3|^Time$", colnames(con)) := NULL]
+if (any(grepl("Time.?2|^Time$", colnames(con)))) 
+  con[, grepout("Time.?2|^Time$", colnames(con)) := NULL]
+conR = copy(con)
+con[, grepout("RM", colnames(con)) := NULL]
+datas <- c("con", "conR")
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+#   dl <- prepFDData(get(datas[i]), Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+#     LevelCovariates = "^dummy|Floo|^Time\\..$|Head|HH|credits", 
+#     drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+#     use.var.name.for.dummy.prefix = F, print.messages = F)
+   dl <- FirstDiffPanelData(X = get(datas[i]), 
+     Group = "^hhid$", TimeVar = "tee", Cluster = "groupid",
+     LevelCovariates = "^dummy|Head|^Time\\..$|Female$|Floo|Eldest|HH|credits|xid$|SchPa|^Size$")
+  dat <- dl$diff
+  dat[, grepout("^en$", colnames(dat)) := NULL]
+  if (any(grepl("Time.?2", colnames(dat)))) 
+    dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  # create PureControl*Time2, Time3 interactions and drop creditstatus
+  if (any(grepl("cred.*s$", colnames(dat)))) {
+    dat[, PureControl := 0L]
+    dat[!grepl("es$", creditstatus), PureControl := 1L]
+    dat[, creditstatus := NULL]
+    dat[, c("PureControl.Time3", "PureControl.Time4") := 
+      .(PureControl * Time.3, PureControl * Time.4)]
+  }
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dcond[, Tee := .N, by = hhid]
+@

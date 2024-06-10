@@ -1,0 +1,11 @@
+<<>>=
+if (grepl("oct", getwd())) newfol <- c("1/additional", "1/original", "1/generated", 2:4, "default") else
+	newfol <- c("1/original", "1/additional", 2:3)
+newfol <- paste0("./", newfol)
+fol0 <- fol <- data.table(original = gsub("^\\.", "", foldername), new = newfol)
+if (grepl("oct", getwd())) 
+fol0[, original := paste0(substr(original, 1, 10), "...", 
+	substr(original, nchar(original)-20, nchar(original)))]
+#fol[, new := factor(new)]
+lapply(as.list(fol[, new]), dir.create, recursive = T, showWarnings = F)
+@

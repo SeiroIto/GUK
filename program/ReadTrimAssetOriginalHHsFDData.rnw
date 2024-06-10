@@ -1,0 +1,3 @@
+<<ReadTrimAssetFDData original HHs file contents>>=
+source(paste0(pathprogram, "ReadTrimAssetOriginalHHsFDData.R"))
+@

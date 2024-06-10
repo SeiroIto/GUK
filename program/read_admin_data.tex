@@ -1,0 +1,857 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/read_admin_data/"); library(knitr); knit("read_admin_data.rnw", "read_admin_data.tex"); system("platex read_admin_data"); system("dvipdfmx read_admin_data")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+
+
+
+
+
+
+\hfil GUK administrative files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+\section{Read files}
+
+Read Administrative data. 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{Arm} is defined using \textsf{rand\_arm} in {\footnotesize c:/data/GUK/received/cleaned\_by\_RA/GUKAdminstrativeData.dta}, stored in \textsf{admin\_data\_wide2.rds}.
+\item	Corrected: typos, erroneous date entries (12512 is guessed as 12/12), hhid == 8169303, 8169305, 8169306, 8169316 are pure savers (value.repay in 48th month is set to zero), 
+\item	Reshaped: X1.date, X2.date variables to long (date, X1, X2, ...) format, with dates following POSIX.ct. Used dcast of data.table.
+\end{itemize}
+\gobblepars
+\begin{Schunk}
+\begin{Soutput}
+            used  (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells   2458232 131.3    4270784  228.1   4270784  228.1
+Vcells 122798959 936.9  195553110 1492.0 195553110 1492.0
+\end{Soutput}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{Soutput}
+[1] "C"
+\end{Soutput}
+\begin{Soutput}
+[1] "Japanese_Japan.932"
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+Save admin files.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(adl, paste0(path1234, "admin_data.rds"))
+fwrite(adl, paste0(path1234, "admin_data.prn"), sep = "\t", quote = F)
+saveRDS(adw, paste0(path1234, "admin_data_wide.rds"))
+fwrite(adw, paste0(path1234, "admin_data_wide.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+\section{Individual level outcomes}
+
+\begin{Schunk}
+\begin{Soutput}
+           used  (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells  2457775 131.3    4270784  228.1   4270784  228.1
+Vcells 88683609 676.7  195553110 1492.0 195553110 1492.0
+\end{Soutput}
+\end{Schunk}
+
+
+I created following variables (names of derived-variables start with upper scale characters.)
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[individual totals]	 TotalRepaid, TotalSaved, TotalWithdrawn, TotalNetSaving, FullyRepaid.
+\item[group totals]	 GroupSaving, GroupNetSaving, MeanGroupShortfall, 
+\item[cumulatives]	 CumSaving, CumNetSaving, CumWithdrawal, CumRepaid, CumRepaidRate := CumRepaid/(125*45*3) or, CumRepaid/(190*45*2), CumPlannedInstallment := 125 * floor(WeeksElapsed) or 190 * floor(WeeksElapsed).
+\item[PlannedInstallment]	125 or 190 * NumberOfWeeks.
+\item[repayment shortfall] Shortfall := (planned installments)-(amount repaid), ShortfallRate :	= Shortfall/PlannedInstallment, value.Paid = repayment + net saving.
+\item[normalised repayments]	 NormRepaid := value.repay/NumberOfWeeks, NormNetDeficit := (plannedInstallment - value.Paid)/NumberOfWeeks. There are so many members who do not repay in full. To guard against classification errors in data, compute the total amount paid in, including saving.
+\item[mean values of other members in a group]	 OtherShortfall, OtherRepaid, CumOtherRepaid, CumOtherRepaidRate, OtherCost, OtherRevenue.
+\end{description}
+
+There are errors in admin data: Only repaid at month 48 and not receiving a loan. These households creditstatus are recorded as No. These are classified as pure savers in ID information in c:/data/GUK/received/cleaned\_by\_RA/clean\_panel\_data\_by\_section/. Change value.repay in 48th month as zero. This will make 
+\begin{Schunk}
+\begin{Soutput}
+      hhid creditstatus missing_followup loanamount_1st
+1: 8169303           No     None missing              0
+2: 8169305           No     None missing              0
+3: 8169306           No     None missing              0
+4: 8169316           No     None missing              0
+\end{Soutput}
+\begin{Soutput}
+      hhid creditstatus Tee totalloan value.repay totalrepayment totalsaving
+1: 8169303           No  48         0       16300          16300         360
+2: 8169305           No  48         0       16800          16800        -140
+3: 8169306           No  48         0       16300          16300         320
+4: 8169316           No  48         0       16424          16424         176
+   loanamount1st DisDate1
+1:             0     <NA>
+2:             0     <NA>
+3:             0     <NA>
+4:             0     <NA>
+\end{Soutput}
+\end{Schunk}
+
+
+
+
+
+\begin{palepinkleftbar}
+\begin{finding}
+Repayments are insufficient and late. Very few are on schedule. \textsc{\small Figure \ref{Figure monthly late repayment ratios}} shows mean cumulative shortfall rates are 30\%-50\%. Full repayment is rare even at the end of 4th year. \textsc{\small Figure \ref{Figure repayment shortfall by group}} shows repayment shortfall is lower for arms without a grace period, shortfall is still being paid back after the loan matures in all arms, while \textsc{\small Figure \ref{Figure repayment shortfall and net saving}} shows shortfall and positive net saving coexist.
+\end{finding}
+\end{palepinkleftbar}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Why does GUK accept saving from members with repayment shortfall (on monthly basis)? 
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+Almost no difference in repayment between ultra poor and moderately poor.
+\end{finding}
+\end{palepinkleftbar}
+
+\noindent
+Repaid amount in 3 years $\geqslant$ due amount. FullyRepaid: Sum of repayment $\geqslant$ due amount.
+\begin{Schunk}
+\begin{Soutput}
+             FullyRepaid
+Arm             0   1
+  traditional 422   9
+  large       419  41
+  large grace 414  46
+  cattle      417  23
+\end{Soutput}
+\end{Schunk}
+EffectivelyFullyRepaid: Sum of repayment + net saving $\geqslant$ due amount.
+\begin{Schunk}
+\begin{Soutput}
+             EffectivelyFullyRepaid
+Arm             0   1
+  traditional 339  92
+  large       141 319
+  large grace 215 245
+  cattle      194 246
+\end{Soutput}
+\end{Schunk}
+
+
+
+Types of \textsf{membershipstatus}:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[continued]	original participants, ``continuing''
+\item[replaced]	replacing the individual rejecters, ``individual replacing''
+\item[new]	replacing the group rejecters, ``group replacing''
+\item[dropouts]	individual rejecters (so $\Sigma$ rejecters == $\Sigma$ dropouts, for all arms), ``dropped out''
+\item[group rejecters]	missing from admin data.
+\end{description} 
+%Compare between members who received loans by 2014-11?
+\gobblepars
+
+Borrowing patterns among the traditional arm: 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[planned]	Original traditional loan of 5600*3.
+\item[double]	Second loan is double of the first, 5600, 11200.
+\item[twice]	Two loans (roughly) equally split, 7840, 8960, or two disbursement dates are recorded.
+\end{description}
+
+\begin{Schunk}
+\begin{Soutput}
+                 EverRepaid
+membershipstatus  FALSE
+  Continued        1248
+  New member        960
+  Replaced member   144
+  Drop-out member  2544
+\end{Soutput}
+\begin{Soutput}
+        loanamount1st
+DisDate1    0
+    <NA> 4896
+\end{Soutput}
+\begin{Soutput}
+         TradGroup2
+TradGroup NotReceivedLoan  <NA>
+  planned               0  4608
+  twice                 0 13680
+  double                0     0
+  <NA>               2208     0
+\end{Soutput}
+\end{Schunk}
+Check how many of traditional arm subects are receiving double sized loans.
+\begin{Schunk}
+\begin{Soutput}
+             loanamount2nd
+loanamount1st   0 5600 8960 11200
+         0    102    0    0     0
+         5600   0  126    0   114
+         7840   0    0  191     0
+\end{Soutput}
+\end{Schunk}
+\textsf{planned} have their disbursement made by Dec, 2013, and attrition patterns.
+\begin{Schunk}
+\begin{Soutput}
+    TradGroup   DisDate1   DisDate2   DisDate3 Maturity12 Maturity23   N
+ 1:   planned 2013-05-01 2014-04-01 2015-03-01   335 days   334 days  47
+ 2:   planned 2013-06-01 2014-04-01 2015-03-01   304 days   334 days  20
+ 3:   planned 2013-06-01 2014-05-01 2015-04-01   334 days   335 days  10
+ 4:   planned 2013-10-01 2014-10-01 2015-09-01   365 days   335 days  18
+ 5:   planned 2013-11-01 2014-04-01 2015-03-01   151 days   334 days   2
+ 6:   planned 2013-11-01 2014-10-01 2015-09-01   334 days   335 days  23
+ 7:   planned 2013-12-01 2014-10-01 2015-09-01   304 days   335 days   6
+ 8:     twice 2013-08-01 2014-09-01       <NA>   396 days    NA days   9
+ 9:     twice 2013-10-01 2014-09-01       <NA>   335 days    NA days  11
+10:     twice 2013-11-01 2014-10-01       <NA>   334 days    NA days 104
+11:     twice 2014-03-01 2015-02-01       <NA>   337 days    NA days   1
+12:     twice 2014-03-01 2015-04-01       <NA>   396 days    NA days   2
+13:     twice 2014-04-01 2015-02-01       <NA>   306 days    NA days  14
+14:     twice 2014-04-01 2015-04-01       <NA>   365 days    NA days   3
+15:     twice 2014-05-01 2015-02-01       <NA>   276 days    NA days  13
+16:     twice 2014-05-01 2015-04-01       <NA>   335 days    NA days  12
+17:     twice 2015-01-01 2015-02-01       <NA>    31 days    NA days   7
+18:     twice 2015-01-01 2015-12-01       <NA>   334 days    NA days  74
+19:     twice 2015-03-01 2015-02-01       <NA>   -28 days    NA days   5
+20:     twice 2015-09-01 2016-09-01       <NA>   366 days    NA days  25
+21:     twice 2015-12-01 2016-09-01       <NA>   275 days    NA days  25
+    TradGroup   DisDate1   DisDate2   DisDate3 Maturity12 Maturity23   N
+\end{Soutput}
+\end{Schunk}
+
+
+
+Save.
+\begin{Schunk}
+\begin{Sinput}
+saveRDS(adw2, paste0(path1234, "admin_data_wide2.rds"))
+fwrite(adw2, paste0(path1234, "admin_data_wide2.prn"), sep = "\t", quote = F)
+\end{Sinput}
+\end{Schunk}
+
+Plots.
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/monthly_late_repayment_ratios-1} 
+
+}
+
+\caption{Monthly cumulative repayment shortfall ratios\\ {\footnotesize Cumulative repayment shortfall ratio = (cumulative shortfall) / (cumulative planned installment). Dots indicate individuals.}\setlength{\baselineskip}{8pt}}\label{Figure monthly late repayment ratios}
+\end{figure}
+\end{Schunk}
+
+
+
+
+Plot weekly repayments, monthly total normalised by number of weeks in each month. 
+
+
+
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/monthly_normalised_repayment_5-1} 
+
+}
+
+\caption[Normalised weekly repayment by elapsed months of members receiving loans by Nov, 2014]{Normalised weekly repayment by elapsed months of members receiving loans by Nov, 2014}\label{Figure monthly normalised repayment 5}
+\end{figure}
+\end{Schunk}
+\begin{comment}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	{\small \textsc{Figures} \ref{Figure monthly normalised repayment}, \ref{Figure monthly normalised repayment 2}} show poor loan repayment discipline. The dots in the figures are monthly repayment amount of each members divided with the number of weeks of each month, which I call as normalised weekly repayment. The normalised weekly repayment may not be exactly the same as the average of actual repayment because number of weekly meetings can differ from number of weeks, depending on the day of week. However, it should be correct on average.
+\item	The fixed installment amount is 125 for traditional, large, 190 for large with grace, packaged as indicated by horizontal green lines. 
+\item	The bottom panel in {\small \textsc{Figures} \ref{Figure monthly normalised repayment}} shows ratio of zero repayment incidence to total repayment opportunities, averaged by month. There are many nonrepayment incidence especially in 2014 when the flood hit the area.
+\item	Most borrowers repay a large amount at the end of the lending cycle, which suggests sales of assets or incurring a new debt.
+\end{itemize}
+Cumulative repayment rates.
+\end{comment}
+
+
+\begin{comment}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	{\small \textsc{Figures} \ref{Figure cumulative repayment rate}, \ref{Figure cumulative repayment rate 2}, \ref{Figure cumulative repayment rate 3}} track the repayment history of each individuals. Full loan repayment is indicated when the cumulative installment rate reaches to one. (Traditional arm has three disbursements in which we adjust the numerator in computing cumulative rate.)
+\item	The highest nonparametric estimate at the end of observation is observed with the large with grace arm.
+\item	Mean repayment rate is lowest with the traditional arm (\textsf{planned} group). 
+\end{itemize}
+\end{comment}
+
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=.6\paperwidth,height=.2\paperheight]{figure/EstimationMemo/Nonparametric_cumulative_repayment_rate-1} 
+
+}
+
+\caption[Nonparametric mean estimation of cumulative repayment rates by elapsed months]{Nonparametric mean estimation of cumulative repayment rates by elapsed months}\label{Figure Nonparametric cumulative repayment rate}
+\end{figure}
+\end{Schunk}
+%Cumulative repayment rates for traditional loans on months since disbursement (not calendar months).
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/revenue_and_costs-1} 
+
+}
+
+\caption{Revenues and costs\\ {\footnotesize Dots indicate individuals. Dots are jittered to avoid plot overlap. \setlength{\baselineskip}{8pt}}}\label{Figure revenue and costs}
+\end{figure}
+\end{Schunk}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure revenue and costs}} shows revenues are not reported after 1 year. Some members stopped reporting nonzero cost after 3 years. Revenues are not informative throughout the period and costs are not informative after 3 years.
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+Weekly net saving.
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/monthly_net_saving-1} 
+
+}
+
+\caption{Weekly net saving\\ {\footnotesize From top: Normalised repayment amount, cumulative repayment to cumulative scheduled installment ratio, mean fully repaid member ratio, mean zero-repayer ratio, net saving amount, mean zero-saver ratio\setlength{\baselineskip}{8pt}}}\label{Figure monthly net saving}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/cumulative_net_saving-1} 
+
+}
+
+\caption[Cumulative net saving]{Cumulative net saving}\label{Figure cumulative net saving}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/repayment_shortfall_by_group-1} 
+
+}
+
+\caption{Repayment shortfall by group\\ {\footnotesize Dots indicate group means. Dots are jittered to avoid plot overlap. Observations below -3000 Tk shortfall are omitted.\setlength{\baselineskip}{8pt}}}\label{Figure repayment shortfall by group}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/repayment_shortfall_and_net_saving-1} 
+
+}
+
+\caption{Repayment shortfall and net saving\\ {\footnotesize Dots indicate individuals. Dots are jittered to avoid plot overlap. Observations below -1000 Tk shortfall (28, minimum and median values -6542, -2960, respectively) are omitted. \setlength{\baselineskip}{8pt}}}\label{Figure repayment shortfall and net saving}
+\end{figure}
+\end{Schunk}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Net saving is almost always nonnegative (it does not have to be). Is there a rule for monthly overdraft?
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure monthly net saving}} shows that members accumulate saving during the grace period, followed by lower saving after repayment begins.  \textsc{\small Figure \ref{Figure cumulative net saving}} shows mean cumulative saving is smallest with traditional loans (note also they have the lowest mean repayment rates) but it is most steady as other arms plateaus after 36 months, possibly due to repaying the past shortfalls. Saving is positive prior to disbursement, more so for large scale loans. Given revenues are rarely reported, net saving is more informative than revenue.
+\end{finding}
+\end{palepinkleftbar}
+\noindent
+Number of missed repayments.
+\begin{palepinkleftbar}
+\begin{finding}
+A significant fraction of members are missing repayment (zero repayment) in a month. \textsc{\small Figure \ref{Figure missed repayment}} shows that tradional loan arm has more misses, while loans with a grace period (larger installments) have more number of one-misses. More missed repayments in first 12 months of repayment in all arms.
+\end{finding}
+\end{palepinkleftbar}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/missed_repayment-1} 
+
+}
+
+\caption{Number of missed repayment in a month\\ {\footnotesize Dots indicate individuals. Dots are jittered to avoid plot overlap. \setlength{\baselineskip}{8pt}}}\label{Figure missed repayment}
+\end{figure}
+\end{Schunk}
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/effective_repayment-1} 
+
+}
+
+\caption{Reported repayment plus net saving as effective repayment\\ {\footnotesize Effective repayment is repayment plus net saving where the latter is forfeit at the end of loan maturity when there is cumulative repayment shortfall. Cumulative effective repayment shortfall ratio = (cumulative repayment) / (cumulative scheduled installment). Cumulative net saving ratio = (cumulative net saving) / (cumulative scheduled installment).Dots indicate individuals.  \setlength{\baselineskip}{8pt}}}\label{Figure effective repayment}
+\end{figure}
+\end{Schunk}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Net saving is almost always nonnegative (it does not have to be). Is there a rule for monthly overdraft?
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure monthly net saving}} shows that members accumulate saving during the grace period, followed by lower saving after repayment begins.  \textsc{\small Figure \ref{Figure cumulative net saving}} shows mean cumulative saving is smallest with traditional loans (note also they have the lowest mean repayment rates) but it is most steady as other arms plateaus after 36 months, possibly due to repaying the past shortfalls. Saving is positive prior to disbursement, more so for large scale loans. Given revenues are rarely reported, net saving is more informative than revenue.
+\end{finding}
+\end{palepinkleftbar}
+
+\begin{palepinkleftbar}
+\begin{finding}
+It has been reported that lenders resort to forfeiting defaulter's saving in an effort to collect loans. \textsc{\small Figure \ref{Figure effective repayment}} shows, in the top panel, cumulative effective repayment rate, a ratio of cash flows into the lender divided by the cumulative planned installment. Mean cumulative effective repayment rate is lowest for the traditional arm. The bottom panel shows cumulative repayment rate (not including net saving). 
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+
+
+\section{Within group outcomes}
+
+
+The aim here is to find dynamic patterns in repayment among group members. Rudimentary hypothesises:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[positive dynamic covariance of group repayment shortfall/misses]	Informal sanctions are costly, so, larger the group repayment shortfall $h_{g,t}$, smaller the size of sanctions for each members with repayment shortfall, leading to moral hazard in the future hence greater future group repayment shortfall. Group repayment shortfall is dynamically positively correlated for the groups with large group repayment shortfall. Shortfalls are: sum of individual shortfall.
+\item[negative covariance with past saving and group repayment shortfall/misses]	Rather than accepting costs of sanctions, it may be cheaper for members to extend a credit to the member with shortfall. Feasibility of such an action is greater if the members have more saving. Greater per member group saving $s_{g,t}$ or per member cumulative group saving $S_{g,t}$ leads to smaller future shortfall.
+\item[negative covariance of repayment/misses between group members]	Free riding on other's repayment capacity induces negative covariance of repayments within a group, or negative covariance between other mamber's net saving $\bar{s}^{-i}_{g,t}$ and repayment $r_{g,t}$. 
+\end{description}
+I choose the sample as:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	MonthsElapsed $> 0$ \& MonthsElapsed $\leqslant 36$, and,
+\item	grepl(``es", creditstatus), and,
+\item	$!$grepl(``twice$|$double", TradGroup), and,
+\item	FullyRepaid$== 0$, and,
+\item	as.Date(DisDate1) $\leqslant$ as.Date(2015-01-01).
+\end{itemize}
+
+Group fixed effect estimator estimating equations: 
+\[
+x_{g,i,t}
+=
+a_{11}x_{g,i,t-1}+a_{12}\bar{x}_{g,-i,t-1}+a_{21}s_{g,i,t-1}+a_{22}\bar{s}_{g,-i, t-1}+a_{31}S_{g,i,t-1}+a_{32}\bar{S}_{g,-i,t-1}+Arms*year+\delta_{g}+e_{g,i,t},\quad x=h, r.
+\]
+What is the effect of having other members outcomes as a covariate?
+\[
+\begin{aligned}
+x_{g,i,t}
+&=
+d_{10}+d_{11}x_{g,-i,t}+d_{12}s_{g,i,t}+e_{g,i,t}.\\
+x_{g,-i,t}
+&=
+d_{20}+d_{21}x_{g,i,t}+d_{22}s_{g,-i,t}+e_{g,-i,t}.
+\end{aligned}
+\]
+%\begin{comment}
+Solving the system gives:
+\[
+\begin{aligned}
+x_{g,i,t}
+&=
+d_{10}+d_{11}\left(d_{20}+d_{21}x_{g,i,t}+d_{22}s_{g,-i,t}+e_{g,-i,t}\right)+d_{12}s_{g,i,t}+e_{g,i,t},\\
+&=
+\frac{1}{1-d_{11}d_{21}}\left\{d_{10}+d_{11}\left(d_{20}+d_{22}s_{g,-i,t}+e_{g,-i,t}\right)+d_{12}s_{g,i,t}+e_{g,i,t}\right\}.
+\end{aligned}
+\]
+So
+\[
+\begin{aligned}
+\plim d_{11}&=
+\frac{d_{11}d_{22}}{1-d_{11}d_{21}}\frac{\cov[s_{g,-i,t}, e_{g,i,t}]}{\NU[s_{g,-i,t}]}+
+\frac{d_{11}}{1-d_{11}d_{21}}\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]},\\
+&=
+\frac{d_{11}}{1-d_{11}d_{21}}\left(
+d_{22}\frac{\cov[s_{g,-i,t}, e_{g,i,t}]}{\NU[s_{g,-i,t}]}+
+\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]}\right).
+\end{aligned}
+\]
+%\end{comment}
+Assuming $\cov[s_{g,-i,t}, e_{g,i,t}]=0$, we have:
+\[
+\plim d_{11}
+=
+d_{11}\frac{1}{1-d_{11}d_{21}}
+\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]}.
+\]
+If we further assume $\NU[e_{g,i,t}]=\NU[e_{g,-i,t}]$, then
+\[
+\plim \hat{d}_{11}
+=
+d_{11}\frac{1}{1-d_{11}d_{21}}\rho\left(e_{g,-i,t}, e_{g,i,t}\right).
+\]
+If we impose symmetry that $d_{ij}=d_{-ij}$, the above becomes
+\[
+\plim \hat{d}_{1}
+=
+d_{1}\frac{1}{1-d^{2}_{1}}\rho\left(e_{g,-i,t}, e_{g,i,t}\right).
+\]
+If we impose a `stability' condition in the sense that repurcussions between $x_{g,i,t}, x_{g,-i,t}$ converge to a finite value $|d_{1}|<1$, the sign of $\rho\left(e_{g,-i,t}, e_{g,i,t}\right)$ is likely to be positive hence we can presume $\sign \left(\hat{d}_{1}\right) = \sign \left(d_{1}\right)$. This conclusion will hold when we have other covariates than $s$ provided that their covariances with error terms are zero. Moreover, this conclusion also holds under multiple other members provided that their respective zero covariances assumptions hold. If we have an averaged term $\bar{x}_{g,-i,t}$ in place of $x_{g,-i,t}$, we have an average of all $\rho$'s as terms in the curly bracket. What we want to note from this consideration is that while $\plim \hat{d}_{1}\neq d_{1}$, there is no reason to expect $\plim \hat{d}_{1}\simeq 1$.
+
+
+Create other member's mean cumulative shortfall ratio. 
+\begin{dinglist}{43}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	There are 2 ways: {\tiny (\url{https://github.com/Rdatatable/data.table/issues/1363})}
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Use \textsf{.BY} and specify the leave-one-out conditions.
+	\item	Use algebraic expressions that follow leave-one-out conditions.
+	\end{itemize}
+2nd way is way much faster, but the code is more undestandable with the 1st way. Median can only be coded in the 1st way.
+\end{dinglist}
+
+
+
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+
+
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall\label{tab shortfall group}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallGroupEstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals\label{tab shortfall indiv}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/ShortfallIndividualEstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall\label{tab shortfall indiv o800}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/read_admin_data/Shortfallo800EstimationResults3.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab shortfall group}} shows group level repayment shortfall has a positive autocorrelation hence is persistent. In (1), the coefficient is smaller in groups with high shortfall rates, hinting loan repayment discipline as a group at some intermediate level. In (2) and (3), group level shortfall gets smaller in the third year than in the second year for all arms, indicating stronger efforts in repayment in the final loan year. In (4) and (5), the \textsf{UltraPoor} is found to have no larger repayment shortfall than the moderately poor, except for the \textsf{Large} arm or \textsf{Upfront} attribute in the second loan year. \textsc{\small Table \ref{tab shortfall indiv}} (1), (4) and (5) also show persistence for individuals, although the magnitude is much smaller. In (1), lagged shortfall of others decreases with own shortfall only in high GRSR group. This confirms the group level repayment discipline that is consistent with a steady state short fall rate at an intermediate level as a group.  In (2), shortfall is larger in the second and third year for the arms with a grace period. This reflects that a grace period does not necessarily help the borrowers to prepare repayments, which is against the intention to match the repayment with the cash flow. The ultra poor has smaller shortfall in all arms in year 2 except in the large grace arm in year 3. The results on the ultra poor may indicate the difference with the moderately poor is nominal.
+\end{finding}
+\end{palepinkleftbar}
+
+
+Check correlations between repayment, saving, revenues, costs.
+\begin{Schunk}
+\begin{Soutput}
+Warning in AddSubTitleInTable(tab0, addseparatingcols - 1, separatingcoltitle, : length(separatingcoltitle) needs to be length(addseparatingcols)+1. Possible NA in subtitle.
+\end{Soutput}
+\end{Schunk}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects and IV estimation of repayment\label{tab repay}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/RepaymentIVEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Endogenous variables: Net saving, cost, revenue, other costs, other revenue. Instruments are lagged net saving, other member's mean costs, other member's mean revenues. For (7), additional instruments of lagged other member's mean costs, lagged other member's mean revenues are used. For (8), instruments are lagged net saving, lagged costs, lagged revenue, lagged other member's mean costs, lagged other member's mean revenues.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab repay}} shows repayment is strongly positively correlated with others' concurrent repayment. This indicates a strong, positive correlation within a group, which holds even after controlling for costs, revenues, and net saving. Lagged cumulative net saving is positively correlated, indicating solvency is related with saving. IV estimates (=choice of IVs) are poor.
+\end{finding}
+\end{palepinkleftbar}
+
+
+Check correlations between repayment, saving, revenues, costs.
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects estimation of costs\label{tab cost}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/CostVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab cost}} shows costs are positively autocorrelated (persistent) and strongly, positively correlated with other members' concurrent costs. 
+\end{finding}
+\end{palepinkleftbar}
+
+
+Cumulative profits.
+\begin{Schunk}
+\begin{Soutput}
+Warning in AddSubTitleInTable(tab0, addseparatingcols - 1, separatingcoltitle, : length(separatingcoltitle) needs to be length(addseparatingcols)+1. Possible NA in subtitle.
+\end{Soutput}
+\end{Schunk}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects estimation of cumulative profit\label{tab CumProfit}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/CumProfitVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Profit is (revenue) - (costs).\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab CumProfit}} shows cumulative profits are positively only in the first year. 
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects of missed repayment\label{tab miss}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/MissVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab miss}} shows number of missed repayments are positively autocorrelated (persistent) and are positively correlated (almost more than proportional) with others' concurrent misses. Other members' lagged misses are negatively correlated, which implies some stability in group repayment. Missed repayment is smaller in the third year.
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+\end{document}

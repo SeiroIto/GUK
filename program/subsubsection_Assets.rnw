@@ -1,0 +1,144 @@
+Assets reportd in rd 1 is too small, indicating possible errors or a different way of reporting only in rd 1. So we also examine rd 2 vs. rd 4 differences (\textsf{as3, as4}).
+
+<<ReadTrimAssetData, cache = F, warning = F, eval = T, child='c:/data/GUK/analysis/program/ReadTrimAssetANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ReadTrimAssetANCOVA.R"))
+#destat(ass0[, grepout("UD", colnames(ass0)), with = F], signif = 3)
+@
+Main assets are household assets (\textsf{NLHAssetAmount}), livestock assets (\textsf{TotalImputedValue, NumCows}) and production assets (\textsf{PAssetAmount}) both with \Sexpr{nrow(ass1[!is.na(NLHAssetAmount), ])} observations. 
+<<asset set parameters>>=
+FileName <- "Asset"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes", 
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+# regression specifications: k
+regsuffixes <- c(
+  "",   # base: arm dummies
+  "P",  # poverty class dummy
+  "a",  # attribute dummies
+  "T", # time-varying arm dummies
+  "Ta", # time-varying with attribute dummies
+  "TP", # time-varying with arm*UltraPoor dummies
+  "TPa") # time-varying with attribute*UltraPoor dummies
+listheader <- paste0("as", regsuffixes)
+# DataToUse: 
+#  DataToUse1: "",  P, a, T, Ta
+#  DataToUse2: TP, TPa
+# Each data uses NLHAssetAmount*3, PAssetAmount*3 regressions + dummy regression
+DataToUse1 <- DataToUse2 <- 
+  c(rep("ass1", 2), "ass1R", rep("ass2", 2), "ass2R", "ass2R")
+Regressands <- c(rep("NLHAssetAmount", 3), rep("PAssetAmount", 4))
+Addseparatingcols = c(1, 4); Separatingcolwidth = c(.2, .2)
+Separatingcoltitle = c("", "Household asset amount (Tk)", "Productive asset amount (Tk)")
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<asset select covariates, cache = F, warning = F, eval = T, child='c:/data/GUK/analysis/program/AssetCovariateSelectionANCOVA2.rnw'>>=
+@
+<<get jay assets>>=
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+<<display covariates Asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<estimate asset ancova, cache = F, warning = F, eval = T>>=
+jay
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAAssetsResults.rnw"))}
+
+
+
+<<asset set parameters robustness>>=
+# Compare asset changes between arms and "pure control" (loan nonreceivers)
+FileName <- "AssetRobustness"
+FileNameHeader <- c("", "PovertyStatus", "Attributes", 
+  "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta")
+listheader <- paste0("asr", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<asset select covariates robustness>>=
+source(paste0(pathprogram, "AssetCovariateSelectionANCOVARobustness2.R"))
+<<asset regression robustness, eval= T>>=
+DataToUse1 <- DataToUse2 <- c(rep("ass1", 3), rep("ass2", 4))
+Regressands <- c(rep("NLHAssetAmount", 3), rep("PAssetAmount", 4))
+Addseparatingcols = c(1, 4); Separatingcolwidth = rep(.2, 2)
+Separatingcoltitle = c("", "Household asset amount (Tk)", "Productive asset amount (Tk)")
+AddMeanStdColumn <- UseRawDataForDestat <- T
+dig.depmean <- 0
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+Robustness: To understand underlying pattern of asset accumulation, we compare the loan recipients and loan rejecters. This distinction is made by households by choice, so the indicator variable is considered to be endogenous to asset level. This is a limitation, however, it has its own merit in giving an idea how loan recipients faired during the study period relative to loan nonrecipients. There are \Sexpr{nrow(ass[!grepl("es", creditstatus) & survey == 1, ])} individuals who did not receive loans. \textsc{\small Table \ref{tab FD assets pure control original HHs}} shows that the pure controls also experience similar increase-increase-decrease pattern for household assets. This suggests the pattern observed among the loan recipients may be a systemic pattern of the area, not necessarily reflecting the repayment burdern. This partially relieves a concern that repayment burden was excessive for loan recipients.
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAAssetsRobustnessResults.rnw"))}
+
+
+<<prod assets>>=
+ass0 <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+#ass <-  readRDS(paste0(pathsaveHere, "RosterAssetAdminOriginalHHsDataUsedForEstimation.rds"))
+ass <- ass0[!(hhid == 7043715 & NLHAssetAmount == 0) & o800 == 1L, ]
+ass[, grepout("Time|Loan|UD|Forced|00", colnames(ass)) := NULL]
+<<prod asset histogram original HHs, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Productive asset holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+#assP <- ass[o1600==1L & PAssetAmount > 0, ]
+assP <- ass[PAssetAmount > 0, ]
+assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))]
+assP[, PAssetClass := as.integer(cut(PAssetAmount, 
+  quantile(PAssetAmount, probs=seq(0, 1, .1)), include.lowest=TRUE))]
+g <- ggplot(data = subset(assP, BStatus == "borrower"), 
+  aes(PAssetClass)) + 
+  geom_histogram(breaks = 0:10) + 
+  scale_x_continuous(label = 
+    as.integer(assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))]),
+    breaks = 0:10, name = "productive asset holding deciles") +
+  theme(axis.text.x = element_text(size = 6, angle = 90, vjust = .5, hjust = 1), 
+   strip.text = element_text(size = 6, colour = "blue"))+
+  facet_grid(tee ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "ProdAssetClassesByRound.png")
+    , g,
+    width = 13, height = 8, units = "cm", dpi = 300
+ )
+<<prod asset histogram original HHs loan nonrecipients, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Productive asset holding among loan nonrecipients", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+g <- ggplot(data = subset(assP, BStatus != "borrower"), aes(PAssetClass)) + 
+  geom_histogram(breaks = 0:10) + 
+  #scale_x_log10(breaks = c(1, 100, 1000, 10000, 20000, 30000, 50000)) +
+  scale_x_continuous(label = 
+    as.integer(assP[, quantile(PAssetAmount, probs=seq(0, 1, .1))]),
+    breaks = 0:10, name = "productive asset holding deciles") +
+  theme(axis.text.x = element_text(size = 6, angle = 90, vjust = .5, hjust = 1), 
+   strip.text = element_text(colour = "blue"))+
+  facet_grid(tee ~ Arm, scales = "free_y")
+ggsave(
+  paste0(pathprogram, "EstimationMemo/figure/",
+    "ProdAssetClassesByRoundLoanNonrecipients.png")
+    , g, 
+    width = 13, height = 8, units = "cm", dpi = 300
+ )
+@
+Check what is happening with productive assets. Productive assets seem to start with bimodal distributions in all arms and ended with more uniform or unimodal distributions. This is the same for both loan recepients (\textsc{\small Figure \ref{fig PAssets}}) and  loan nonrecepients (\textsc{\small Figure \ref{fig PAssetsLoanNonrecipients}}). One expects a no major change in productive asset holding when one compares between arms and loan nonrecipients. There is no difference in productive asset holding between \textsf{traditional} and loan nonrecipients, and their holding differ with other arms of large size from round 2 to 4. 
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding of loan recipients\label{fig PAssets}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/ProdAssetClassesByRound.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. Loan recipients only.\\[1ex]
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding of loan nonrecipients\label{fig PAssetsLoanNonrecipients}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/ProdAssetClassesByRoundLoanNonrecipients.png")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Deciles of asset holding are displayed on horizontal axises. Deciles are defined for the productive asset values pooled over all survey rounds. Loan nonrecipients only.\\[1ex]
+\end{tabular}
+}
+

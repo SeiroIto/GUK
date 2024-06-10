@@ -1,0 +1,121 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/PermutationTests/"); library(knitr); knit("PermutationTests.rnw", "PermutationTests.tex"); system("platex PermutationTests"); system("dvipdfmx PermutationTests")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+
+
+
+
+
+
+
+\hfil Permutation tests using \textsf{o800} == 1\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+%\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+
+Group level mean as a unit of observation. Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling 100000 times.
+
+
+\hspace{-1.0cm}\begin{minipage}[t]{15cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results\label{tab perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/PermutationTestResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{13cm}<{\hfill}}
+Source:& \scriptsize Estimated with GUK administrative and survey data.\\
+Notes: & \textsf{R}'s package \textsf{coin} is used on the baseline group mean covariates to conduct approximate permutation tests at the group level. Number of repetition is set to 100000. Number of groups is 72. Holm's step-down method is used to adjust for multiple testing of a multi-factor grouping variable. For example, for the \textsf{traditional} arm, comparisons are made against other three arms, while the same comparisons are made in other arms against \textsf{traditional}. Specifically, \textsf{independence\_test} function is used for permutation tests and \textsf{pvalue} function is applied with an option \textsf{method = ``step-down''}. \textsf{HeadLiteracy} is an indicator variable of household head literacy. \textsf{HeadAge} is age of household head. \textsf{HHsize} is total number of household members. \textsf{FloodInRd1} is an indicator variable of flood exposure. \textsf{HAssetAmount} and \textsf{PAssetAmount} are amount of household and productive assets, respectively, in BDT, \textsf{NumCows} is cattle holding per household. \textsf{NetValue} is net asset values in BDT per housheold using asset items observed in all 4 rounds. \textsf{BroadNetValue} is net asset values in BDT per housheold for all asset items. \textsf{Attrited} indicates attrition rates in the household survey, and \textsf{GRejected} and \textsf{IRejected} show group rejection rates and individual rejection rates to the lending program. \textsf{Non-attriting borrowers} indicates the ratio of non-attriting borrowers to all borrowers. Because attrition and rejection are separate events, a household can reject and attrit, so non-attrited borrowers $\geqslant$ total - (rejected members + attrited members). USD 1 is about BDT 80. \textsf{RiskPrefIndex} is an index where a larger number is associated with more risk tolerance. \textsf{TimePref1Index} is an index where a larger number is associated with greater future discounting in a 3 month time frame, and \textsf{TimePref2Index} is in a 1 year and 3 month time frame. \textsf{RiskPrefVal} is the minimum expected monetary value of the risky option that a respondent chose over a certainty option. Lower values indicate a greater risk tolerance. \textsf{TimePref1val} is the respondent's choice of the minimum expected monetary value of future benefits in a 3 month time frame over the present monetary benefit, and \textsf{TimePref2Val} is in a 1 year and 3 month time frame. Lower values indicate a greater patience. If a respondent's \textsf{TimePref1val} is greater than \textsf{TimePref2val}, the respondent is considered to be present-biased. \textsf{PresentBias} is an indicator function that takes the value of 1 if the respondent is considered to be present-biased, 0 otherwise. \setlength{\baselineskip}{7pt}
+\end{tabular}
+\end{minipage}
+
+Household as a unit of observation. 
+
+
+\hspace{-1.0cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results at household level\label{tab permHH}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/HHLevelPermutationTestResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{13cm}<{\hfill}}
+Source:& stimated with GUK administrative and survey data.\\
+Notes: & \textsf{R}'s package \textsf{coin} is used on baseline covariates to conduct approximate permutation tests. For each variable, the first row indicates means and the second row indicates $p$ values in percentages of permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. $P$ values for observed test statistic and the null distribution are expressed in per centage units.
+\end{tabular}
+\end{minipage}
+
+
+
+
+
+
+\end{document}

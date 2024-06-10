@@ -1,0 +1,79 @@
+<<>>=
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+if (Only800) ar <- ar[o800 == 1L, ]
+# "ar" is roster
+# below is what was processed in AttritionTestsContents2.rnw
+ar[, Attrited := 1L]
+ar[hhid %in% hhid[Time == 4], Attrited := 0L]
+ar[, c("Rejected", "GRejected", "IRejected") := 0L]
+ar[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+ar[grepl("^i.*rej", BStatus), IRejected := 1L]
+ar[grepl("^g.*rej", BStatus), GRejected := 1L]
+ar[, En := 1:.N, by = .(hhid, Time)]
+ar[, Tee := .N, by = .(hhid, mid, Time)]
+ar <- ar[En == 1 & Time == 1, ]
+@
+Among \Sexpr{nrow(ar)} observations, there are \Sexpr{length(unique(ar[grepl("floo", BStatus), groupid]))} whose villages are washd away and \Sexpr{nrow(ar[grepl("^g.*reje", BStatus), ])} who by group rejected the assigned arms which are \Sexpr{names(table0(ar[grepl("^g.*reje", BStatus), Arm]))} with \Sexpr{table(ar[grepl("^g.*reje", BStatus), Arm])} individuals, respectively. There are \Sexpr{table(ar[grepl("^i.*rej", BStatus), Arm])} individuals who individually rejected \Sexpr{names(table(ar[grepl("^i.*rej", BStatus), Arm]))}, respectively. Among attrited HHs, when were they lost?
+<<>>=
+table(ar[Attrited == 1L, Tee])
+@
+Reasons for attrition and relation to flood damage.
+<<>>=
+table0(ar[Attrited == 1L, .(FloodInRd1, BStatus)])
+table0(ar[Attrited == 1L, .(AssignOriginal, BStatus)])
+@
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling \Sexpr{PermRepTimes} times.
+
+% below form permutation tables for all groups examined in AttritionTestContents2.rnw
+\Sexpr{knit_child(paste0(pathprogram, "FormPermutationTables.rnw"))}
+
+
+\subsection{Trimmed sample}
+<<>>=
+TabLabelStrings <- 
+c(
+  "Per.* of rejection$", "of rej.*ng traditional arm$", "of rej.*ng non-traditional arm$", 
+  "of rej.*l vs", "p rejection$", "p rej.* traditional arm$", 
+  "p rej.*g non-traditional arm$", "p rejecters.*vs", "l rejection$", 
+  "l rej.*g tra",  "l rej.*g non-", "l rej.*vs", 
+  "bo.*non-ca", 
+  "of attrition$", "of attri.* traditional arm$", 
+  "of attri.* non-traditional arm$", "of attri.* of",
+#  "attrition among borrowers$", "non-att.*race arm borrowers$", "non-att.*other arm borrowers$", 
+  "survival$", "surviving.*race$", "surv.*other"
+  )
+
+<<print trimmed sample, results = "asis">>=
+for (i in 1:length(TabLabelStrings)) {
+  ii <- grep(TabLabelStrings[i], TabLabel1)
+  cat(eval(parse(text=paste0("Tb1", ii))))
+}
+@
+
+	\noindent\textsc{\normalsize Table \ref{\Sexpr{TabLabelStrings[1]}}} to \textsc{\normalsize Table \ref{\Sexpr{TabLabelStrings[length(TabLabelStrings)]}}}: Trimmed sample.\\
+
+	\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("Per.* of rejection$", TabLabel1)]}}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on the analysis sample of \Sexpr{nrow(ar[!grepl("tw|dou", TradGroup), ])} members. It shows that lower head literacy, smaller household size, being affected by flood at the baseline, smaller livestock holding, and smaller net assets are correlated with opting out the offered type of lending. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of rej.*ng traditional arm$", TabLabel1)]}}} indicates that lower asset and livestock holding is more pronounced among \textsf{traditional} rejecters relative to loan receivers. It also shows that flood exposure is less frequent, contrary to \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("Per.* of rejection$", TabLabel1)]}}}, among the rejecters. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of rej.*ng non-traditional arm$", TabLabel1)]}}} indicates that lower head literacy, smaller household size, higher flood exposure, are more pronounced among non-\textsf{traditional} rejecters relative to loan receivers. It also shows that asset and livestock holding is no different relative to the receivers. Comparing rejecters of \textsf{traditional} arm, lower flood exposure may be the only stark difference against non-\textsf{traditional} arm members, and smaller asset and livestock holding is merely suggestive (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of rej.*l vs", TabLabel1)]}}}). 
+	
+	Group rejecters and non-group rejecters are compared in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rejection$", TabLabel1)]}}}. Marked differences are found in arm (\textsf{traditional} vs. non-\textsf{traditional}) and net asset values and head literacy are noted. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.* traditional arm$", TabLabel1)]}}} compares group rejecters in \textsf{traditional} arm and finds smaller flood exposure and lower livestock and net asset holding are associated with group rejection. Group rejecters in non-\textsf{traditional} arm are examined in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.*g non-traditional arm$", TabLabel1)]}}} and younger head age, flood at baseline, and smaller household asset holding are correlated with rejection. Comparing group rejecters between \textsf{traditional} and non-\textsf{traditional} arms in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rejecters.*vs", TabLabel1)]}}}, younger head age, higher flood exposure, larger net asset values and livestock holding are noted among the non-\textsf{traditional} group rejecters. These hint that for non-\textsf{traditional} arm group rejecters, it is the smaller household size and the baseline flood that may have constrained them from participation, and for \textsf{traditional} group rejecters, it is the low asset levels.
+
+	Acknowledging the reasons for rejection can be different, we tested the independence of each characteristics for individual rejecters (vs. non-individual rejeceters) in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rejection$", TabLabel1)]}}}. Smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{LivestockValue}, \textsf{NumCows}, and \textsf{NetValue} are associated with individual rejecters. Individual decisions not to participate may be more straightforward: Smaller household size may indicate difficulty in securing the cattle production labour in a household, being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+
+	\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g tra", TabLabel1)]}}} and \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g non-", TabLabel1)]}}} compare individual rejecters and nonrejecters in \textsf{traditional} arm and non-\textsf{traditional} arms, respectively. For \textsf{traditional} rejecters, livestock and other asset values are not correlated with rejection, but the values are similar to non-\textsf{traditional} and higher $p$ values may be due to smaller sample size. For non-\textsf{traditional} arm rejecters, household size and flood exposure are correlated. Comparison of individual rejecters between \textsf{traditional} and non-\textsf{traditional} arms show no detectable difference (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*vs", TabLabel1)]}}}). This suggests that indvidual rejecters in all arms were constrained with small household size and small asset holding.
+
+	%	A closer look at the nonparticipation correlates among \textsf{traditional} arm mebers in \textsc{\normalsize Table \ref{tab reject trad perm}} and non-\textsf{traditional} arm members in \textsc{\normalsize Table \ref{tab reject nontrad perm}} reveal possible differences in the causes. Rejection among \textsf{traditional} members tend to be associated with lower livestock holding but not with higher flood exposure nor smaller household size, while rejecters among non-\textsf{traditional} members are more likely to have suffered from flood in baseline and have smaller household size. Since the offered arms were randomised, rejecters of \textsf{traditional} arm, who were not more exposed to flood and have similar household size at the mean, may have accepted the offer had they been offered non- \textsf{traditional} lending. Henceforth, we conjecture that flood exposure and household size are the potential impediments in larger size loans. This implies that there may not be minimum livestock and asset holding levels to partake the larger loans, and a poverty trap at this level may be overcome.
+
+	\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("survival$", TabLabel1)]}}} picks up only program surviving members (nonattrited and loan recepients) have greater asset values than non-survivors. Comparing the surviving members, characteristics are similar except that the \textsf{traditional} members are more exposed to the flood than the non-\textsf{traditional} members. Comparing against the large grace arm, survivors in the cattle arm are more exposed to the flood, have fewer productive assets, and have less livestock with $p$ value at .124 (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("surviving.*race$", TabLabel1)]}}}). This shows that the smaller livestock holders are encouraged to participate and continue to operate in the cattle arm that has a managerial support program with all other features being equal. This underscores our intrepretation that the current impact estimates may be downward biased, if any, as people who would otherwise attrit or reject in cattle arm stayed on.
+
+	\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[1]}}} shows results from tests of independence between attriters and non-attriters. We see the moderate rate of attrition is not correlated with household level characteristics at the conventional $p$ value level. Productive asset amounts seem to differ between attriters and non-attriters, with the former being larger than the latter. This positive attrition selection can cause underestimation of impacts, if the asset values are positively correlated with entrepreneurial capacity. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* traditional arm$", TabLabel1)]}}} shows attrition in the \textsf{traditional} arm. Household heads of attriters are relatively less literate than non-attriters. \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* non-traditional arm$", TabLabel1)]}}} compares attriters and non-attriters in the non-\textsf{traditional} arm. Unlike \textsf{traditional} arm attriters, non-\textsf{traditional} arm attriters have more literate household heads, have a larger household size, are more exposed to floods, and have larger productive assets. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the impacts of non-\textsf{traditional} arm. These are explicitly shown in \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("of attri.* of", TabLabel1)]}}} where we compare attriters of \textsf{traditional} and non-\textsf{traditional} arms. Overall, attrition may have attenuated the impacts but is not likely to have inflated them.\footnote{So one can employ the Lee bounds for stronger results, but doing so will give us less precision and require more assumptions. We will not use the Lee bounds \textcolor{red}{[we can show them if necessary]}. }
+
+	Moved from main text.
+	
+	Group rejecters of \textsf{traditional} and non-\textsf{traditional} arms differ in household characteristics. Lower livestock values, smaller cattle holding, and smaller net asset values are associated with group rejection for \textsf{traditional} arm (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.* traditional arm$", TabLabel1)]}}}), while higher baseline flood exposure rates and younger household heads are associated with group rejection for non-\textsf{traditional} arms (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("p rej.*g non-traditional arm$", TabLabel1)]}}}). Given randomisation, we conjecture that it is lack of \textsf{Upfront} liquidity that prevented smaller livestock holders of \textsf{traditional} arm from participating because they cannot purchase cattle due to insufficient net asset values or an insufficient resale value of owned livestock, when members of similar characteristics partcipated in non-\textsf{traditional} arms. %This is a real resource constraint that binds the households. This is different from a psychological constraint that, so long as there is a cost or a payment involved, albeit at a minimal level, there remains a group of households who would not take up the investment \citep{Ashraf2010, CohenDupas2010}. 
+	For non-\textsf{traditional} arm rejecters, it is the past flood that kept members from participating, even they are younger and have similar cattle holding as the non group-rejecters. 
+
+	Individual rejecters of \textsf{traditional} arm and non-\textsf{traditional} arms share similar characteristics (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*vs", TabLabel1)]}}}). In fact, they are not very different in all the variables considered. %This is consistent with the conjecture that, had the \textsf{traditional} arm group rejecters been offered any of the non-\textsf{traditional} arms, they, as a group, may have accepted it.  %It shows the latter is more exposed to flood in baseline and has larger livestock values. This implies that, once large enough sum of loan is disbursed, %there is no minimum livestock and asset holding level to partake in the larger loans, and 
+	%despite a negative asset shock in flood and a poverty trap at this level may be overcome once household size and negative asset shocks are accounted for.
+	The common factors associated with nonparticipation are a smaller household size and smaller livestock holding (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g tra", TabLabel1)]}}} and \textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rej.*g non-", TabLabel1)]}}}), although the $p$ values for livestock holding difference between individual rejecters and non individual rejecters are around 7\% (\textsc{\normalsize Table \ref{\Sexpr{TabLabel1[grep("l rejection$", TabLabel1)]}}}). %In non-\textsf{traditional} arms, the individual rejecters have only marginally different mean values relative to individual nonrejecters (\textsc{\normalsize Table \ref{tab Ireject nontrad perm}}). 
+
+

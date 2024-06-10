@@ -1,0 +1,91 @@
+Further data preparations (trimming, round numbering, creating dummy vectors, interaction terms) for estimation. \textcolor{blue}{We keep observations if: \textsf{Mstatus} includes strings old, iRej, gEro, gRej, \& \textsf{TradGroup} does not include strings tw or dou (relaxing  \textsf{DisDate1} is before 2015-01-01). } Produces files: \textsf{\footnotesize \Sexpr{paste0(flnames, "AdminDataUsedForEstimation.prn")}}.
+<<common data preparations, warning = F>>=
+x1 <- readRDS(paste0(pathsavemembership1or4, "RosterAdminSchoolingData.rds"))
+x2 <- readRDS(paste0(pathsavemembership1or4, "RosterAdminSchoolingAugmentedData.rds"))
+ar <- readRDS(paste0(pathsavemembership1or4, "RosterAdminData.rds"))
+ass <- readRDS(paste0(pathsavemembership1or4, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsavemembership1or4, "LivestockAdminData.rds"))
+lab <- readRDS(paste0(pathsavemembership1or4, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsavemembership1or4, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsavemembership1or4, "ConsumptionAdminData.rds"))
+flnames <- c("RosterSchooling", "RosterAugmentedSchooling", "Roster", 
+  "Asset", "Livestock", "LabourIncome", "FarmRevenue", "Consumption")
+dfiles <- c("x1", "x2", "ar", "ass", "lvo", "lab", "far", "con")
+interterms <- c("LoanYear.2", "LoanYear.3", "LoanYear.4", 
+  "Time.2", "Time.3", "Time.4")
+Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
+povertystatus <- c("UltraPoor", "ModeratelyPoor")
+Obs <- NULL
+for (j in 1:length(dfiles)) {
+  dd <- get(dfiles[j])
+  setkey(dd, hhid, Year, Month)
+  dd[, Arm := droplevels(Arm)]
+  # trimming
+  # keep only membership = 1 or 4, which corresponds to 
+  # Mstatus old, iRej, gR (drop group erosion, groups lost to flood)
+  dd <- dd[grepl("old|iRej|gR", Mstatus), ]
+  # But rejecters do not receive loans. So I need to relax creditstatus = yes condition.
+  # Remark out the following:
+  # dd <- dd[grepl("Yes", creditstatus), ]
+  #  dd <- dd[as.Date(DisDate1) < as.Date("2015-01-01"), ]
+  dd <- dd[!grepl("tw|dou", TradGroup), ]
+#grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & !grepl("tw|dou", TradGroup)
+  setkey(dd, hhid, Year, Month)
+  dd[, c("en") := NULL]
+  dd[, tee := 1]
+  dd[Year == 2014, tee := 2]
+  dd[Year == 2015, tee := 3]
+  dd[Year == 2016, tee := 3]
+  dd[Year == 2017, tee := 4]
+  dd[, Time := tee]
+  setkey(dd, hhid, Year, tee)
+  dd <- data.table(dd, makeDummyFromFactor(dd[, Arm], reference = NULL))
+  setnames(dd, "dummyLarge grace", "dummyLargeGrace")
+  if (any(grepl("dummyNANA", colnames(dd)))) dd[, dummyNANA := NULL]
+  dd[, dummyDropOuts := NULL]
+  dd <- data.table(dd, makeDummyFromFactor(dd[, povertystatus], reference = NULL))
+  setnames(dd, c("dummyUltra Poor", "dummyModerate Poor"),
+    c("dummyUltraPoor", "dummyModeratelyPoor"))
+  dd[, c("Size", "Grace") := .("SmallSize", "WithoutGrace")]
+  dd[!grepl("tra", Arm), Size := "LargeSize"]
+  dd[grepl("gr|cow", Arm), Grace := "WithGrace"]
+  dd[, c("Grace", "Size") := .(factor(Grace), factor(Size, levels = c("SmallSize", "LargeSize")))]
+  dd <- data.table(dd, makeDummyFromFactor(dd[, Size], reference = NULL),
+    makeDummyFromFactor(dd[, Grace], reference = NULL))
+  # create demeaned dummies
+  for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+    dd[, paste0("DemeanedDummy", k) := 
+      eval(parse(text = paste0("dummy", k))) - mean(eval(parse(text = paste0("dummy", k))), na.rm = T)]
+  for (i in interterms) {
+    i1 <- unlist(strsplit(i, "\\."))
+    i2 <- i1[2]; i1 <- i1[1]
+    i0 <- gsub("\\.", "", i)
+    dd[, (i) := as.numeric(eval(parse(text=i1)) == i2)]
+    dd[, paste0("Demeaned", i0) := 
+      eval(parse(text=i)) - mean(eval(parse(text=i)), na.rm = T)] 
+    for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+      dd[, paste0("dummy", k, ".", i0) := 
+        eval(parse(text=paste0("Demeaned", i0))) * 
+        eval(parse(text=paste0("DemeanedDummy", k)))]
+    # undemeand (UD) interactions
+    for (k in c(Arms, povertystatus, c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace")))
+      dd[, paste0("UDdummy", k, ".", i0) := 
+        eval(parse(text=i)) * eval(parse(text = paste0("dummy", k)))]
+  }
+  dd[, grepout("Demea", colnames(dd)) := NULL]
+  Obs <- rbind(Obs, cbind(dfiles[j], dd[, .(obs = .N), by = .(Arm, tee)]))
+  assign(dfiles[j], dd)
+  if (ThisIsNoFlood) 
+    pathsaveHere <- pathsaveNoFlood else 
+    pathsaveHere <- pathsavemembership1or4
+  saveRDS(dd, paste0(pathsaveHere, flnames[j], "AdminDataUsedForEstimation.rds"))
+  fwrite(dd, paste0(pathsaveHere, flnames[j], "AdminDataUsedForEstimation.prn"), 
+    sep = "\t", quote = F)
+}
+setnames(Obs, "V1", "file")
+Obs <- reshape(Obs, direction = "wide", idvar = c("file", "tee"),
+  timevar = "Arm", v.names = "obs")
+setnames(Obs, grepout("obs", colnames(Obs)), 
+  gsub("obs.", "", grepout("obs", colnames(Obs))))
+Obs
+@

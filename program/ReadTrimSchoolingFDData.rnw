@@ -1,0 +1,155 @@
+% This file is a pure replicate of read, trim of data in the main file (ImpactEstimation_body3.rnw). 
+<<schooling FD read data test run>>=
+s01 <- readRDS(paste0(pathsaveHere, "RosterSchoolingAdminDataUsedForEstimation.rds"))
+s02 <- readRDS(paste0(pathsaveHere, "RosterAugmentedSchoolingAdminDataUsedForEstimation.rds"))
+s01[, Enrolled := as.numeric(Enrolled)]
+s02[, Enrolled := as.numeric(Enrolled)]
+s1 <- s01[!grepl("nnn", Spattern), ]
+s1 <- s1[!grepl("1001", EnrollPattern), ]
+s1 <- s1[!is.na(RArm), ]
+s2 <- s02[!is.na(RArm), ]
+s1[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
+s1[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]
+s2[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
+s2[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]
+s.1 <- s1[, .(RArm, groupid, Mstatus, Mgroup, hhid, tee)]
+s.1[, en := 1:.N, by = .(hhid, tee)]
+s.1 <- s.1[en == 1, ]
+teeArm <- data.table(as.data.frame.table(table0(s.1[, .(tee, RArm)])))
+teeArm <- reshape(teeArm, direction = "wide", idvar = "tee", timevar = "RArm")
+setnames(teeArm, grepout("Fr", colnames(teeArm)), 
+  gsub("Freq.", "", grepout("Fr", colnames(teeArm))))
+teeArm[, total := rowSums(teeArm[, -1, with = F])]
+teeArm
+s1 <- s1[, grepout("groupid|hhid|^mid$|RArm|sex|Eldest|tee|^dummy[A-Z]|Tim|RM|Head|Enrolled|Floo|Sch", 
+  colnames(s1)), with = F]
+s2 <- s2[, grepout("groupid|hhid|^mid$|RArm|sex|Eldest|tee|^dummy[A-Z]|Tim|RM|Head|Enrolled|Floo|Sch", 
+  colnames(s2)), with = F]
+s1 <- cbind(s1, makeDummyFromFactor(s1[, Schooling], NULL), 
+  makeDummyFromFactor(s1[, sex]))
+s2 <- cbind(s2, makeDummyFromFactor(s2[, Schooling], NULL),
+  makeDummyFromFactor(s2[, sex]))
+setnames(s1, grepout("Pri|Jun|High|Fem", colnames(s1)), 
+  c("UDdummyPrimary", "UDdummyJunior", "UDdummyHigh", "UDFemale"))
+setnames(s1, grepout("Time\\.", colnames(s1)), 
+  c("UDTime.2", "UDTime.3", "UDTime.4"))
+setnames(s2, grepout("Pri|Jun|High|Fem", colnames(s2)), 
+  c("UDdummyPrimary", "UDdummyJunior", "UDdummyHigh", "UDFemale"))
+setnames(s2, grepout("Time\\.", colnames(s2)), 
+  c("UDTime.2", "UDTime.3", "UDTime.4"))
+s1[, c("dummyPrimary", "dummyJunior", "dummyHigh", "Female", 
+  "Time.2", "Time.3", "Time.4") := 
+  .(UDdummyPrimary - mean(UDdummyPrimary), UDdummyJunior - mean(UDdummyJunior), 
+    UDdummyHigh - mean(UDdummyHigh), UDFemale - mean(UDFemale), 
+    UDTime.2 - mean(UDTime.2), UDTime.3 - mean(UDTime.3),
+    UDTime.4 - mean(UDTime.4))]
+s2[, c("dummyPrimary", "dummyJunior", "dummyHigh", "Female",
+  "Time.2", "Time.3", "Time.4") := 
+  .(UDdummyPrimary - mean(UDdummyPrimary), UDdummyJunior - mean(UDdummyJunior), 
+    UDdummyHigh - mean(UDdummyHigh), UDFemale - mean(UDFemale),
+    UDTime.2 - mean(UDTime.2), UDTime.3 - mean(UDTime.3),
+    UDTime.4 - mean(UDTime.4))]
+s1[, HHMid := paste(hhid, mid, sep = ".")]
+s2[, HHMid := paste(hhid, mid, sep = ".")]
+s1[, c("Schooling", "hhid", "mid", "sex") := NULL]
+s2[, c("Schooling", "hhid", "mid", "sex") := NULL]
+# interaction with school type terms
+Schdummies <- c("dummyPrimary", "dummyJunior", "dummyHigh")
+# interaction with time dummies
+Timedummies <- c("Time.2", "Time.3", "Time.4")
+tobeinteracted1 <- c("dummyTraditional", "dummyLarge", "dummyLargeGrace", "dummyCow")
+tobeinteracted2 <- c("dummyModeratelyPoor", "dummyUltraPoor")
+tobeinteracted3 <- c("dummyWithoutGrace", "dummyWithGrace")
+tobeinteracted4 <- c("dummyLargeSize", "dummySmallSize")
+for (i in 1:4) {
+  tobeint <- get(paste0("tobeinteracted", i))
+  Schdum <- rep(Schdummies, each = length(tobeint))
+  Timdum <- rep(Timedummies, each = length(tobeint))
+  s1[, paste(Schdum, gsub("\\.", "", tobeint), sep = ".") := 
+    eval(parse(text = paste("list(", paste(Schdum, tobeint, sep = "*", collapse = ","), ")")))]
+  s1[, paste(Schdummies, "Female", sep = ".") := 
+    eval(parse(text = paste("list(", paste(Schdummies, "Female", 
+      sep = "*", collapse = ","), ")")))]
+  s1[, paste(Schdum, gsub("\\.", "", tobeint), "Female", sep = ".") := 
+    eval(parse(text = paste("list(", 
+     paste(Schdum, tobeint, "Female", sep = "*", collapse = ","), 
+     ")")))]
+  s1[, paste(Timdum, gsub("\\.", "", tobeint), sep = ".") := 
+    eval(parse(text = paste("list(", paste(Timdum, tobeint, sep = "*", collapse = ","), ")")))]
+  s1[, paste(Timedummies, "Female", sep = ".") := 
+    eval(parse(text = paste("list(", paste(Timedummies, "Female", 
+      sep = "*", collapse = ","), ")")))]
+  s1[, paste(Timdum, gsub("\\.", "", tobeint), "Female", sep = ".") := 
+    eval(parse(text = paste("list(", 
+     paste(Timdum, tobeint, "Female", sep = "*", collapse = ","), 
+     ")")))]
+  s2[, paste(Schdum, gsub("\\.", "", tobeint), sep = ".") := 
+    eval(parse(text = paste("list(", paste(Schdum, tobeint, sep = "*", collapse = ","), ")")))]
+  s2[, paste(Schdummies, "Female", sep = ".") := 
+    eval(parse(text = paste("list(", paste(Schdummies, "Female", 
+      sep = "*", collapse = ","), ")")))]
+  s2[, paste(Schdum, gsub("\\.", "", tobeint), "Female", sep = ".") := 
+    eval(parse(text = paste("list(", 
+     paste(Schdum, tobeint, "Female", sep = "*", collapse = ","), 
+     ")")))]
+  s2[, paste(Timdum, gsub("\\.", "", tobeint), sep = ".") := 
+    eval(parse(text = paste("list(", paste(Timdum, tobeint, sep = "*", collapse = ","), ")")))]
+  s2[, paste(Timedummies, "Female", sep = ".") := 
+    eval(parse(text = paste("list(", paste(Timedummies, "Female", 
+      sep = "*", collapse = ","), ")")))]
+  s2[, paste(Timdum, gsub("\\.", "", tobeint), "Female", sep = ".") := 
+    eval(parse(text = paste("list(", 
+     paste(Timdum, tobeint, "Female", sep = "*", collapse = ","), 
+     ")")))]
+}
+s1[, Female := UDFemale]
+s1[, dummyPrimary := UDdummyPrimary]
+s1[, dummyJunior := UDdummyJunior]
+s1[, dummyHigh := UDdummyHigh]
+s1[, Time.2 := UDTime.2]
+s1[, Time.3 := UDTime.3]
+s1[, Time.4 := UDTime.4]
+s2[, Female := UDFemale]
+s2[, dummyPrimary := UDdummyPrimary]
+s2[, dummyJunior := UDdummyJunior]
+s2[, dummyHigh := UDdummyHigh]
+s2[, Time.2 := UDTime.2]
+s2[, Time.3 := UDTime.3]
+s2[, Time.4 := UDTime.4]
+s1[, grepout("Forced|^Time$|LoanY|UD", colnames(s1)) := NULL]
+s2[, grepout("Forced|^Time$|LoanY|UD", colnames(s2)) := NULL]
+s1R = copy(s1)
+s2R = copy(s2)
+s134 = copy(s1[tee == 1 | tee == 4, ])
+s234 = copy(s2[tee == 1 | tee == 4, ])
+s1[, grepout("RM", colnames(s1)) := NULL]
+s2[, grepout("RM", colnames(s2)) := NULL]
+s134[, grepout("RM", colnames(s134)) := NULL]
+s234[, grepout("RM", colnames(s234)) := NULL]
+ds1 <- prepFDData(s1, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds1R <- prepFDData(s1R, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds2 <- prepFDData(s2, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds2R <- prepFDData(s2R, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds134 <- prepFDData(s134, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds234 <- prepFDData(s234, Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
+  LevelCovariates = "^dummy[A-Z]|Head|Time|Fem|Floo|Eldest", drop.if.NA.in.differencing = T,
+  use.var.name.for.dummy.prefix = F, print.messages = F)
+ds1d <- ds1$diff
+ds1Rd <- ds1R$diff
+ds2d <- ds2$diff
+ds2Rd <- ds2R$diff
+ds134d <- ds134$diff
+ds234d <- ds234$diff
+s1[, Tee := .N, by = HHMid]
+ds1d[, Tee := .N, by = HHMid]
+@

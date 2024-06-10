@@ -1,0 +1,161 @@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall\label{tab shortfall group}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[1], "EstimationResults1.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[1], "EstimationResults2.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[1], "EstimationResults3.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals\label{tab shortfall indiv}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[2], "EstimationResults1.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[2], "EstimationResults2.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall, all individuals (continued)\label{tab shortfall indiv3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[2], "EstimationResults3.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall\label{tab shortfall indiv o800}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults1.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults2.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults3.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab shortfall group}} shows group level repayment shortfall has a positive autocorrelation hence is persistent. In (1), the coefficient is smaller in groups with high shortfall rates, hinting loan repayment discipline as a group at some intermediate level. In (2) and (3), group level shortfall gets smaller in the third year than in the second year for all arms, indicating stronger efforts in repayment in the final loan year. In (4) and (5), the \textsf{UltraPoor} is found to have no larger repayment shortfall than the moderately poor, except for the \textsf{Large} arm or \textsf{Upfront} attribute in the second loan year. \textsc{\small Table \ref{tab shortfall indiv}} (1), (4) and (5) also show persistence for individuals, although the magnitude is much smaller. In (1), lagged shortfall of others decreases with own shortfall only in high GRSR group. This confirms the group level repayment discipline that is consistent with a steady state short fall rate at an intermediate level as a group.  In (2), shortfall is larger in the second and third year for the arms with a grace period. This reflects that a grace period does not necessarily help the borrowers to prepare repayments, which is against the intention to match the repayment with the cash flow. The ultra poor has smaller shortfall in all arms in year 2 except in the large grace arm in year 3. The results on the ultra poor may indicate the difference with the moderately poor is nominal.
+\end{finding}
+\end{palepinkleftbar}

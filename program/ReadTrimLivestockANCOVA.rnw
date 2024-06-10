@@ -1,0 +1,3 @@
+<<ReadTrimLivestockANCOVA file contents>>=
+source(paste0(pathprogram, "ReadTrimLivestockANCOVA.R"))
+@

@@ -1,0 +1,135 @@
+% path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("read_source.rnw", "read_source.tex"); system("platex read_source"); system("dvipdfmx read_source")
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); system("recycle c:/data/GUK/analysis/program/cache/read_source/"); library(knitr); knit("read_source.rnw", "read_source.tex"); system("platex read_source"); system("dvipdfmx read_source")
+
+\input{c:/data/knitr_preamble.rnw}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_chunk$set(fig.path='figure/read_source', cache.path='cache/read_source', cache = F, echo = T, results = 'markup', tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+@
+
+\hfil Reading GUK files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\tableofcontents
+
+\setlength{\parindent}{1em}
+
+Based on files received in March, 2017.
+
+
+\section{read}
+
+List folder names.
+<<>>=
+setwd(pathreceived.mar)
+foldername <- list.dirs(path = ".", recursive = T, full.names = T)
+foldername <- foldername[!grepl("p.$|^.$", foldername)]
+@
+<<cache = F>>=
+library(foreign)
+library(readstata13)
+setwd(pathreceived.mar)
+fn <- list.files(path = foldername, pattern = ".dta$", 
+	recursive = T, full.names = T)
+@
+There will be warnings due to duplicated factor levels in dta which should be a fair warning but suppress them. In \textsf{\footnotesize\Sexpr{gsub("_", "\\\\_", fn[32])}}, \textsf{iga} seems to be assigned with noninteger values even if it is coded as a factor variable. I will assign the factor labels from stata value labels.
+<<warning = F>>=
+setwd(pathreceived.mar)
+X <- lapply(fn, read.dta13, generate.factors = T, nonint.factors = T)
+X <- lapply(X, data.table)
+@
+Save to \textsf{source} folder.
+<<>>=
+setwd(pathsource.mar)
+saveRDS(X, "all_data.RDS")
+@
+Check if files are stored correctly. Section 3B is food security and comes with many yes/no answers.
+<<>>=
+fnshort <- gsub("^\\.\\/(.*?\\/).*(\\/.*?$)", "/\\1...\\2", fn)
+fnshort <- gsub("^\\.", "", fnshort)
+grepout(" 3B", fnshort)
+X[grep(" 3B", fnshort)]
+setwd(pathsource.mar)
+@
+
+\section{save as text files}
+
+Create subfolders in \textsf{source} folder. Following correspondence:
+% This is a re-creation but will be shown for tractability.
+<<create new subfolders in child file again, warning = F, results = 'hide', child='c:/data/GUK/analysis/program/create_new_folders_in_source_folder.rnw'>>=
+<<results = 'hide'>>=
+setwd(pathsource.mar)
+X <- readRDS("all_data.RDS")
+@
+Pick files in each folder, save. I will skip the first folder (baseline additional) which use \textsf{xls} files.
+<<>>=
+folstr <- substr(fol[, original], nchar(fol[, original])-15, nchar(fol[, original]))
+folstr <- gsub("\\(|_|\\)", ".", folstr)
+fname0 <- asc(strsplit(fn, "^.*\\/"))
+fname0 <- asc(strsplit(fname0, "\\.dta"))
+fname0 <- tolower(gsub(" ", "_", fname0))
+setwd(pathsource.mar)
+write.to.gzip <- function(data, filename) {
+	write.tablev(data, filename)
+	system(paste("gzip", filename))
+}
+for (i in c(1, 3:4)) {
+	ii <- (1:length(fn))[grepl(folstr[i], fn)]
+	currfol <- paste0(getwd(), gsub("^\\.", "", fol[i, new]), "/")
+	relfol <- paste0(gsub("^\\.", "", fol[i, new]), "/")
+	fn0 <- paste0(currfol, fname0[ii], ".prn")
+	relative.fn0 <- paste0(relfol, fname0[ii], ".prn")
+	fn0dta <- gsub("prn", "dta", fn0)
+	#write.to.gzip(X[ii][[3]], fn0[3])
+	#system(paste("gzip", fn0[1]))
+	lapply(seq_along(fn0), function(i) write.tablev(X[ii][[i]], fn0[i]))
+	#lapply(seq_along(fn0), function(i) write.dta(X[[i]], fn0dta[i]))
+	#zip(paste0("prn", gsub("\\.?\\/", "_", fol[i, new]), ".zip"), files = relative.fn0)
+	#zip(paste0("dta", gsub("\\.?\\/", "_", fol[i, new]), ".zip"), files = fn0)
+}
+@
+
+\section{read additional char households}
+
+List folder names.
+<<>>=
+setwd(pathreceived.mar)
+foldernamea <- list.dirs(path = ".", recursive = T, full.names = T)
+foldernamea <- grepout("last", foldernamea)
+@
+Read using XLConnect and save as tab-separated text files. Note: Memory limit binds. Some files are hand copied.
+<<eval = F>>=
+library(XLConnect)
+setwd(pathreceived.mar)
+fnx <- list.files(path = foldernamea, pattern = ".xlsx$", 
+	recursive = T, full.names = T)
+fnxs <- gsub("^.*\\/", "", fnx)
+options(java.parameters = "-Xmx8g" )
+# skip section 2c as the file size is too large to read
+#for (i in c(1:21, 23, 25, 27:length(fnx))) {
+for (i in 31:length(fnx)) {
+  gc()
+  wb <- loadWorkbook(fnx[i])
+  #  set "header = F" so I can read it as entries
+  sc <- readWorksheet(wb, header = F, sheet = "Sheet1",
+    startRow = 1, startCol = 1, endCol = 200, endRow = 3000)
+  colnames(sc) <- tolower(sc[1, ])
+  sc <- sc[-1, ]
+  sc <- a2b(sc, "na", NA)
+  write.tablev(sc, paste0(pathsource.mar, "1/additional/", gsub("xlsx", "prn", fnxs[i])))
+}
+@
+
+\end{document}

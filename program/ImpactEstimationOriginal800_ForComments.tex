@@ -1,0 +1,1214 @@
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Estimating lending impacts using original 800 households\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+
+
+\newpage
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+
+
+
+
+
+
+\renewcommand{\thefootnote}{*\arabic{footnote}}
+\setcounter{footnote}{0}
+
+\section{Introduction}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Describe outreach to ultra poor
+\item	Motivate poverty trap and nonconvexity
+\end{itemize}
+
+	According to over 3700 microfinance institutions (MFIs), there are estimated 204 million borrowers around the world in 2013, of which 110 million are ``the poorest'' borrowers whose incomes are below the national poverty line \citep{MFGateway2015}. The outreach to the poorest of ``the poorest,'' or the \textit{ultra poor}, however, is arguably slow in comparison.\footnote{MF is not successful in reaching out to the poorest of the poor, or the ultra poor \citep[][]{Scully2004}. Empirical evidence in \citet{Yaron1994, Navajas2000, RahmanRazzaque2000, AghionMorduch2007} supports this claim. Some authors discuss the tradeoff between sustainability and outreach for microfinance institutions (MFIs) \citet{HermesLensink2011, HermesLensinkMeesters2011, Cull2011}. } This is in contrast with the idea that ``everyone is an entrepreneur'' where MFIs provide credits to the people of any income levels.
+
+	The potential reasons behind slow outreach to the ultra poor can be grouped into demand and supply sides. On the demand side, the ultra poor borrowers may not be entrepreneurial enough to demand credits for production, or may face an inferior production possibility than wealthier borrowers. On the supply side, MFIs may perceive the ultra poor as riskier than the moderately poor, or the loan size may be too small to justify the fixed transaction costs while the lender is constrained to keep the interest rate low to avoid adverse selection and moral hazard. 
+
+	In assessing the plausibility of these possible causes, we run a randomised controlled trial on the poorest population in Bangladesh. Specifically, we test the necessity of entrepreneurial skills in successfully completing a loan cycle. To do so, we provided a packaged loan that bundles an asset lease with managerial support programs which is intended to render entrepreneurship unnecessary. Provided that the managerial support programs cover a sufficiently wide range of issues, the package is expected to achieve a no smaller return relative to a regular credit, had the entrepreneurial skills been indeed essential. As we track all the potential borrowers including who eventually opted out of borrowing, we are able to estimate the intention to treat estimates of offering loans and their implied necessity for entrepreneurial skills. 
+	
+	The asset, a heifer, is a prime investment choice in the studied area. There is little loss in production opportunity even when the loan takes an in-kind form that takes away a choice from the borrower therefore is generally considered to be less efficient. A heifer needs to be at least 2 years old to start lactation. The packaged loan is therefore given one year of grace period as we expect a member to acquire a heifer of one year old. In comparing with a classic Grameen style loan that is smaller in amount and has no grace period, we add two more treatment arms which jointly serve as a bridge between the two, large loan arms with and without a grace period. For the Grameen style loans which serves as a control group, we repeat loan disbursement twice so the total loan size becomes the same. We thereby obtain a stepped-wedge design over the key features of loans, i.e., upfront liquidity, grace period, and in-kind loans with support programs.
+
+	Our study closely follows the literature of microfinance design as hallmarked in \citet{Field2013} who found a grace period induces more risk taking and subsequent loan delinquency. Similar to their study, we allow some borrowers a grace period in repayment. We use an experiment under a more controlled environment that the investment choice set is smaller and the duration of grace period is tailored to match the cash flow profile of presumed (dairy cattle) production. Under our setting, unless one is committed to behave opportunistically, it is difficult to delay a payment or to invest in riskier assets when given a grace period that suits the actual cash flow of investment with a Pareto-dominant risk-return profile. Our study is also related to a large scale cattle transfer study conducted in the neighbouring area \citep{BandieraBRAC2017}. The targeted population of their study is similar to ours, yet our study population resides on less stable terrain, are more exposed to flood and water logging, are considered to be less well connected to the market, are equally less trained, and are probably poorer. The chance of survival for each investment is expected to be no higher. The difference in experimental design is that they use a transfer while we use loans and leases, and charge a market-rate fee to everything we provide. Our experiment is designed to be financially viable if the repayment is made. 
+
+	We found that entrepreneurship is not a prerequisite for microfinance lending and repayments. There is little difference in the outcomes out of the packaged attribute when compared to the traditional Grameen style lending. We intepret this as due to more uniform investment opportunity in the area compared with the urban setting of \citet{Field2013}. We found that having upfront liquidity is the key to greater asset accumulation and higher loan repayment rates. We consider this as evidence of a poverty trap which is formed by the nnconvex production set of cattle. We also found weak evdence that a grace period also increases asset accumulation.
+
+	In the following section, we will describe the experimental setting of the microfinance intervention. The next Section summarises the existing literature. Section \ref{SecBackground} gives the brief account of background of study site. Section \ref{SecTheory} shows a possible mechanism of poverty trap that our target population is under. Section \ref{SecExperimentalDesign} lays out the details of experimental design. Section \ref{SecEmpiricalStrategy} explains the estimation strategy. In section \ref{SecResults}, we provide a brief overview of the experimental results. Section \ref{SecConclusion} discusses the interpretation of results.
+
+\section{Existing studies}
+\label{SecExistingStudies}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	A high uptake rate (among members) poses less of the statistical power issue that plagues the benchmark study of \citet{BanerjeeKarlanZinman2015}
+\item	Heterogenous impacts of microcredits: Experiences/skills matter
+\item	Mixed and weak impacts of MFI training programs: Entrepreneurial skills are not trained easily, it may have to be outsourced
+\item	Grace period: Our study is marked to actual cash flow profile which may not encourage defaults
+\item	Lending suffices: We also observe sustained asset level increase as in asset transfer programs
+\end{itemize}
+
+	Due partly to insufficient statistical power,\footnote{\citet{BanerjeeKarlanZinman2015} collects five studies of microfinance lending impacts. They raise lack of statistical power due to low take up. This naturally gives way to erroneously large impacts. \citet{BanerjeeKarlanZinman2015} point that more able and experienced borrowers saw larger, ``transformative effects.'' In the current study, in contrast, the up take rate is relatively high at 75\%, of which 5\% is lost to flood.  } doubts are cast on the magnitude of microfinance impacts \citep{BanerjeeKarlanZinman2015, DuvendackMader2019, Meager2019} while asset grants (capital injection) remain to show high returns \citep{deMel2008, DeMel2014, FafchampsFlypaper2014, BandieraBRAC2017}. Lack of mean impacts forces researchers to look for a particular subgroup which shows impacts, or impact heterogeneity \citep{Banerjee2017HyderabadFollowup}: Borrowers with prior experiences or high ability are shown to have higher returns \citep{Banerjee2015Miracle, Mckenzie2017Spurring, Buera2017}. By focusing on experienced members or existing firms, the current literature increasingly looks at impacts on the intensive margins. This study is targeted to an isolated greenfield population, so it looks at impacts on the extensive margins.
+
+	Higher impacts on experience is consistent with the large impacts of capital grant programs on existing firm owners. Wheather such experience or entrepreneurship is trainable remains unsettled. A growing body of management capital literature in developing countries is insightful yet most of the research is necessarily geared to existing firms, so it does not inform much on how one can assist novice entrepreneurs, or the trainability on the extensive margins.\footnote{\citet{BruhnKarlanSchoar2018} shows intensive management consulting services to the small scale firms in Mexico resulted in sustained improvements in management practices which led to higher TFP and larger employment. Others also show effectiveness \citep{Calderon2011, Berge2012, Bloometal2013} while others do not \citep{Bruhn2012, KarlanKnightUdry2015}. \citet{MckenzieWoodruff2013} put them as: These managerial impacts studies are too different to compare, in terms of population, interventions, measurement (variables, timing), and most importantly, implied statistical power in the design. } \citet{KarlanValvidia2011, BruhnZia2011, Argent2014} are the exceptions, but results and quality of evidence are mixed: Former two report ineffectiveness using RCTs and the last reports effectiveness with observational data assuming placement exogeneity.  The current study explicitly tests if the entrepreneurship matters in microfinance outcomes. %Entrepreneurship and training components in the current study are to provide basic knowledge of dairy cattle production which can easily be written down. They, the cristalised intelligence, are outsourceable in nature. We consider it is the skills to deploy services in a timely manner, rather than the knowledge contents \textit{per se}, that we provide to help borrowers in increasing efficiency.
+
+	Another factor consistent with capital grant effectiveness is production set nonconvexity. Theories base lumpiness and credit market imperfection as keys to a povety trap \citep[e.g., ][]{GalorZeira1993} but its empirical application is scant. A few studies report impacts of transfer programs. A transfer program in Northern Bangladesh closely related to this study, shows an occupational change and an income increase \citep{BandieraBRAC2017}. Other transfer programs to the ultra poor also show increases in incomes and assets \citep{Blattman2014, BanerjeeetalScience2015, Blattmanetal2016, HaushoferShapiro2016}. %\citet{BanerjeeetalScience2015} reports increased consumption, asset levels, saving, various incomes of the ultra poor after receiving a large transfer. \citet{Kaboski2018Indivisibility} uses a lab-in-the-field experiment to show the link between investment indivisibility, saving, and patience. 
+Similar to these studies, we note that the higher-return production set exhibits nonconvexity in the current study. So this study tests if frontloading the disbursement results in a higher asset level. Unlike previous studies, however, this paper uses a loan or a lease, not a transfer. If the liquidity constraint is keeping the people from using a higher-return production set, a loan is more straightforward way than a transfer to test it. Moreover, a loan or a lease, or charging a fee in general, may have an effect on its own on top of liquidity through self-selection or its use \citep{Ashraf2010, CohenDupas2010} which should be incorporated in, not separated from, testing a liquidity constraint. 
+
+	In incorporating a heifer lease which requies some time to produce milk, we introduced a grace period. Previous research has shown its risk-inducing effects in the urban setting with the emphasis on liquidity of assets and its implications for shock coping \citep{Field2013}. %shows that a two-month grace period increases the investment size, raises profitability, but also increases the default rates. They discuss how it influences the investment riskiness that varies along risk preference heterogeneity. 
+Unlike them, the experimental setting of the current study has much a smaller choice set that limits the extent of willful/rational risk taking. It is shown that a grace period does not cause delinquency. This study is more in line with \citet{Beaman2015} who redesigned the repayment schedule after adopting the borrower's cash flow profile (repay after harvest), thus, on a good faith, a grace period is expected to reduce delinquency. 
+
+
+
+\section{Background}
+\label{SecBackground}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Lowest income area with high annual flood risks
+\item	No NGO/MFI presence
+\item	Argue: Cattle $\succcurlyeq$ goat in risk-return if invested
+\item	But: higher inputs and upfront fixed costs
+\item	Goats are better in: Inputs, returns, but worse in mortality/morbidity risks
+\item	Goat sales: Requires relatively high incomes and gives an infrequent cash flow
+\item	Cows: Higher price, vaccination, fodder
+\end{itemize}
+
+
+	In the study area, cattle and goats/sheep are the main livestock that residents own. Existing studies in the South Asian context show the morbidity of goat kids ranges from 12\% \citep{Mahmud2015} to more than 50\% in some diseases \citep[][Table 5]{Nandi2011}, while cattle morbidity is around 22\% \citep{Bangar2013}. Goat kid mortality ranges from 6\% \citep{Mahmud2015} to 30\% \citep[][Table 5]{Paul2014} \citep{Ershaduzzaman2007}. Heifer mortality is between 5\% \citep[][p.332R]{Hossain2014} to 10\% \citep{Alauddin2018}. Higher morbidity of goat kids partly reflects their eating style that uses lips rather than tongues (as cattles do) and vulnerability to logging water. 
+
+	Reproductive capacity of goats are high that parity size approaches to 2 at the third birth, and the birth interval is about 200 days \citep{Hasan2014goat}. An indigenous cow has a birth interval of 375 to 458 days \citep{Hasan2018}, resulting in about 2 years for gestation and calving interval \citep{Habib2012} with the mean lifetime births of 4 \citep[][Table 1]{Hasan2018}. Lactation length is 227 days and milk yield is 2.2 kg per day \citep{Rokonuzzaman2009} while goat milk is seldom marketed. It is also worth noting that a meat market requires a cluster of relatively high income earners, which takes some efforts to get to from the river islands. Goat meat sales is seasonal and it does not provide a frequent cash flow. 
+	
+	Rearing costs are higher for cattle as it requires fodder while a goat will eat the bushes. Cattle requires vaccination shots when a goat is usually left unvaccinated. Goat kid's potentially higher reproductive capacity and lower rearing costs are, however, more than offset by the elevated morbidity and mortality risks, and a less frequent cash flow. Residents also report that a goat herd is less mobile than single cattle when they are forced to evacuate during the flood. All of these considerations prompt residents to opt for cattle when they can afford it, and do not expand the herd size of goats, which are both confirmed in our data.
+
+
+\section{Theory}
+\label{SecTheory}
+
+\hspace{-3em}\mpage{\linewidth}{\input{GoatCowProdFunctions.tkz}\input{poverty_trapCompoundScurve.tkz}}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Contour of two production functions, a nonconvex production set, gives rise to a poverty trap
+\item	Goats relative to cows as an investment: Infrequent income stream, limited local consumption, vulnerability to logging water, a herd is less mobile
+\item	Goat returns net of mortality are lower (not generally, only in this area) and one cannot scale up goats: Takes long to switch to cow ownership
+\item	No saving constraint required, saving = depreciation at equilibria
+\item	The entire region depicted in the diagram represents poverty, so it shows a poverty trap within poverty (i.e., ultra poor and moderately poor)
+\item	We are not going to show the production nonconvexity, instead we show lower repayment rates and smaller cattle holding for a smaller loan size, just as \citet{BandieraBRAC2017} did
+\end{itemize}
+
+\section{Experimental design}
+\label{SecExperimentalDesign}
+
+	The primary aim of the study is to assess if the entrepreneurial skills matter in microfinance lending outcomes. We do so by providing knowledge to a group through training so some part of entrepreneurship will no longer be a prerequisite. Some of other members who are not provided knowledge may opt out the loan or perform worse. One can measure impacts of entrepreneurship by comparing these two groups.
+
+	In an attempt to make entrepreneurial skills that members may possess redundant, we provide a packaged loan that bundles an asset lease with managerial support programs. The asset, a heifer, is a prime investment choice in the studied area. So there is little loss in production opportunity even when the lending takes an in-kind form (which then becomes a lease with an option to repay with money) that takes away a choice from the borrower therefore is generally considered to be less efficient. Provided that the managerial support programs cover a sufficiently wide range of issues, the package effectively renders the entrepreneurial skills redundant and is expected to achieve a no smaller return relative to a regular credit, had the entrepreneurial skills are indeed essential. 
+
+	As entrepreneurial skills are unobservable, one must assume its characterisation as a production factor. In one of the experimental arms, we offer advise, relevant knowledge through training sessions, provide links to veterinarians, fodder suppliers, and milk buyers. It can be seen that we are offering a capacity to use the best practice or \textit{cristalised intelligence} related to cattle production. This is only a part of entrepreneurial skills. As we were unable to randomly provide \textit{fluid intelligence} that may be amenable to apply a suitable action to unforeseen events, the estimated impacts are considered to reflect hightened awareness of the production knowledge that can be manipulated by outsiders. This characterisation suggests that this portion of entrepreneurial skills is a tradeable input that professional consultants provide in the management capital literature. %If there is an impact of cristalised intelligence, then one can compute its net returns. We note that, in an attempt not to give any monetary subsidy, we are charging fees at market prices to all the services we provide at request: Fodder supply, milk marketing, veterinary, and insemination. What we do not charge is a form of consulting services that answer to the questions from members who may lack practical knowledge of cattle production. We also provided compulsory training. \footnote{This could have served as a levy on the members of in-kind arm if they already had the relevant knowledge, as we did not give a choice of nonparticipation had they agreed to receive an in-kind loan. Majority of households had no experience in dairy cattle production at the baseline, and we expect them to lack the practical knowledge. }  
+
+	A heifer needs to be about 15 months old to be ready for insemination and takes about 9.5 months to deliver a calf as it starts lactation, or the total of about 2 years. Presuming that one acquires a heifer of one year old, the packaged loan requires at least one year of grace period. As a natural reference, we compare it with the traditional regular microcredit, a classic Grameen style loan that is about a third in loan size and has no grace period. In order to make comparison feasible, we added two intermediate treatment arms to bridge in between: Arms with a large amount of cash that is equivalent of heifer price, one with a grace period and another without a grace period. With the loan sizes that are three times the traditional microfinance loans, we extended the maturity to three years. As the comparison arm, the traditional regular microcredit, has only one year maturity, we provided the total of three loans in three loan cycles which are unconditionally disbursed annually so the total loaned amount will be aligned and there is no selection due to delin	quency. As a result, four arms have the equivalent loan size but with different characteristics in upfront liquidity, grace period, and the medium of loans bundled with support programs. In effect, we constructed a stepped-wedge design over these key features of loans, namely, \textsf{Upfront}, \textsf{WithGrace}, and \textsf{InKind}, to assess individual impacts on the outcomes as indicated in \textsc{\normalsize Table \ref{tab factorial design}}.
+
+\begin{table}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: A 4$\times$4 factorial, stepped wedge design\label{tab factorial design}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\vspace{2ex}
+\hfil\begin{tabular}{>{\footnotesize\hfill}p{2cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}
+>{\footnotesize\hfil}p{2.5cm}<{}}
+					& \cellcolor{paleblue}\textcolor{black}{large, grace} 			& \cellcolor{paleblue}\textcolor{black}{large} & \cellcolor{paleblue}\textcolor{black}{traditional} \\\cellcolor{paleblue}
+\textcolor{black}{cow} 				& \mpage{2.5cm}{\hfil entrepreneurial\\\hfil capacity\\\hfil (\textsf{InKind})} &\cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil saving\\\hfil constraint\\\hfil (\textsf{WithGrace})}} &\cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}}\\\cellcolor{paleblue}
+\textcolor{black}{large, grace} &\cellcolor{gray20} 	&  \mpage{2.5cm}{\hfil saving\\\hfil constraint\\\hfil (\textsf{WithGrace})} & \cellcolor{gray80}\mpage{2.5cm}{\textcolor{gray}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}}\\\cellcolor{paleblue}
+\textcolor{black}{large} 			&\cellcolor{gray20} 	&\cellcolor{gray20}& \mpage{2.5cm}{\hfil liquidity\\\hfil constraint\\\hfil (\textsf{Upfront})}%\\\cellcolor{pink}
+\end{tabular}
+\end{minipage}
+
+\footnotesize Note: \mpage{12cm}{\footnotesize Cell contents are hypothesised constraints on investments that exists in the column arm but are eased in the row arm. Contents in brackets are variable names of respective attributes.}
+\end{table}
+
+	
+	Our sample is drawn from the population of river island (\textit{char}) villages in Northern Bangladesh. We selected the areas of no NGO/MFI activity. 80 villages are randomly chosen and we formed a member committee of 10 households, of which 6 are ultra poor and 4 are moderately poor. The poverty status was determined by a participatory ranking process. We randomised the loan arms at the village level. All loan products are of individual liability and the committee was intended to serve as an activity platform for MFI operations. 
+
+	Baseline data was collected in 2012 prior to the loan type randomisation. After offering the arms, three groups opted out as a group. This was unexpected as we have explained the loan types, the random assignment process, and have obtained everyone's consent to participate before randomisation. Although they refused to receive a loan, they gave a consent to be surveyed so we track them in subsequent survey rounds. We further lost four groups to the flood in 2013. As they relocated, we had no choice but to drop them from the study. In addition to group level rejection/attrition, we had 90 individual loan rejectors. They agreed to receive a loan before we offered it, and they changed their mind. We retain them in the study as they agreed to be surveyed even in the absence of loans. %There are another type of members rejecting loans but are willing to use the saving instrument. We also keep them in the study. 
+As a result, we have flood victims whom we do not track, group rejectors, individual rejectors and borrowers that we track. See \citet{GUK2016} for more details on the randomisation and acceptance process.
+
+\section{Empirical strategy}
+\label{SecEmpiricalStrategy}
+
+	With the panel of 4 rounds, we use the difference-in-differences (DID) estimators to measure impacts of a particular loan attribute.  As we include loan rejecters, what we are estimating is intention-to-treat effects. For an ease of interpretation, we will assign indicator variables for each attribute, \textsf{Upfront, WithGrace, InKind} rather than using loan arm indicators. Numerically, both are equivalent. The first estimating equation is:
+\begin{equation}
+\Delta y_{it}=a_{10}+\bfa'_{1}\bfdee_{i}+e_{it},
+\end{equation}
+where, for member $i$ in period $t$, $y_{it}$ is an outcome measure, $\bfdee_{i}$ is a vector of indicator variables in loan attributes that $i$ receives, $e_{it}$ is an error term which can be correlated within a MFI group, and $\Delta$ is a first-difference operator. To allow for time-varying impacts, we estimate:
+\begin{equation}
+\Delta y_{it}=a_{10}+\bfa'_{1}\bfdee_{i}+a_{t0}c_{t}+\bfa'_{t}c_{t}\bfdee_{i}+\bfb'\Delta\bfx_{it}+e_{it},
+\end{equation}
+where $c_{t}$ is a period indicator variable for $t>1$ that takes the value of 1 at $t$, 0 otherwise, $\bfx_{it}$ is a vector of time-variant covariates. The specification allows treatment effects to be time-varying by interacting with the period indicator. $a_{t0}$ measures the period $t$ deviation from $a_{10}$, $\bfa'_{t}$ measures the period $t$ deviation from $\bfa'_{1}$ for each attribute. The estimates of main interest $\bfa'_{1}, \bfa'_{t}$ constitute a collection of DID estimates. By using a differenced data on fixed covariates, we obtain incremental impacts in a period as main estimates. %If \textsf{Upfront} has an estimate of 10, then it is a 10 unit larger change than the baseline (\textsf{traditional}). If the interaction of \textsf{Upfront} with rd 2-3 is 10, then it is a 10 unit larger change than rd 2-3 change of baseline. 
+With incremental changes per period, one can compute cumulative effect sums. \footnote{For an attribute \textsf{A}, all periods share $a_{10}+a_{1, \mbox{\scriptsize A}}$ as the baseline change per period, and $a_{t0}+a_{t, \mbox{\scriptsize A}}$ are deviations from it at period $t$, so the incremental change is their sum. 
+Cumulative change sum is:
+\[
+\begin{aligned}
+\Delta\mbox{1st period} 
+&= 
+a_{10}+a_{1, \mbox{\scriptsize A}},\\
+\Delta\mbox{1st period}+\Delta\mbox{2nd period} 
+&=
+2\left(a_{10}+a_{1, \mbox{\scriptsize A}}\right)+a_{20}+a_{2, \mbox{\scriptsize A}},\\
+\Delta\mbox{1st period}+\Delta\mbox{2nd period}+\Delta\mbox{3rd period} 
+&= 
+3\left(a_{10}+a_{1, \mbox{\scriptsize A}}\right)
++a_{20}+a_{2, \mbox{\scriptsize A}}
++a_{30}+a_{3, \mbox{\scriptsize A}}.
+\end{aligned}
+\]} All the standard errors are clustered at the group (char) level as suggested by \citet{AbadieAtheyImbensWooldridge2017}.\footnote{To aid the understanding if the data is more suited to the assumption of first-difference (FD) rather than fixed-effects (FE), we use a check suggested by \citet[][10.71]{Wooldridge2010}. It is an AR(1) regression using FD residuals. Most of results show low autocorrelations in FD residuals which is consistent with the assumption of FD estimator. The issue of choice between FD or FE is not of primary importance, as the use of cluster-robust standard errors gives consistent estimates of SEs in both estimators, and it boils down to efficiency.  }
+
+
+\section{Results}
+\label{SecResults}
+
+
+
+
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Randomisation went well at group level
+\item	Loan rejection is related to flood and smaller household size in nontraditional arm, smaller livestock values for traditional arm
+\item	Traditional arm rejecters have smaller livestock values but with similar household size as non-traditional rejecters, implying some unused capacity for them to raise more livestock, or participation to large sized lending if offered
+\item	This hints that once household size and risk are mitigated, poverty trap may be overcome
+\item	Less educated members attrited in traditional arm indicates there may be underestimation, if there is an attrition bias at all (so, no need to use Lee bounds, I think)
+\item	Greater accumulation of assets (livestock, productive assets, household assets) for \textsf{Upfront} attribute
+\item	No impacts of \textsf{InKind} on asset accumulation, rejecting the necessity of entrepreneurship, which is in contrast with the finding of existing studies that impacts are larger for the experienced borrowers ... everyone can be an entrepreneur at this level of skills? 
+\item	Lower repayment rates for \textsf{traditional}
+\item	Greater asset accumulation and higher repayment rates for \textsf{Upfront} suggests nonconvex production, a poverty trap
+\item	More diverse and smaller scale investment portfolio among \textsf{traditional}
+\item	Large consumption increase in period 2, smaller consumption increase and larger increase in labour incomes in period 3, interpreting these as repayment burden
+\item	Schooling of primary school aged girls increased but decreased for high school age girls for \textsf{Upfront}, nutrition/wealth effects for younger girls and stronger labour demand effects for older girls 
+\end{itemize}
+
+
+
+\subsection{Participation}
+
+	The reasons behind nonparticipation are fundamental in understanding the outreach. Selective attrition may bias the estimates so we need to know attriter's characteristics. In this section, we check how participation and attrition are different between arms. To do so, we test if the household characteristics are different between participants and nonpariticipants, or attriters and nonattriters. We use permutation tests to examine if there is a difference in mean characteristics between any two groups. We use 100000 random draws from all admissible permutations.
+
+	Before examining participation decisions, we confirm randomisation balance. Despite there were rejections to participate at the group level, we see randomisation balance was reasonably achieved as there is no household characteristics whose $p$ value exceeding 10\% for the difference between intervention arms at the group level (\textsc{\normalsize Table \ref{tab perm}} in Appendix \ref{AppSecRandomisation}).
+
+	We examined the difference between various groups in Appendix \ref{AppSecAttritionRejection}. In summary, group rejecters of \textsf{traditional} and non-\textsf{traditional} differ. Baseline flood and younger household head are associated with group rejection for non-\textsf{traditional} while low livestock values for \textsf{traditional} (\textsc{\normalsize Table \ref{tab Greject trad perm}}, \textsc{\normalsize Table \ref{tab Greject nontrad perm}}). Non-\textsf{traditional} group rejecter have more livestock values than \textsf{traditional} group rejecters (\textsc{\normalsize Table \ref{tab Greject trad nontrad perm}}). In contrast to group rejecters, individual rejecters have similar characteristics between these two groups (\textsc{\normalsize Table \ref{tab Ireject trad nontrad perm}}), and the common factor associated with nonparticipation is small household size (\textsc{\normalsize Table \ref{tab Ireject trad perm}}), and for non-\textsf{traditional} arms, baseline flood exposure is also correlated (\textsc{\normalsize Table \ref{tab Ireject nontrad perm}}).
+
+\begin{table}
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm\label{tab trad reject nontrad participate perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/GRejectedTradParticipatedNonTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{TradArm} is group-rejecters in \textsf{traditional} arm \textsf{NonTradArm} is borrowers in non-\textsf{traditional} arms. Both columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+	As for group rejecters, we observed that lower livestock values are associated in \textsf{traditional} arm while it was mostly flood exposure for non-\textsf{traditional} arms. Given randomisation, we conjecture that it is lack of liquidity, or lack of \textsf{Upfront} attribute, prevented smaller livestock holders of \textsf{traditional} arm because they cannot purchase cattle due to insufficient saving or resale value of livestock, when members of similar characteristics partcipated in non-\textsf{traditional} arms. In \textsc{\normalsize Table \ref{tab trad reject nontrad participate perm MainText}}, group rejecters of \textsf{traditional} arm and borrowers of non-\textsf{traditional} arms are compared. It shows the former is less exposed to flood in baseline and has lower livestock values. This implies that, once large enough sum of loan is disbursed, a poverty trap at this level may be overcome once household size and negative asset shocks are accounted for.
+
+	We see that households lacking labour resources and with a recent flood damage may opt out the borrowing. This is in contrast to the asset transfer programs where everyone participates. As some households who did not meet the conditions to raise cattle withheld themselves from participating, it may have caused the repayment rates to be higher than other programs targeting the poor. 
+
+\begin{table}
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AttritedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters between traditional and non-traditional arms\label{tab attrit TNT perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/TradNonTradAttritedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{NonTradArm} and \textsf{TradArm} columns show means of each group. Attrition due to flood is dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+	The survey comes with a moderate rate of attrition. We checked for systematic differences between attriters and nonattriters in \textsc{\normalsize Table \ref{tab attrit perm MainText}} (see more detailed attrition examination in Appendix \ref{AppSecAttritionRejection}). The attrition is not correlated with household level characteristics. As attrition rates differ between \textsf{traditional} and non-\textsf{traditional} arms, we compare them in \textsc{\normalsize Table \ref{tab attrit TNT perm MainText}}. It shows that \textsf{traditional} arm attriters have a lower rate of head literacy while non-\textsf{traditional} arm attriters are more exposed to the flood. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the relative impacts of non-\textsf{traditional} arm. So one can employ Lee bounds for stronger results, but doing so will give us less precision and require more assumptions.
+
+
+\subsection{Impacts}
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative effects on livestock and net assets\label{fig LivestockCumulativeEffects}}\\
+
+\vspace{2ex}
+\hspace{-2em}\includegraphics[height = 12cm, width = 14cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/LivestockCumulativeEffects.eps}\\
+\renewcommand{\arraystretch}{1}
+\setlength{\tabcolsep}{1pt}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12.5cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:& For \textsf{traditional} arm, additional impact in a period relative to period 1, or a second-order difference, is given by $\Delta^{2}\mbox{2nd period}=\mbox{\textsf{Period2}}$, $\Delta^{2}\mbox{3rd period}=\mbox{\textsf{Period3}}$. For attribute \textsf{X}, $\Delta^{2}_{X}\mbox{1st period}=\mbox{\textsf{X}}$, $\Delta^{2}_{X}\mbox{2nd period}=\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}$, $\Delta^{2}_{X}\mbox{3rd period}=\mbox{\textsf{Period3}}+\mbox{\textsf{X.Period3}}$. Per period changes in period 1 is $\Delta\mbox{1st period}=\mbox{\textsf{intercept}}$ for \textsf{traditional}, $\Delta_{X}\mbox{1st period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}$ for other attributes, period 2 and 3 for \textsf{traditional} are $\Delta\mbox{2nd period}=\Delta\mbox{1st period}+\Delta^{2}\mbox{2nd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{Period2}}$, $\Delta\mbox{3rd period}=\Delta\mbox{1st period}+\Delta^{2}\mbox{3rd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{Period3}}$. For other attributes, $\Delta_{X}\mbox{2nd period}=\Delta_{X}\mbox{1st period}+\Delta^{2}_{X}\mbox{2nd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}$, $\Delta_{X}\mbox{3rd period}=\Delta_{X}\mbox{1st period}+\Delta^{2}_{X}\mbox{3rd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period3}}+\mbox{\textsf{X.Period3}}$. Cumulative change sums are $\Delta\mbox{1st period}+\Delta\mbox{2nd period}=2\mbox{\textsf{intercept}}+\mbox{\textsf{Period2}}$, $\Delta\mbox{1st period}+\Delta\mbox{2nd period}+\Delta\mbox{3rd period}=3\mbox{\textsf{intercept}}+\mbox{\textsf{Period2}}+\mbox{\textsf{Period3}}$, $\Delta_{X}\mbox{1st period}+\Delta_{X}\mbox{2nd period}=2(\mbox{\textsf{intercept}}+\mbox{\textsf{X}})+\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}$, $\Delta_{X}\mbox{1st period}+\Delta_{X}\mbox{2nd period}+\Delta_{X}\mbox{3rd period}=3(\mbox{\textsf{intercept}}+\mbox{\textsf{X}})+\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}+\mbox{\textsf{Period3}}+\mbox{\textsf{X.Period3}}$. For each outcome, top panel shows cumulative sums.  Second panel shows per period changes $\Delta\mbox{1st period}, \Delta\mbox{2nd period}, \Delta\mbox{3rd period}$.   Third panel shows per period chanegs relative to period 1 change of \textsf{traditional}, $\Delta^{2}\mbox{2nd period}, \Delta^{2}_{X}\mbox{2nd period}$, $\Delta^{2}\mbox{3rd period}, \Delta^{2}_{X}\mbox{3rd period}$ are plotted. For period 1, $\Delta\mbox{period 1}$ for \textsf{traditional} and $\Delta^{1}_{X}\mbox{1st period}$ for other attributes are shown. Bars show 95\% confidence intervals using cluster robust standard errors.\\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig LivestockCumulativeEffects}} summarises estimation results as cumulative impact sums and additional impacts (see Appendix tables for full estimation results). There are three stock outcome variables, livestock values, number of cattle, and net asset values. For each outcome, there are three panels. First panel shows cumulative impacts up to period 1 (between survey rounds 1-2), period 2 (rounds 2-3), and period 3 (rounds 3-4) which are displayed along the horizontal axis. In each period, there are several estimation specifications which are bunched side-by-side. This is intended to show robustness to specification changes at a glance. One sees that there is little variation across specifications. As we multiply the estimates when we compute cumulative sums, it widens standard error bands in the later periods which unnecessarily clouds impact estimates. To assess the estimates in a less noisy way, the second panel shows the changes in each period, $\Delta\mbox{1st period}, \Delta\mbox{2nd period}, \Delta\mbox{3rd period}$. In addition, to make comparison easier against the \textsf{traditional} arm, the third panel shows changes relative to concurrent changes of \textsf{traditional} arm. For \textsf{traditional} arm in the third panel, they show changes in period 1, period 2 - period 1, and period 3 - period 1.
+
+	\textsc{\footnotesize Figure \ref{fig LivestockCumulativeEffects}} shows impacts on livestock holding values, cattle holding, and net asset values. One sees in \textsf{livestock values, cumulative} a sustained increase of livestock holding values in all arms. Second panel \textsf{livestock values, changes}, showing per period changes, indicates positive impacts only in period 1 for all attributes which reflects the loan receipt. When we convert these impacts to contemporaneous relative-to-\textsf{traditional} impacts in the third panel \textsf{livestock values, contemporaneous}, one sees that changes in period 2 and 3 cannot be statistically distinguishable from \textsf{tradtional} arm. This may not be surprising that all arms are receiving the equivalent sums by the beginning of period 3. At the same time, we acknowledge that the price information used to convert livestock holding to values, the median reported prices among survey respondents, is expected to have measurement errors. This may bias the results to any direction, so we use number of cattle holding as a proxy of livestock holding values in the second three panels. It is a reasonable proxy as the largest share of livestock value comes from cattle and goats and sheep are less popular in the area. 
+
+	Expectedly, we see a sustained cumulative increase in all arms in \textsf{number of cattle, cumulative} panel. The relative additional impacts by period, shown in \textsf{number of cattle, concurrent} panel, are found to be large with the \textsf{Upfront} attribute especially in the first period. This is no surprise as a large liquid sum disbursed from the lender should face a relatively less obstacle in converting into livestock holding than in \textsf{traditional} arm while households may not have additional resource to buy more calf in period 2 or 3. The \textsf{traditional} arm members have increasing changes in the size of cattle holding in period 2 and 3, which can be explained by the second and third disbursements. \textsf{Upfront}-ness does not lead to constant additional increase in period 3 as one sees the error bands cross the zero line. \textsf{WithGrace} attribute and \textsf{InKind} attribute received sustained cumulative impacts, yet the increaments relative to \textsf{traditional} are statistically zero for all periods. 
+
+	Net assets, defined by asset and livestock holding values less debt values, shows similar patterns as in livestock holding values, a sustained increase in assets, only that net assets have larger increments. This reflects that loan recipients accumulate household and productive assets. Livestock values did not change in period 2 and 3 for \textsf{traditional} arm, but the net asset values continue to increase in period 2 and 3, indicating sales of livestock. \textsf{WithGrace} attribute has relatively large increments in period 2 when one compares with contemporaneous \textsf{traditional} arm increments while the opposite is true in period 1. The latter is expected because debt does not decrease in period 1 for \textsf{WithGrace} arm when they do not repay, and the cattle valuation remains at the price of purchase, hence no increase, during the first year. Relative increases were larger in period 2 and 3 for \textsf{WithGrace} than \textsf{traditional} although the $p$ values are around 10\%. This suggests that having a grace period helps accumulate assets. The \textsf{Upfront} attribute has the larger asset accumulation relative to \textsf{traditional} in period 1. In all arms, net asset increments are large during first two periods, and smallest in the last period. We conjecture that this is due to loan repayment burden, which is consistent with what we observe in consumption and labour income patterns. 
+
+	\textsf{Traditional} arm experienced a sustained increase in all outcomes. However, even they received an equivalent loan amount, the cumulative impacts on net assets are smaller than \textsf{Upfront} attribute. This is consistent with the nonconvex production technology for cattle under a liquidity constraint. 
+
+	Looking at impacts of the \textsf{InKind} attribute on cattle holding, livestock values and net asset values, entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake and successes among members. This is in contrast with the existing studies which observed larger impacts among the more experienced borrowers. Previous studies targeted the population with a richer set of investment possibilities in a more urbanised setting, which feeds impact heterogeneity. In the current study, the population resides in a remote area with cattle as the dominant production possibility, and this may drive impacts to be more homogenous. The dairy cattle farming that consists of feeding, grazing, pregnancy and calving may turn out not to be too demanding in terms of crystalised intelligence in comparison with micro scale production in urban areas. 
+
+\begin{figure}
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative weekly repayment rates\label{fig weeklysavingrepayrate}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo2/CumulativeWeeklyRepaymentRateByPovertystatus.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows ratio of cumulative repayment sum to cumulative due amount sum, ratio of sum of cumulative repayment and cumulative net saving (saving - withdrawal) sum to cumulative due amount sum, both are plotted against weeks after first disbursement. Value of 1 indicates the member is at per with repayment schedule. Horizontal lines has a $Y$ intercept at 1. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
+\end{tabular}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: IGA choices\label{fig IGAChoices}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/IGAChoices.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices\label{fig AllIGAChoices}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/AllIGAChoices.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices\label{fig AllIGAChoicesCollapsed}}\\
+
+\vspace{1ex}
+\hfil\includegraphics[height = 4cm, width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/AllIGAChoicesCollapsed.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Administrative data.\\
+Note:& Based on information reported at the weekly meeting. 
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig weeklysavingrepayrate}} shows ratio of cumulative repayment to cumulative due amount, ratio of sum of cumulative repayment and cumulative net saving (saving - withdrawal) to cumulative due amount, both are plotted against weeks after first disbursement. Each dot represents a member at each time point. Value of 1, which is given by a horizontal line, indicates the member is at per with repayment schedule. One sees that repayment rates are above 1 at the beginning but stay below 1 for most of the time. The majority of borrowing members did not repay the loan by the 48th month with installments. One notes \textsf{traditional} arm has lower repayment rates of all arms. When a member does not reach the due amount with installments, they had to repay from net saving, an arrangement to which the lender and the borrowers agreed at the loan contract. Repayment rates after paying from net saving are 44.71, 93.57, 97.01, 95.42\%, respectively, for \textsf{traditional, large, large grace, cow} arms and 87.85\% for overall. \textcolor{red}{[Abu-san: Why does the admin data continue up to the 48th month, not 36th?]}
+
+	There is little difference in repayment rates by poverty classes. \textsc{\footnotesize Figure \ref{fig weeklysavingrepayrate}} depicts both moderately poor and ultra poor. It is impossible to distinguish between them with eyeballs, and DID estimates also confirm this. This is in contrast to a popular belief that the ultra poor are the riskiest among all income classes. Poverty gradation through a participatory process, however, does not distinguish the moderately poor and the ultra poor on the observables. \textsc{\footnotesize Figure \ref{fig NetAssetValuesAtRd1}} shows net asset values at baseline by poverty class, and \textsc{\footnotesize Figure \ref{fig LivestockValuesAtRd1}} shows initial livestock values at baseline by poverty class. Both show little difference in these observable characteristics. \textcolor{red}{[Abu-san: Any ideas why?]}
+
+
+	Smaller cumulative impacts and lower repayment rates of \textsf{traditional} arm members stand out once we acknowledge that they are receiving an equivalent amount and their contract differs with other arms only in the attributes we focus. These differences arise partly from the difference in investment choices. \textsc{\small Figure \ref{fig IGAChoices}, \ref{fig AllIGAChoices}} show that almost no one of the \textsf{traditional} arm invested only in one project while only few members did so with the \textsf{Upfront} attribute. Goat/sheep and small trades are the top choices for the first income generating activities (IGAs) in \textsf{traditional}. This is consistent with convexity in the production technology of large domestic animals under a liquidity constraint. This also validates our supposition in experimental design that cattle production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive cattle. \textsc{\small Figure \ref{fig AllIGAChoicesCollapsed}} shows there are a significant number of cases in the \textsf{traditional} arm that members reportedly raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. 
+
+
+
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on labour incomes, consumption\label{fig IncomeConsumptionEffects}}\\
+
+\vspace{2ex}
+\hfil\includegraphics[height = 7cm, width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/IncomeConsumptionEffects.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{11cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:& Top panel shows additional impacts by period which are obtained by $\Delta\mbox{1st period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}, \Delta\mbox{2nd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}$, $\Delta\mbox{3rd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period3}}+\mbox{\textsf{X.Period3}}$. Second panel shows changes relative to \textsf{traditional} which is obtained by $\mbox{\textsf{X}}$, $\mbox{\textsf{X.Period2}}$, $\mbox{\textsf{X.Period3}}$. Bars show 95\% confidence intervals using cluster robust standard errors. \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	\textsc{\footnotesize Figure \ref{fig IncomeConsumptionEffects}} depicts estimates of consumption and labour incomes. As these are flow variables, we do not show cumulative impacts, and the top panel shows changes per period, the second panel shows changes relative to \textsf{traditional}. Consumption is not measured in the baseline, so we do not use it to understand welfare impacts but to understand how the members have dealt with the loan repayment. Consumption increased in period 3 and 4 except for \textsf{InKind} attribute. Increments were smaller in period 4 in all arms. As the repayment was delinquent after period 2, it is interesting that members increased the consumption while kept the loan repayment at sub-due level in period 3, but decreased the consumption and increased loan repayment in period 4. This hints na\"ivet\'e of members who are not used to borrowing yet still conforming with the repayment discipline at the end. Labour income follows a pattern consistent with this interpretation of consumption that members increase their labour supply towards the end of loan cycle to aid repayment. The increased repayment in period 4 may thus have been born out of reduced consumption and increased wage labour.
+
+\begin{figure}
+\mpage{12cm}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on schooling\label{fig SchoolingEffects}}\\
+
+\vspace{2ex}
+\hfil\includegraphics[height = 7cm, width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/SchoolingEffects.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{11cm}<{\hfill}}
+Source: & Constructed from FD estimation results.\\
+Note:&  Top panel shows additional impacts by period which are obtained by $\Delta\mbox{1st period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}, \Delta\mbox{2nd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period2}}+\mbox{\textsf{X.Period2}}$, $\Delta\mbox{3rd period}=\mbox{\textsf{intercept}}+\mbox{\textsf{X}}+\mbox{\textsf{Period3}}+\mbox{\textsf{X.Period3}}$. Second panel shows changes relative to \textsf{traditional} which is obtained by $\mbox{\textsf{X}}$, $\mbox{\textsf{X.Period2}}$, $\mbox{\textsf{X.Period3}}$. Bars show 95\% confidence intervals using cluster robust standard errors. \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+	In \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}, effects on child schooling are plotted. The impacts are on school enrollment probability changes, and concurrent panels are of interest as they show differences in enrollment changes between each attribute and \textsf{traditional}. One sees positive impacts on female primary school enrollments and negative impacts on female junior and high school enrollments with \textsf{Upfront} attribute. We interpret the former impact as nutrition/wealth effects of cattle rearing that children get to drink milk more. The reason, we conjecture, that only girls have positive impacts is that boys might have been drinking milk even in the absence of intervention. Negative impacts of elder girl's schooling may be due to stronger demand for cattle production in a household. Having cattle to take care of naturally shifts the relative prices in a household against child schooling, especially for elder girls as their returns on human capital are considered to be lower and task contents of cattle labour are less brawn intensive yet requires to be above primary school ages. This may be a downside of having more household production with cattle.
+
+
+
+\section{Conclusion}
+\label{SecConclusion}
+
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	No entrepreneurship is necessary for project success, due probably to a simpler production process
+\item	Upfront liquidity increases asset holding and repayment rates, not the loan size \textit{per se}
+\item	Cattle has higher returns and lower risks, resulting in higher repayment rates, but also has larger initial fixed costs, possibly generating a poverty trap
+\item	Lending uptake is impeded by small household size and asset shocks
+\item	If these are met, a poverty trap may be overcome
+\item	In the remote rural setting, larger upfront loan suited to project needs is shown to be Pareto improving, despite widely believed fears of inefficiency due to information asymmetry
+\item	In the remote rural setting, slow pace of outreach may be explained by not sufficiently cracking the liquidity constraint
+\item	Consumption and wage labour were adversely affected to repay the loan
+\item	Female schooling beyond primary school were adversely affected due possibly to stronger labour demand for cattle production
+\end{itemize}
+
+{\footnotesize\bibliographystyle{aer}
+\setlength{\baselineskip}{8pt}
+\bibliography{c:/dropbox/docs/notes/seiro}
+}
+
+\appendix
+\setcounter{section}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
+\renewcommand{\thetable}{\Alph{section}\arabic{table}}
+\renewcommand{\thesection}{\Alph{section}}
+
+
+
+\section{Data description}
+
+\begin{table}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Descriptive statistics by arm in administrative data\label{tab DestatByArm}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/DestatByArm.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & Information of original 800 households. Net saving as percentage of loan amount is a mean over loan recipients whose first disbursement is in 2013. Effective repayment is a sum of repayment and net saving. \\
+& 2. & \textsf{Loan year} -1 is preparation period for loan disbursement when only saving is allowed. \\
+\end{tabular}
+\end{minipage}
+\end{table}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Net asset values at baseline\label{fig NetAssetValuesAtRd1}}\\
+\hfil\includegraphics[width = 10cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/NetAssetsAtRd1.pdf}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Net asset values = total gross asset values - debt outstanding. Debt outstanding takes the value of the month immediately after the respective survey round interview. \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+\begin{figure}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Lvestock holding at baseline\label{fig LivestockValuesAtRd1}}\\
+\hfil\includegraphics[width = 8cm, height = 5cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/LivestockValuesAtRd1.eps}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Livestock holding at baseline. Median market price is used to convert holding to values. \\[1ex]
+\end{tabular}
+}
+\end{figure}
+
+\begin{table}
+\renewcommand{\arraystretch}{.6}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations by borrower status and arm\label{tab NumObsByBStatusArmFile}}\\
+\hfil\input{c:/data/GUK/analysis/program/table/ImpactEstimationOriginal1600Memo3/NumObsByBStatusArmFile.tex}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:&  \\[1ex]
+\end{tabular}
+}
+\end{table}
+
+\begin{table}
+\renewcommand{\arraystretch}{.6}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations used in estimation by borrower status and arm\label{tab NumObsByBStatusArmRegUsed}}\\
+\hfil\input{c:/data/GUK/analysis/program/table/ImpactEstimationOriginal1600Memo3/NumObsByBStatusArmRegUsed.tex}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:&  \\[1ex]
+\end{tabular}
+}
+\end{table}
+
+
+\section{Randomisation checks}
+\label{AppSecRandomisation}
+\setcounter{table}{0}
+
+\begin{table}
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results\label{tab perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/PermutationTestResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Number of groups is 72. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+\end{table}
+
+
+\section{Attrition and rejection}
+\label{AppSecAttritionRejection}
+\setcounter{table}{0}
+
+
+
+Among 800 observations, there are 4 whose villages are washd away and 70 who by group rejected the assigned arms which are traditional, large, large grace with 40, 20, 10, 0 individuals, respectively. There are 31, 9, 13, 37 individuals who individually rejected traditional, large, large grace, cow, respectively. Among attrited HHs, when were they lost?
+\begin{Schunk}
+\begin{Soutput}
+
+  1 
+116 
+\end{Soutput}
+\end{Schunk}
+Reasons for attrition and relation to flood damage.
+\begin{Schunk}
+\begin{Soutput}
+          BStatus
+FloodInRd1 borrower individual rejection group rejection rejection by flood
+      0          26                    7               2                 23
+      1          20                    7              13                 17
+      <NA>        0                    1               0                  0
+\end{Soutput}
+\begin{Soutput}
+              BStatus
+AssignOriginal borrower individual rejection group rejection rejection by flood
+   traditional       26                    6               0                  0
+   large              7                    0               0                  0
+   large grace        7                    2               0                  0
+   cow                6                    7               0                  0
+   <NA>               0                    0              15                 40
+\end{Soutput}
+\end{Schunk}
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling 100000 times.
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AttritedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters between traditional and non-traditional arms\label{tab attrit TNT perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/TradNonTradAttritedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{NonTradArm} and \textsf{TradArm} columns show means of each group. Attrition due to flood is dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection\label{tab reject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/RejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among traditional arm\label{tab reject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/RejectedInTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejection among non-traditional arm\label{tab reject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/RejectedInNonTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of rejecters, traditional vs. non-traditional arm\label{tab reject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/TradNonTradRejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+	\textsc{\normalsize Table \ref{tab attrit perm}} shows results from tests of independence between attriters and non-attriters. We see a moderate rate of attrition is not correlated with household level characteristics.  \textsc{\normalsize Table \ref{tab attrit TNT perm}} compares attriters of \textsf{traditional} arm and non-\textsf{traditional} arms. It shows that \textsf{traditional} arm attriters have a (marginally) lower rate of head literacy while non-\textsf{traditional} arm attriters are more exposed to the flood. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the impacts of non-\textsf{traditional} arm. So one can employ Lee bounds for stronger results, but doing so will give us less precision and require more assumptions.
+
+	\textsc{\normalsize Table \ref{tab reject perm}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on 760 members whose residence was not washed away by flood. It shows that smaller household size, being affected by flood at the baseline, smaller livestock holding, smaller net assets, and less exposue to cattle growing are correlated with opting out the offered type of lending. 
+	
+	Group rejecters and non-group rejecters are compared in 	\textsc{\normalsize Table \ref{tab Greject perm}}. Marked differences are found in arm (\textsf{traditional} vs. non-\textsf{traditional}) and net asset values. \textsc{\normalsize Table \ref{tab Greject trad perm}} compares group rejecters in \textsf{traditional} arm and finds less flood exposure and smaller livestock holding to be correlated with rejection. Group rejecters in non-\textsf{traditional} arm are examined in \textsc{\normalsize Table \ref{tab Greject nontrad perm}} and flood at baseline and younger head age are correlated with rejection. Comparing group rejecters between \textsf{traditional} and non-\textsf{traditional} arms, flood at baseline, net asset values, and livestock holding are different (\textsc{\normalsize Table \ref{tab Greject trad nontrad perm}}). These hint that for non-\textsf{traditional} arm group rejecters, it is baseline flood that may have constrained them from participation, and asset levels for \textsf{traditional} group rejecters.
+	
+	Acknowledging the reasons for rejection can be different, we tested the independence of each characteristics for individual rejecters (vs. non-individual rejeceters) in \textsc{\normalsize Table \ref{tab Ireject perm}}. Smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{NumCows} are associated with individual rejecters. Individual decisions not to participate may be more straightforward: Smaller household size may indicate difficulty in securing the cattle production labour in a household, being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+
+	\textsc{\normalsize Table \ref{tab Ireject trad perm}} and \textsc{\normalsize Table \ref{tab Ireject nontrad perm}} compare individual rejecters and nonrejecters in \textsf{traditional} arm and non-\textsf{traditional} arms, respectively. Somewhat surprisingly, smaller household size is found to be correlated with rejection in all arms but more pronounced among \textsf{traditional} members. This hints that \textsf{traditional} arm borrowers may have been looking into cattle production but were held back by lack of household labour. Livestock and other asset values are not correlated with rejection, only cattle holding is smaller for \textsf{traditional} rejecters. Comparison of individual rejecters between \textsf{traditional} and non-\textsf{traditional} arms show no detectable difference (\textsc{\normalsize Table \ref{tab Ireject trad nontrad perm}}). This suggests that indvidual rejecters in all arms were constrained with small household size.
+
+	In summary, group level rejecters between \textsf{traditional} and non-\textsf{traditional} differ that smaller household size and baseline flood withheld participation for non-\textsf{traditional} while low livestock values withheld participation for \textsf{traditional}. Individual rejecters have similar characteristics between two groups.
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection\label{tab Greject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/GRejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among traditional arm\label{tab Greject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/GRejectedInTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection among non-traditional arm\label{tab Greject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/GRejectedInNonTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejecters, traditional vs. non-traditional arm\label{tab Greject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/TradNonTradGRejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection\label{tab Ireject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/IRejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{Rejected} and \textsf{Nonrejected} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. Individual rejection is observed only for non group rejecters. Sample size is smaller in \textsc{Table \ref{tab Ireject perm}} as 70 observations are dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among traditional arm\label{tab Ireject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/IRejectedInTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection among non-traditional arm\label{tab Ireject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/IRejectedInNonTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejecters, traditional vs. non-traditional arm\label{tab Ireject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/TradNonTradIRejectedPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection in traditional arm vs. participants in non-traditional arm\label{tab trad reject nontrad participate perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/GRejectedTradParticipatedNonTradPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borrowers, cow vs. non-cow arms\label{tab accept cow noncow perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AcceptedCowNonCowPermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{CowArm} and \textsf{NonCowArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of borowers, cow vs. large grace arms\label{tab accept cow large grace perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AcceptedCowLargeGracePermutationTestResultso800.tex}};
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to 100000. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{CowArm} and \textsf{LargeGraceArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+
+
+
+\section{Estimated results}
+\setcounter{table}{0}
+
+\subsection{Saving and repayment}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment\label{tab FD saving original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/SavingOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cumulative net saving and repayment by attributes\label{tab FD saving attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/SavingAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net cumulative saving and repayment, ultra poor vs. moderately poor\label{tab FD saving2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hspace{-.75cm}\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/SavingPovertystatusOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Schooling}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/SchoolingRd14DiffOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences by attributes\label{tab FD enroll5 attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/SchoolingRd14DiffAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Assets}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets\label{tab FD assets original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AssetOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets by attributes\label{tab FD assets attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AssetAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, round 2 and 4 comparison\label{tab FD assets rd24 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AssetRd24DiffOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of assets, loan recipients vs. pure control\label{tab FD assets pure control original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/AssetOriginalHHsRobustnessFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Pure control is members not receiving loans while they were put on a wait list. 
+Sample is continuing members and replacing members of early rejecters. Household assets do not include livestock. Regressions (1)-(2), (4)-(5) use only arm and calendar information. (3) and (6) information if the household was exposed to the flood in round 1. Pure controls are households who rejected to receive a loan.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Livestock}
+
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Number of cows/oxen by year\label{fig Number of cowsoxen by year}}\\
+\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/NumberOfCowsByYear.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& \\[1ex]
+\end{tabular}
+}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values\label{tab FD livestock original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/LivestockOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values by attributes\label{tab FD livestock attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/LivestockAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of livestock holding values, ultra vs. moderately poor\label{tab FD livestock poor original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/LivestockPovertyStatusOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{TotalImputedValue}, a sum of all livestock holding values evaluated at respective median market prices in the same year. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cattle holding by attributes\label{tab FD cow attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/NumCowsAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of cattle holding, ultra vs. moderately poor\label{tab FD NumCows poor original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/NumCowsPovertyStatusOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Saving and repayment information is taken from administrative data. Time invariant household characteristics are taken from household survey data. Administrative data are merged with survey data by the dating the survey rounds in administrative data. Net saving is saving - withdrawal. Excess repayment is repayment - due amount. 	extsf{LY2, LY3, LY4} are dummy variables for second, third, and fourth year into borrowing. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Regressand is \textsf{NumCows}, number of cattle holding. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Net assets}
+
+
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Total asset dynamics of nonborrowers\label{fig NonborrowerTotalAssetDynamics}}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/figure/ImpactEstimationOriginal1600Memo3/NonborrowerGrossAssetsDynamicsByPovertyStatus.png}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Only for nonborrowers. Scatter plots contrast $t$ vs. $t+1$ comparison where $t$ and $t+1$ are given in strip ribbons of each panel. \\[1ex]
+\end{tabular}
+}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net assets, original HHs\label{tab FD net assets original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/NetAssetOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net assets by attributes\label{tab FD net assets attributes original HHs}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/NetAssetAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of net assets by attributes, round 2 and 4 comparison\label{tab FD net assets attributes rd24 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/NetAssetRd24DiffAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates between round 2 and 4. A first-difference is defined as $\Delta x_{t+k}\equiv x_{t+k} - x_{t}$ for $k=1, 2, \dots$. Saving and repayment misses are taken from administrative data and merged with survey data at Year-Month of survey interviews. Intercept terms are omitted in estimating equations. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Household assets do not include livestock. Regressions (1)-(3), (5)-(6) use only arm and calendar information. (4) and (7) use previous six month repayment and saving information which is lacking in rd 1, hence starts from rd 2.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Consumption}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption\label{tab FD consumption original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/ConsumptionOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption by attributes \label{tab FD consumption attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/ConsumptionAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of consumption, moderately poor vs. ultra poor\label{tab FD consumption2 original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/ConsumptionPovertyStatusOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{UltraPoor} is an indicator function if the household is classified as the ultra poor. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Consumption is annualised values. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\subsection{Labour income}
+
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes\label{tab FD incomes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/IncomesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of incomes by attributes \label{tab FD incomes attributes original HH}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.55}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/Original1600Memo3/IncomesAttributesOriginalHHsFDEstimationResults.tex}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & First-difference estimates using administrative and survey data. First-differenced ($\Delta x_{t+1}\equiv x_{t+1} - x_{t}$) regressands are regressed on categorical and time-variant covariates. Head age and literacy are from baseline survey data. $\rho$ indicates the AR(1) coeffcient of first-difference residuals as suggested by \citet[][10.71]{Wooldridge2010} and $\Pr[\rho=0]$ is its $p$ value. \textsf{6M repayment, 6M net saving} are mean lagged 6 month repayment and net saving. \textsf{6M other repayment, 6M other net saving} are mean lagged 6 month repayment and net saving of other members in a group. \textsf{LargeSize} is an indicator function if the arm is of large size, \textsf{WithGrace} is an indicator function if the arm is with a grace period, \textsf{InKind} is an indicator function if the arm provides a cow. Sample is continuing members and replacing members of early rejecters and received loans prior to 2015 Janunary. Labour income is in 1000 Tk unit andis sum of all earned labour incomes. Farm revenue is total of agricultural produce sales. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+
+
+
+
+
+\end{document}

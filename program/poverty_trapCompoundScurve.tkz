@@ -1,0 +1,66 @@
+\begin{tikzpicture}[ 
+axis/.style={very thick, ->, >=stealth'},
+dashed line/.style={dashed, thin},
+every node/.style={color=black},
+background rectangle/.style = {fill = gray90},
+]
+\begin{axis}[
+  scale = 1.0,
+  axis equal image, % forces a square plot
+  clip = false, % allows plotting outside axis bounds
+  axis x line=center, axis y line=center,
+  xlabel = {$k_{t}$}, ylabel = {$k_{t+1}$},
+  xtick={100}, ytick={100}, % effectively drops axis ticks
+  xlabel style={below right}, ylabel style={above left},
+  xmin=0, xmax=11,
+  ymin=0, ymax=10]
+\coordinate (origin) at (axis cs: 0, 0) ;
+\path[name path=xaxis] (origin) -- (axis cs: 10, 0);
+\path[name path=yaxis] (origin) -- (axis cs: 0, 10);
+\addplot+ [name path=SSline, black, no marks, line width = .5pt] plot coordinates {(0, 0) (9, 9)};
+\node[above] at (axis cs: 9, 9) {\small $k_{t+1}=k_{t}$};
+\coordinate (mone) at (axis cs: .5, 0) ;		% k_{1}
+\coordinate (mtwo) at (axis cs: .5, 1.25);	% equil 2
+\coordinate (mthree) at (axis cs: 1.5, 2);	% equil3, goat equilibrium
+\coordinate (mfour) at (axis cs: 1.75, 2.5);	% 
+\coordinate (mfive) at (axis cs: 5, 3);		% 
+\draw[name path=GoatFlexzero2, blue, very thick] (origin) -- (mone);
+\draw[name path=GoatFlexvisible2, blue, very thick] 
+  (mone) .. controls ($(mtwo) + (-1, 0)$) and ($(mfour) + (-1, -1)$) .. 
+  (axis cs: 4.3, 2.7);
+\addplot+ [name path=cowspart2, blue, no marks, smooth, line width=1.5pt] table {
+4.3 2.7
+4.63 4.63
+};
+\addplot+ [name path=cows2, blue, no marks, smooth, line width=1.5pt] table {
+4.63 4.63
+5 5.5
+6 6.75
+7 7
+8 7.1
+9.5 7.2
+};
+\path [name intersections={of=SSline and GoatFlexvisible2, by={gfone2, gftwo2}}];
+\path [name intersections={of=SSline and GoatFlexzero2, by={gf0, gf1}}];
+\path [name intersections={of=GoatFlexvisible2 and cowspart2, by={gcone2}}];
+\path [name intersections={of=SSline and cows2, by={cone2, ctwo2}}];
+
+\fill[blue] (gfone2) circle (3pt) (cone2) circle (3pt);
+\fill[red] (origin) circle (3pt) (gftwo2) circle (3pt) node[above left] {\small goats} (ctwo2) circle (3pt) node[above left] {\small cattle};
+\draw [name path=kunderline, blue, dashed] (cone2) -- (cone2 |- origin) node [below] {\small $k_{2}$};
+% draw dashed lines
+\def\thisspace{3.5}
+\def\raisespace{2}
+  % left of gone
+\draw[yellow, very thick, <-, >=stealth'] ($(.5, .5) + (0, \raisespace)$) -- ($(3.5, 3.5)+ (0, \raisespace)$); 
+  % right of gone
+\draw[yellow, very thick, ->, >=stealth'] ($(5, 5)+ (\thisspace, \thisspace-\raisespace)$) -- ($(gftwo2) + (-\thisspace, -\thisspace-\raisespace)$); 
+  % right of gtwo
+\draw[yellow, very thick, <-, >=stealth'] ($(gftwo2) + (\thisspace, \thisspace+\raisespace)$) -- ($(cone2) + (-\thisspace, -\thisspace+\raisespace)$); 
+  % right of cone
+\draw[yellow, very thick, ->, >=stealth'] ($(cone2) + (\thisspace, \thisspace+\raisespace)$) -- ($(ctwo2) + (-\thisspace, -\thisspace+\raisespace)$); 
+  % right of ctwo
+\draw[yellow, very thick, <-, >=stealth'] ($(ctwo2) + (\thisspace, \thisspace+\raisespace)$) -- ($(ctwo2) + (15+\raisespace, 15+\thisspace+\raisespace)$); 
+\node[below right] at ($(ctwo2)+ (25, 7)$) {\mpage{1cm}{\small $sf(k)+(1-\delta)k$}};
+\end{axis}
+\end{tikzpicture}

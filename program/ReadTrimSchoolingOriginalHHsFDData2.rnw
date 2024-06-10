@@ -1,0 +1,3 @@
+<<ReadTrimSchoolingFDData2 original HHs file contents, cache = F, warings = F>>=
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@

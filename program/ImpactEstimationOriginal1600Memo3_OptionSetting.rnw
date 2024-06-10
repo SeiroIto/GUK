@@ -1,0 +1,41 @@
+<<option setting 1, cache = F, child='c:/migrate/R/knitrPreamble/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_knit$set(base.dir = 'c:/data/GUK/analysis/program/')
+opts_chunk$set(
+fig.path='figure/ImpactEstimationOriginal1600Memo3/', 
+cache.path='cache/ImpactEstimationOriginal1600Memo3/', 
+cache = F, echo = T, results = 'markup', 
+tidy.opts=list(blank=FALSE, width.cutoff=40))
+options(digits = 6, width = 80)
+library(data.table)
+pathsave <- paste0(path, "save/")
+pathprogram <- paste0(path, "program/")
+pathreceived <- paste0(path0, "received/")
+pathsaveReadFilesMergeAdminRoster <- 
+  paste0(pathsave, "ReadFilesMergeAdminRoster/")
+pathsaveOriginal1600Memo3 <- paste0(pathsave, "Original1600Memo3/")
+pathsaveHere <- pathsaveOriginal1600Memo3
+pathsaveHere2 <- pathsaveReadFilesMergeAdminRoster
+pathsaveNoFlood <- paste0(pathsave, "NoFlood/")
+pathcleaned <- paste0(pathreceived, "cleaned_by_RA/")
+path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
+path234 <- paste0(pathcleaned, "only_panel_2_3_4/")
+path234E <- paste0(path234, "only_endline/")
+source(paste0(pathprogram, "tabulate_est_for_GUK_data.R"))
+source(paste0(pathprogram, "SubstTable.R"))
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+RMDenomination <- 1000
+datafiles <- c("s1", "arA", "ar", "ass", "lvo", "lvp", "lab", "far", "con")
+Datafiles <- c("S1", "ArA", "Ar", "Ass", "Lvo", "Lvp", "Lab", "Far", "Con")
+DataFileNames <- c(
+  "Schooling", "AllMeetingsRepayment", "Repayment", "Asset", 
+  "Livestock", "LivestockProducts",
+  "LabourIncome", "FarmIncome", "Consumption")
+#DataFileNamesX <- paste0(DataFileNames, "Xid")
+InitialSampleMonthUpperBound <- 6
+Only800 <- T
+Only800 <- T
+NotPrintFileNames <- ""
+#NotPrintFileNames <- "%"
+PermRepTimes <- 100000
+@

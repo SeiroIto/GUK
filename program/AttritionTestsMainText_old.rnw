@@ -1,0 +1,391 @@
+<<>>=
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+if (Only800) ar <- ar[o800 == 1L, ]
+# "ar" is roster
+# below is what was processed in AttritionTestsContents2.rnw
+ar[, Attrited := 1L]
+ar[hhid %in% hhid[Time == 4], Attrited := 0L]
+ar[, c("Rejected", "GRejected", "IRejected") := 0L]
+ar[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+ar[grepl("^i.*rej", BStatus), IRejected := 1L]
+ar[grepl("^g.*rej", BStatus), GRejected := 1L]
+ar[, En := 1:.N, by = .(hhid, Time)]
+ar[, Tee := .N, by = .(hhid, mid, Time)]
+ar <- ar[En == 1 & Time == 1, ]
+@
+Among \Sexpr{nrow(ar)} observations, there are \Sexpr{length(unique(ar[grepl("floo", BStatus), groupid]))} whose villages are washd away and \Sexpr{nrow(ar[grepl("^g.*reje", BStatus), ])} who by group rejected the assigned arms which are \Sexpr{names(table0(ar[grepl("^g.*reje", BStatus), Arm]))} with \Sexpr{table(ar[grepl("^g.*reje", BStatus), Arm])} individuals, respectively. There are \Sexpr{table(ar[grepl("^i.*rej", BStatus), Arm])} individuals who individually rejected \Sexpr{names(table(ar[grepl("^i.*rej", BStatus), Arm]))}, respectively. Among attrited HHs, when were they lost?
+<<>>=
+table(ar[Attrited == 1L, Tee])
+@
+Reasons for attrition and relation to flood damage.
+<<>>=
+table0(ar[Attrited == 1L, .(FloodInRd1, BStatus)])
+table0(ar[Attrited == 1L, .(AssignOriginal, BStatus)])
+@
+Use \textsf{coin} package's \textsf{independence\_test}: Approximate permutation tests by randomly resampling \Sexpr{PermRepTimes} times.
+
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[1]}, full sample\label{tab attrit perm whole sample}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[1], "FullPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[1]}, dropping 2 loan receivers in traditional arm\label{tab attrit perm drop 24}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[1], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[1]}, dropping group rejecters\label{tab attrit perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[1], "DropGroupRejectersPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[2]}\label{tab attrit Trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[2], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[3]}\label{tab attrit TNT perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[3], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{NonTradArm} and \textsf{TradArm} columns show means of each group. Attrition due to flood is dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+Start: To be dropped:
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attrition\label{tab attrit perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[1], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{Attrited} and \textsf{Nonattrited} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of attriters between traditional and non-traditional arms\label{tab attrit TNT perm MainText}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[3], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{NonTradArm} and \textsf{TradArm} columns show means of each group. Attrition due to flood is dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+End: To be dropped.
+
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[4]}\label{tab reject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[4], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[5]}\label{tab reject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[5], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[6]}\label{tab reject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[6], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[7]}\label{tab reject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[7], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+	\textsc{\normalsize Table \ref{tab attrit perm}} shows results from tests of independence between attriters and non-attriters. We see a moderate rate of attrition is not correlated with household level characteristics. \textsc{\normalsize Table \ref{tab attrit Trad perm}} shows attrition in the \textsf{traditional} arm. Household heads of attriters are relatively less literate than non-attriters. \textsc{\normalsize Table \ref{tab attrit TNT perm}} compares attriters of \textsf{traditional} arm and non-\textsf{traditional} arms. It shows that \textsf{traditional} arm attriters have a (marginally) lower rate of head literacy while non-\textsf{traditional} arm attriters are more exposed to the flood. The \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition may upwardly bias the positive gains of the arm, hence understate the impacts of non-\textsf{traditional} arm. So one can employ Lee bounds for stronger results, but doing so will give us less precision and require more assumptions.
+
+	\textsc{\normalsize Table \ref{tab reject perm}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on \Sexpr{nrow(ar[!grepl("floo", BStatus), ])} members whose residence was not washed away by flood. It shows that smaller household size, being affected by flood at the baseline, smaller livestock holding, smaller net assets, and less exposue to cattle growing are correlated with opting out the offered type of lending. 
+	
+	Group rejecters and non-group rejecters are compared in \textsc{\normalsize Table \ref{tab Greject perm}}. Marked differences are found in arm (\textsf{traditional} vs. non-\textsf{traditional}) and net asset values. \textsc{\normalsize Table \ref{tab Greject trad perm}} compares group rejecters in \textsf{traditional} arm and finds lower livestock values, smaller cattle holding, smaller net asset values, and smaller flood exposure are associated with group rejection for \textsf{traditional} arm (\textsc{\normalsize Table \ref{tab Greject trad perm}}). Group rejecters in non-\textsf{traditional} arm are examined in \textsc{\normalsize Table \ref{tab Greject nontrad perm}} and flood at baseline, younger head age, and higher cattle holding are correlated with rejection. Comparing group rejecters between \textsf{traditional} and non-\textsf{traditional} arms, flood at baseline, net asset values, and livestock holding are different (\textsc{\normalsize Table \ref{tab Greject trad nontrad perm}}). These hint that for non-\textsf{traditional} arm group rejecters, it is baseline flood that may have constrained them from participation, and asset levels for \textsf{traditional} group rejecters.
+	
+	Acknowledging the reasons for rejection can be different, we tested the independence of each characteristics for individual rejecters (vs. non-individual rejeceters) in \textsc{\normalsize Table \ref{tab Ireject perm}}. Smaller \textsf{HHsize}, being affected with \textsf{FloodInRd1}, and smaller \textsf{NumCows} are associated with individual rejecters. Individual decisions not to participate may be more straightforward: Smaller household size may indicate difficulty in securing the cattle production labour in a household, being hit with a flood may have resulted in lower livestock levels that would prompt them to reconsider partaking in another livestock project. 
+
+	\textsc{\normalsize Table \ref{tab Ireject trad perm}} and \textsc{\normalsize Table \ref{tab Ireject nontrad perm}} compare individual rejecters and nonrejecters in \textsf{traditional} arm and non-\textsf{traditional} arms, respectively. Somewhat surprisingly, smaller household size is found to be correlated with rejection in all arms but more pronounced among \textsf{traditional} members. This hints that \textsf{traditional} arm borrowers may have been looking into cattle production but were held back by lack of household labour. Livestock and other asset values are not correlated with rejection, only cattle holding is smaller for \textsf{traditional} rejecters. Comparison of individual rejecters between \textsf{traditional} and non-\textsf{traditional} arms show no detectable difference (\textsc{\normalsize Table \ref{tab Ireject trad nontrad perm}}). This suggests that indvidual rejecters in all arms were constrained with small household size.
+
+	In summary, group level rejecters between \textsf{traditional} and non-\textsf{traditional} differ that smaller household size and baseline flood withheld participation for non-\textsf{traditional} while low livestock values withheld participation for \textsf{traditional}. Individual rejecters have similar characteristics between two groups.
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of group rejection\label{tab Greject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "GRejectedPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[9]}\label{tab Greject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[9], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[10]}\label{tab Greject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[10], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[11]}\label{tab Greject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[11], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[16]}\label{tab trad Greject nontrad participate perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[16], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[15]}\label{tab Ireject trad nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[15], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is individual-rejection. \textsf{TradArm} and \textsf{NonTradArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results of individual rejection\label{tab Ireject perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "IRejectedPermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is either group-rejection or individual-rejection. \textsf{Rejected} and \textsf{Nonrejected} columns show means of each group. For \textsf{Arm}, proportions of non-traditional arm are given. Individual rejection is observed only for non group rejecters. Sample size is smaller in \textsc{Table \ref{tab Ireject perm}} as \Sexpr{nrow(ar[grepl("gr", BStatus), ])} observations are dropped. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[13]}\label{tab Ireject trad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[13], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[14]}\label{tab Ireject nontrad perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[14], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\end{minipage}
+
+
+%	A closer look at the nonparticipation correlates among \textsf{traditional} arm mebers in \textsc{\normalsize Table \ref{tab reject trad perm}} and non-\textsf{traditional} arm members in \textsc{\normalsize Table \ref{tab reject nontrad perm}} reveal possible differences in the causes. Rejection among \textsf{traditional} members tend to be associated with lower livestock holding but not with higher flood exposure nor smaller household size, while rejecters among non-\textsf{traditional} members are more likely to have suffered from flood in baseline and have smaller household size. Since the offered arms were randomised, rejecters of \textsf{traditional} arm, who were not more exposed to flood and have similar household size at the mean, may have accepted the offer had they been offered non- \textsf{traditional} lending. Henceforth, we conjecture that flood exposure and household size are the potential impediments in larger size loans. This implies that there may not be minimum livestock and asset holding levels to partake the larger loans, and a poverty trap at this level may be overcome.
+
+
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[17]}\label{tab accept cow noncow perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[17], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{CowArm} and \textsf{NonCowArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[15]}\label{tab indiv reject trad nontrad}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[15], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. \textsf{TradArm} is group-rejecters in \textsf{traditional} arm \textsf{NonTradArm} is borrowers in non-\textsf{traditional} arms. Both columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[18]}\label{tab accept cow large grace perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[18], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{CowArm} and \textsf{LargeGraceArm} columns show means of each group. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+\hfil\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: \Sexpr{HeaderDescription[19]}\label{tab trad nontrad random assignment perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, addtofilename[19], "PermutationTestResultso800.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Step-down method is used to adjust for multiple testing of a multi-factor grouping variable. Rejection is group-rejection. \textsf{CowArm} and \textsf{LargeGraceArm} columns show means of each group. \\
+& 2. & 40 are lost to flood before arm assignment. Standard errors are clustered at group (village) level.
+\end{tabular}\\
+\end{minipage}
+
+	\textsc{\normalsize Table \ref{tab attrit perm MainText}} shows that the \textsf{traditional} arm attriters may be less entrepreneurial, if anything, so their attrition can upwardly bias the positive gains of the arm, hence understate the relative impacts of non-\textsf{traditional} arm. Attriters of non-\textsf{traditional} arms have similar literacy as non-attriters but have more exposure to flood. Attrited members of non-\textsf{traditional} arms do not show indication of being different in terms of productivity, thus is expected not to cause a bias in a predictable way. Overall, attrition may have attenuated the impacts but is not likely to have inflated them.\footnote{So one can employ the Lee bounds for stronger results, but doing so will give us less precision and require more assumptions. We will not use the Lee bounds \textcolor{red}{[we can show them if necessary]}. }

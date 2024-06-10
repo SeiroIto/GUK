@@ -1,0 +1,197 @@
+%   path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ReplyToComments2019Mar18/"); library(knitr); knit("ReplyToComments2019Mar18.rnw", "ReplyToComments2019Mar18.tex"); system("platex ReplyToComments2019Mar18"); system("dvipdfmx ReplyToComments2019Mar18")
+
+\input{c:/data/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+Replies and suggestions for revision \hfill \MonthDY\\
+Seiro Ito
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600_OptionSetting.rnw'>>=
+@
+
+\vspace{2ex}
+
+Takahashi-san's comments:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Substantive
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Savings is stock, not flow. So I wonder if it make sense to use ``cumulative net saving" unless it represents the total saving amount at time t.  At least we may need to use set of observation timing dummies along with Survey Round dummies. 
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Admin data record flow (new deposits and withdrawal of cash) variables. Abu san can clarify this.
+	\end{itemize}
+\item	The results are interesting, but how should we expect the changing behavior of schooling investment across arms over time? Do we have enough convincing story? 
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Directed and increasing labour demand for girls, for example. Other?
+	\end{itemize}
+\item	This is not intuitive. [Referring to: Productive assets see a major decline among Large during rd 3-4 period (Table 15).]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	?
+	\end{itemize}
+\item	or with less entrepreneurship? [Referring to: Table 22 shows, albeit at p
+values around 10\%, the ultra poor has a larger increase relative to the moderately poor, which is another manifestation against the popular notion that the ultra poor are riskier.]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	It is a part of riskiness. It takes both entrepreneurship/profitability and willingness to repay, which are combined to be referred to as (low) credit risks, for the lender to get repaid. 
+	\end{itemize}
+\end{enumerate}
+
+\item	Editorial
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	where? all interaction terms are positive and highly significant. [Referring to: Repayment is greater for \textsf{Large, LargeGrace, Cow} in rd 2-3 but they become statistically the same with \textsf{Traditional} in rd 3-4  (Table 4)]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	A typo, in rd 4, not ``in rd 3-4.''
+	\end{itemize}
+\item	Later, use consistently either ``InKind" or ``InKind" throughout. 
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	I will correct it.
+	\end{itemize}
+\item	Better sort in the order of ``Large" ``With Grace" and ``InKind". 
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	I will.
+	\end{itemize}
+\item	What are 6M repayment and net saving?
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Sorry I took off the information from this draft. It is a previous 6-month average of each variables. 6M repayment is mean repayment for the 6 months prior to the current period.
+	\end{itemize}
+\item	should we rely on column (4) or (5), whose results are opposite? [Referring to:Table 7]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Signs are reversed when one conditions on 6M (6-month lagged) variables. Repayment seems to be positively autocorrelated. Period-by-period fluctuations exist but they may not be important in terms of magnitude once we condition on lags.
+	\end{itemize}
+\item	where? [Referring to: Table 21 shows baseline trend is a large increase in rd 1-2, a small increase in rd 2-3]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	There. Please refer to ``Inference'' section of the memo. 
+	\end{itemize}
+\item	Why not use the baseline data? [Referring to: Consumption estimation.]]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Consumption is not collected at the baseline.
+	\end{itemize}
+\end{enumerate}
+\end{itemize}
+
+\vspace{2ex}
+
+Kurosaki-san's comments:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Substantive
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Table 4 (1)(2)? Then it indicates an increase in net saving, not a decrease. [Referring to: Period of rd 2-3 saw a decline in net saving, even further for LargeGrace, but remain in positive values (Table 4).]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	My error. Will correct.
+	\end{itemize}
+\item	Very good results. Can we say although statistically insignificant, point estimates on the ultra poor are positive, indicating they save and repay more than the moderately poor? [Referring to: The ultra poor re-paid just as much as the moderately poor (Table 6). This is evidence against the popular belief that the ultra poor are riskier.]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	P-values are smaller than 10\% so all the terms on UP are marginally significant. But (or and) the magnitude of deviation from MP is small.
+	\item	That is also my interpretation. I think we can say so. But this has to be weighed against that GUK was running a loss so interest rates need to be raised. We do not know how heavy the repayment burden was for the UP, and how much more they can repay once the rates are raised.
+	\end{itemize}
+\item	Tables 14-15 to be put as appendix tables?
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Not sure which of all round comparison or begin-end comarison is presented. If we are interested in highest schooling levels, rd1 - rd4 comparison is better. If we also care about progression, then we may want to use all rounds? We need to come up with a way to reveal grade progression and repetetion.
+	\end{itemize}
+\item	The results in Table 16 appear important.
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	I am also worried about this table. It looks as if there is asset substitution going on: From productive assets to GUK-loan assets. If the loans are replacing the existing capital/assets, we may need to look into the asset component details. If we can assume some rationality, households may be choosing the least productive assets to be replaced with, but that is no more than an imagination.
+	\end{itemize}
+\item	Better to drop labor and farm incomes from our analysis? First, N is small, both for labor and farm incomes. Second, I cannot explain why labor income increased during rd2-3.
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	My interpretation of labour being intensified in rd 2-3 is due to repayment. I think households are doing everything they can to repay. But, then, it does not explain why labour supply in rd 3-4 went back to rd 1-2 level when the repayment burdern was still high. As a possibility, labour demand could have been smaller, but we do not know anything about the demand side. 
+	\item	We need to figure out what is going on. Unless we do so, we need to drop them.
+	\end{itemize}
+\item	Why tables are prepared for all consumption and hygiene consumption? It appears a little bit strange to focus on hygiene portion only; the results appear to suggest that hygiene portion occupies a very large share of consumption and its dynamics almost replicate the dynamics of all consumption. What underlies this unexpected pattern?
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Sorry, I do not have anything to respond. I wanted to use food consumption but it came with too many NAs. Hygiene consumption was large and did not suffer from NAs. I presented them purely for data availability reasons.
+	\item	This contrast hints that consumption information needs to be dealt with a grain of salt.
+	\end{itemize}
+\end{enumerate}
+\item	Editorial
+\end{itemize}
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Because all coefficient estimates on intervention arms or attributes are on increments, it is better to show more explicitly what intercept estimates mean. In some tables that follow, intercepts are for rd1-2 change; in some, for rd2-3 change; in others, for rd1-4 change. Shall we write something like ``(Intercept [rd1-2 change])" instead of just ``(Intercept)" in all tables?
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	I will correct the statement.
+	\end{itemize}
+\item	Better to state that no full cancel out. ``Initially increased for two years then decreased in the last year, but with a net increase between rd1-4." [Referring to: Initially increased then decreased in assets.]
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	I will correct the statement.
+	\end{itemize}
+\item	If not the main results, better to delete Tables 7-9?
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Probably, we should. I threw them in at the last minutes just to share what the flow variables may look like.
+	\end{itemize}
+\item	Is this ``cow" a typo error for ``livestock"? I cannot see any estimates for cow ownership. Or the livestock assets are mainly cow? If so, we need to explain this somewhere.
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	This refers to Figures, not Tables. Figure 5 shows stagnant cow ownership among traditional arm members. This is one of the main findings of the paper in my eyes.
+	\end{itemize}
+\end{enumerate}
+\end{document}

@@ -1,0 +1,1201 @@
+<<figure absolute changes in assets, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Gross impacts on asset holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+# not impacts as it does not take difference with trad, just averages
+library(ggplot2)
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+na1 <- NeA1R2[o800 == 1L, 
+ c("Arm", "hhid", "tee", 
+    grepout("^Br.*tValue$|^NLA.*t$|NumCows$|^NetValue$", colnames(NeA1R2))), 
+    with = F]
+## modify monthly count
+setnames(na1, 
+  grepout("^Br.*tValue$|^NLA.*t$|NumCows$|^NetValue$", colnames(NeA1R2))
+  ,
+  paste0("value.", grepout("^Br.*tValue$|^NLA.*t$|NumCows$|^NetValue$", colnames(NeA1R2)))
+  )
+na1L <- reshape(na1, direction = "long", idvar = c("Arm", "hhid", "tee"), 
+  varying = grepout("value", colnames(na1))
+  )
+setnames(na1L, "time", "variables")
+na1L[!grepl("Cows", variables) & !is.na(value) & value != 0, value := log(value)]
+na1L[, Arm := factor(Arm, labels = ArmsC)]
+na1L[, variables := factor(variables)] 
+na1L[, variables := factor(variables, labels = 
+  c("Broad net assets", "Net assets", "Net non livestock assets", "Number of cattle"))]
+na1M <- na1L[, .(MeanValue = mean(value, na.rm = T)), by = .(tee, Arm, variables)]
+p <- ggplot(data = na1L[!(grepl("catt", variables) & value > 4), ]
+  , aes(x = factor(tee), y = value, 
+      colour = variables, group = variables)) + 
+  geom_point(alpha = .6, size = .0125, position = position_jitter(width = .25, height = .15)) + 
+  scale_colour_viridis_d()+
+  facet_grid(variables ~ Arm, scales = "free_y") + 
+  scale_y_continuous(name = "assets") +
+  scale_x_discrete(name = "periods", breaks = 1:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 5, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(.1, units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="none") + 
+  xlab("periods") + 
+  labs(color  = "variables") +
+  guides(colour = guide_legend(title = "variables", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi1, colour = "lightgreen")+
+  geom_point(data = na1M, alpha = .6, shape = 0, stroke = .75, size = 1.25, color = "red", 
+    aes(x = factor(tee), y = MeanValue))
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/AssetsByPeriod.png"),
+  p,
+  width = 14, height = 10, units = "cm",
+  dpi = 600
+ )
+pdf(
+  paste0(pathprogram, "figure/EstimationMemo/AssetsByPeriod.pdf"),
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure absolute changes in net assets, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Gross impacts on asset holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+# not impacts as it does not take difference with trad, just averages
+library(ggplot2)
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+na1 <- NeA1R2[o800 == 1L, 
+ c("Arm", "hhid", "tee", 
+    grepout("^NetValue$", colnames(NeA1R2))), 
+    with = F]
+na1[, Arm := factor(Arm, labels = ArmsC)]
+na1[, variables := "Net assets"]
+na1M <- na1[, .(MeanValue = mean(NetValue, na.rm = T)), by = .(tee, Arm)]
+p <- ggplot(data = na1
+  , aes(x = factor(tee), y = NetValue)) + 
+  geom_point(alpha = .6, size = .2, colour = "cornflowerblue",
+    position = position_jitter(width = .25, height = .15)) + 
+  facet_grid(. ~ Arm, scales = "free_y") + 
+  scale_y_log10(lim = c(100, 200000), name = "assets") +
+  scale_x_discrete(name = "periods", breaks = 1:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 5, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(.1, units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="none") + 
+  xlab("periods") + 
+  geom_hline(aes(yintercept = 0), data = confi1, colour = "lightgreen")+
+  geom_point(data = na1M, alpha = .6, shape = 0, stroke = .75, size = 1.25, color = "red", 
+    aes(x = factor(tee), y = MeanValue))
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsByPeriod.png"),
+  p,
+  width = 2*12, height = 2*4, units = "cm",
+  dpi = 600
+ )
+pdf(
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsByPeriod.pdf"),
+  , width = 2*12/2.54, height = 2*4/2.54)
+print(p)
+whatever <- dev.off()
+<<figure indiv absolute changes in net assets, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Gross impacts on asset holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+# not impacts as it does not take difference with trad, just averages
+library(ggplot2)
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+na1 <- NeA1R2[o800 == 1L, 
+ c("Arm", "hhid", "tee", 
+    grepout("^NetValue$", colnames(NeA1R2))), 
+    with = F]
+na1[, Arm := factor(Arm, labels = ArmsC)]
+na1[, variables := "Net assets"]
+p <- ggplot(data = na1
+  , aes(x = factor(tee), y = NetValue, group = hhid)) + 
+  geom_point(alpha = .6, size = .2, colour = "cornflowerblue") + 
+  geom_line(alpha = .6, size = .2, colour = "cornflowerblue")+
+  facet_grid(. ~ Arm, scales = "free_y") + 
+  scale_y_log10(name = "assets") +
+  scale_x_discrete(name = "periods", breaks = 1:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 5, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 5, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(.1, units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="none") + 
+  xlab("periods") + 
+  geom_hline(aes(yintercept = 0), data = confi1, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/IndivdualNetAssetsByPeriod.png"),
+  p,
+  width = 2*12, height = 2*4, units = "cm",
+  dpi = 600
+ )
+pdf(
+  paste0(pathprogram, "figure/EstimationMemo/IndividualNetAssetsByPeriod.pdf"),
+  , width = 2*12/2.54, height = 2*6/2.54)
+print(p)
+whatever <- dev.off()
+@
+<<figure assets relative to baseline trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on land, livestock holding, net assets", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi1 <- confi[grepl("Lan|Cows$|^NetAssets$|^BroadNet", FileName), ]
+confi1 <- confi1[!grepl("cum|con", ImpactType), ]
+cols <- c("FileName", "regressand", "attributes")
+confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+confi1[, regressand := factor(regressand, levels = 
+  c("land holding values", "number of cattle", "net asset values", "broad net asset values"))]
+confi1[, regressand := factor(regressand, labels = 
+  c("land", "cattle", "net assets", "broad net assets"))]
+confi1[, num := factor(num)]
+p <- ggplot(data = 
+  confi1[grepl("^Ta?$", regtype) & 
+  ((grepl("^T$", regtype) & grepl("tra", attributes) & grepl("ab", ImpactType) & period == 2) |
+   (grepl("^T$", regtype) & grepl("tra", attributes) & grepl("relative to baseline trad", ImpactType) & period > 2) |
+   (!grepl("tra", attributes) & grepl("baseline trad", ImpactType))), ]
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 8, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .1, .3, .1, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi1, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AssetRelativeToBaselineTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AssetRelativeToBaselineTradEffects.eps")
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AssetRelativeToBaselineTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure assets relative to concurrent trad only BroadNetAssets and NumCows, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on livestock holding and net assets, relative to concurrent traditional", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi1 <- confi[grepl("Cows$|^BroadNetAssets$", FileName) & !grepl("Upfront", attributes), ]
+confi1[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "regressand", "attributes")
+confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+confi1[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi1[, regressand := factor(regressand, levels = c("number of cattle", "broad net asset values"))]
+confi1[, regressand := factor(regressand, labels = c("cattle", "broad net assets"))]
+confi1[, num := factor(num)]
+confi1 <- confi1[(grepl("^Ta?$", regtype)), ]
+# drop trad & period > 2 & absolute/gross (need only relative) 
+# this makes conditioning easier
+confi1 <- confi1[!(grepl("^tra", attributes) & period > 2 & 
+  grepl("^ab", ImpactType)), ]
+confi1 <- confi1[!grepl("cum|peri", ImpactType), ]
+# drop Ta for trad because it is duplicate of T
+confi1 <- confi1[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# drop all relative to baseline trad in nontrad
+confi1 <- confi1[!(!grepl("^tra", attributes) & grepl("base", ImpactType)), ]
+# this drops all WithGrace
+confi1 <- confi1[!(!grepl("^tra", attributes) & grepl("gross", ImpactType)), ]
+confi1 <- confi1[!(!grepl("^tra", attributes) & grepl("ab", ImpactType)), ]
+confi1 <- confi1[!(grepl("^tra", attributes) & grepl("gross", ImpactType) & period > 2), ]
+table(confi1[grepl("^T$", regtype),.(attributes, ImpactType)])
+p <- ggplot(data = confi1
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(FileName ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 8, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi1, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsRelativeToConcurrentTradEffects.eps")
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure Land NetAssets broad net assets NumCows Trad cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on livestock holding and net assets relative to concurrent traditional", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confi2 <- confi2[grepl("^L|^NetAssets$|ws$", FileName) & !grepl("Tr", attributes), ]
+confi2 <- confi2[!grepl("None|Adi|Oen", FileName), ]
+cols <- c("FileName", "regressand", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, regressand := unlist(regressand)]
+confi2[, regressand := factor(regressand, levels = 
+  c("net assets", "land", "cattle"))]
+table(confi2[,.(attributes, ImpactType)])
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 9, 
+     margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 9, 
+     margin = margin(1.5, .1, 1.5, .1, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetLandCattleCumRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetLandCattleCumRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure Land NetAssets broad net assets NL assets NumCows Trad cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on livestock holding and net assets relative to concurrent traditional", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confi2 <- confi2[grepl("^L|NetAssets$|^N.*NL|Pr|ws$", FileName) & !grepl("Tr", attributes), ]
+confi2 <- confi2[!grepl("None|Adi|Oen", FileName), ]
+cols <- c("FileName", "regressand", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, regressand := unlist(regressand)]
+confi2[grepl("Pr", FileName), regressand := "broad net assets, annual price"]
+confi2[, regressand := factor(regressand, levels = 
+  c("net assets", "broad net assets", "broad net assets, annual price", 
+    "net non livestock assets", "land", "cattle"))]
+table(confi2[,.(attributes, ImpactType)])
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AssetCumRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AssetCumRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*11/2.54)
+print(p)
+whatever <- dev.off()
+<<figure NetAssets cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on livestock holding and net assets relative to concurren traditional", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+# confi2 is cumulative
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confi3 <- confi2[grepl("^NetA.*ts$", FileName) & !grepl("Trad", attributes), ]
+cols <- c("FileName", "regressand", "attributes")
+confi3[, (cols) := droplevels(.SD), .SDcols = cols]
+confi3[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+p <- ggplot(data = confi3
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = .5, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(. ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.text = element_text(size = 6),
+   legend.title = element_text(size = 7),
+   legend.key = element_rect(fill = "white"),
+   legend.key.size = unit(.5, "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi3, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsCumRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsCumRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*4/2.54)
+print(p)
+whatever <- dev.off()
+<<figure NetAssets and NumCows cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Cumulative effects on livestock holding and narrow net assets relative to concurren traditional", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+# confi2 is cumulative
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confi3 <- confi2[grepl("ows$|^Ne.*ts$", FileName) & !grepl("Trad", attributes), ]
+cols <- c("FileName", "regressand", "attributes")
+confi3[, (cols) := droplevels(.SD), .SDcols = cols]
+confi3[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+p <- ggplot(data = confi3
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(FileName ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 8, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi3, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsCumRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsCumRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure all types of assets cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 8, fig.width = 12>>=
+library(ggplot2)
+# confi2 is cumulative for nontrad and concurrent only for trad
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confi3 <- confi2[grepl("^Ne.*ts$|Price|^Bro", FileName) & !grepl("Trad", attributes), ]
+confi3 <- confi3[!grepl("Adi|None|Own", FileName) & !grepl("^B.*NL", FileName), ]
+cols <- c("FileName", "regressand", "attributes")
+confi3[, (cols) := droplevels(.SD), .SDcols = cols]
+confi3[, regressand := factor(FileName)]
+confi3[, regressand := factor(regressand, labels = 
+  c("broad net assets", "net assets", "net assets, annual price", "net non-livestock assets"))]
+confi3[, regressand := factor(regressand, levels = 
+  c("net assets",  "net assets, annual price", "broad net assets", "net non-livestock assets"))]
+p <- ggplot(data = confi3
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+    axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+    axis.text.y = element_text(size = 6), 
+    axis.title = element_text(size = 6), 
+    strip.text.x = element_text(color = "blue", size = 8, 
+      margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 8, 
+      margin = margin(1.5, .1, 1.5, .1, "cm")),
+    panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+    panel.spacing.y = unit(.1, units = "cm"),
+    legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi3, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AllTypesOfNetAssetsCumRelativeToConcurrentTradEffects.png")
+  ,p,
+  width = 13, height = 13, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/AllTypesOfNetAssetsCumRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*10/2.54)
+print(p)
+whatever <- dev.off()
+<<figure NetAssets and NumCows period wise relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 8, fig.cap = paste0("periulative effects on livestock holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi1 <- confi[grepl("^Ne.*ts$|Cows$", FileName) & !grepl("Upfront", attributes), ]
+confi1[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "regressand", "attributes")
+confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+confi1[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi1[, regressand := factor(regressand, labels = c("net assets", "net NL assets", "cattle"))]
+confi1[, num := factor(num)]
+confi1 <- confi1[(grepl("^Ta?$", regtype)), ]
+# drop Ta for trad because it is duplicate of T
+confi1 <- confi1[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# keep only gross for for trad
+confi11 <- confi1[grepl("^tra", attributes) & grepl("gross", ImpactType), ]
+# keep only periodwise relative to concurrent trad
+confi12 <- confi1[!grepl("^tra", attributes) & grepl("^peri", ImpactType), ]
+confiP2 <- rbind(confi11, confi12)
+table(confiP2[,.(attributes, ImpactType)])
+confi3 <- confiP2[!grepl("trad", attributes) , ]
+cols <- c("FileName", "regressand", "attributes")
+confi3[, (cols) := droplevels(.SD), .SDcols = cols]
+p <- ggplot(data = confi3
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num), size = .1) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(FileName ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "period wise impacts relative to traditional") + 
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   legend.text = element_text(size = 7),
+   legend.title = element_text(size = 7),
+   legend.key = element_rect(fill = "white"),
+   legend.key.size = unit(.25, "cm"),
+   legend.position="bottom") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(
+    colour = guide_legend(title = "regression specifications", nrow = 1),
+    shape = guide_legend(override.aes = list(size = .125))) +
+  geom_hline(aes(yintercept = 0), data = confi3, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsPeriodwiseRelativeToConcurrentTradEffects.png")
+  , p,
+  width = 12, height = 8, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNumCowsPeriodwiseRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure NetAssets by experience cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 8, fig.cap = paste0("periulative effects on livestock holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confie1 <- confi2[grepl("^NetA.*ts", FileName) & !grepl("Pr", FileName) & !grepl("Trad", attributes), ]
+cols <- c("FileName", "regressand", "attributes")
+confie1[, (cols) := droplevels(.SD), .SDcols = cols]
+confie1[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confie1[, SubGroup := factor(gsub(".*ts\\, ", "", regressand))]
+confie1[, SubGroup := factor(SubGroup, levels = c("net assets", "Own", "Adi", "None"))]
+confie1[, SubGroup := factor(SubGroup, labels = c("All", "Own", "Adi", "None"))]
+confie1[, num := factor(num)]
+# keep only cumulative relative to concurrent trad
+confie2 <- confie1[grepl("^Ta?$", regtype) & grepl("^cum", ImpactType), ]
+cols <- c("FileName", "regressand", "attributes")
+confie2[, (cols) := droplevels(.SD), .SDcols = cols]
+p <- ggplot(data = confie2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num), size = .1) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(SubGroup ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 9, 
+     margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 9, 
+     margin = margin(1.5, .1, 1.5, .1, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.text = element_text(size = 7),
+   legend.title = element_text(size = 7),
+   legend.key = element_rect(fill = "white"),
+   legend.key.size = unit(.25, "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(
+    colour = guide_legend(title = "regression specifications", nrow = 1),
+    shape = guide_legend(override.aes = list(size = .125))) +
+  geom_hline(aes(yintercept = 0), data = confie2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsByExperienceCumulativeRelativeToConcurrentTradEffects.png")
+  , p,
+  width = 12, height = 8, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsByExperienceCumulativeRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure NumCows by experience cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 8, fig.cap = paste0("periulative effects on livestock holding", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi2 <- readRDS(paste0(pathsaveHere, "confi2.rds"))
+confie1 <- confi2[grepl("NumC", FileName) & !grepl("Trad", attributes), ]
+cols <- c("FileName", "regressand", "attributes")
+confie1[, (cols) := droplevels(.SD), .SDcols = cols]
+confie1[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confie1[, SubGroup := factor(gsub("cattle\\, ", "", regressand))]
+confie1[, SubGroup := factor(SubGroup, levels = c("cattle", "Own", "Adi", "None"))]
+confie1[, SubGroup := factor(SubGroup, labels = c("All", "Own", "Adi", "None"))]
+p <- ggplot(data = confie1
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num), size = .1) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(SubGroup ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 9, 
+     margin = margin(.1, 1.25, .1, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 9, 
+     margin = margin(1.5, .1, 1.5, .1, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.text = element_text(size = 7),
+   legend.title = element_text(size = 7),
+   legend.key = element_rect(fill = "white"),
+   legend.key.size = unit(.25, "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(
+    colour = guide_legend(title = "regression specifications", nrow = 1),
+    shape = guide_legend(override.aes = list(size = .125))) +
+  geom_hline(aes(yintercept = 0), data = confie1, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NumCowsByExperienceCumulativeRelativeToConcurrentTradEffects.png")
+  , p,
+  width = 12, height = 10, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/NumCowsByExperienceCumulativeRelativeToConcurrentTradEffects.pdf")
+  , width = 2*12/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure period wise impacts relative to concurrent trad on income consumption, warning = F, message = F, fig.align='center', fig.height = 8, fig.width = 10, fig.cap = paste0("Cumulative effects on labour incomes, and consumption", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- confi[grepl("Con|Lab", FileName), ]
+confi2 <- confi2[!(grepl("Con", FileName) & num > 3), ]
+confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+confi2 <- confi2[!grepl("^Up", attributes), ]
+confi2[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+cols <- c("FileName", "regressand", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, num := factor(num)]
+confi2 <-  confi2[grepl("^Ta?$", regtype) & 
+  ((grepl("tra", attributes) & grepl("re.*base", ImpactType)) |
+    (!grepl("tra", attributes) & grepl("^peri", ImpactType))), ]
+#confi2[grepl("Lab", FileName), estimate := estimate*100]
+#confi2[grepl("Lab", FileName), ub := ub*100]
+#confi2[grepl("Lab", FileName), lb := lb*100]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 8, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.3, .1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionEffects.png"),
+  p,
+  width = 13, height = 10, units = "cm",
+  dpi = 300
+ )
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionEffects.pdf"),
+  , width = 13/2.54, height = 10/2.54)
+print(p)
+whatever <- dev.off()
+<<figure income consumption relative to concurrent trad, warning = F, message = F, fig.align='center', out.height = 14, out.width = 14, fig.cap = paste0("Contemporaneous effects on incomes and consumption", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- confi[grepl("Con|Lab", FileName) & !grepl("Upf", attributes), ]
+confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "regressand", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, num := factor(num)]
+confi2 <- confi2[(grepl("^Ta?$", regtype)), ]
+# drop trad & period > 2 & absolute/gross (need only relative) for Labour
+# drop trad & period > 3 & relative (need only gross) for Con
+confi2 <- confi2[!(grepl("^tra", attributes) & period > 2 & 
+  grepl("^gr", ImpactType) & grepl("Lab", FileName)), ]
+confi2 <- confi2[!(grepl("^tra", attributes) & period > 3 & 
+  grepl("rela", ImpactType) & grepl("Con", FileName)), ]
+# drop Ta for trad because it is duplicate of T
+confi2 <- confi2[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# drop all relative to baseline trad in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("base", ImpactType)), ]
+# drop all gross in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("gross", ImpactType)), ]
+table(confi2[grepl("^Ta$", regtype),.(attributes, ImpactType)])
+confi2[grepl("^Ta$", regtype) &  
+  grepl("Con", FileName) & period == 3 & num == 2, ]
+# drop cumulative and period wise relative to concurrent trad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("cum|peri", ImpactType)), ]
+confi2[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(regressand ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.3, .1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.key.size = unit(0.1, "cm"),
+   legend.position="bottom", 
+   legend.text = element_text(size = 5)) + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 14, height = 14, units = "cm",
+  dpi = 450
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionRelativeToConcurrentTradEffects.eps")
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+<<figure income period wise relative to concurrent trad, eval = F, results = "hide", warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10, fig.cap = paste0("Period wise effects on incomes and consumption", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi1 <- confi[grepl("Con|Lab", FileName) & !grepl("Upf", attributes), ]
+cols <- c("FileName", "regressand", "attributes")
+confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+confi1 <- confi1[(grepl("^Ta?$", regtype)), ]
+# drop Ta for trad because it is duplicate of T
+confi1 <- confi1[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# keep only gross for for trad
+confi11 <- confi1[grepl("^tra", attributes) & grepl("gross", ImpactType), ]
+# keep only cumulative relative to concurrent trad
+confi12 <- confi1[!grepl("^tra", attributes) & grepl("^peri", ImpactType), ]
+confi2 <- rbind(confi11, confi12)
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("^rela|^cum", ImpactType)), ]
+confi2[, num := factor(num)]
+confi2[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + facet_grid(FileName ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 8, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 8, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.3, .1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom") + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionPeriodwiseRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+  "figure/EstimationMemo/IncomeConsumptionPeriodwiseRelativeToConcurrentTradEffects.eps")
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+<<figure income cumulative relative to concurrent trad, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- confi[grepl("Con|Lab", FileName) & !grepl("Upf", attributes), ]
+confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+confi2 <- confi2[grepl("^Ta?$", regtype), ]
+# keep only per capita consumption and drop total consumption
+confi2 <- confi2[num <= 3, ]
+confi3 <- confi2[!grepl("^tra", attributes) & grepl("cum", ImpactType), ]
+cols <- c("FileName", "regressand", "attributes")
+confi3[, (cols) := droplevels(.SD), .SDcols = cols]
+confi3[, num := factor(num)]
+confi3[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle", "WithGrace", "InKind"))]
+p <- ggplot(data = confi3
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .5))
+p <- p + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 1:4) +
+  facet_grid(FileName ~ attributes, scales = "free_y",
+    labeller = labeller(FileName = 
+      c("Consumption" = "Per capita consumption", "LabourIncome" = "Labour income"))) +
+  theme(
+    axis.text.x = element_text(size = 7, angle = 0, vjust = 1, hjust = 1), 
+    axis.text.y = element_text(size = 7), 
+    axis.title = element_text(size = 6), 
+    strip.text.x = element_text(color = "blue", size = 8, 
+      margin = margin(.05, 1.25, .05, 1.25, "cm")), 
+    strip.text.y = element_text(color = "blue", size = 8, 
+      margin = margin(1.5, .05, 1.5, .05, "cm")),
+    panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+    panel.spacing.y = unit(.1, units = "cm"),
+    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 7),
+    legend.position="bottom") + 
+  xlab("periods") +
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi3, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/ConsumptionIncomeCumRelativeToConcurrentTradEffects.png"),
+  p,
+  width = 13, height = 12, units = "cm",
+  dpi = 300
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, 
+  "figure/EstimationMemo/ConsumptionIncomeCumRelativeToConcurrentTradEffects.eps"),
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/ConsumptionIncomeCumRelativeToConcurrentTradEffects.pdf"),
+  , width = 2*14/2.54, height = 2*8/2.54)
+print(p)
+whatever <- dev.off()
+<<figure changes schooling with trad, eval = F, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 14, fig.cap = paste0("Effects on schooling", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- unique(confis)
+confi2 <- confi2[!grepl("^Up", attributes), ]
+confi2 <- confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "school", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi2[, attributes := factor(attributes, labels = 
+  c("Traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi2[, num := factor(num)]
+confi2 <- confi2[grepl("T", regtype), ]
+# drop trad & period > 2 & relative (need only gross) 
+confi2 <- confi2[!(grepl("^tra", attributes) & period > 2 & 
+  grepl("rela", ImpactType)), ]
+# drop Ta for trad because it is duplicate of T
+confi2 <- confi2[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# drop all relative to baseline trad in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("base", ImpactType)), ]
+# drop all gross in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("gross", ImpactType)), ]
+table(confi2[,.(attributes, ImpactType)])
+confi2[grepl("^Ta$", regtype) &  period == 4 & num == 5, ]
+confi2 <- subset(confi2, grepl("5|6", num) & grepl("male", gender))
+confi2 <- confi2[!(grepl("trad", attributes) & grepl("rel", ImpactType))]
+confi2 <- confi2[!(!grepl("trad", attributes) & grepl("gross", ImpactType))]
+cols <- c("ImpactType", "gender", "num")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .25))
+p <- p + facet_grid(school * gender ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom",
+   legend.key.size = unit(0.1, "cm"),
+   legend.text = element_text(size = 5)) + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingEffectsWithTrad.png"),
+  p,
+  width = 14, height = 12, units = "cm",
+  dpi = 450
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingEffectsWithTrad.eps"),
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/SchoolingEffectsWithTrad.pdf"),
+  , width = 13/2.54, height = 12/2.54)
+print(p)
+whatever <- dev.off()
+<<figure changes schooling, eval = F, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 14, fig.cap = paste0("Effects on schooling", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- unique(confis)
+confi2 <- confi2[!grepl("^Up", attributes), ]
+confi2 <- confi2[!grepl("^trad", attributes), ]
+confi2 <- confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "school", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi2[, attributes := factor(attributes, levels = 
+  c("Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"))]
+confi2[, num := factor(num)]
+confi2 <- confi2[grepl("T", regtype), ]
+# drop trad & period > 2 & relative (need only gross) 
+confi2 <- confi2[!(grepl("^tra", attributes) & period > 2 & 
+  grepl("rela", ImpactType)), ]
+# drop Ta for trad because it is duplicate of T
+confi2 <- confi2[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# drop all relative to baseline trad in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("base", ImpactType)), ]
+# drop all gross in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("gross", ImpactType)), ]
+table(confi2[,.(attributes, ImpactType)])
+confi2[grepl("^Ta$", regtype) &  period == 4 & num == 5, ]
+confi2 <- subset(confi2, grepl("5|6", num) & grepl("male", gender))
+confi2 <- confi2[!(grepl("trad", attributes) & grepl("rel", ImpactType))]
+confi2 <- confi2[!(!grepl("trad", attributes) & grepl("gross", ImpactType))]
+cols <- c("ImpactType", "gender", "num")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .25))
+p <- p + facet_grid(school * gender ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   panel.spacing.x = unit(c(.1, .1, .3, .1), units = "cm"),
+   panel.spacing.y = unit(.1, units = "cm"),
+   legend.position="bottom",
+#   legend.key.size = unit(0.1, "cm"),
+   legend.text = element_text(size = 5)) + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingEffects.png"),
+  p,
+  width = 14, height = 12, units = "cm",
+  dpi = 450
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingEffects.eps"),
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+pdf(
+  paste0(pathprogram, 
+  "figure/EstimationMemo/SchoolingEffects.pdf"),
+  , width = 13/2.54, height = 12/2.54)
+print(p)
+whatever <- dev.off()
+<<figure cumulative changes schooling, eval = F, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 14>>=
+library(ggplot2)
+confi <- readRDS(paste0(pathsaveHere, "EstimatesCI.rds"))
+confi2 <- unique(confis)
+confi2 <- confi2[!(grepl("^Up", attributes) | grepl("^tra", attributes)), ]
+confi2 <- confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
+cols <- c("FileName", "school", "attributes")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+confi2[, attributes := factor(attributes, levels = 
+  c("traditional", "Large/Upfront", "LargeGrace", "Cow",
+    "WithGrace", "InKind"))]
+confi2[, num := factor(num)]
+confi2 <- confi2[grepl("T", regtype), ]
+# drop trad & period > 2 & relative (need only gross) 
+confi2 <- confi2[!(grepl("^tra", attributes) & period > 2 & 
+  grepl("rela", ImpactType)), ]
+# drop Ta for trad because it is duplicate of T
+confi2 <- confi2[!(grepl("^tra", attributes) & grepl("^Ta$", regtype)), ]
+# drop all relative to baseline trad in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("base", ImpactType)), ]
+# drop all gross in nontrad
+confi2 <- confi2[!(!grepl("^tra", attributes) & grepl("gross", ImpactType)), ]
+table(confi2[,.(attributes, ImpactType)])
+confi2[grepl("^Ta$", regtype) &  period == 4 & num == 5, ]
+confi2 <- subset(confi2, grepl("5|6", num) & grepl("male", gender))
+confi2 <- confi2[!(grepl("trad", attributes) & grepl("rel", ImpactType))]
+confi2 <- confi2[!(!grepl("trad", attributes) & grepl("gross", ImpactType))]
+cols <- c("ImpactType", "gender", "num")
+confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+p <- ggplot(data = confi2
+  , aes(x = factor(period), y = estimate, 
+      colour = num, shape = num, group = num)) + 
+  geom_pointrange(aes(
+    ymin = lb, ymax = ub), 
+    stat = "identity", fatten = 1.75, 
+    position = position_dodge(width = .25))
+p <- p + facet_grid(school * gender ~ attributes, scales = "free_y") + 
+  scale_y_continuous(name = "impacts" #,limits = c(-.35, .15)
+  ) +
+  scale_x_discrete(name = "periods", breaks = 2:4) +
+  theme(
+   axis.text.x = element_text(size = 5, angle = 0, vjust = 1, hjust = 1), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 6), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, 1.25, 0, 1.25, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(1.5, 0, 1.5, 0, "cm")),
+   legend.position="bottom",
+   legend.key.size = unit(0.1, "cm"),
+   legend.text = element_text(size = 5)) + 
+  xlab("periods") + 
+  labs(color  = "regression specifications", shape = "regression specifications") +
+  guides(colour = guide_legend(title = "regression specifications", nrow = 1)) +
+  geom_hline(aes(yintercept = 0), data = confi2, colour = "lightgreen")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingExceptTradEffects.png"),
+  p,
+  width = 14, height = 12, units = "cm",
+  dpi = 450
+ )
+setEPS()
+postscript(file =  
+  paste0(pathprogram, "figure/EstimationMemo/SchoolingExceptTradEffects.eps"),
+  , horizontal = F)
+print(p)
+whatever <- dev.off()
+@

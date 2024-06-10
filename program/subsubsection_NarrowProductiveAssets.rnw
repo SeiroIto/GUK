@@ -1,0 +1,84 @@
+<<>>=
+patblW <- readRDS(paste0(path1234, "PAssetItems.rds"))
+patblW <- a2b.data.table(patblW, NA, 0)
+patblWPC <- readRDS(paste0(path1234, "NarrowPAssetItems.rds"))
+patblWPC <- a2b.data.table(patblWPC, NA, 0)
+@
+Narrow productive assets are productive assets that are reported in all rounds. They are \Sexpr{tolower(patblWPC[!grepl("Sum|Total", pa), pa])}
+
+
+<<merge narrow prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+@
+<<NarrowProdAsset set parameters original HHs>>=
+FileName <- "NarrowProdAsset"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TPa")
+listheader <- paste0("pa", regsuffixes)
+<<narrow prod asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "NarrowProdAssetCovariateSelectionANCOVA2.R"))
+<<get jay from narrow pa covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NarrowPAssetAmount", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+NeA1[, grepout("Value|Total|NL|HAs|^Prod|Net", colnames(NeA1)) := NULL]
+<<display covariates narrow prod asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<narrow prod asset regression estimation original HHs>>=
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<narrow prod asset values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+NeAfig[, Arm := factor(Arm, labels = armsC)]
+NeAfig[, teeArm := factor(paste0(Arm, tee), levels = (paste0(armsC, rep(1:4, each = 4))))]
+g <- 
+ggplot(data = NeAfig, 
+  aes(y = NarrowPAssetAmount+1, fill = Arm, col = Arm, group = Arm)) + 
+  geom_boxplot(outlier.size = 0, fill = NA, notch = T, notchwidth = .4, size = .25,
+    aes(x = tee, group = teeArm)) +
+  scale_y_log10(breaks = c(0, 100, 250, 500, 1000, 5000, 10000, 20000, 50000)) +
+  geom_point(aes(x = tee, colour = Arm), size = .5, alpha = .7, 
+    position=position_jitterdodge(jitter.width = .3, dodge.width = .75))+
+  scale_colour_manual(values = c("red", "blue", "purple", "green")) +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1), 
+    strip.text.y = element_text(colour = "blue"), 
+    legend.position = "bottom")
+ggsave(
+  paste0(pathprogram, 
+    "EstimationMemo/figure/NarrowProdAssets.png"),
+  g,
+  width = 12*2, height = 8*2, units = "cm",
+  dpi = 300
+ )
+pdf(file =  
+  paste0(pathprogram, 
+    "EstimationMemo/figure/NarrowProdAssets.pdf"),
+  , width = 12*2/2.54, height = 8*2/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+<<>>=
+# dummy chunk
+@
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Narrow productive asset holding\label{fig narrow prod asset survey round}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/NarrowProdAssets.pdf")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Narrow productive assets are productive assets that are reported in all rounds. They are \Sexpr{tolower(patblWPC[!grepl("Sum|Total", pa), pa])}. \\[1ex]
+\end{tabular}
+}
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANarrowProdAssetResults.rnw"))}

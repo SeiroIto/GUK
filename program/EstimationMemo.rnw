@@ -1,0 +1,110 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/EstimationMemo/"); library(knitr); knit("EstimationMemo.rnw", "EstimationMemo.tex"); system("platex EstimationMemo"); system("pbibtex EstimationMemo"); system("dvipdfmx EstimationMemo")
+
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newcommand*\justify{%
+  \fontdimen2\font=0.4em% interword space
+  \fontdimen3\font=0.2em% interword stretch
+  \fontdimen4\font=0.1em% interword shrink
+  \fontdimen7\font=0.1em% extra space
+  \hyphenchar\font=`\-% allowing hyphenation
+}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\usepackage{ascmac}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil ANCOVA estimation of lending impacts\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+Need: packages \textsf{lmtest, sandwich}.
+
+
+To reach to this file:
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	read\_cleaned\_data: This reads survey files. Corrects errors.
+\item	read\_admin\_data: This reads administrative file. Corrects errors, define \textsf{TradGroup2}  ``NotReceivedLoan''.
+\item	ReadFilesMergeAdminRoster: This merges survey files with admin file (e.g., \textsf{AssetAdminData.rds}). Create \textsf{ar, arA} and attach \textsf{o800, o1600}. Attrition in \textsf{o800} is 92. Define \textsf{BStatus}.
+\end{enumerate}
+
+In what follows, 
+\begin{enumerate}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Read RosterAdminData.rds, etc., create dummy interactions and trim observations if \verb+grepl("tw|dou", TradGroup)+ is true. 
+\item	Summarise descriptive statistics, estimate ANCOVA, graph estimates and IGAs.
+\end{enumerate}
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
+<<>>=
+# Only change the trimming conditions to switch between "1 or 4" to "NoFlood"
+ThisIsNoFlood <- F
+if (ThisIsNoFlood) 
+  pathsaveHere <- pathsaveNoFlood else 
+  pathsaveHere <- pathsaveEstimationMemo
+<<DataTrimmingOriginal1600, eval = F, cache = F, child='c:/data/GUK/analysis/program/DataTrimmingOriginal1600Memo3.rnw'>>=
+# Below reads from folder pathsaveReadFilesMergeAdminRoster and 
+# saves as XXXTrimmed.rds in folder pathsaveOriginal1600Memo3
+<<EstimationMemo child file 1, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ChildFile1.rnw'>>=
+<<Summary, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Summary.rnw'>>=
+<<original HH regressions this is to be deleted, eval = F, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo3_body2.rnw'>>=
+# Below reads XXXTrimmed.rds from folder pathsaveOriginal1600Memo3, 
+# flags InitialSample in XXXInitialSample.rds and estimates. 
+<<original HH regressions, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA2.rnw'>>=
+@
+\end{document}

@@ -1,0 +1,44 @@
+The asset code for round one (section 14a) is the following
+
+541 = Radio
+542 = Cassette player
+544 = Bicycle
+545 = Rickshaw/van
+547 = Motor cycle
+549 = Fridge
+552 = Electric Fan
+553 = Television
+556 = VCR/VCP (Video Casette Recorder/Video Casette Player)
+558 = Sewing Machine
+566 = Tubewell for  Drinking
+567 = Wrist Watch
+568 = Wall Clock
+569 = Mobile Phone
+570 = Solar Electricity
+571 = Others (specify)
+
+
+From round 2, code 544 captures both radio or TV.
+
+In round 2 onwards following codes are used (please check the relevant Dropbox folder for the questionnaire )
+
+540 = Residnetial (homestead) land
+541 = Agricultural land
+542 = Fallow/submerged land
+543 = Stove/Gas Burner/Metal cooking pots
+544 = Radio/Television
+545 = Cassette player
+546 = Bicycle
+547 = Van
+548 = Motorcycle/Scooter
+549 = Electric Fan
+550 = Almirah/cabinet
+551 = VCR/VCP (Video Casette Recorder/Video Casette Player)
+552 = Sewing Machine
+553 = Tubewell for  Drinking
+554 = Wrist Watch
+555 = Wall Clock
+556 = Mobile Phone
+557=  Jewelry
+558 = Others (specify)
+

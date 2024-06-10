@@ -1,0 +1,25 @@
+<<>>=
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+if (Only800) ar <- ar[o800 == 1L, ]
+# "ar" is roster
+# below is what was processed in AttritionTestsContents2.rnw
+ar[, Attrited := 1L]
+ar[hhid %in% hhid[Time == 4], Attrited := 0L]
+ar[, c("Rejected", "GRejected", "IRejected") := 0L]
+ar[grepl("^[ig].*rej", BStatus), Rejected := 1L]
+ar[grepl("^i.*rej", BStatus), IRejected := 1L]
+ar[grepl("^g.*rej", BStatus), GRejected := 1L]
+ar[, En := 1:.N, by = .(hhid, Time)]
+ar[, Tee := .N, by = .(hhid, mid, Time)]
+ar <- ar[En == 1 & Time == 1, ]
+@
+
+% Randomisation tests are done in PermutationTestsContents.rnw
+In \textsc{\normalsize Table \ref{tab perm}}, we use \textsf{independence\_test} of \textsf{R}'s \textsf{coin} package: Approximate permutation tests by randomly resampling \Sexpr{PermRepTimes} times. The test examines if the arm $a$'s mean is different from all other arms' means. This is done by randomly reassigning group labels to get the permuted distribution of arm $a$ means. If the arm $a$ does not differ from non-$a$ arms, then the $p$ value becomes large (non small). All the values are relatively large, except for \textsf{Time preference 1, Time preference 2} of \textsf{Traditional} arm are around 20\%.
+
+In \textsc{\normalsize Table \ref{table anova CattleHoldingArm}}, we show the cattle ownership ratios by each arm  at various points in time and examine their equality with ANOVA, Kruskal-Wallis, and Tukey Honest Significant Test. For ANOVA and Kruskal-Wallis, each entry indicates $p$ values. ANOVA tests for the null of equality of all means under normality. Kruskal-Wallis tests for the null of no stochastic dominance among samples without using the normality assumption. Tukey's honest significant tests show difference in means and $p$ values in parenthesis that account for multiple testing under the normality assumption.  
+
+In column (1), for example, the final round cattle holding is tested. ANOVA and Kruskall-Wallis give .06\% and .07\%, respectively. Tukey HST is tested for each pair wise differences in ownewship ratios. \textsf{Large-Traditional} shows .5016 percentage points larger for \textsf{Large} arm relative to \textsf{Traditional}, and the null $p$ value of equality is .02\%. Likewise, \textsf{Large grace-Traditional, Cattle-Traditional} give $p$ values of 2.35\% and 6.90\%, respectively. Differences between arms with large loan size, \textsf{Large, Large grace, Cattle} show relatively large $p$ values. It shows the results are statistically different between \textsf{Traditional} and the other arms. 
+
+Similarly, columns (2) to (5) show test results at each different points of time. In column (2), we edited the data by assigning 1 to members of \textsf{Cattle} arm who report holding is NA or zero at round 4. We did so because there is a possibility of misreporting and decided to check the sensitivity of permutation test results if we correct them. We see effectively no difference between (1) and (2) except the difference \textsf{Cattle-Traditional} becomes larger and associated $p$ value becomes smaller. Looking at (5), all the $p$ values are large and do not indicate statistically meaningful differences between arms.

@@ -1,0 +1,481 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ShortfallRegressionAtIndivLevelAndGroupLevel/"); library(knitr); knit("ShortfallRegressionAtIndivLevelAndGroupLevel.rnw", "ShortfallRegressionAtIndivLevelAndGroupLevel.tex"); system("platex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("pbibtex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("dvipdfmx ShortfallRegressionAtIndivLevelAndGroupLevel")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Fixed effect estimation of repayment\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+Need: packages \textsf{lmtest, sandwich}.
+
+This is a file whose regression results to be used in read\_admin\_data.rnw.
+
+<<all chunks0, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
+<<>>=
+opts_chunk$set(cache = F, echo = T, results = 'markup', 
+tidy.opts=list(blank=FALSE, width.cutoff=40))
+pathsaveHere <- paste0(pathsave, "read_admin_data/")
+pathsaveEstimationMemo <- paste0(pathsave, "EstimationMemo/")
+adw <- readRDS(paste0(path1234, "admin_data_wide.rds"))
+adw[, PlannedInstallment := 120]
+adw[grepl("gr|cow", Arm), PlannedInstallment := 190]
+adw[, Shortfall := PlannedInstallment - value.repay]
+adw[, ShortfallRate := Shortfall/PlannedInstallment]
+adw[, MonthsRepaid := MonthsElapsed]
+adw[grepl("gr|cow", Arm), MonthsRepaid := MonthsRepaid - 12]
+adw[, MeanGRSR := mean(ShortfallRate[grepl("Yes", creditstatus) & 
+    !is.na(MonthsElapsed) & MonthsRepaid >= 1 & MonthsRepaid <= 6], 
+  na.rm = T), by = groupid]
+MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], 
+  na.rm = T)
+# adw[, GRSR := "low"]
+# adw[MeanGRSR > MedianGRSR, GRSR := "high"]
+# adw[, GRSR := factor(GRSR, levels = c("low", "high"))]
+# adwG <- adw[, .(groupid, hhid, Shortfall, ShortfallRate, PlannedInstallment, 
+#   GRSR, MeanGRSR, MonthsRepaid, Date)]
+# MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], 
+#   na.rm = T)
+# merge(adw2, adwG, by = intersect(colnames(adw2), colnames(adwG)), all.X = T)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+variablesToBeLagged <- 
+  c("Shortfall", "value.repay", "value.sav", "value.NetSaving", 
+   "value.cost", "value.rev", "value.missw", "Profit",
+   "CumRepaid", "CumRepaidRate", "CumEffectiveRepaidRate", "CumMisses", 
+   "CumNetSaving", "CumProfit",
+    "MeanGroupShortfall", "GroupNetSaving", "CumGroupNetSaving", 
+    "OtherShortfall", "OtherRepaid", "CumOtherRepaid", "CumOtherRepaidRate",
+    "OtherNetSaving", "CumOtherNetSaving", "OtherProfit", "CumOtherProfit",
+    "OtherMisses", "CumOtherMisses", "OtherCost", "OtherRevenue")
+adw2[, paste0("Lag", variablesToBeLagged) :=  
+  shift(.SD, type = "lag"), by = hhid, .SDcols=variablesToBeLagged]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+# MonthsRepaid > 0: Only traditional has FirstYear as repayment
+X <- adw2[
+    #MonthsElapsed > 0 & MonthsElapsed <= 36 & 
+    MonthsElapsed > 0 &  
+    grepl("es", creditstatus) & FullyRepaid == 0 & 
+    as.Date(DisDate1) <= as.Date("2015-01-01"),
+    .(value.repay, Lagvalue.repay, value.missw, Lagvalue.missw,
+    value.sav, Lagvalue.sav, value.NetSaving, Lagvalue.NetSaving,  
+    Profit, LagProfit, value.cost, value.rev, Lagvalue.cost, Lagvalue.rev, 
+    Shortfall, LagShortfall, ShortfallRate, 
+    MeanGroupShortfall, LagMeanGroupShortfall, OtherShortfall, LagOtherShortfall,
+    CumNetSaving, LagCumNetSaving, 
+    LagGroupNetSaving, LagCumGroupNetSaving, 
+    OtherNetSaving, LagOtherNetSaving, 
+    CumOtherNetSaving, LagCumOtherNetSaving, 
+    CumProfit, LagCumProfit,
+    CumRepaid, LagCumRepaid, 
+    CumRepaidRate, LagCumRepaidRate, 
+    CumEffectiveRepaidRate, LagCumEffectiveRepaidRate, 
+    CumOtherRepaidRate, LagCumOtherRepaidRate, 
+    OtherRepaid, LagOtherRepaid, OtherMisses, LagOtherMisses, 
+    OtherProfit, LagOtherProfit, CumOtherProfit, LagCumOtherProfit,
+    OtherCost, LagOtherCost, OtherRevenue, LagOtherRevenue,
+    CumOtherRepaid, LagCumOtherRepaid, 
+    Arm, groupid, hhid, povertystatus, creditstatus, membershipstatus, GRSR,
+    TradGroup, Date, LoanYear,
+    MonthsElapsed, MonthsRepaid, Year, Month, StartedIn2013,
+    FirstYear, SecondYear, ThirdYear)]
+X[, FourthYear := 0L]
+X[MonthsElapsed > 36, FourthYear := 1L]
+X[, c("LagCumRepaidRateSQ", "LagCumOtherRepaidRateSQ") := 
+  .(LagCumRepaidRate^(2), LagCumOtherRepaidRate^(2))]
+X[, c("LagMeanGroupNetSaving", "LagMeanCumGroupNetSaving") := 
+  .(LagGroupNetSaving/.N, LagCumGroupNetSaving/.N), by = .(groupid, Date)]
+X[, LagMeanCumGroupNetSaving := LagCumGroupNetSaving/1000]
+X[, c("UltraPoor", "ModeratelyPoor") := 0L]
+X[grepl("ltra", povertystatus), UltraPoor := 1L]
+X[!grepl("ltra", povertystatus), ModeratelyPoor := 1L]
+@
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+<<Take village and LoanYear deviation of value and lags except for group level variables>>=
+for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
+ !grepl("GroupShortf|LagGroupNetSav", colnames(X)))) {
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = groupid]
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = Date]
+}
+<<shortfall regressions>>=
+# take only 1st member to form group level data
+X[, gnum := 1:.N, by = .(groupid, Date)]
+X[, c("LargeSize", "WithGrace", "InKind") := 0L]
+X[!grepl("tra", Arm), LargeSize := 1L]
+X[grepl("gr|co", Arm), WithGrace := 1L]
+X[grepl("co", Arm), InKind := 1L]
+X[, Attributes := "traditional"]
+X[!grepl("tra", Arm), Attributes := "LargeSize"]
+X[grepl("gr|co", Arm), Attributes := "LargeSizeAndWithGrace"]
+X[grepl("co", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
+X[, Attributes := factor(Attributes, levels = c("traditional", "LargeSize", 
+  "LargeSizeAndWithGrace", "LargeSizeAndWithGraceAndInKind"))]
+X1 <- X[gnum == 1, ]
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+X[, o800 := 0L]
+# need to use groupid because some hhid in admin record is missing in jds data
+X[groupid %in% jds[grepl("trea", treat), groupid], o800 := 1L]
+X2 <- X[o800 == 1L, ]
+addmargins(table0(X2[, .(TeeInLY = 1:.N), by = .(groupid, LoanYear)][
+  TeeInLY == 1, LoanYear]))
+# group shortfall regressions
+vfesg1 <- lm(Shortfall  ~ Arm, data = X1)
+vfesg2 <- lm(MeanGroupShortfall  ~ Arm +
+  GRSR + LagMeanGroupShortfall + GRSR:LagMeanGroupShortfall, data = X1)
+vfesg3 <- lm(MeanGroupShortfall ~  
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear, 
+  data = X1)
+vfesg4 <- lm(MeanGroupShortfall ~  
+  LargeSize + WithGrace + InKind + 
+  SecondYear +
+  I(LargeSize*SecondYear) + WithGrace:SecondYear + InKind:SecondYear + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear),
+  data = X1)
+vfesg5 <- lm(MeanGroupShortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear  + Arm:FourthYear + 
+  UltraPoor + UltraPoor:Arm + 
+  UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear  + UltraPoor:Arm:FourthYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+vfesg6 <- lm(MeanGroupShortfall ~ 
+  GRSR + GRSR:LagMeanGroupShortfall + 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(SecondYear*UltraPoor) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(ThirdYear*UltraPoor) +
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(FourthYear*UltraPoor) +
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+# individual shortfall regressions
+vfes1 <- lm(Shortfall  ~ Arm, data = X)
+vfes2 <- lm(Shortfall  ~ Arm +
+  GRSR + LagMeanGroupShortfall + GRSR:LagMeanGroupShortfall
+  + LagShortfall, data = X)
+vfes3 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear, 
+  data = X)
+vfes4 <- lm(MeanGroupShortfall ~  
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear),
+  data = X)
+vfes5 <- lm(Shortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear +
+  UltraPoor:Arm + 
+  UltraPoor:SecondYear + UltraPoor:ThirdYear + UltraPoor:FourthYear +
+  UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear + UltraPoor:Arm:FourthYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+vfes6 <- lm(Shortfall ~ 
+  GRSR + GRSR:LagMeanGroupShortfall + 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(SecondYear*UltraPoor) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(ThirdYear*UltraPoor) +
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(FourthYear*UltraPoor) +
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+# individual shortfall regressions with o800
+vfeso1 <- lm(Shortfall  ~ Arm, data = X2)
+vfeso2 <- lm(Shortfall  ~ 
+   Arm + LagMeanGroupShortfall + 
+  + LagShortfall, data = X2)
+vfeso3 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear
+  + LagShortfall, 
+  data = X2)
+vfeso4 <- lm(MeanGroupShortfall ~  
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear)
+  + LagShortfall, 
+  data = X2)
+vfeso5 <- lm(Shortfall ~ 
+  Arm + 
+  Arm:SecondYear + Arm:ThirdYear + Arm:FourthYear +
+  UltraPoor:Arm + 
+  +I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear)+
+  UltraPoor*Arm*SecondYear + UltraPoor*Arm*ThirdYear + UltraPoor*Arm*FourthYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X2)
+# vfeso5 <- update(vfeso5.0,
+#   . ~ .
+#   +I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear)
+#   - Armtraditional:SecondYear:UltraPoor - Armtraditional:ThirdYear:UltraPoor
+#   - Armtraditional:FourthYear:UltraPoor)
+vfeso6 <- lm(Shortfall ~ 
+  SecondYear + LargeSize + WithGrace + InKind +
+  I(LargeSize*SecondYear) + I(WithGrace*SecondYear) + I(InKind*SecondYear) + 
+  ThirdYear +
+  I(LargeSize*ThirdYear) + I(WithGrace*ThirdYear) + I(InKind*ThirdYear) +
+  FourthYear +
+  I(LargeSize*FourthYear) + I(WithGrace*FourthYear) + I(InKind*FourthYear) +
+  UltraPoor + 
+  I(LargeSize*UltraPoor) + I(WithGrace*UltraPoor) + I(InKind*UltraPoor) + 
+  I(UltraPoor*SecondYear) + I(UltraPoor*ThirdYear) + I(UltraPoor*FourthYear) +
+  I(LargeSize*SecondYear*UltraPoor) + I(WithGrace*SecondYear*UltraPoor) + 
+  I(InKind*SecondYear*UltraPoor) + 
+  I(LargeSize*ThirdYear*UltraPoor) + I(WithGrace*ThirdYear*UltraPoor) + 
+  I(InKind*ThirdYear*UltraPoor) + 
+  I(LargeSize*FourthYear*UltraPoor) + I(WithGrace*FourthYear*UltraPoor) + 
+  I(InKind*FourthYear*UltraPoor) + 
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X2)
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*|^p\\$.*", "",
+    "I\\((.*?)\\)", "\\1",
+    "traditional:", "",
+    "large g", "LargeG",
+    "large", "Large",
+    "cow", "Cattle",
+    "Attributes.*And", "",
+    "Attributes", "",
+    "LargeSize", "Upfront",
+    "^SecondYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY2",
+    "^ThirdYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY3",
+    "^FourthYear *\\* *(Ul.*)", "\\1 $\\\\times$ LY4",
+    "(.*):SecondYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY2",
+    "(.*):ThirdYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY3",
+    "(.*):FourthYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY4",
+    "(.*) \\* SecondYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY2",
+    "(.*) \\* ThirdYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY3",
+    "(.*) \\* FourthYear \\* (.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY4",
+    "(.*):SecondYear$", "\\1 $\\\\times$ LY2",
+    "(.*):ThirdYear$", "\\1 $\\\\times$ LY3",
+    "(.*):FourthYear$", "\\1 $\\\\times$ LY4",
+    "SecondYear", "LY2",
+    "ThirdYear", "LY3",
+    "FourthYear", "LY4",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    "\\*|:", " $\\\\times$ ",
+    "Lag(.*?)-Lag", "\\1$_{t-1}-$Lag",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "Short", "short",
+    "value.repay", "repayment",
+    #"MeanGroupS.*l\\$", "per member group shortfall$",
+    "MeanGroups.*l\\$", "Group shortfall$", # it is per member, but too long to show
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (BDT1000)$",
+    "value.NetSaving\\$", "Net saving$",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+reglists.header <- c("vfesg", "vfes", "vfeso")
+# Below is defined in EstimationMemo_OptionSetting.rnw
+# ShortfallFileNames<- c("Group", "Individual", "o800")
+datas <- c("X1", "X", "X2")
+for (m in 1:length(reglists.header)) {
+  rlist <- eval(parse(text=paste("list(", paste0(reglists.header[m], 1:6, collapse = ","), ")")))
+  dataX <- get(datas[m])
+  ClusterList <- lapply(rlist, function(x) 
+      if (!is.null(x$na.action)) matrix(dataX[-x$na.action, groupid]) else
+      matrix(dataX[, groupid])
+    )
+  ro <- lapply(1:length(rlist), function(j) 
+     clx(rlist[[j]], cluster = ClusterList[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  ro.estlist <- lapply(ro.estlist, function(x) x[, -3, drop = F])
+  # unify covariate names so default (traditional) is not duplicated in latextab
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Arm", "Attributes", rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Armtraditional:|Attributestraditional:", "", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^SecondYear:UltraPoor$", "I(SecondYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^ThirdYear:UltraPoor$", "I(ThirdYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^FourthYear:UltraPoor$", "I(FourthYear * UltraPoor)", 
+      rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("^(.*):(.*)Year$", "I(\\1 * \\2Year)", 
+      rownames(x))
+    x
+    })
+  r.N <- unlist(lapply(ro, "[[", 8))
+  r.M <- unlist(lapply(ro, "[[", 6))
+  r.R <- unlist(lapply(rlist, function(x) round(summary(x)$adj, 3)))
+  r.tab <- tabs2latex3(ro.estlist, digits = 2, use.Pvalue = T, xx.yyy = T)
+  # reorder rows: rn.new #
+  rtab <- r.tab
+  rn <- rownames(r.tab)
+  rn0 <- rn
+  for (i in 1:nrow(subst.table)) 
+    rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+  source(paste0(pathprogram, 
+    "ReorderingOfRowsInEstimatedResultsRepaymentTable.R"))
+  rn <- rn[rn.new]
+  r.tab <- r.tab[rn.new, ]
+  rn <- paste0("\\makebox[5cm]{\\scriptsize\\hfill ", rn, "}")
+  r.tb <- rbind(as.matrix(cbind(covariates = rn, r.tab)), 
+    c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", r.M),
+    c("\\bar{R}^{2}", r.R),
+    c("N", r.N))
+  r.ltxtb <- latextab(r.tb[1:(grep("fill LY3\\}$", rn)-1), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults1.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults1.tex")
+    , colnamestrue = F)
+  r.ltxtb <- latextab(r.tb[grep("fill LY3\\}$", rn):(grep("InK.*U.*4\\}$", rn)+1), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults2.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults2.tex")
+    , colnamestrue = F)
+  r.ltxtb <- latextab(r.tb[
+  #grep("ll Group s.*1\\}\\$\\}$", rn):nrow(r.tb)
+  (grep("InK.*U.*4\\}$", rn)+2):nrow(r.tb)
+  , ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(6, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[m], "EstimationResults3.tex")
+    , colnamestrue = F)
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveEstimationMemo, "Shortfall", ShortfallFileNames[m], "EstimationResults3.tex")
+    , colnamestrue = F)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], ".estlist"), ro.estlist)
+  assign(paste0(reglists.header[m], ".N"), r.N)
+  assign(paste0(reglists.header[m], ".M"), r.M)
+  assign(paste0(reglists.header[m], ".R"), r.R)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], "Xlist"), ClusterList)
+}
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults.rnw"))}
+
+\end{document}

@@ -1,0 +1,38 @@
+Broad net non-livestock assets = Broad non livestock assets + net saving - debt to GUK - debts to relatives and money lenders. 
+
+<<merge broad NL assets livestock saving data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+# same file as net assets, broad net assets
+@
+<<Broad net NL asset set parameters original HHs>>=
+FileName <- "BroadNetNLAssets"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nv", regsuffixes)
+<<Broad net NL asset regression select covariates original HHs>>=
+source(paste0(pathprogram, "NetNLAssetCovariateSelectionANCOVA2.R"))
+<<get jay from broad net NL assets covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
+NeA1[, grepout("Net2?Va|Out", colnames(NeA1)) := NULL]
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+# Previously, Rd 1-4 diff: DataToUse2 <- rep("NeA2", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NetNLAssetValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<display covariates broad net NL asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<broad net NL assets ANCOVA estimation>>=
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+@
+
+
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVABroadNetNLAssetsResults.rnw"))}

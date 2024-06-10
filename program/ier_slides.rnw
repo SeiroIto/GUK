@@ -1,0 +1,339 @@
+% library(knitr); path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.nar <- paste0(path0, "received/mar/")
+%  library(knitr); path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.nar <- paste0(path0, "received/mar/"); system("recycle c:/data/GUK/analysis/program/cache/ier_slides/"); library(knitr); knit("ier_slides.rnw", "ier_slides.tex"); system("platex ier_slides"); system("pbibtex ier_slides"); system("dvipdfmx ier_slides")
+
+
+%\input{c:/data/knitr_beamer_preamble.rnw}
+\input{c:/data/knitr_beamer_preamble_ho.rnw}
+
+\newcounter{armindex}
+\newcommand{\mpagec}[2]{\begin{minipage}[c]{#1}#2\end{minipage}}
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+
+<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+<<option setting 2, cache = F>>=
+opts_chunk$set(fig.path='ier_slides/figure', cache.path='ier_slides/cahe', echo = T, results = 'markup')
+@
+
+\title[MF ultra poor]{\large An assessment of microfinance interventions on the ultra poor}
+\author[Ito, Kurosaki, Shonchoy, Takahashi]{Seiro Ito, Takashi Kurosaki, Abu Shonchoy, Kazushi Takahashi}
+\institute[IDE]{Institute of Developing Economies, Hitotsubashi University, Institute of Developing Economies, Sophia University}
+\date[March 15, 2017]{March 15, 2017\\\vspace{1ex} IER, Hitotsubashi University}
+\logo{IDE, IER, SU}
+
+
+\frame{\titlepage}
+\setcounter{page}{1}
+
+\setbeamercovered{transparent = 0}
+%\setbeamercolor{normal text}{fg=turquoiseblue2, bg=}
+%\setbeamercolor{alerted text}{fg=black, bg=}
+%\usebeamercolor{normal text}
+
+\begin{frame}[label = background]{}
+Motivation 1: Costly, risky, and stressful?
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{3.0ex}\setlength{\baselineskip}{12pt}
+\pause
+\item	Why is there so few evidence on positive microfinance impacts?
+\pause
+\item	Why is the outreach of MF limited to the relatively wealthy?
+\pause
+\item	Supply: Capital constraint is only one of the constraints.
+\pause
+\item	Demand: Managerial ability? \pause Not all of us are entrepreneurs.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label = background2]{}
+Motivation 2: Adult trainability?
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{3.0ex}\setlength{\baselineskip}{12pt}
+\pause
+\item	Some argued that cognitive skills interventions must take place early in life.
+\pause
+\item	May be true in high income countries where a school system is efficient that leaves no low hanging fruit.
+\pause
+\item	In low income countries, schools are inefficient that can leave some room for interventions in later life.
+\pause
+\item	Mixed evidence on adult training impacts. \pause Can we supplement elementary managerial capacity with a tweak in program archtecture?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{}
+Related literature: 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	MF is not successful in reaching out to the poorest of the poor, or the ultra poor \citep[][]{Scully2004}. Empirical evidence in \citet{Yaron1994, Navajas2000, RahmanRazzaque2000, AghionMorduch2007} supports this claim. Some authors discuss the tradeoff between sustainability and outreach for microfinance institutions (MFIs) \citet{HermesLensink2011, HermesLensinkMeesters2011, Cull2011}. 
+\item	There is a growing interest on managerial impacts on firm growth in LDCs \citep[][]{deMel2008, Calderon2011, KarlanValvidia2011, Berge2012, Bruhn2012, MckenzieWoodruff2012, Bloometal2013}. Evidence on profits is mixed: \citet{Calderon2011, Berge2012, Bloometal2013} report effectiveness, while \citet{KarlanValvidia2011, Bruhn2012, KarlanKnightUdry2012} conclude that they are ineffective. 
+\item	\citet{MckenzieWoodruff2012}: These studies are too different to compare, in terms of population, interventions, measurement (variables, timing), and most importantly, implied statistical power in the design. 
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{}
+We conjecture that the previous studies might have a too limited time frame, a too wide variety of investment options, and a lesser degree of control in isulating from outside options.
+
+\vspace{2ex}
+\pause
+We want:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\pause
+\item	A long enough follow up period.
+\pause
+\item	Less heterogeneity, more statistical power.
+\pause
+\item	Less uncontrolled treatments.
+\end{itemize}
+\vspace{2ex}
+\pause
+NGOs and CBOs: Livestock (usually calf) is the most popular and plausibly the only viable investment option. 
+
+\vspace{2ex}
+\pause
+Our study area is ideal for impact evaluation:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\pause
+\item	A 4-year (unexpectedly extended to 5-year) project.
+\pause
+\item	A smaller choice set.
+\pause
+\item	Little or no MFI/NGOs presence.
+\end{itemize} 
+\end{frame}
+
+\begin{frame}{}
+Theretical considerations in related literature: Management as a technology
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\pause
+\item	Bloom et al (2016): theory and global evidence supporting the theory. RCTs to improve management skills of micro entrepreneurs, resulting in higher productivity or adoption of good management practices.
+\pause
+\item	Bloom et al. (2016 QJE): inventory control and factory information training in India. Higuchi et al. (2015 JEBO): KAIZEN training in Vietnam. More KAIZEN RCTs in Africa by Sonobe and his co.
+\end{itemize}
+\pause
+(Less related) Behavioral foundation of entrepreneurship
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Astebro et al. (2014): review paper. Fafchamps and Quinn (forthcoming): random assignment of peers to entrepreneurs in Ghana. Kremer et al. (2013, AER P\&P): behavior biases' impact on firm performance in Kenyan retail shops; using risk games. Fehr and List (2004, JEEA): Trust games to CEOs in Costa Rica
+\item	Reminder as a tool to overcome limited attention issues: Several RCTs in the context of savings (e.g., Karlan et al. 2016; Kast et al. 2012). On-going RCT on micro entrepreneurs in India by Goto et al. (2017)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{}
+We want to measure the impacts of managerial capacity in MF uptake and outcomes.\\~\\
+\pause
+But managerial capacity is unobservable.\\~\\
+\pause
+We design the study to allow us to infer if managerial capacity matters for successes.\\~\\
+\pause
+We make the managerial capacity useless by offering a credit under the environment which requires a minimal level of managerial capacity.\\~\\
+\pause
+Success rates in this ``easy'' credit $\simeq$ success rates in a comparable credit\\
+\pause
+$\Rightarrow$ Managerial capacity does not causally affect MF success \pause (or our provision of help was hoplessly useless that requires managerial capacity in ``easy'' credit)\\~\\
+
+``Easy'': Provide a calf, supplementary services, and training.
+\end{frame}
+
+
+
+\begin{frame}{}
+A 4$\times$4 factorial, stepped wedge design with placebo controls\\
+
+\vspace{2ex}
+\pause
+\hfil\begin{tabular}{>{\footnotesize\hfill}p{2cm}<{}
+>{\footnotesize\hfil}p{2cm}<{}
+>{\footnotesize\hfil}p{2cm}<{}
+>{\footnotesize\hfil}p{2cm}<{}}
+					& \cellcolor{paleblue}large, grace 			& \cellcolor{paleblue}large & \cellcolor{paleblue}small \\\cellcolor{paleblue}
+cow 				& \mpage{2cm}{\hfil managerial\\\hfil capacity} &\cellcolor{gray50} &\cellcolor{gray50}\\\cellcolor{paleblue}
+large, grace &\cellcolor{gray50} 	&  \mpage{2cm}{\hfil saving\\\hfil constraint} & \cellcolor{gray50}\\\cellcolor{paleblue}
+large 			&\cellcolor{gray50} 	&\cellcolor{gray50}& \mpage{2cm}{\hfil convex\\\hfil technology}\\\cellcolor{pink}
+control & \multicolumn{3}{c}{\cellcolor{green}level \hspace{1em} impacts}
+\end{tabular}
+
+\pause
+\vspace{2ex}
+We will report the ``level impacts'' as a linear function of treatment dose difference $t_{1}-t_{0}$ between the control and the treated. 
+\[
+\mbox{impacts}=\E[y|\mbox{treated}]-\E[y|\mbox{control}]=\E[y|t_{1}]-\E[y|t_{0}]=b(t_{1}-t_{0}).
+\]
+\end{frame}
+
+\begin{frame}{}
+
+\vspace{-2ex}
+\begin{adjustbox}{max size={1.0\textwidth}{1.2\textheight}}
+\hspace{-1cm}\input{GUK_rct_design_rev_fig.tex}
+\end{adjustbox}
+\end{frame}
+
+
+\begin{frame}{}
+Disbursement\\
+\hfil\includegraphics[width=12cm]{figure/compare_outcomesunnamed-chunk-36-1.eps}
+\end{frame}
+
+\begin{frame}{}
+Stated use of credit\\
+\hfil\includegraphics[width=12cm]{figure/compare_outcomesunnamed-chunk-29-1.eps} \\
+\pause
+As expected, livestock is the majority investments.
+\end{frame}
+
+
+\begin{frame}{}
+Currently, we are collecting the final round data.\\~\\
+\pause
+I will report the intermediate results up to round 3.\\~\\
+
+\pause
+\textsf{control / treated}: Initial treatment assignment. All the control will be given a chance to be treated in our stepped wedge design.\\~\\
+
+\pause
+\textsf{credit}: Actual disbursement of credit.\\~\\
+
+\pause
+\textsf{elapsed days}: Number of days since receiving a credit. About 200 + day difference between \textsf{cotrol} and \textsf{treated} in a same cluster. We consider this as a measure of continous treatment (as in dose-response). \pause We have not exploited it yet.
+\end{frame}
+
+\begin{frame}{}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: FD estimates of three meals per day, round 2, 3\label{FD3meals}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/3meals_slides.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+\end{frame}
+
+\begin{frame}{}
+There may not be much of poverty alleviation impacts on the meal intake. \\~\\
+\pause
+\vspace{2ex}
+This is contrary to our expectation, because the area is known for a hunger season called \textit{monga}.
+\end{frame}
+
+\begin{frame}{}
+Nonfarm asset accumulation by arms: Within cluster comparisons\\
+\hfil\includegraphics[width=12cm, height = 7.5cm]{figure/compare_outcomesunnamed-chunk-48-1.eps} \\
+
+\pause
+Almost zero gradient.
+\end{frame}
+
+\begin{frame}{}
+There is no poverty alleviation impact on nonfarm asset accumulation. \\~\\
+\pause
+\vspace{2ex}
+This was expected, because most of the investments were on livestock.
+\end{frame}
+
+\begin{frame}{}
+Livestock accumulation: Within cluster comparisons\\
+\hfil\includegraphics[width=12cm, height = 7.5cm]{figure/compare_outcomesunnamed-chunk-62-1.eps}\\
+\pause
+Zero difference at start but becomes increasingly more heterogenous in the later rounds.
+\end{frame}
+
+\begin{frame}{}
+Total asset accumulation by arms: Within cluster comparisons\\
+\hfil\includegraphics[width=12cm, height = 7.5cm]{figure/compare_outcomesunnamed-chunk-66-1.eps} \\
+\pause
+Zero difference at start but becomes increasingly more heterogenous in the later rounds. Dose-response is not monotonic.
+\end{frame}
+
+\begin{frame}{}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Descriptive statistics of asset regression data\label{destat.alr.sss}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/destat_alr_sss_slide.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{}
+%\hspace{-1.5cm}\begin{minipage}[t]{9cm}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: DID estimates of asset impacts\label{FDasset}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/asset_regression_alr_sss_slide.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{1}
+%\end{minipage}
+\end{frame}
+
+\begin{frame}{}
+There is no poverty alleviation impact on total asset accumulation. \\~\\
+\pause
+\vspace{2ex}
+This was not expected, because most of the investments were on livestock.
+\end{frame}
+
+\begin{frame}{}
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: DID estimates of livestock impacts\label{FDlivestock}}\\
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/livestock_regression_alr_sss_slide.tex}};
+\input{c:/data/GUK/analysis/program/tablecolortemplate_top_1row.tex}
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{}
+There is some poverty alleviation impact on livestock asset accumulation for educated male headed households. \\~\\
+\pause
+\vspace{2ex}
+It shows livestock accumulation continued for the two years (up to 2015) after we started to disbursing loans in 2013.
+\end{frame}
+
+\begin{frame}{}
+We find almost zero impact of loan disbursement when compared with the late loan takes in the same cluster. \\~\\
+\pause
+This might have been expected to some people because one calf/cow with repayment would not drastically change the asset position of the UP.\\~\\
+\pause
+It was disappointingly surprising to me, nonetheless.\\~\\
+\pause
+We will need to:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Consider impacts on flows, not stocks.
+\item	Incorporate generalised propensity score for continuous treatments \citet{Imbens2000, HiranoImbens2004, ImaiVanDyk2004, Egger2013}.
+\item	Make use of factorial design to test the main hypothesis.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{}
+\vspace{3ex}
+\hfil{\Large Thank you very much.}
+\vspace{3ex}
+I would like to thank my coauthors and:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	People at GUK.
+\item	Our RAs at MOMODa Foundation.
+\item	JSPF funding.
+\item	Hitotsubashi Univeristy, IER funding. Okayasu-san, Aoki-san.
+\item	IDE funding.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[allowframebreaks]{}
+\footnotesize\bibliographystyle{aer}
+\setlength{\baselineskip}{10pt}
+\bibliography{c:/dropbox/docs/notes/seiro}
+\end{frame}
+
+\end{document}
+

@@ -1,0 +1,52 @@
+\section{Randomisation checks}
+\label{AppSecRandomisation}
+\setcounter{table}{0}
+
+% Created in PermutationTestsContents.rnw(87)
+\hspace{-1.5cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results\label{tab perm}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "PermutationTestResults.tex")}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Number of groups is 72. Holm's step-down method is used to adjust for multiple testing of a multi-factor grouping variable.
+\\
+& 2. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. 
+\end{tabular}
+\end{minipage}
+
+\vspace{2ex}
+\mpage{\linewidth}{
+\renewcommand{\arraystretch}{.6}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Anova results for cattle holding equality by arm\label{table anova CattleHoldingArm}}\\
+\hfil\input{\Sexpr{  paste0(pathprogram, "table/EstimationMemo/anovaCowResults.tex")}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Survey data.\\
+Note:& Each column uses respective year cattle ownership information. Columns (1) to (5) tests cattle holding equality for each survey rounds. In column (2), we edited the data by assigning 1 to members of \textsf{Cattle} arm who report holding is NA or zero. For ANOVA and Kruskal-Wallis, each entry indicates $p$ values. ANOVA tests for the null of equality of all means under normality. Kruskal-Wallis tests for the null of no stochastic dominance among samples without using the normality assumption. Tukey's honest significant tests show difference in means and $p$ values in parenthesis that account for multiple testing under the normality assumption.  \\[1ex]
+\end{tabular}}
+
+
+<<Randomisation tests main text, cache = F, child='c:/data/GUK/analysis/program/RandomisationTestsMainText.rnw'>>=
+@
+
+
+\section{Rejection}
+\label{AppSecRejection}
+\setcounter{table}{0}
+
+<<Rejection tests main text, cache = F, child='c:/data/GUK/analysis/program/RejectionTestsMainText4.rnw'>>=
+@
+
+\section{Attrition}
+\label{AppSecAttrition}
+\setcounter{table}{0}
+
+<<Attrition Tests main text, cache = F, child='c:/data/GUK/analysis/program/AttritionTestsMainText4.rnw'>>=
+@

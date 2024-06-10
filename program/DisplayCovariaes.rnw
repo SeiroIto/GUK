@@ -1,0 +1,14 @@
+<<>>=
+# display covariates
+jay <- length(Regressands)
+GroupVar <- rep("^hhid$", jay)
+ListCovariates <- vector(mode = "list", length = jay)
+ListCovariates <- replicate(length(listheader), ListCovariates, simplify = FALSE)
+# use functions in GetCovariatesFunctions.R
+ListCovariates <- GetCovariates(listheader) 
+ListCovariates <- AttachSymbolsToLC(ListCovariates)
+# select only HHAssets regresssions (PAssets regressions have same specifications)
+if (any(grepl("^as", listheader))) ListCovariates <- lapply(ListCovariates, function(x) x[1:3])
+ListCovariates <- lapply(ListCovariates, function(x) paste(x, collapse = "\n"))
+cat(unlist(ListCovariates), "\n\n")
+@

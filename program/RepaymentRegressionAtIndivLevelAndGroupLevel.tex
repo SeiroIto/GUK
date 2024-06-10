@@ -1,0 +1,390 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/RepaymentRegressionAtIndivLevelAndGroupLevel/"); library(knitr); knit("RepaymentRegressionAtIndivLevelAndGroupLevel.rnw", "RepaymentRegressionAtIndivLevelAndGroupLevel.tex"); system("platex RepaymentRegressionAtIndivLevelAndGroupLevel"); system("pbibtex RepaymentRegressionAtIndivLevelAndGroupLevel"); system("dvipdfmx RepaymentRegressionAtIndivLevelAndGroupLevel")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\special{papersize= 209.9mm, 297.04mm}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+\hfil Fixed effect estimation of repayment\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+Need: packages \textsf{lmtest, sandwich}.
+
+
+
+
+
+\begin{Schunk}
+\begin{Sinput}
+pathsaveHere <- pathsaveEstimationMemo
+adw <- readRDS(paste0(path1234, "admin_data_wide.rds"))
+adw[, PlannedInstallment := 120]
+adw[grepl("gr|cow", Arm), PlannedInstallment := 190]
+adw[, Shortfall := PlannedInstallment - value.repay]
+adw[, ShortfallRate := Shortfall/PlannedInstallment]
+adw[, MonthsRepaid := MonthsElapsed]
+adw[grepl("gr|cow", Arm), MonthsRepaid := MonthsRepaid - 12]
+adw[, MeanGRSR := mean(ShortfallRate[grepl("Yes", creditstatus) & 
+    !is.na(MonthsElapsed) & MonthsRepaid >= 1 & MonthsRepaid <= 6], 
+  na.rm = T), by = groupid]
+MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], 
+  na.rm = T)
+# adw[, GRSR := "low"]
+# adw[MeanGRSR > MedianGRSR, GRSR := "high"]
+# adw[, GRSR := factor(GRSR, levels = c("low", "high"))]
+# adwG <- adw[, .(groupid, hhid, Shortfall, ShortfallRate, PlannedInstallment, 
+#   GRSR, MeanGRSR, MonthsRepaid, Date)]
+# MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], 
+#   na.rm = T)
+# merge(adw2, adwG, by = intersect(colnames(adw2), colnames(adwG)), all.X = T)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+variablesToBeLagged <- 
+  c("Shortfall", "value.repay", "value.sav", "value.NetSaving", 
+   "value.cost", "value.rev", "value.missw", "Profit",
+   "CumRepaid", "CumRepaidRate", "CumEffectiveRepaidRate", "CumMisses", 
+   "CumNetSaving", "CumProfit",
+    "MeanGroupShortfall", "GroupNetSaving", "CumGroupNetSaving", 
+    "OtherShortfall", "OtherRepaid", "CumOtherRepaid", "CumOtherRepaidRate",
+    "OtherNetSaving", "CumOtherNetSaving", "OtherProfit", "CumOtherProfit",
+    "OtherMisses", "CumOtherMisses", "OtherCost", "OtherRevenue")
+adw2[, paste0("Lag", variablesToBeLagged) :=  
+  shift(.SD, type = "lag"), by = hhid, .SDcols=variablesToBeLagged]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+# MonthsRepaid > 0: Only traditional has FirstYear as repayment
+X <- adw2[MonthsElapsed > 0 & MonthsElapsed <= 36 & 
+    grepl("es", creditstatus) & FullyRepaid == 0 & as.Date(DisDate1) <= as.Date("2015-01-01"),
+    .(value.repay, Lagvalue.repay, value.missw, Lagvalue.missw,
+    value.sav, Lagvalue.sav, value.NetSaving, Lagvalue.NetSaving,  
+    Profit, LagProfit, value.cost, value.rev, Lagvalue.cost, Lagvalue.rev, 
+    Shortfall, LagShortfall, ShortfallRate, 
+    MeanGroupShortfall, LagMeanGroupShortfall, OtherShortfall, LagOtherShortfall,
+    CumNetSaving, LagCumNetSaving, 
+    LagGroupNetSaving, LagCumGroupNetSaving, 
+    OtherNetSaving, LagOtherNetSaving, 
+    CumOtherNetSaving, LagCumOtherNetSaving, 
+    CumProfit, LagCumProfit,
+    CumRepaid, LagCumRepaid, 
+    CumRepaidRate, LagCumRepaidRate, 
+    CumEffectiveRepaidRate, LagCumEffectiveRepaidRate, 
+    CumOtherRepaidRate, LagCumOtherRepaidRate, 
+    OtherRepaid, LagOtherRepaid, OtherMisses, LagOtherMisses, 
+    OtherProfit, LagOtherProfit, CumOtherProfit, LagCumOtherProfit,
+    OtherCost, LagOtherCost, OtherRevenue, LagOtherRevenue,
+    CumOtherRepaid, LagCumOtherRepaid, 
+    Arm, groupid, hhid, povertystatus, creditstatus, membershipstatus, GRSR,
+    TradGroup, Date, LoanYear,
+    MonthsElapsed, MonthsRepaid, Year, Month, StartedIn2013,
+    FirstYear, SecondYear, ThirdYear)]
+X[, c("LagCumRepaidRateSQ", "LagCumOtherRepaidRateSQ") := 
+  .(LagCumRepaidRate^(2), LagCumOtherRepaidRate^(2))]
+X[, c("LagMeanGroupNetSaving", "LagMeanCumGroupNetSaving") := 
+  .(LagGroupNetSaving/.N, LagCumGroupNetSaving/.N), by = .(groupid, Date)]
+X[, LagMeanCumGroupNetSaving := LagCumGroupNetSaving/1000]
+X[, c("UltraPoor", "ModeratelyPoor") := 0L]
+X[grepl("ltra", povertystatus), UltraPoor := 1L]
+X[!grepl("ltra", povertystatus), ModeratelyPoor := 1L]
+\end{Sinput}
+\end{Schunk}
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+\begin{Schunk}
+\begin{Sinput}
+for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
+ !grepl("GroupShortf|LagGroupNetSav", colnames(X)))) {
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = groupid]
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = Date]
+}
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+# take only 1st member to form group level data
+X[, gnum := 1:.N, by = .(groupid, Date)]
+X[, Attributes := "traditional"]
+X[!grepl("tra", Arm), Attributes := "LargeSize"]
+X[grepl("gr|co", Arm), Attributes := "WithGrace"]
+X[grepl("co", Arm), Attributes := "InKind"]
+X[, Attributes := factor(Attributes, 
+  levels = c("traditional", "LargeSize", "WithGrace", "InKind"))]
+X1 <- X[gnum == 1, ]
+# group shortfall regressions
+vfesg1 <- lm(MeanGroupShortfall  ~ 
+  GRSR + GRSR:LagMeanGroupShortfall, data = X1)
+vfesg2 <- lm(MeanGroupShortfall ~  
+  Arm + Arm:SecondYear + Arm:ThirdYear, 
+  data = X1)
+vfesg3 <- lm(MeanGroupShortfall ~  
+  Attributes + Attributes:SecondYear + Attributes:ThirdYear, 
+  data = X1)
+vfesg4 <- lm(MeanGroupShortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear +
+  UltraPoor + UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+vfesg5 <- lm(MeanGroupShortfall ~ 
+  GRSR + Attributes + GRSR:LagMeanGroupShortfall + 
+  Attributes:SecondYear + Attributes:ThirdYear +
+  UltraPoor + UltraPoor:Attributes:SecondYear + UltraPoor:Attributes:ThirdYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+# individual shortfall regressions
+vfes1 <- lm(Shortfall  ~ 
+  GRSR + GRSR:LagMeanGroupShortfall, data = X)
+vfes2 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear, 
+  data = X)
+vfes3 <- lm(MeanGroupShortfall ~  
+  Attributes + Attributes:SecondYear + Attributes:ThirdYear, 
+  data = X)
+vfes4 <- lm(Shortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear +
+  UltraPoor + UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+vfes5 <- lm(Shortfall ~ 
+  GRSR + Attributes + GRSR:LagMeanGroupShortfall + 
+  Attributes:SecondYear + Attributes:ThirdYear +
+  UltraPoor + UltraPoor:Attributes:SecondYear + UltraPoor:Attributes:ThirdYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+subst.table <- matrix(
+  c("Arm|Attributes|povertystatus|^se\\$.*|^p\\$.*", "",
+    "traditional:", "",
+    "large g", "LargeG",
+    "large", "Large",
+    "cow", "Cow",
+    "(.*):SecondYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY2",
+    "(.*):ThirdYear:(.*)", "\\1 $\\\\times$ \\2 $\\\\times$ LY3",
+    "(.*):SecondYear$", "\\1 $\\\\times$ LY2",
+    "(.*):ThirdYear$", "\\1 $\\\\times$ LY3",
+    "SecondYear:U.*", "UltraPoor $\\\\times$ LY2",
+    "ThirdYear:U.*", "UltraPoor $\\\\times$ LY3",
+    "SecondYear", "LY2",
+    "ThirdYear", "LY3",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*?)-Lag", "\\1$_{t-1}-$Lag",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    #"MeanGroupS.*l\\$", "per member group shortfall$",
+    "MeanGroupS.*l\\$", "group shortfall$", # it is per member, but too long to show
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving\\$", "Net saving$",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+reglists.header <- c("vfesg", "vfes")
+filenamelist <- c("Group", "Individual")
+datas <- c("X1", "X")
+for (m in 1:length(reglists.header)) {
+  rlist <- eval(parse(text=paste("list(", paste0(reglists.header[m], 1:5, collapse = ","), ")")))
+  dataX <- get(datas[m])
+  ClusterList <- lapply(rlist, function(x) 
+      if (!is.null(x$na.action)) matrix(dataX[-x$na.action, groupid]) else
+      matrix(dataX[, groupid])
+    )
+  ro <- lapply(1:length(rlist), function(j) 
+     clx(rlist[[j]], cluster = ClusterList[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  ro.estlist <- lapply(ro.estlist, function(x) x[, -3, drop = F])
+  # unify covariate names so default (traditional) is not duplicated in latextab
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Arm", "Attributes", rownames(x))
+    x
+    })
+  ro.estlist <- lapply(ro.estlist, function(x) {
+    rownames(x) <- gsub("Armtraditional:|Attributestraditional:", "", rownames(x))
+    x
+    })
+  r.N <- unlist(lapply(ro, "[[", 8))
+  r.M <- unlist(lapply(ro, "[[", 6))
+  r.R <- unlist(lapply(rlist, function(x) round(summary(x)$adj, 3)))
+  r.tab <- tabs2latex3(ro.estlist, digits = 2, use.Pvalue = T, xx.yyy = T)
+  # reorder rows: rn.new #
+  rtab <- r.tab
+  rn <- rownames(r.tab)
+  source(paste0(pathprogram, 
+    "ReorderingOfRowsInEstimatedResultsRepaymentTable.R"))
+  rn <- 
+  rn[rn.new]
+  rn0 <- rn
+  r.tab <- r.tab[rn.new, ]
+  rn <- rownames(r.tab)
+  for (i in 1:nrow(subst.table)) 
+    rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+  rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+  r.tb <- rbind(as.matrix(cbind(covariates = rn, r.tab)), 
+    c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", r.M),
+    c("\\bar{R}^{2}", r.R),
+    c("N", r.N))
+  r.ltxtb <- latextab(r.tb[1:(grep("fill LY3\\}$", rn)-1), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(5, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", filenamelist[m], "EstimationResults1.tex")
+    , colnamestrue = F)
+  r.ltxtb <- latextab(r.tb[grep("fill LY3\\}$", rn):nrow(r.tb), ], 
+    hleft = "\\scriptsize\\hfil$", hcenter = c(5, rep(1.1, ncol(r.tb)-1)), hright = "$", 
+    headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90")
+  write.tablev(r.ltxtb, 
+    paste0(pathsaveHere, "Shortfall", filenamelist[m], "EstimationResults2.tex")
+    , colnamestrue = F)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], ".estlist"), ro.estlist)
+  assign(paste0(reglists.header[m], ".N"), r.N)
+  assign(paste0(reglists.header[m], ".M"), r.M)
+  assign(paste0(reglists.header[m], ".R"), r.R)
+  assign(paste0(reglists.header[m], "list"), rlist)
+  assign(paste0(reglists.header[m], "Xlist"), ClusterList)
+}
+\end{Sinput}
+\end{Schunk}
+
+
+\begin{Schunk}
+\begin{Sinput}
+ShortfallTabFN <- "Group fixed effects estimates of repayment shortfall. Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Shortfall is (planned installment) - (actual repayment). OtherShortfall indicates mean shortfall of other members in a group. Group repayment shortfall rates (GRSR) is (shortfall)/(planned installment). GRSR is defined as high if the first six months' repayment shortfall rate is above median, low if otherwise. Median GRSR is -1.42."
+\end{Sinput}
+\end{Schunk}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall\label{tab shortfall group}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/ShortfallGroupEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group level effects of repayment shortfall (continued)\label{tab shortfall group2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/ShortfallGroupEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects estimates of repayment shortfall. Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Shortfall is (planned installment) - (actual repayment). OtherShortfall indicates mean shortfall of other members in a group. Group repayment shortfall rates (GRSR) is (shortfall)/(planned installment). GRSR is defined as high if the first six months' repayment shortfall rate is above median, low if otherwise. Median GRSR is -1.42.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall\label{tab shortfall indiv}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/ShortfallIndividualEstimationResults1.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/EstimationMemo/ShortfallIndividualEstimationResults2.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects estimates of repayment shortfall. Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Shortfall is (planned installment) - (actual repayment). OtherShortfall indicates mean shortfall of other members in a group. Group repayment shortfall rates (GRSR) is (shortfall)/(planned installment). GRSR is defined as high if the first six months' repayment shortfall rate is above median, low if otherwise. Median GRSR is -1.42.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab shortfall group}} shows group level repayment shortfall has a positive autocorrelation hence is persistent. The coefficient is larger in groups with low shortfall rates, hinting loan repayment discipline, albeit weak, as a group. \textsc{\small Table \ref{tab shortfall indiv}} also shows persistence for individuals, although the magnitude is much smaller. Lagged shortfall of others tends to reduce own shortfall, and this relationship, again, indicating some loan discipline as a group member. Individual shortfall is negative correlated with lagged group net saving and lagged group cumulative net saving, sugesting a possibility that a neative shock is shared within a group. Group level shortfall gets smaller in the third year in all arms, indicating stronger efforts in repayment in the final loan year.  
+\end{finding}
+\end{palepinkleftbar}
+
+\end{document}

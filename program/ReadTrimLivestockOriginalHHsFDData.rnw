@@ -1,0 +1,32 @@
+<<ReadTrimLivestockFDData Original HHs file contents>>=
+#lvo <-  readRDS(paste0(pathsaveHere, "RosterLivestockAdminOriginalHHsDataUsedForEstimation.rds"))
+# added below, this is the sample to use (July 30, 2019)
+lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+lvo[, grepout("Loan|UD|Forced|HadCows.dummyLarge$|HadCows.dummyLarge\\.T|HadCows.dummyLargeG|HadCows.dummyCow", colnames(lvo)) := NULL]
+lvostrings <- "^groupid$|hhid|^Arm$|BSta|tee|^dummy[TLCMUWSNI]|^TotalIm|Floo|Time\\.|Head"
+if (Only800) lvo <- lvo[o800 == 1, ]
+lvoR <- lvo[, grepout(paste0(lvostrings, "|RM"), colnames(lvo)), with = F] 
+lvo <- lvo[, grepout(lvostrings, colnames(lvo)), with = F]
+lvo3 <- lvo[tee == 2 | tee == 4, ]
+lvoR3 <- lvoR[tee == 2 | tee == 4, ]
+datas <- c("lvo", "lvoR", "lvo3", "lvoR3")
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+#   dl <- prepFDData(get(datas[i]), Group = "^hhid$", TimeVar = "tee", Cluster = "groupid", 
+#     LevelCovariates = "^dummy[A-Z].*[a-z]$|^Arm|Floo|^Time\\..$", 
+#     drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
+#     use.var.name.for.dummy.prefix = F, print.messages = F)
+dl <- FirstDiffPanelData(get(datas[i]), 
+  Group = "^hhid$", TimeVar = "tee", Cluster = "groupid",
+  LevelCovariates = "^dummy|Head|^Time\\..$|Female$|Floo|Eldest|^Arm|BSta|^cred.*s$|xid$|Sch.*Pa")
+  dat <- dl$diff
+  dat[, grepout("^en$", colnames(dat)) := NULL]
+  # Recreate Time.4 which is dropped when kept only 1:(T-1) obs.
+  dat[, grepout("Time.?2", colnames(dat)) := NULL]
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
+dlvoRd <- dlvoRd[tee > 2, ]
+addmargins(table0(dlvo$diff[tee==2, .(BStatus, Arm)]), 1:2, sum, T)
+@

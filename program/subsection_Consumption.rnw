@@ -1,0 +1,35 @@
+<<ReadTrimConsumption ANCOVA, cache = F, warning = F>>=
+source(paste0(pathprogram, "ReadTrimConsumptionANCOVA.R"))
+@
+
+Consumption is observed in rd 2-4. There are \Sexpr{nrow(con)} observations. 
+
+
+<<consumption regression set parameters original HHs>>=
+# Page 6 of rd 4 questionnaire.
+FileName <- "Consumption"
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("cn", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<consumption select covariates original HHs>>=
+source(paste0(pathprogram, "ConsumptionCovariateSelectionANCOVA2.R"))
+<<get jay from consumption covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- c(rep("PCExpenditure", 3), rep("TotalExpenditure", 3),
+  "PCExpenditure")
+DataToUse1 <- DataToUse2 <- rep("con", 7)
+Addseparatingcols = c(1, 4); Separatingcolwidth = rep(.2, 2)
+Separatingcoltitle = c("", "Per capita consumption (Tk)", 
+  "Total consumption (Tk)")
+dig.depmean <- 0
+AddMeanStdColumn <- T
+UseRawDataForDestat <- F
+source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+<<>>=
+#dummy chunk
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAConsumptionResults.rnw"))}
+

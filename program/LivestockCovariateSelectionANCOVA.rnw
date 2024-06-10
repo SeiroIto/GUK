@@ -1,0 +1,28 @@
+<<>>=
+excl.base <- "Pure|With|.Size|Poo|^Arm$|Trad|Time|Live.*de$|credits|^NumCows$|InKind|Cash|BSta"
+excla.base <- "Pure|Witho|Small|Poo|^Arm|Trad|Time|Live.*de$|credits|^NumCows$|dummy[FTCS]|Large$|Large\\.|LargeG|Cash|BSta"
+exclG.base <- "Pure|Witho|^dummy[FTLCS]|Poo|.Size|^Arm$|Time|Live.*de$|credits|^NumCows$|InKind|Cash|BSta"
+exclP.base <- "Pure|With|dummy[FTLCS]|Large|Size|^Arm$|Time|Mode|Live.*de$|credits|^NumCows$|InKind|Cash|BSta" 
+exclS.base <- "Pure|^dummy[FTC]|Large\\.|Large$|Poo|Grac|^Arm$|Small|Time|Live.*de$|credits|^NumCows$|InKind|Cash|BSta"
+exclT.base <- "Pure|Poor|Size|With|Trad|^dummyT|\\..*Pri|Pri..*\\.|^Arm$|Live.*de$|credits|^NumCows$|InKind|Cash|BSta"
+exclTa.base <- "^PureCo|^credit|^Arm$|dummy[FTC]|Large$|Large\\.|LargeG|Witho|Poor|Small|^dummy.*[a-z]$|^NumCows$|BSta"
+for (a in Lvsuffixes) {
+  if (!grepl("T", a)) {
+    assign(paste0("excl", a, 1), "Floo|RM|Eff|Head|Cows|0$") 
+    assign(paste0("excl", a, 2), "Floo|RM|Eff|Head|Cows")
+    assign(paste0("excl", a, 3), "Cows")
+    assign(paste0("excl", a, 4), "RM|NumCows|\\.dummyH|HadCows\\.") # keep HadCows$
+    assign(paste0("excl", a, 5), 
+    "RM|Trad|NumCows|HadCows.dummyLarge\\.T|HadCows.dummyLarge$|HadCows.dummyLargeG|HadCows.dummyCow|HadCows.dummyLargeS|HadCows.dummyW|HadCows.dummyCash|HadCows.dummyNonCash"
+    ) # keep HadCows, Arm.HadCows, Arm.HadCows.Time except traditional
+    assign(paste0("excl", a, 6), "RM|Had") # keep NumCowsOwnedAtRd1
+  } else {
+    assign(paste0("excl", a, 1), "Floo|RM|Head|Cows|0$")
+    assign(paste0("excl", a, 2), "Floo|RM|Head|Cows")
+    assign(paste0("excl", a, 3), "Cows")
+    assign(paste0("excl", a, 4), "RM|NumCows|\\.dummyH|HadCows\\.") 
+    assign(paste0("excl", a, 5), "RM|NumCows")
+    assign(paste0("excl", a, 6), "RM|HadCows")
+  }
+}
+@

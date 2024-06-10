@@ -1,0 +1,92 @@
+\subsection{Cumulative impacts}
+
+<<linear hypothesis lvo>>=
+# b <- rpois(3, 4)
+# x <- matrix(rpois(3*100, 5), byrow = T, ncol = 3)
+# y <- x%*%b + rnorm(100)
+# dat <- data.table(cbind(y=y, x))
+# setnames(dat, c("y", "trad", "large", "largegrace"))
+# testlm <- lm(y ~ trad + large + largegrace, data = dat)
+# Vb <- summary(testlm)$cov
+library(car)
+# linearHypothesis (testlm, "large - 2*largegrace = 1")
+# lh1 <- linearHypothesis (testlm, "large - 2*largegrace = 1", vcov.=Vb/10)
+# lh3 <- linearHypothesis (testlm, "(Intercept)+large - 2*largegrace = 1", vcov.=Vb/10)
+# c(attributes(lh1)$value, attributes(lh1)$vcov)
+# c(attributes(lh1)$value) + 
+#   c(0, -1.96*sqrt(attributes(lh1)$vcov), 1.96*sqrt(attributes(lh1)$vcov))
+# library(multcomp)
+# lh2 <- glht(model=testlm, linfct=matrix(c(0, 0, 1, -2), byrow = T, nrow=1), 
+#   rhs=1, alternative="two.sided", vcov.=Vb/10)
+# summary(lh2)
+# confint(lh2)$confint[1, ]
+addthese <- c("2*(Intercept)", "2*dummyLargeSize", 
+  "Time.3", "dummyLargeSize.Time3")
+lhcow <- linearHypothesis(lva2$reg, 
+  paste0(paste(addthese, collapse = "+"), "=0")
+  , vcov. = lva2$V)
+varlhcow <- attr(lhcow, "vcov")
+#c(attr(lhcow, "value")) + c(0, -1.96*sqrt(varlhcow), 1.96*sqrt(varlhcow))
+@
+Cumulative effect sums. 
+Cumulative impacts relative to traditional up to $t$ is given by $\mbox{(Intercept)}+b_{\mbox{\scriptsize Arm}}+b_{\mbox{\scriptsize $t$}}+b_{\mbox{\scriptsize Arm*$t$}}.$  This is given by \textsf{Intercept+Arm+TimeX+Arm.TimeX}. For the traditional arm, it is given by $\mbox{(Intercept)}+b_{\mbox{\scriptsize $t$}}.$
+
+
+
+In the example of cow, all periods share the baseline changes of \textsf{intercept+cow}. Per period deviations from baseline is \textsf{TimeX+cow.TimeX} for period \textsf{X}. Then per period changes are:
+\[
+\begin{aligned}
+\Delta\mbox{1st period} &= \mbox{intercept}+\mbox{cow},\\
+\Delta\mbox{2nd period} &= \mbox{intercept}+\mbox{cow}+\mbox{Time2}+\mbox{cow.Time2},\\
+\Delta\mbox{3rd period} &= \mbox{intercept}+\mbox{cow}+\mbox{Time3}+\mbox{cow.Time3}.
+\end{aligned}
+\]
+So cumulative change is:
+\[
+\begin{aligned}
+\Delta\mbox{1st period}+\Delta\mbox{2nd period}
+&=
+2(\mbox{intercept}+\mbox{cow})+\mbox{Time2}+\mbox{cow.Time2},\\
+\Delta\mbox{1st period}+\Delta\mbox{2nd period}+\Delta\mbox{3rd period}
+&=
+3(\mbox{intercept}+\mbox{cow})+\mbox{Time2}+\mbox{cow.Time2}\\
+&\hspace{2em}+\mbox{Time3}+\mbox{cow.Time3}.
+\end{aligned}
+\]
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[\textsf{covadd}]	covariate names for impacts
+	\begin{description}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item[\textsf{covadd.trad}]	lists only traditional arm covariates
+	\item[\textsf{covadd.nontrad}]	lists all other arm covariates
+	\end{description}
+\item[per period deviation]
+	\begin{description}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item[traditional]	\textsf{TimeY}.
+	\item[deviation from traditional]	\textsf{XX.TimeY}.
+	\end{description}
+\item[per period change].
+	\begin{description}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item[traditional]	\textsf{intercept}+\textsf{TimeY}.
+	\item[deviation from traditional]	\textsf{intercept+XX}+\textsf{TimeY+XX.TimeY}
+	\end{description}
+\item[cumulative change]	\textsf{intercept+XX}+\textsf{TimeY-1+XX.TimeY-1}+\textsf{TimeY+XX.TimeY}.
+\end{description}
+
+<<Cumulative impacts main text file, echo = F, eval = T, cache = F, child='c:/data/GUK/analysis/program/MainText_CumulativeImpacts.rnw'>>=
+@
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{fig IGAChoices}, \ref{fig AllIGAChoices}} show that there are very few members who chose to invest in more than one project for the ``large'' arms, while in the \textsf{traditional} arm, almost no one invested only in one project. Goat/sheep and small trades are the top choices for the first IGA in \textsf{traditional}. This indicates the exitence of both a liquidity constraint and convexity in the production technology of large domestic animals. This also validates our supposition that dairy livestock production is the most preferred and probably the only economically viable investment choice. It reduces a concern that the \textsf{cow} arm may have imposed an unnecessary restriction in an investment choice by forcing to receive a cow. \textsc{\small Figure \ref{fig AllIGAChoicesCollapsed}} shows there are a significant number of cases in the \textsf{traditional} arm that members reportedly raise cows, yet they are also accompanied by pararell projects in smaller livestock production and small trades. Contrasting \textsf{large}, \textsf{large grace} with \textsf{cow} arms, it suggests that entrepreneurship (to the extent that is necessary for dairy livestock production) may not be an impediment for a microfinance loan uptake among members.
+\end{finding}
+\end{palepinkleftbar}
+
+Together with \textsc{\small Table \ref{tab FD enroll attributes original HH}} showing smaller net saving and repayment among \textsf{traditional}, the restriction on a project choice induced by a smaller loaned sum resulted in smaller returns. 
+
+
+
+

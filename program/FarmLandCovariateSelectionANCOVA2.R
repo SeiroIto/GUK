@@ -1,0 +1,40 @@
+# exluding strings: variables with the following strings will be dropped
+excl.base <- "Pure|^HA|^PA|UD|Size|Poo|With|InK|Cash|Trad|Time"
+excla.base <- "Pure|^HA|^PA|UD|Large$|Large[\\.G]|Small|Trad|yCow|Poo|Witho|Cash|Time"
+exclP.base <- "Pure|^HA|^PA|UD|dummy[CMST]|Large$|Large\\.|[et]Grace|Time" 
+exclT.base <- paste0("^dummyH.*[a-z]$|Time.?2|", 
+  gsub("Time", "^Time$", excl.base))
+exclTa.base <- paste0("^dummyH.*[a-z]$|Time.?2|", 
+  gsub("Time", "^Time$", excla.base))
+exclTP.base <- "Pure|UD|^dummyH.*[a-z]$|Mod|Siz|Wi|InK|Ca|Tra|Time.?2|^Time$"
+exclTPa.base <- paste0("^dummyH.*[a-z]$|Time.?2|", 
+  gsub("Time", "^Time$", exclP.base))
+# additions: common additional covariates after inclX1 (starts from m = 2)
+additions <- c(
+  NA,  # this is a dummy slot for inclX1 (for HAssetValue)
+  "|Am.*Fi.*0$", 
+  "|Head|Flood|HH"
+  )
+for (a in regsuffixes) {
+  if (!grepl("T", a))
+    assign(paste0("incl", a, 1), 
+      "^dummy[CI].*[wd]$|^dummy[LW].*[cgz]e$|dummy.*Poor$") else 
+  if (grepl("Ta?$", a))
+    assign(paste0("incl", a, 1), 
+      # disallow level covariates
+      #"^dummy[CI].*[wd]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.") 
+      # allow level covariates
+      "^dummy[CI].*[wd]|^dummy[LW].*[cgz]e|^Time\\.") else
+   # if TPa: add any variable with "Poor"
+    assign(paste0("incl", a, 1), 
+      # disallow level covariates
+      #"^dummy[CI].*[wd]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.|Poor") 
+      # allow level covariates
+      "^dummy[CI].*[wd]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
+  for (m in 2:length(additions)) 
+    if (m == 4) # if m==4, copy inclX1
+      assign(paste0("incl", a, 4), get(paste0("incl", a, 1))) else
+      assign(paste0("incl", a, m), 
+        paste0(get(paste0("incl", a, m-1)), additions[m])
+      )
+}

@@ -1,0 +1,64 @@
+Memo to be used for google meet meeting with Abu-san
+Sep 28, 2020
+
+
+1. Evidence of repayment discipline or HHs diversifying earning portfolio?
+
+Referring to IGA.
+
+Constraints on production and sales capacity.
+
+No information to choose which. What would be a rationale for HHs to diversify earning portfolio after receiving a loan?
+
+2. Contents of training.
+
+GUK provided how to take care of livestock, introducing HHs to a veterinarian. 
+Did GUK provide services for fodder provision, milk sales?
+
+input support, market linkage, training
+
+
+3. Reasons for the traditional arm members who had cattle at baseline continued to hold diversified asset portfolio.
+
+Constraints on production and sales capacity.
+
+There is a fixed cost portion that is shared among all cattle herd, and a proportional cost portion that increases with the cattle herd size. Since the fixed cost portion is already paid for, it is the proportional cost portion that may not have allowed larger herd size. Or, they wanted to hold a diversified portfolio, but why did only the traditional arm initial cattle owners do so when initial cattle owners of other arms do not?
+
+4. Managerial support or training with input support?
+
+Not sure how theses can be different.
+Explain the contents and refer to previously used terminology, and then write that we will use managerial support in short.
+
+5. Winsorizing asset data?
+
+
+
+6. Why spec (5) (6) need to be dropped from Table D1?
+
+For robustness, checked if initial cattle holding matters beyond net asset values. Initial variables are included as covariates in ANCOVA to increase precision. See Frison and Pocock. If robustness checks are relegated to other tables, that is understandable.
+
+P values in 0.XXX is wasteful in one digit. ab.c % need 0.abc. 
+
+7. Caloric consumption
+
+Food intake information may be of low quality.
+
+
+8. Moderately poor and ultra poor distinction
+
+This is one of our original intentions. If the UPs are riskier.
+Sampling turned out that UP and MP are similar in assets.
+So impacts are similar. Can show tables.
+So we are not going to compare these two poverty classes. We will bunch them together.
+
+
+9. Link between loans and schooling
+
+Use capacity contsraint to refer to schooling.
+
+Already has MFI, just increase the initial loan size.
+Cost-benefit analysis: Compare with transfer programs.
+extra 12 months to get repaid.
+loan deliquency rates
+
+

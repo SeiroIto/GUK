@@ -1,0 +1,2114 @@
+%  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/read_admin_data/"); library(knitr); knit("read_admin_data.rnw", "read_admin_data.tex"); system("platex read_admin_data"); system("dvipdfmx read_admin_data")
+
+\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\renewcommand\Routcolor{\color{gray30}}
+\newtheorem{finding}{Finding}[section]
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\newcommand\gobblepars{%
+    \@ifnextchar\par%
+        {\expandafter\gobblepars\@gobble}%
+        {}}
+\newenvironment{lightgrayleftbar}{%
+  \def\FrameCommand{\textcolor{lightgray}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\newenvironment{palepinkleftbar}{%
+  \def\FrameCommand{\textcolor{palepink}{\vrule width 1zw} \hspace{10pt}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+{\endMakeFramed}
+\makeatother
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{framed}
+\captionsetup[figure]{font={stretch=.6}} 
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows, decorations, decorations.pathreplacing, backgrounds}
+\usepackage{adjustbox}
+\tikzstyle{toprow} =
+[
+top color = gray!20, bottom color = gray!50, thick
+]
+\tikzstyle{maintable} =
+[
+top color = blue!1, bottom color = blue!20, draw = white
+%top color = green!1, bottom color = green!20, draw = white
+]
+\tikzset{
+%Define standard arrow tip
+>=stealth',
+%Define style for different line styles
+help lines/.style={dashed, thick},
+axis/.style={<->},
+important line/.style={thick},
+connection/.style={thick, dotted},
+}
+
+
+\begin{document}
+\setlength{\baselineskip}{12pt}
+
+<<option setting child files, cache = F, child=paste0(pathprogram, "EstimationMemo_OptionSetting.rnw")>>=
+<<modify option>>=
+pathsaveHere <- paste0(pathsave, "read_admin_data/")
+@
+
+\hfil GUK administrative files\\
+
+\hfil\MonthDY\\
+\hfil{\footnotesize\currenttime}\\
+
+\hfil Seiro Ito
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\setlength{\parindent}{1em}
+\vspace{2ex}
+
+
+\section{Read files}
+
+Read Administrative data. 
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\textsf{Arm} is defined using \textsf{rand\_arm} in {\footnotesize \Sexpr{gsub("\\_", "\\\\_", list.files(path = pathcleaned, pattern = "Ad.*ta.dta$", full.names = T))}}, stored in \textsf{admin\_data\_wide2.rds}.
+\item	Corrected: typos, erroneous date entries (12512 is guessed as 12/12), hhid == 8169303, 8169305, 8169306, 8169316 are pure savers (value.repay in 48th month is set to zero), 
+\item	Reshaped: X1.date, X2.date variables to long (date, X1, X2, ...) format, with dates following POSIX.ct. Used dcast of data.table.
+\end{itemize}
+\gobblepars
+<<read stata dta and correct variable names to be coherent, echo = F, warning = F>>=
+gc()
+library(readstata13)
+ad <- data.table(read.dta13(list.files(path = pathcleaned, pattern = "Ad.*ta.dta$", full.names = T),
+  generate.factors = T, nonint.factors = T))
+#ad <- data.table(read.dta13(list.files(path = pathcleaned, pattern = "Ad.*_updated.dta$", full.names = T), generate.factors = T, nonint.factors = T))
+setnames(ad, grepout("[vfyW][A-Z]", colnames(ad)),
+   gsub("([vfyW])([A-Z])", "\\1_\\2", grepout("[vfyW][A-Z]", colnames(ad))))
+setnames(ad, grepout("^(repay)([a-z])", colnames(ad)),
+   gsub("(epay)([a-z])", "\\1_\\2", grepout("^(repay)([a-z])", colnames(ad))))
+setnames(ad, grepout("^s.*?[fv][jfmasond]", colnames(ad)),
+   gsub("(^s.*?[fv])([jfmasond])", "\\1_\\2", grepout("^s.*?[fv][jfmasond]", colnames(ad))))
+setnames(ad, grepout("^m.*?[w][jfmasondJFMASOND]", colnames(ad)),
+   gsub("(^m.*?[w])([jfmasondJFMASOND])", "\\1_\\2", 
+   grepout("^m.*?[w][jfmasondJFMASOND]", colnames(ad))))
+arms <- c("traditional", "large", "large grace", "cow")
+for (i in 1:4) ad[rand_arm == levels(rand_arm)[i], Arm := arms[i]]
+ad[, Arm := factor(Arm, levels = arms)]
+ad[, Arm := factor(Arm, labels = armsC)]
+setnames(ad, grepout("_", colnames(ad)),
+   tolower(grepout("_", colnames(ad))))
+setnames(ad, grepout("sav_ref", colnames(ad)), 
+  gsub("sav_", "savi", grepout("sav_ref", colnames(ad))))
+mons <- unlist(strsplit(grepout("_[jfmasond]", colnames(ad)), ".*_"))
+mons <- mons[mons != ""]
+thesecols <- grepout("_[jfmasond]", colnames(ad))[nchar(mons) > 5]
+thesecols1 <- strsplit(thesecols, "_")
+thesecols2 <- lapply(thesecols1, function(x) 
+  c(x[1], paste0(substr(x[2], 1, 3), substr(x[2], nchar(x[2])-1, nchar(x[2])))))
+thesecols2 <- unlist(lapply(thesecols2, function(x) paste(x[1], x[2], sep = "_")))
+setnames(ad, thesecols, thesecols2)
+#unlist(unique(lapply(strsplit(grepout("_", colnames(ad)), "_"), function(x) tolower(x[1]))))
+# 1st, 2nd, 3rd are time-invariant attributes
+setnames(ad, grepout("1st|2nd|3rd", colnames(ad)),
+   gsub("_", "", grepout("1st|2nd|3rd", colnames(ad))))
+setnames(ad, grepout("_", colnames(ad)), 
+  gsub("_", "\\.", grepout("_", colnames(ad))))
+setnames(ad, "rand.arm", "randomArm")
+<<reshape ad to adl>>=
+# base reshape gives an error: 'varying' arguments must be the same length
+#adl <- reshape(ad, direction = "long", idvar = c("districtname", "upazila", "unionname", 
+#  "villagename", "groupid", "povertystatus", "hhid", "memname"),
+#  varying = grepout("\\.", colnames(ad)))
+adl <- melt(ad, idvar = c("districtname", "upazila", "unionname", 
+  "villagename", "groupid", "povertystatus", "hhid", "memname"), 
+  measure.vars = grepout("\\.", colnames(ad)))
+<<create Date and calendar date variables, warning = F>>=
+firstpart <- function(x) unlist(strsplit(x, "\\."))[1]
+secondpart <- function(x) unlist(strsplit(x, "\\."))[2]
+adl[, c("Time", "Variable") := .(as.character(variable), as.character(variable))]
+adl[, Variable := unlist(strsplit(as.character(variable), "\\..*"))]
+adl[, Time := gsub("^.*\\.", "", variable)]
+adl[, Year := as.numeric(paste0(20, substr(Time, 4, 5)))]
+adl[, Month := substr(Time, 1, 3)]
+adl[, Date := paste0(1, "-", Month, "-", Year)]
+# first disbursement Date. Correct erroneous entries.
+#unique(adl[, Date])
+#adl[grepl("arm", Date), ]
+# Below gives only one date so I cannot infer what 12512 means... guessed as 12/12.
+# unique(adl[hhid == unique(adl[grepl("12512", distributiondate1st), hhid]), distributiondate1st])
+adl[grepl("12512", distributiondate1st), distributiondate1st := "12/12/2013"]
+adl[grepl("102013", distributiondate1st), distributiondate1st := "30/10/2013"]
+## This will give NA(s) in some non-English locales; setting the C locale
+## as in the commented lines will overcome this on most systems.
+## lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
+# this was unnecessary before I start using R in japanese mode...
+lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
+adl[, Date := strptime(paste0(1, "-", Month, "-", Year), format = "%d-%b-%Y")]
+Sys.setlocale("LC_TIME", lct)
+adl[, Month := factor(format(Date,"%B"), 
+  levels = strftime(paste0("2000-", 1:12, "-1"), "%B"))]
+setkey(adl, groupid, hhid, Variable, Date)
+<<create DisDate Disbursed variables, warning = F>>=
+adl[, DisbursementDate1 := strptime(distributiondate1st, format = "%d/%m/%Y")]
+adl[, DisbursementDate2 := strptime(distributiondate2nd, format = "%d/%m/%Y")]
+adl[, DisbursementDate3 := strptime(distributiondate3rd, format = "%d/%m/%Y")]
+setkey(adl, hhid, Date)
+# DisDateX: Immediate next month of Xth disbursement
+setnames(adl, "loananount1st", "loanamount1st")
+adl[loanamount1st > 0,
+  DisDate1 := min(Date[Date >= DisbursementDate1], na.rm = T), by = hhid] 
+if (nrow(adl[is.na(DisDate1) & 
+  !(is.na(distributiondate1st) | distributiondate1st == ""), ]) > 0)
+  adl[is.na(DisDate1) & !(is.na(distributiondate1st) | distributiondate1st == ""), ]
+adl[loanamount2nd > 0,
+  DisDate2 := min(Date[Date >= DisbursementDate2], na.rm = T), by = hhid] 
+adl[loanamount3rd > 0,
+  DisDate3 := min(Date[Date >= DisbursementDate3], na.rm = T), by = hhid] 
+adl[, Disbursed := 0L]
+for (i in 1:3) adl[Date == eval(parse(text = paste0("DisDate", i))), Disbursed := 1L]
+<<Compute elapsed months and weeks since first disbursement LoanYear>>=
+library(zoo)
+adl[, MonthsElapsed := 0L]
+# 1L is added since loan repayment begins immediately after receiving a loan
+adl[, MonthsElapsed := round((as.yearmon(Date) - as.yearmon(DisDate1))*12) + 1L]
+adl[, WeeksElapsed :=  round(difftime(Date, DisDate1, units = c("weeks")), 1)]
+adl[, LoanYear := as.integer(NA)]
+adl[grepl("es", creditstatus) & MonthsElapsed > 0 & MonthsElapsed <= 12, LoanYear := 1L]
+adl[grepl("es", creditstatus) & MonthsElapsed > 12 & MonthsElapsed <= 24, LoanYear := 2L]
+adl[grepl("es", creditstatus) & MonthsElapsed > 24 & MonthsElapsed <= 36, LoanYear := 3L]
+adl[grepl("es", creditstatus) & MonthsElapsed > 36 & MonthsElapsed <= 48, LoanYear := 4L]
+adl[, c("Year2014", "Year2015", "FirstYear", "SecondYear", "ThirdYear") := 0L]
+adl[Year == 2014, Year2014 := 1L]
+adl[Year == 2015, Year2015 := 1L]
+adl[MonthsElapsed >= 0 & MonthsElapsed <= 12, FirstYear := 1L]
+adl[MonthsElapsed > 12 & MonthsElapsed <= 24, SecondYear := 1L]
+adl[MonthsElapsed > 24 & MonthsElapsed <= 36, ThirdYear := 1L]
+<<Reshape ad to adw>>=
+# Reshape to wide: base reshape takes forever... use dcast of data.table
+adlforw <- adl[, variable := NULL]
+adlforw[, value := as.numeric(value)]
+# adw <- reshape(adlforw, direction = "wide", 
+#    idvar = c("hhid", "Date", "Year", "Month", "MonthsElapsed"),
+#    timevar = "Variable", v.names = "value")
+adw <- data.table::dcast(adlforw, ... ~ Variable, value.var = "value")
+setnames(adw, unique(adl[, Variable]), paste0("value.", unique(adl[, Variable])))
+setkey(adw, hhid, Date)
+adw[, Tee := 1:.N, by = hhid]
+adw[, MaxTee := .N, by = hhid]
+<<Initial and terminal dates, results = 'hide'>>=
+#Initial and terminal dates.
+c(unique(adw[Tee == 1, Date]), unique(adw[Tee == MaxTee, Date]))
+@
+Save admin files.
+<<save adw, echo = T>>=
+saveRDS(adl, paste0(path1234, "admin_data.rds"))
+fwrite(adl, paste0(path1234, "admin_data.prn"), sep = "\t", quote = F)
+saveRDS(adw, paste0(path1234, "admin_data_wide.rds"))
+fwrite(adw, paste0(path1234, "admin_data_wide.prn"), sep = "\t", quote = F)
+@
+
+\section{Individual level outcomes}
+
+<<>>=
+gc()
+adl <- readRDS(paste0(path1234, "admin_data.rds"))
+adw <- readRDS(paste0(path1234, "admin_data_wide.rds"))
+@
+<<eval = F, results = 'hide'>>=
+# first disbursement Date. Correct erroneous entries.
+unique(adl[grepl("\\d\\d\\d\\d\\d", distributiondate1st), distributiondate1st])
+<<eval = F>>=
+# 3 years from start Date
+adl[, paste0(rep(c("AfterYear", "EndOfYear"), each = 3), 1:3) := F]
+adl[Date > DisbursementDate1 + 3600*24*365*1, AfterYear1 := T]
+adl[Date > DisbursementDate1 + 3600*24*365*2, AfterYear2 := T]
+adl[Date > DisbursementDate1 + 3600*24*365*3, AfterYear3 := T]
+  # end dates of year1, year2, year3
+adl[, paste0("EndDateOfYear", 1:3) := 
+  .(max(Date[!(AfterYear1)]), max(Date[!(AfterYear2)]), max(Date[!(AfterYear3)])), 
+  by = hhid]
+  # mark end of year1, year2, year3
+for (i in 1:3) adl[Date == eval(parse(text = paste0("EndDateOfYear", i))), 
+    paste0("EndOfYear", i) := T]
+@
+I created following variables (names of derived-variables start with upper scale characters.)
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[individual totals]	 TotalRepaid, TotalSaved, TotalWithdrawn, TotalNetSaving, FullyRepaid.
+\item[group totals]	 GroupSaving, GroupNetSaving, MeanGroupShortfall, 
+\item[cumulatives]	 CumSaving, CumNetSaving, CumWithdrawal, CumRepaid, CumRepaidRate := CumRepaid/(125*45*3) or, CumRepaid/(190*45*2), CumPlannedInstallment := 125 * floor(WeeksElapsed) or 190 * floor(WeeksElapsed).
+\item[PlannedInstallment]	125 or 190 * NumberOfWeeks.
+\item[repayment shortfall] Shortfall := (planned installments)-(amount repaid), ShortfallRate :	= Shortfall/PlannedInstallment, value.Paid = repayment + net saving.
+\item[normalised repayments]	 NormRepaid := value.repay/NumberOfWeeks, NormNetDeficit := (plannedInstallment - value.Paid)/NumberOfWeeks. There are so many members who do not repay in full. To guard against classification errors in data, compute the total amount paid in, including saving.
+\item[mean values of other members in a group]	 OtherShortfall, OtherRepaid, CumOtherRepaid, CumOtherRepaidRate, OtherCost, OtherRevenue.
+\end{description}
+
+There are errors in admin data: Only repaid at month 48 and not receiving a loan. These households creditstatus are recorded as No. These are classified as pure savers in ID information in \Sexpr{gsub("\\_", "\\\\_", path1234)}. Change value.repay in 48th month as zero. This will make 
+<<change errors in month 48 value.repay>>=
+ID <- readRDS(paste0(path1234, "ID.rds"))
+unique(ID[hhid == 8169303|hhid == 8169305|hhid == 8169306|hhid == 8169316, 
+  .(hhid, creditstatus, missing_followup, loanamount_1st)])
+adw[(hhid == 8169303|hhid == 8169305|hhid == 8169306|hhid == 8169316) & Tee == 48, 
+  .(hhid, creditstatus, Tee,  totalloan, value.repay, totalrepayment, totalsaving,  loanamount1st, DisDate1)]
+adw[hhid == 8169303|hhid == 8169305|hhid == 8169306|hhid == 8169316, 
+  c("value.repay", "totalrepayment") := 0]
+@
+
+<<compute totals>>=
+MonthsOfRepayment <- 45
+adw[, StartedIn2013 := as.Date(DisDate1) < as.Date("2014-01-01")]
+adw[, MonthsRepaid := MonthsElapsed]
+adw[grepl("gr|cat", Arm), MonthsRepaid := MonthsRepaid - 12]
+adw[, TotalRepaid := sum(value.repay, na.rm = T), by = hhid]
+adw[, c("BeforeMaturity1", "BeforeMaturity2", "BeforeMaturity3") := F]
+adw[MonthsElapsed <= 36, BeforeMaturity1 := T]
+adw[MonthsElapsed <= 12 & grepl("tra", Arm), 
+  BeforeMaturity1 := T]
+adw[MonthsElapsed > 12 & MonthsElapsed <= 24 & grepl("tra", Arm), 
+  BeforeMaturity2 := T]
+adw[MonthsElapsed > 24 & MonthsElapsed <= 36 & grepl("tra", Arm), 
+  BeforeMaturity3 := T]
+for (i in 1:3) 
+  adw[(eval(parse(text=paste0("BeforeMaturity", i)))), 
+    paste0("TotalRepaidMaturity", i) := sum(value.repay, na.rm = T), by = hhid]
+adw[, Profit := value.rev - value.cost]
+adw[, TotalSaved := sum(value.sav, na.rm = T), by = hhid]
+adw[, TotalWithdrawn := sum(value.saviref, na.rm = T), by = hhid]
+adw[, TotalNetSaving := TotalSaved - TotalWithdrawn]
+adw[MonthsElapsed <= 36, 
+  TotalRepaidIn3Years := sum(value.repay, na.rm = T), by = hhid]
+adw[year(Date) <= 2016, 
+  TotalRepaidBy2016 := sum(value.repay, na.rm = T), by = hhid]
+adw[, value.Paid := value.repay + value.sav - value.saviref]
+# copy Totals to all rows of same hhid
+for (i in c("TotalRepaid", "TotalRepaidBy2016", "TotalRepaidIn3Years", 
+  "TotalSaved", "TotalWithdrawn", paste0("TotalRepaidMaturity", 1:3)))
+  adw[, (i) := eval(parse(text = i))[!is.na(eval(parse(text = i)))][1], by = hhid]
+adw[, c("GroupSaving", "GroupNetSaving") := .(sum(value.sav, na.rm = T), 
+  sum(value.sav, na.rm = T)-sum(value.saviref, na.rm = T)), 
+  by = .(groupid, Date)]
+<<compute cumulatives, cache = F>>=
+# Compute cumulatives.
+setkey(adw, hhid, Date)
+# cumsum(1+NA) = NA: So turn NA => 0
+for (i in c("repay", "sav", "saviref")) 
+  adw[is.na(eval(parse(text=paste0("value.", i)))), paste0("value.", i) := 0]
+for (i in c("Profit")) 
+  adw[is.na(eval(parse(text=i))), (i) := 0]
+adw[, CumProfit := cumsum(Profit), by = hhid]
+adw[, CumSaving := cumsum(value.sav), by = hhid]
+adw[, value.NetSaving := value.sav - value.saviref]
+adw[is.na(value.NetSaving), value.NetSaving := 0]
+adw[, EffectiveRepayment := value.repay + value.NetSaving]
+# sav: saving
+# saviref: originally "sav_ref" in R, SaviRefMMYY in stata, "savings refund in MM/YY".
+# value.NetSaving is saving net of saving refund. Not net of repayments.
+# EffectiveRepayment := value.repay + value.NetSaving 
+# is a more accurate measure of net cash outflows from member to GUK.
+adw[, CumNetSaving := cumsum(value.NetSaving), by = hhid]
+adw[, CumWithdrawal := cumsum(value.saviref), by = hhid]
+adw[, CumRepaid := cumsum(value.repay), by = hhid]
+adw[, CumMisses := cumsum(value.missw), by = hhid]
+adw[, CumEffectiveRepayment := cumsum(EffectiveRepayment), by = hhid]
+#adw[is.na(EffectiveRepayment), .(hhid, MonthsRepaid, value.repay, 
+##value.sav, value.saviref, 
+#value.NetSaving, EffectiveRepayment, value.Paid)]
+adw[, CumPlannedInstallment := 0L]
+# When disbursed, WeeksElapsed is computed as 0 (because date information is not very reliable, 
+# forcing us to count weeks from the 2nd month).
+# So floor(WeeksElapsed) gives the 1st month as zero-th installment, 
+# leading to CumPlannedInstallment to zero in the 1st month, ending 36th installment in 37th month.
+adw[!grepl("gr|cat", Arm) & MonthsElapsed > 0 & MonthsElapsed <= 36, 
+  CumPlannedInstallment := as.integer(125 * floor(WeeksElapsed))]
+adw[grepl("gr|cat", Arm) & MonthsElapsed > 12 & MonthsElapsed <= 36, 
+  CumPlannedInstallment := as.integer(190 * floor(WeeksElapsed-52))]
+adw[!grepl("Yes", creditstatus), CumPlannedInstallment := 0L]
+adw[, PlannedInstallment := c(CumPlannedInstallment[1], diff(CumPlannedInstallment)), 
+  by = hhid]
+adw[(grepl("gr|cat", Arm) & MonthsElapsed <= 12) | MonthsElapsed > 36, 
+  PlannedInstallment := 0L]
+adw[, c("CumRepaidRate", "CumEffectiveRepaidRate") := 
+  .(round(CumRepaid/CumPlannedInstallment, 3), 
+    round(CumEffectiveRepayment/CumPlannedInstallment, 3))]
+# TotalDebt owed
+adw[, TotalDebt := as.integer(125 * MonthsOfRepayment * 3)]
+adw[!grepl("gr|cat", Arm), TotalDebt := as.integer(190 * MonthsOfRepayment * 2)]
+adw[, c("OutstandingRate", "EffectiveOutstandingRate") := 
+  .(round(1-CumRepaid/TotalDebt, 3), round(1-CumEffectiveRepayment/TotalDebt, 3))]
+# Need to define these rates as NA because repayment has not begun, so ratios become infinite
+adw[(grepl("gr|cat", Arm) & MonthsElapsed <= 12), 
+  c("CumRepaidRate", "CumEffectiveRepaidRate") := NA]
+setkey(adw, groupid, Date)
+adw[, c("CumGroupSaving", "CumGroupNetSaving") := 
+  .(cumsum(GroupSaving), cumsum(GroupNetSaving)), by = groupid]
+adw[, c("FullyRepaid", "EffectivelyFullyRepaid") := 0L]
+# FullyRepaid (up to current month) if CumRepaid > TotalDebt
+# Note: FullyRepaid is time varying
+adw[(grepl("tr|ge$", Arm) & CumRepaid > 125*MonthsOfRepayment*3) | 
+  (!grepl("tr|ge$", Arm) & CumRepaid > 190*MonthsOfRepayment*2), FullyRepaid := 1L]
+adw[(grepl("tr|ge$", Arm) & CumEffectiveRepayment > 125*45*3) | 
+  (!grepl("tr|ge$", Arm) & CumEffectiveRepayment > 190*45*2), EffectivelyFullyRepaid := 1L]
+# Let FullyRepaid (EffectivelyFullyRepaid) copies the final month value
+adw[, FullyRepaid := FullyRepaid[.N], by = hhid]
+adw[, EffectivelyFullyRepaid := EffectivelyFullyRepaid[.N], by = hhid]
+<<define EverSaved EverRepaid>>=
+adw[, EverSaved := any(!is.na(CumNetSaving ) & CumNetSaving > 0), by = hhid]
+adw[, EverRepaid := any(CumRepaid > 0), by = hhid]
+<<compute Shortall, cache = F>>=
+#We know monthly number of missed repayments, amount of repayment, and loan disbursement dates. So one can compute the shortfall by (planned installments)-(amount repaid). 
+setkey(adw, hhid, Date)
+adw[, Shortfall := PlannedInstallment - value.repay]
+adw[, ShortfallRate := Shortfall/PlannedInstallment]
+adw[, MaxRepayment := as.integer(125*52*3)]
+adw[grepl("gr|cat", Arm), MaxRepayment := as.integer(190*52*2)]
+adw[MonthsElapsed > 36, CumPlannedInstallment := as.integer(MaxRepayment)]
+adw[, CumShortfall := CumPlannedInstallment - CumRepaid]
+adw[, CumShortfallRatio := round(CumShortfall/CumPlannedInstallment, 3)]
+adw[CumPlannedInstallment == 0, CumShortfallRatio := NA]
+adw[, MeanGroupShortfall := sum(Shortfall, na.rm = T)/.N, by = .(groupid, Date)]
+@
+\begin{palepinkleftbar}
+\begin{finding}
+Repayments are insufficient and late. Very few are on schedule. \textsc{\small Figure \ref{Figure monthly late repayment ratios}} shows mean cumulative shortfall rates are 30\%-50\%. Full repayment is rare even at the end of 4th year. \textsc{\small Figure \ref{Figure repayment shortfall by group}} shows repayment shortfall is lower for arms without a grace period, shortfall is still being paid back after the loan matures in all arms, while \textsc{\small Figure \ref{Figure repayment shortfall and net saving}} shows shortfall and positive net saving coexist.
+\end{finding}
+\end{palepinkleftbar}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Why does GUK accept saving from members with repayment shortfall (on monthly basis)? 
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+Almost no difference in repayment between ultra poor and moderately poor.
+\end{finding}
+\end{palepinkleftbar}
+<<compute GRSR>>=
+# group level regressions
+# Split the groups to low and high group repayment shortfall rates (GRSR) at day 1
+adw[, MeanGRSR := mean(ShortfallRate[grepl("Yes", creditstatus) & 
+    !is.na(MonthsElapsed) & MonthsRepaid >= 1 & MonthsRepaid <= 6], 
+  na.rm = T), by = groupid]
+#table(X[is.nan(MeanGRSR), .(Arm, membershipstatus)])
+MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], na.rm = T)
+adw[, GRSR := "low"]
+adw[MeanGRSR > MedianGRSR, GRSR := "high"]
+adw[, GRSR := factor(GRSR, levels = c("low", "high"))]
+@
+\noindent
+Repaid amount in 3 years $\geqslant$ due amount. FullyRepaid: Sum of repayment $\geqslant$ due amount.
+<<tabulation of Arm and FullyRepaid>>=
+#table(adw[CumRepaidRate >= 1 & MonthsElapsed == 36, Arm])
+table(adw[Tee == 1 & grepl("es", creditstatus), .(Arm, FullyRepaid)])
+@
+EffectivelyFullyRepaid: Sum of repayment + net saving $\geqslant$ due amount.
+<<tabulation of Arm and EffectivelyFullyRepaid>>=
+table(adw[Tee == 1 & grepl("es", creditstatus), 
+  .(Arm, EffectivelyFullyRepaid)])
+<<compute normalised values>>=
+# Normalise installments with the number of weeks per month.
+library(Hmisc)
+adw[, NumberOfDays := monthDays(Date)]
+adw[, NumberOfWeeks := NumberOfDays/7]
+adw[, NormRepaid := value.repay/NumberOfWeeks]
+adw[, NormPaid := value.Paid/NumberOfWeeks]
+adw[, NormNetDeficit := 125-NormPaid]
+adw[grepl("gra|packa", Arm), NormNetDeficit := 190-NormPaid]
+<<compute other members values>>=
+# Compute mean values of other members in the group.
+adw[, c("OtherShortfall", "OtherRepaid", "CumOtherProfit",
+  "CumOtherRepaid", "CumOtherRepaidRate",
+  "OtherNetSaving", "CumOtherNetSaving", "OtherProfit",
+  "OtherMisses", 
+  "OtherCost", "OtherRevenue") := 
+  .((sum(Shortfall) - Shortfall)/(.N-1), 
+    (sum(value.repay) - value.repay)/(.N-1), 
+    (sum(CumProfit) - CumProfit)/(.N-1), 
+    (sum(CumRepaid) - CumRepaid)/(.N-1), (sum(CumRepaidRate) - CumRepaidRate)/(.N-1), 
+    (sum(value.NetSaving) - value.NetSaving)/(.N-1), 
+    (sum(CumNetSaving) - CumNetSaving)/(.N-1), 
+    (sum(Profit) - Profit)/(.N-1), 
+    (sum(value.missw) - value.missw)/(.N-1), 
+    (sum(value.cost) - value.cost)/(.N-1), (sum(value.rev) - value.rev)/(.N-1)),
+  by = .(Date, groupid)]
+# recompute CumOther... in the way not to propagate NAs.
+adw[, CumOtherMisses := 
+  (sum(CumMisses, na.rm = T) - CumMisses)/(sum(!is.na(CumMisses))-1), 
+  by = .(Date, groupid)]
+adw[is.na(CumMisses), CumOtherMisses := 
+  sum(CumMisses, na.rm = T)/sum(!is.na(CumMisses)), 
+  by = .(Date, groupid)]
+adw[, CumOtherRepaidRate := 
+  (sum(CumRepaidRate, na.rm = T) - CumRepaidRate)/(sum(!is.na(CumRepaidRate))-1), 
+  by = .(Date, groupid)]
+adw[is.na(CumRepaidRate), CumOtherRepaidRate := 
+  sum(CumRepaidRate, na.rm = T)/sum(!is.na(CumRepaidRate)), 
+  by = .(Date, groupid)]
+@
+<<compute MonthsToRepay, results = 'hide'>>=
+# Number of months to fully repay.
+adw[, MonthsToRepay := as.integer(NA)]
+adw[grepl("tr|ge$", Arm) & CumRepaid > 125*MonthsOfRepayment*3, 
+  MonthsToRepay := as.integer(min(MonthsElapsed))]
+adw[!grepl("tr|ge$", Arm) & CumRepaid > 190*MonthsOfRepayment*2, 
+  MonthsToRepay := as.integer(min(MonthsElapsed))]
+adw[, MonthsToRepay := MonthsToRepay[!is.na(MonthsToRepay)][1], by = hhid]
+@
+Types of \textsf{membershipstatus}:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[continued]	original participants, ``continuing''
+\item[replaced]	replacing the individual rejecters, ``individual replacing''
+\item[new]	replacing the group rejecters, ``group replacing''
+\item[dropouts]	individual rejecters (so $\Sigma$ rejecters == $\Sigma$ dropouts, for all arms), ``dropped out''
+\item[group rejecters]	missing from admin data.
+\end{description} 
+%Compare between members who received loans by 2014-11?
+\gobblepars
+<<defining Mem, results = 'hide'>>=
+adw[, Mem := tolower(substr(membershipstatus, 1, 1))]
+adw[, Mem := factor(Mem, labels = 
+  c("continuing", "group replacing", "individual replacing", "dropped out"))]
+table(adw[, .(Mem, membershipstatus)])
+adw[, c("Maturity12", "Maturity23") := 
+  .(DisDate2 - DisDate1, DisDate3 - DisDate2)]
+@
+Borrowing patterns among the traditional arm: 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[planned]	Original traditional loan of 5600*3.
+\item[double]	Second loan is double of the first, 5600, 11200.
+\item[twice]	Two loans (roughly) equally split, 7840, 8960, or two disbursement dates are recorded.
+\end{description}
+<<define TradGroup>>=
+adw[(loanamount1st == 5600 & loanamount2nd == 5600 & loanamount3rd == 5600) |
+  (!is.na(DisDate1) & !is.na(DisDate2) & !is.na(DisDate3)), 
+  TradGroup := "planned"]
+adw[loanamount1st == 5600 & loanamount2nd == 11200, 
+  TradGroup := "double"]
+adw[(loanamount1st == 7840 & loanamount2nd == 8960) | 
+  (!is.na(DisDate1) & !is.na(DisDate2) & is.na(DisDate3)), 
+  TradGroup := "twice"]
+adw[is.na(loanamount1st) & is.na(DisDate1) & !EverRepaid, 
+  TradGroup := "twice"]
+adw[, TradGroup := factor(TradGroup, levels = c("planned", "twice", "double"))]
+@
+<<TradGroup2 members who did not receive a loan>>=
+table0(adw[is.na(TradGroup) & grepl("trad", Arm) & grepl("No", creditstatus), 
+ .(membershipstatus, EverRepaid)])
+table0(adw[is.na(TradGroup) & grepl("trad", Arm) & grepl("No", creditstatus), 
+ .(DisDate1, loanamount1st)])
+adw[grepl("trad", Arm) & grepl("No", creditstatus) & grepl("Con|Ne", membershipstatus), 
+  TradGroup2 := "NotReceivedLoan"]
+table0(adw[grepl("trad", Arm) & grepl("Con|Ne", membershipstatus), .(TradGroup, TradGroup2)])
+@
+Check how many of traditional arm subects are receiving double sized loans.
+<<tabuation of 1st and 2nd amount>>=
+table0(adw[grepl("tr", Arm) & Tee == 1, 
+  .(loanamount1st, loanamount2nd)])
+@
+\textsf{planned} have their disbursement made by Dec, 2013, and attrition patterns.
+<<listing disbursement patterns of traditional loan>>=
+traddisb <- adw[Tee == 1 & loanamount2nd != 0 & grepl("tr", Arm), .N, 
+  by = .(TradGroup, DisDate1, DisDate2, DisDate3, Maturity12, Maturity23)]
+setkey(traddisb, TradGroup, DisDate1, DisDate2)
+traddisb
+armdisb <- adw[Tee == 1, .N, 
+  by = .(Arm, TradGroup, Mem, DisDate1, DisDate2, DisDate3, 
+    Maturity12, Maturity23)]
+setkey(armdisb, Arm, TradGroup, DisDate1, DisDate2)
+armdisb[, c("DisDate2", "DisDate3") := NULL]
+<<disbursement patterns by continuing-vs-replaced-vs-dropout members, results = 'hide'>>=
+armdisb[grepl("c", Mem), ]
+armdisb[grepl("r", Mem), ]
+armdisb[grepl("d", Mem), ]
+<<compute loan mature month, results = 'hide'>>=
+# Identifying the month loan matures.
+adw[, paste0("MonthMatures", 1:3) := F]
+adw[grepl("tr", Arm) & MonthsElapsed == 12, MonthMatures1 := T]
+adw[grepl("tr", Arm) & MonthsElapsed == 24, MonthMatures2 := T]
+adw[grepl("tr", Arm) & MonthsElapsed == 36, MonthMatures3 := T]
+adw[!grepl("tr", Arm) & MonthsElapsed == 36, MonthMatures1 := T]
+table(adw[!grepl("tw", TradGroup) & MonthMatures1, .(Arm, MonthsElapsed)])
+table(adw[!grepl("tw", TradGroup) & MonthMatures1, .(Arm, CumRepaidRate >= .9)])
+<<Cumulative repayment for traditional, warning = F, results = 'hide'>>=
+# Cumulative repayment for traditional.
+# total loan for traditional arm needs to be time varying
+adw[, c("CumTradLoanAmount", "LoanCycle") := 0L]
+# Immediate next month of disbursements
+adw[Date == DisDate1, CumTradLoanAmount := loanamount1st[1], by = hhid] 
+adw[Date == DisDate2, CumTradLoanAmount := loanamount2nd[1], by = hhid] 
+adw[Date == DisDate3, CumTradLoanAmount := loanamount3rd[1], by = hhid] 
+table0(adw[grepl("tr", Arm) & Tee == 1, .(TradGroup, loanamount1st)])
+setkey(adw, hhid, Date)
+adw[grepl("tr", Arm), 
+  CumTradLoanAmount := cumsum(CumTradLoanAmount), by = hhid]
+adw[grepl("tr", Arm), 
+  LoanCycle := cumsum(Disbursed), by = hhid]
+for (i in c("LoanCycle"))
+  adw[, (i) := eval(parse(text = i))[eval(parse(text = i)) != 0][1], by = .(hhid, Date)]
+adw[grepl("trad", Arm), 
+  CumTradRepaidRate := round(CumRepaid/CumTradLoanAmount, 3)]
+table0(adw[grepl("tr", Arm) & Tee == MaxTee, 
+  .(CumTradLoanAmount, TradGroup)])
+adw[loanamount3rd > 0 & Disbursed != 0, 
+  .(hhid, Date, LoanCycle, CumTradLoanAmount)][1:21,]
+adw[loanamount3rd > 0, 
+  .(hhid, Date, LoanCycle, CumTradLoanAmount)][1:21,]
+adw2 <- adw
+@
+Save.
+<<save adw2, echo = T>>=
+saveRDS(adw2, paste0(path1234, "admin_data_wide2.rds"))
+fwrite(adw2, paste0(path1234, "admin_data_wide2.prn"), sep = "\t", quote = F)
+@
+
+Plots.
+<<monthly late repayment ratios, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Monthly cumulative repayment shortfall ratios", "\\\\ {\\footnotesize Cumulative repayment shortfall ratio = (cumulative shortfall) / (cumulative planned installment). Dots indicate individuals.}\\setlength{\\baselineskip}{8pt}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+# creditstatus is time invariant
+ggplot(adw[grepl("Yes", creditstatus), ], 
+    aes(x = MonthsElapsed, y = CumShortfallRatio, colour = povertystatus, group = povertystatus)) +
+  geom_point(size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(span = .25) +
+  scale_y_continuous(limits = c(-1, 1)) +
+  scale_x_continuous(breaks = seq(0, 48, 12), limits = c(0, 48)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+    legend.position="bottom", 
+    legend.key = element_rect(fill = "white")) + 
+  geom_hline(aes(yintercept = 0), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Cumulative repayment shortfall ratio") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+<<monthly normalised net repayment, warning = F, message = F, eval = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Normalised weekly repayment deficit", "\\\\ {\\footnotesize Repayment deficit = planned installment - repayment - net saving.}\\setlength{\\baselineskip}{8pt}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+ggplot(adw, 
+    aes(x = MonthsElapsed, y = NormNetDeficit, colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  scale_y_continuous(limits = c(-200, 200)) +
+  scale_x_continuous(breaks = seq(-24, 48, 12)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+    legend.position="bottom", 
+    legend.key = element_rect(fill = "white")) + 
+  geom_hline(aes(yintercept = 0), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment deficit") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+<<cache = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+<<repay data>>=
+repay <- adw2[MonthMatures1 & !grepl("tw", TradGroup), ]
+<<tabulations of each arm and disbursement dates, results = 'hide'>>=
+table(adw2[!grepl("tr", Arm) & TotalRepaid >= 19760 & Tee == 1, .(DisDate1, Arm)])
+table(adw2[grepl("tr", Arm) & TotalRepaid >= 19500 & Tee == 1, .(DisDate1, Arm)])
+table(adw2[!grepl("tr", Arm) & CumRepaid >= 19760 & MonthsElapsed == 36, .(DisDate1, Arm)])
+table(adw2[grepl("tr", Arm) & CumRepaid >= 19500 & MonthsElapsed == 36, .(DisDate1, Arm)])
+lapply(1:4, function(i) destat(repay[levels(Arm)[i] == Arm, CumRepaidRate]))
+table(adw2[totalloan > TotalRepaidIn3Years & Tee == 1, Arm])
+if (nrow(adw2[totalrepayment != TotalRepaid, ]) > 0) adw2[totalrepayment != TotalRepaid, ]
+if (nrow(adw2[savings != TotalSaved, ]) > 0) adw2[savings != TotalSaved, ]
+@
+Plot weekly repayments, monthly total normalised by number of weeks in each month. 
+<<monthly normalised repayment 2, warning = F, message = F, eval = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = "Normalised weekly repayment by Elapsed Months", fig.lp = 'Figure '>>=
+library(ggplot2)
+adl1 <- adw2[!is.na(MonthsElapsed), .(hhid, groupid, povertystatus, Arm, 
+  Date, MonthsElapsed, NormRepaid, FullyRepaid, CumRepaidRate)]
+adl1[, c("Zero", "Total") := .(sum(FullyRepaid == 0L & NormRepaid == 0, na.rm = T), 
+  sum(FullyRepaid == 0L)), by = .(Date, Arm)]
+setnames(adl1, c("NormRepaid", "FullyRepaid", "CumRepaidRate"),
+  paste0("value.", c("NormRepaid", "FullyRepaid", "CumRepaidRate")))
+adl1 <- reshape(adl1, direction = "long", idvar = c("hhid", "MonthsElapsed", "Date"),
+  varying = grepout("^val", colnames(adl1)))
+setnames(adl1, "time", "Variable")
+adl1[grepl("NormRepaid", Variable), value := log(value)]
+adl1[grepl("gra|pack", Arm) & MonthsElapsed <= 12, 
+  c("CumRepaidRate", "FullyRepaid") := 0]
+nonrepaydata <- unique(adl1[grepl("NormRepaid", Variable), 
+  .(Arm, MonthsElapsed, FullyRepaid, Zero, Total)])
+nonrepaydata[, value := Zero/Total]
+nonrepaydata[MonthsElapsed <= 0 | 
+  (grepl("gra|pack", Arm) & MonthsElapsed <= 12), 
+  value := NA]
+nonrepaydata[, Variable := "NonRepayerRatioEM"]
+nonrepaydata[, c("Zero", "Total") := NULL]
+adl1 <- rbind(adl1, nonrepaydata, use.names = T, fill = T)
+adl1[, Variable := factor(Variable, levels = c("NormRepaid", 
+  "CumRepaidRate", "FullyRepaid", "NonRepayerRatioEM"))]
+linedata <- data.table(Arm = factor(levels(adl1[, Arm]), 
+  levels = levels(adl1[, Arm])), value = c(log(c(125, 125, 190, 190)), rep(.25, 4)), 
+  Variable = factor(rep(c("NormRepaid", "NonRepayerRatioEM"), each = 4), 
+    levels = c("NormRepaid", "NonRepayerRatioEM")))
+linedata <- linedata[grepl("Nor", Variable), ]
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(30, 40, 60, 90, 125, 190, 500, 1000, 2000, 3000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+ggplot(adl1, aes(x = MonthsElapsed, y = value, colour = povertystatus, group = povertystatus)) +
+  geom_point(data = subset(adl1, Variable == "NormRepaid"), 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = subset(adl1, Variable == "NormRepaid"), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", 
+    legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous(breaks = c(0, 1, log(YAxis2)), labels = c(0, 1, YAxis2)) +
+  scale_x_continuous(limits = c(0, 50)) +
+  geom_bar(data = subset(adl1, Variable == "NonRepayerRatioEM"), stat = "identity", 
+    aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl1, Variable == "CumRepaidRate"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl1, Variable == "FullyRepaid"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_hline(data = linedata, aes(yintercept = value), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  #facet_grid(Variable ~ Arm, heights = c(7, 1, 1, 1)): obsolete argument: height
+  expand_limits(y = c(0, 1)) +
+  facet_grid(Variable ~ Arm, scales = "free_y", space = "free_y")
+@
+<<repayment.fig.annotation>>=
+repayment.fig.annotation <- "\\\\ {\\footnotesize From top: Normalised repayment amount, cumulative repayment to full repayment ratio, mean fully repaid member ratio, mean zero-repayer ratio\\setlength{\\baselineskip}{8pt}}"
+<<monthly normalised repayment 3, warning = F, message = F, eval = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Normalised weekly repayment by calendar months of members receiving loans by Nov, 2014", repayment.fig.annotation), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adl1 <- adw2[grepl("Yes", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+  .(hhid, groupid, povertystatus, Arm, Date, 
+    NormRepaid, FullyRepaid, CumRepaidRate)]
+adl1[, c("Zero", "Total") := .(sum(FullyRepaid == 0L & NormRepaid == 0, na.rm = T), 
+  sum(FullyRepaid == 0L)), by = .(Date, Arm)]
+setnames(adl1, c("NormRepaid", "FullyRepaid", "CumRepaidRate"),
+  paste0("value.", c("NormRepaid", "FullyRepaid", "CumRepaidRate")))
+adl1 <- reshape(adl1, direction = "long", idvar = c("hhid", "Date"),
+  varying = grepout("^val", colnames(adl1)))
+setnames(adl1, "time", "Variable")
+adl1[grepl("NormRepaid", Variable), value := log(value)]
+nonrepaydata <- unique(adl1[grepl("NormRepaid", Variable), 
+  .(Arm, Date, Zero, Total)])
+nonrepaydata[, value := Zero/Total]
+nonrepaydata[grepl("gra|pack", Arm) & as.Date(Date) < as.Date("2014-04-01"), 
+  value := NA]
+nonrepaydata[, Variable := "NonRepayerRatioEM"]
+nonrepaydata[, c("Zero", "Total") := NULL]
+adl1 <- rbind(adl1, nonrepaydata, use.names = T, fill = T)
+adl1[, Variable := factor(Variable, levels = c("NormRepaid", 
+  "CumRepaidRate", "FullyRepaid", "NonRepayerRatioEM"))]
+linedata <- data.table(Arm = factor(levels(adl1[, Arm]), 
+  levels = levels(adl1[, Arm])), value = c(log(c(125, 125, 190, 190)), rep(.25, 4)), 
+  Variable = factor(rep(c("NormRepaid", "NonRepayerRatioEM"), each = 4), 
+    levels = c("NormRepaid", "NonRepayerRatioEM")))
+linedata <- linedata[grepl("Nor", Variable), ]
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(30, 40, 60, 90, 125, 190, 500, 1000, 5000, 10000, 15000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+ggplot(adl1, aes(x = Date, y = value, colour = povertystatus, group = povertystatus)) +
+  # scatter plot: normalised repayment vs. calendar dates
+  geom_point(data = subset(adl1, Variable == "NormRepaid"), 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  # add loess lines
+  geom_smooth(data = subset(adl1, Variable == "NormRepaid"), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+    legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous(breaks = c(0, 1, log(YAxis2)), labels = c(0, 1, YAxis2)) +
+  # bar plots: non repayer ratio in each month
+  geom_bar(data = subset(adl1, Variable == "NonRepayerRatioEM"), 
+    stat = "identity", 
+    aes(x = Date, y = value, group = Arm)) +
+  # bar plots: cumulative repayment amount/total repayment ratio in each month
+  geom_bar(data = subset(adl1, Variable == "CumRepaidRate"), 
+    stat = "summary", fun.y = "mean", 
+    aes(x = Date, y = value, group = Arm)) +
+  # bar plots: number of fully repaid members ratio in each month
+  geom_bar(data = subset(adl1, Variable == "FullyRepaid"), 
+    stat = "summary", fun.y = "mean", 
+    aes(x = Date, y = value, group = Arm)) +
+  geom_hline(data = linedata, aes(yintercept = value), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  expand_limits(y = c(0, 1)) +
+  facet_grid(Variable ~ Arm, scales = "free_y", space = "free_y")
+@
+<<monthly normalised repayment 4, warning = F, message = F, eval = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Normalised weekly repayment by elapsed months of members receiving loans by Nov, 2014", repayment.fig.annotation), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adl1 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  as.Date(DisDate1) <= as.Date("2015-01-01"), 
+  .(hhid, groupid, povertystatus, Arm, Date, MonthsElapsed, 
+    NormRepaid, FullyRepaid, CumRepaidRate)]
+adl1[, c("Zero", "Total") := .(sum(FullyRepaid == 0L & NormRepaid == 0, na.rm = T), 
+  sum(FullyRepaid == 0L)), by = .(MonthsElapsed, Arm)]
+#adl1[, NonRepayerRatioEM := Zero/Total]
+setnames(adl1, c("NormRepaid", "FullyRepaid", "CumRepaidRate"),
+  paste0("value.", c("NormRepaid", "FullyRepaid", "CumRepaidRate")))
+adl1 <- reshape(adl1, direction = "long", idvar = c("hhid", "MonthsElapsed", "Date"),
+  varying = grepout("^val", colnames(adl1)))
+setnames(adl1, "time", "Variable")
+adl1[grepl("NormRepaid", Variable), value := log(value)]
+adl1[grepl("gra|pack", Arm) & MonthsElapsed <= 12, 
+  c("CumRepaidRate", "FullyRepaid") := 0]
+nonrepaydata <- unique(adl1[grepl("NormRepaid", Variable), 
+  .(Arm, MonthsElapsed, FullyRepaid, Zero, Total)])
+nonrepaydata[, value := Zero/Total]
+nonrepaydata[MonthsElapsed <= 0 | 
+  (grepl("gra|pack", Arm) & MonthsElapsed <= 12), 
+  value := NA]
+nonrepaydata[, Variable := "NonRepayerRatioEM"]
+nonrepaydata[, c("Zero", "Total") := NULL]
+adl1 <- rbind(adl1, nonrepaydata, use.names = T, fill = T)
+adl1[, Variable := factor(Variable, levels = c("NormRepaid", 
+  "CumRepaidRate", "FullyRepaid", "NonRepayerRatioEM"))]
+linedata <- data.table(Arm = factor(levels(adl1[, Arm]), 
+  levels = levels(adl1[, Arm])), value = c(log(c(125, 125, 190, 190)), rep(.25, 4)), 
+  Variable = factor(rep(c("NormRepaid", "NonRepayerRatioEM"), each = 4), 
+    levels = c("NormRepaid", "NonRepayerRatioEM")))
+linedata <- linedata[grepl("Nor", Variable), ]
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(30, 40, 60, 90, 125, 190, 500, 1000, 5000, 10000, 15000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+ggplot(adl1, aes(x = MonthsElapsed, y = value, colour = povertystatus, group = povertystatus)) +
+  geom_point(data = subset(adl1, Variable == "NormRepaid"), 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = subset(adl1, Variable == "NormRepaid"), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", 
+    legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous(breaks = c(0, 1, log(YAxis2)), labels = c(0, 1, YAxis2)) +
+  scale_x_continuous(limits = c(0, 50)) +
+  geom_bar(data = subset(adl1, Variable == "NonRepayerRatioEM"), stat = "identity", 
+    aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl1, Variable == "CumRepaidRate"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl1, Variable == "FullyRepaid"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_hline(data = linedata, aes(yintercept = value), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  expand_limits(y = c(0, 1)) +
+  facet_grid(Variable ~ Arm, scales = "free_y", space = "free_y")
+@
+<<monthly normalised repayment 5, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = "Normalised weekly repayment by elapsed months of members receiving loans by Nov, 2014", fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adl1 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  as.Date(DisDate1) <= as.Date("2015-01-01"), 
+  .(hhid, groupid, povertystatus, Arm, Date, MonthsElapsed, 
+    NormRepaid, FullyRepaid, CumRepaidRate)]
+setnames(adl1, c("NormRepaid", "FullyRepaid", "CumRepaidRate"),
+  paste0("value.", c("NormRepaid", "FullyRepaid", "CumRepaidRate")))
+adl1 <- reshape(adl1, direction = "long", idvar = c("hhid", "MonthsElapsed", "Date"),
+  varying = grepout("^val", colnames(adl1)))
+setnames(adl1, "time", "Variable")
+adl1 <- adl1[grepl("NormRepaid", Variable) & value > 0, ]
+adl1[, value := log(value)]
+linedata <- data.table(Arm = factor(levels(adl1[, Arm]), 
+  levels = levels(adl1[, Arm])), value = c(log(c(125, 125, 190, 190)), rep(.25, 4)), 
+  Variable = factor(rep(c("NormRepaid", "NonRepayerRatioEM"), each = 4), 
+    levels = c("NormRepaid", "NonRepayerRatioEM")))
+linedata <- linedata[grepl("Nor", Variable), ]
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(10, 30, 40, 60, 90, 125, 190, 500, 1000, 5000, 10000, 15000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+ggplot(adl1, aes(x = MonthsElapsed, y = value, colour = povertystatus, group = hhid)) +
+  geom_line(data = subset(adl1, Variable == "NormRepaid", group = hhid), 
+    aes(colour = povertystatus), size = .1) +
+  geom_smooth(data = subset(adl1, Variable == "NormRepaid"), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", 
+    legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous(breaks = log(YAxis2), labels = YAxis2, limits = range(log(YAxis2))) +
+  scale_x_continuous(limits = c(0, 50)) +
+  geom_hline(data = linedata, aes(yintercept = value), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+\begin{comment}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	{\small \textsc{Figures} \ref{Figure monthly normalised repayment}, \ref{Figure monthly normalised repayment 2}} show poor loan repayment discipline. The dots in the figures are monthly repayment amount of each members divided with the number of weeks of each month, which I call as normalised weekly repayment. The normalised weekly repayment may not be exactly the same as the average of actual repayment because number of weekly meetings can differ from number of weeks, depending on the day of week. However, it should be correct on average.
+\item	The fixed installment amount is 125 for traditional, large, 190 for large with grace, packaged as indicated by horizontal green lines. 
+\item	The bottom panel in {\small \textsc{Figures} \ref{Figure monthly normalised repayment}} shows ratio of zero repayment incidence to total repayment opportunities, averaged by month. There are many nonrepayment incidence especially in 2014 when the flood hit the area.
+\item	Most borrowers repay a large amount at the end of the lending cycle, which suggests sales of assets or incurring a new debt.
+\end{itemize}
+Cumulative repayment rates.
+\end{comment}
+<<cumulative repayment rate, eval = F, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Cumulative repayment rates", fig.lp = 'Figure '>>=
+library(ggplot2)
+adl2 <- adl[grepl("rep", Variable) & grepl("Yes", creditstatus), ]
+adl2 <- adl2[, .(hhid, groupid, povertystatus, Arm, Date, Variable, value, 
+  CumRepaidRate, totalloan)]
+ggplot(adl2, aes(x = Date, y = CumRepaidRate, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(data = adl2, 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = adl2, 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+    legend.position="bottom") + xlab("date") +
+  facet_grid(. ~ Arm)
+@
+<<cumulative repayment rate 2, eval = F, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Cumulative repayment rates by elapsed months", fig.lp = 'Figure '>>=
+library(ggplot2)
+adl2 <- adl[grepl("rep", variable) & grepl("Yes", creditstatus), ]
+adl2 <- adl2[, .(hhid, groupid, povertystatus, Arm, 
+  Date, MonthsElapsed, Variable, value, CumRepaidRate, totalloan)]
+ggplot(adl2, aes(x = MonthsElapsed, y = CumRepaidRate, 
+    colour = povertystatus, group = povertystatus)) +
+  geom_point(data = adl2, 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = adl2, 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  scale_x_continuous(limits = c(0, 50)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+    legend.position="bottom") + xlab("date") +
+  facet_grid(. ~ Arm)
+@
+\begin{comment}
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	{\small \textsc{Figures} \ref{Figure cumulative repayment rate}, \ref{Figure cumulative repayment rate 2}, \ref{Figure cumulative repayment rate 3}} track the repayment history of each individuals. Full loan repayment is indicated when the cumulative installment rate reaches to one. (Traditional arm has three disbursements in which we adjust the numerator in computing cumulative rate.)
+\item	The highest nonparametric estimate at the end of observation is observed with the large with grace arm.
+\item	Mean repayment rate is lowest with the traditional arm (\textsf{planned} group). 
+\end{itemize}
+\end{comment}
+<<loess data, cache = F, eval = F>>=
+# From Brian Digs post on SO: https://stackoverflow.com/questions/9789871/method-to-extract-stat-smooth-line-fit
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adl2 <- adw2[grepl("Yes", creditstatus), MonthsElapsed > 0 & MonthsElapsed <= 36 & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"),
+  .(hhid, groupid, povertystatus, Arm, TradGroup, value.repay, CumRepaid, PlannedInstallment,
+  Date, MonthsElapsed, CumRepaidRate, totalloan)]
+adl2 <- adl2[!is.na(MonthsElapsed) & !is.na(CumRepaidRate) & 
+  MonthsElapsed != Inf & CumRepaidRate != Inf, ]
+loess.data <- vector(length = 4, mode = "list")
+for (i in 1:4) {
+  gc()
+  if (i <= 2) 
+    data.to.use <- 
+      adl2[Arm == levels(adl2[, Arm])[i] & MonthsElapsed >= 0, ] else
+    data.to.use <- 
+      adl2[Arm == levels(adl2[, Arm])[i] & MonthsElapsed >= 10, ]
+  loess.model <- loess(CumRepaidRate ~ MonthsElapsed, alpha = .2, data = data.to.use)
+  xrange <- range(adl2$MonthsElapsed)
+  xseq <- seq(from = xrange[1], to = xrange[2], length = diff(xrange)*2)
+  pred.loess <- predict(loess.model, 
+    newdata = data.frame(MonthsElapsed = xseq), se = TRUE)
+  y = pred.loess$fit
+  ci <- pred.loess$se.fit * qt(0.95 / 2 + .5, pred.loess$df)
+  ymin = y - ci
+  ymax = y + ci
+  loess.data[[i]] <- data.frame(x = xseq, y, ymin, ymax, se = pred.loess$se.fit)
+}
+loess.DT <- data.table(loess.data[[1]][, 1:2], loess.data[[2]][, "y"], 
+  loess.data[[3]][, "y"], loess.data[[4]][, "y"])
+setnames(loess.DT, c("MonthsElapsed", 
+  paste0("val.", c("traditional", "large", "largeGrace", "packaged"))))
+loess.DT <- reshape(loess.DT, direction = "long", idvar = "MonthsElapsed",
+  varying = grepout("va", colnames(loess.DT)))
+setnames(loess.DT, "time", "arms")
+saveRDS(loess.DT, paste0(pathsaveHere, "loessDT.rds"))
+@
+<<saving.fig.annotation>>=
+saving.fig.annotation <- "\\\\ {\\footnotesize From top: Normalised repayment amount, cumulative repayment to cumulative scheduled installment ratio, mean fully repaid member ratio, mean zero-repayer ratio, net saving amount, mean zero-saver ratio\\setlength{\\baselineskip}{8pt}}"
+<<Nonparametric cumulative repayment rate, cache = F, warning = F, message = F, fig.align='center', out.height = '.2\\paperheight', out.width = '.6\\paperwidth', fig.cap = paste0("Nonparametric mean estimation of cumulative repayment rates by elapsed months"), fig.lp = 'Figure '>>=
+library(ggplot2)
+loess.DT <- readRDS(paste0(pathsaveHere, "loessDT.rds"))
+ggplot(loess.DT, aes(x = MonthsElapsed, y = val, group = arms)) +
+  geom_line(aes(colour = arms), size = 1.2) +
+  scale_x_continuous(limits = c(0, 36), breaks = seq(0, 36, 12)) +
+  scale_y_continuous(limits = c(0, 1.4), breaks = seq(0, 1.4, .2)) +
+  theme(legend.position="bottom") + 
+  xlab("Months since 1st loan disbursement") + ylab("Cumulative repayment rates")
+@
+%Cumulative repayment rates for traditional loans on months since disbursement (not calendar months).
+<<cumulative traditional repayment rate, warning = F, message = F, eval = F, fig.align='center', fig.height = 3, fig.width = 8, fig.cap = "Cumulative repayment rates of traditional loans", fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adl2 <- adw2[grepl("trad", Arm) & 
+  grepl("on", membershipstatus) & grepl("^t", treatment) & grepl("es", creditstatus), ]
+adl2 <- adl2[, .(hhid, groupid, povertystatus, TradGroup, Date, MonthsElapsed, LoanCycle,
+  CumRepaid, CumTradRepaidRate)]
+adl2 <- adl2[!is.na(TradGroup), ]
+ggplot(adl2, aes(x = MonthsElapsed, y = CumRepaid, 
+    colour = povertystatus, group = TradGroup)) +
+  geom_point(aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(span = .5, aes(group = povertystatus)) +
+  geom_vline(xintercept = c(12, 24, 36, 48), aes(color = "yellow")) +
+  theme(legend.position="bottom") + xlab("Months since first loan receipt") +
+  facet_grid(. ~ TradGroup)
+@
+<<revenue and costs, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Revenues and costs", "\\\\ {\\footnotesize Dots indicate individuals. Dots are jittered to avoid plot overlap. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, creditstatus, value.rev, value.cost, Arm, Date, MonthsElapsed)]
+adl6 <- reshape(adl5, direction = "long", idvar = c("hhid", "MonthsElapsed", "Date"),
+  varying = grepout("^val", colnames(adl5)))
+setnames(adl6, "time", "Variable")
+ggplot(adl6, 
+  aes(x = MonthsElapsed, y = value, colour = povertystatus, group = hhid)) +
+  geom_point(aes(colour = povertystatus), size = .1, 
+    position = position_jitterdodge(jitter.width = 0, jitter.height = 5)) +
+  geom_smooth(span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_x_continuous(limits = c(0, 50), breaks = seq(0, 48, 12)) +
+  scale_y_continuous(limits = c(0, 400)) +
+  xlab("Months since 1st loan disbursement") + ylab("Tk") +
+  facet_grid(Variable ~ Arm, scales = "free_y")
+@
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure revenue and costs}} shows revenues are not reported after 1 year. Some members stopped reporting nonzero cost after 3 years. Revenues are not informative throughout the period and costs are not informative after 3 years.
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+Weekly net saving.
+<<zerosaverdata nonrepaydata, warning = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, creditstatus, CumNetSaving, Arm, Date, MonthsElapsed, value.NetSaving)]
+setnames(adl5, "value.NetSaving", "value")
+adl5[, c("ZeroSaver", "TotalSaver") := .(sum(value == 0, na.rm = T), .N),
+  by = .(Arm, MonthsElapsed)]
+adl5[, value := log(value)]
+adl5[, Variable := "NetSaving"]
+zerosaverdata <- unique(adl5[, .(Arm, MonthsElapsed, ZeroSaver, TotalSaver)])
+zerosaverdata[, Variable := "ZeroSaverRatio"]
+zerosaverdata[, value := ZeroSaver/TotalSaver]
+adl5 <- rbind(adl5, zerosaverdata, use.names = T, fill = T)
+adl5[, Variable := factor(Variable)]
+adl5[, c("Zero", "Total") := NULL]
+adl1 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+  .(hhid, groupid, povertystatus, creditstatus, Arm, Date, MonthsElapsed, 
+    NormRepaid, FullyRepaid, CumRepaidRate)]
+adl1[, c("Zero", "Total") := .(sum(FullyRepaid == 0L & NormRepaid == 0, na.rm = T), 
+  sum(FullyRepaid == 0L)), by = .(MonthsElapsed, Arm)]
+setnames(adl1, c("NormRepaid", "FullyRepaid", "CumRepaidRate"),
+  paste0("value.", c("NormRepaid", "FullyRepaid", "CumRepaidRate")))
+adl1 <- reshape(adl1, direction = "long", idvar = c("hhid", "MonthsElapsed", "Date"),
+  varying = grepout("^val", colnames(adl1)))
+setnames(adl1, "time", "Variable")
+adl1[grepl("NormRepaid", Variable), value := log(value)]
+adl1[grepl("gra|pack", Arm) & MonthsElapsed <= 12, 
+  c("CumRepaidRate", "FullyRepaid") := 0]
+nonrepaydata <- unique(adl1[grepl("Yes", creditstatus) & grepl("NormRepaid", Variable), 
+  .(Arm, MonthsElapsed, FullyRepaid, Zero, Total)])
+nonrepaydata[, value := Zero/Total]
+nonrepaydata[MonthsElapsed <= 0 | 
+  (grepl("gra|pack", Arm) & MonthsElapsed <= 12), 
+  value := NA]
+nonrepaydata[, Variable := "NonRepayerRatioEM"]
+nonrepaydata[, c("Zero", "Total") := NULL]
+adl1 <- rbind(adl1, nonrepaydata, use.names = T, fill = T)
+adl1[, Variable := factor(Variable, levels = c("NormRepaid", 
+  "CumRepaidRate", "FullyRepaid", "NonRepayerRatioEM"))]
+adl15 <- rbind(adl1, adl5, use.names = T, fill = T)
+adl15[, Variable := factor(Variable, levels = c("NormRepaid", 
+  "CumRepaidRate", "FullyRepaid", "NonRepayerRatioEM", "NetSaving", "ZeroSaverRatio"))]
+linedata <- data.table(Arm = factor(levels(adl1[, Arm]), 
+  levels = levels(adl1[, Arm])), value = c(log(c(125, 125, 190, 190)), rep(.25, 4)), 
+  Variable = factor(rep(c("NormRepaid", "NonRepayerRatioEM"), each = 4), 
+    levels = c("NormRepaid", "NonRepayerRatioEM")))
+linedata <- linedata[grepl("Nor", Variable), ]
+
+<<monthly net saving, warning = F, message = F, fig.align='center', fig.height = 7, fig.width = 10, fig.cap = paste0("Weekly net saving", saving.fig.annotation), fig.lp = 'Figure '>>=
+library(ggplot2)
+
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(10, 30, 40, 100, 125, 190, 500, 1000, 3000, 5000, 10000, 15000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+
+ggplot(adl15, aes(x = MonthsElapsed, y = value, colour = povertystatus, group = povertystatus)) +
+  geom_point(data = subset(adl15, Variable == "NormRepaid"), 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = subset(adl15, Variable == "NormRepaid"), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  geom_point(data = subset(adl15, Variable == "NetSaving" & value > 0), 
+    aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+  geom_smooth(data = subset(adl15, Variable == "NetSaving" & value > 0), 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous(breaks = c(0, 1, log(YAxis2)), labels = c(0, 1, YAxis2)) +
+  scale_x_continuous(limits = c(-30, 50), breaks = seq(-24, 48, 12)) +
+  geom_bar(data = subset(adl15, Variable == "NonRepayerRatioEM"), stat = "identity", 
+    aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl15, Variable == "CumRepaidRate"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl15, Variable == "FullyRepaid"), 
+    stat = "summary", fun.y = "mean", aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_bar(data = subset(adl15, Variable == "ZeroSaverRatio"), stat = "identity", 
+    aes(x = MonthsElapsed, y = value, group = Arm)) +
+  geom_hline(data = linedata, aes(yintercept = value), colour = "green", size = .3) +
+  xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+  expand_limits(y = c(0, 1)) +
+  facet_grid(Variable ~ Arm, scales = "free_y", space = "free_y")
+# YAxis1 <- c(.25, .5, .75, 1)
+# YAxis2 <- c(0, 10, 50, 100, 500, 1000, 3000)
+# YAxisValues <- c(YAxis1, YAxis2)
+# YAxisLabels <- c(YAxis1, YAxis2)
+# ggplot(adl5, aes(x = MonthsElapsed, y = value, colour = povertystatus, group = povertystatus)) +
+#   geom_point(data = subset(adl5, Variable == "NetSaving" & value > 0), 
+#     aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+#   geom_smooth(data = subset(adl5, Variable == "NetSaving" & value > 0), 
+#     span = .5, aes(colour = povertystatus, group = povertystatus)) +
+#   theme(legend.position="bottom", 
+#     legend.key = element_rect(fill = "white")) + 
+#   scale_y_continuous(breaks = c(0, 1, log(YAxis2)), labels = c(0, 1, YAxis2)) +
+#   scale_x_continuous(breaks = seq(-24, 48, 12)) +
+#   geom_bar(data = subset(adl5, Variable == "ZeroSaverRatio"), stat = "identity", 
+#     aes(x = MonthsElapsed, y = value, group = Arm)) +
+#   xlab("Months since 1st loan disbursement") + ylab("Normalised repayment amount") +
+#   expand_limits(y = c(0, 1)) +
+#   facet_grid(Variable ~ Arm, scales = "free_y", space = "free_y")
+# ggplot(adl5, 
+#   aes(x = MonthsElapsed, y = value, colour = povertystatus, group = povertystatus)) +
+#   geom_point(data = adl5[grepl("NetSaving", Variable) & value > 0, ],
+#     aes(colour = povertystatus), size = .1, position = position_dodge(width = .5)) +
+#   geom_smooth(adl5[grepl("NetSaving", Variable) & value > 0, ],
+#     span = .5, aes(colour = povertystatus, group = povertystatus)) +
+#   #scale_y_log10(breaks = c(2, 500, 1000, 5000, 10000, 15000)) +
+#   scale_y_log10(limits = c(1, 3000), breaks = c(0, 10, 50, 100, 500, 1000, 3000)+1,
+#     labels = c(0, 10, 50, 100, 500, 1000, 3000)) +
+#   scale_x_continuous(breaks = seq(-24, 48, 12)) +
+#   theme(legend.position="bottom") + xlab("Months since first loan receipt") +
+#   facet_grid(. ~ Arm)
+@
+<<cumulative net saving, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = "Cumulative net saving", fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, creditstatus, CumNetSaving, Arm, Date, MonthsElapsed)]
+YAxis1 <- c(.25, .5, .75, 1)
+YAxis2 <- c(10, 30, 40, 100, 125, 190, 500, 1000, 3000, 5000, 10000, 15000)
+YAxisValues <- c(YAxis1, YAxis2)
+YAxisLabels <- c(YAxis1, YAxis2)
+ggplot(adl5, aes(x = MonthsElapsed, y = CumNetSaving, colour = povertystatus, group = povertystatus)) +
+  geom_point(aes(colour = povertystatus), size = .3, position = position_dodge(width = .5)) +
+  geom_smooth(span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  theme(legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_y_continuous() +
+  scale_x_continuous(limits = c(-30, 50), breaks = seq(-24, 48, 12)) +
+  xlab("Months since 1st loan disbursement") + ylab("Cumulative net saving amount") +
+  facet_grid(. ~ Arm, scales = "free_y", space = "free_y")
+@
+<<repayment shortfall by group, warning = F, message = F, fig.align='center', fig.height = 4, fig.width = 10, fig.cap = paste0("Repayment shortfall by group", "\\\\ {\\footnotesize Dots indicate group means. Dots are jittered to avoid plot overlap. Observations below -3000 Tk shortfall are omitted.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, Shortfall, value.NetSaving, Arm, Date, LoanYear, MonthsElapsed)]
+adl5[, c("GroupShortfall", "Gnum") := .(mean(Shortfall), 1:.N), 
+  by = .(groupid, povertystatus, MonthsElapsed)]
+adg <- adl5[Gnum == 1, ]
+adg[, c("Shortfall", "hhid") := NULL]
+grlinedata <- adg[MonthsElapsed > 36, .(Arm, groupid, MonthsElapsed, GroupShortfall)]
+grlinedata[, MeanShortfallPost36 := mean(GroupShortfall), by = Arm]
+grlinedata <- unique(grlinedata[, .(Arm, MonthsElapsed, MeanShortfallPost36)])
+ggplot(adg, 
+  aes(x = MonthsElapsed, y = GroupShortfall, colour = povertystatus, group = groupid)) +
+  geom_point(aes(colour = povertystatus), size = .1, 
+    position = position_jitterdodge(jitter.width = 5, jitter.height = 5)) +
+  geom_smooth(data = adg[grepl("tr|ge$", Arm) & MonthsElapsed > 0 & MonthsElapsed <= 36, ], 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  geom_smooth(data = adg[grepl("gr|cat", Arm) & MonthsElapsed > 12 & MonthsElapsed <= 36, ], 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  #geom_line(data = grlinedata, 
+  #  aes(x = MonthsElapsed, y = MeanShortfallPost36, group = Arm, colour = Arm)) +
+  theme(legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_x_continuous(limits = c(-12, 46), breaks = seq(-12, 48, 12)) +
+  scale_y_continuous(limits = c(-3000, 1000), breaks = c(-3000, -2000, seq(-1000, 1000, 250))) +
+  ylab("Group repayment shortfall (Tk)") + 
+  xlab("Months elapsed since initial loan disbursement") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+<<repaymentShortfall.annotation>>=
+repaymentShortfalltext <- paste0("Dots indicate individuals. Dots are jittered to avoid plot overlap. Observations below -1000 Tk shortfall (", sum(adl5[, value.NetSaving]< -1000), ", minimum and median values ", min(adl5[value.NetSaving < -1000, value.NetSaving]), ", ", median(adl5[value.NetSaving < -1000, value.NetSaving]), ", respectively) are omitted.")
+<<repayment shortfall and net saving, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Repayment shortfall and net saving", "\\\\ {\\footnotesize ", repaymentShortfalltext, " \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, creditstatus, Shortfall, value.NetSaving, Arm, Date, MonthsElapsed)]
+YAxis1 <- c(0, 10, 50, 100, 500, 1000) 
+ggplot(adl5[value.NetSaving >= 0, ], 
+  aes(x = Shortfall, y = 1+value.NetSaving, colour = povertystatus, group = hhid)) +
+  geom_point(aes(colour = povertystatus), size = .1, 
+    position = position_jitterdodge(jitter.width = .5, jitter.height = .1)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_x_continuous(limits = c(-1000, 1000), breaks = seq(-1000, 1000, 200)) +
+  scale_y_log10(limits = c(1, 2000), breaks = YAxis1 + 1, labels = YAxis1) +
+  xlab("Repayment shortfall (Tk)") + ylab("Net saving amount (Tk)") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Net saving is almost always nonnegative (it does not have to be). Is there a rule for monthly overdraft?
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure monthly net saving}} shows that members accumulate saving during the grace period, followed by lower saving after repayment begins.  \textsc{\small Figure \ref{Figure cumulative net saving}} shows mean cumulative saving is smallest with traditional loans (note also they have the lowest mean repayment rates) but it is most steady as other arms plateaus after 36 months, possibly due to repaying the past shortfalls. Saving is positive prior to disbursement, more so for large scale loans. Given revenues are rarely reported, net saving is more informative than revenue.
+\end{finding}
+\end{palepinkleftbar}
+\noindent
+Number of missed repayments.
+\begin{palepinkleftbar}
+\begin{finding}
+A significant fraction of members are missing repayment (zero repayment) in a month. \textsc{\small Figure \ref{Figure missed repayment}} shows that tradional loan arm has more misses, while loans with a grace period (larger installments) have more number of one-misses. More missed repayments in first 12 months of repayment in all arms.
+\end{finding}
+\end{palepinkleftbar}
+<<missed repayment, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Number of missed repayment in a month", "\\\\ {\\footnotesize Dots indicate individuals. Dots are jittered to avoid plot overlap. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01"), 
+ .(hhid, groupid, povertystatus, creditstatus, value.missw, Arm, Date, MonthsElapsed)]
+ggplot(adl5, 
+  aes(x = MonthsElapsed, y = value.missw, colour = povertystatus, group = hhid)) +
+  geom_point(aes(colour = povertystatus), size = .3, 
+    position = position_jitterdodge(jitter.width = 0, jitter.height = .45)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1), 
+    legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_x_continuous(limits = c(0, 50), breaks = seq(0, 48, 12)) +
+  scale_y_continuous(breaks = 0:5) +
+  xlab("Months since 1st loan disbursement") + ylab("Number of missed repayment in a month") +
+  facet_grid(. ~ Arm, scales = "free_y")
+@
+<<effective repayment, warning = F, message = F, fig.align='center', fig.height = 5, fig.width = 10, fig.cap = paste0("Reported repayment plus net saving as effective repayment", "\\\\ {\\footnotesize Effective repayment is repayment plus net saving where the latter is forfeit at the end of loan maturity when there is cumulative repayment shortfall. Cumulative effective repayment shortfall ratio = (cumulative repayment) / (cumulative scheduled installment). Cumulative net saving ratio = (cumulative net saving) / (cumulative scheduled installment).Dots indicate individuals.  \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
+library(ggplot2)
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+adw2[, c("CumRepaidRate", "CumEffectiveRepaidRate") := 
+  .(round(CumRepaid/CumPlannedInstallment, 3), 
+    round(CumEffectiveRepayment/CumPlannedInstallment, 3))]
+# Why is there Inf in this variable?
+# adl5[CumPlannedInstallment != 0 & CumEffectiveRepaidRate == Inf, ]
+setkey(adw2, hhid, MonthsElapsed)
+adl5 <- adw2[grepl("Yes", creditstatus) & !is.na(MonthsElapsed) & 
+  !grepl("doub|tw", TradGroup) & as.Date(DisDate1) <= as.Date("2015-01-01") &
+  MonthsElapsed > 0, 
+ .(hhid, groupid, povertystatus, creditstatus, 
+ CumPlannedInstallment, CumNetSaving,
+ CumEffectiveRepayment, CumEffectiveRepaidRate, CumRepaidRate, 
+ Arm, Date, MonthsElapsed, DisDate1)]
+adl5[, CumNetSavingRate := CumNetSaving/CumPlannedInstallment]
+setnames(adl5, grepout("^Cum", colnames(adl5)),
+  paste0("value.", grepout("^Cum", colnames(adl5))))
+adl5 <- reshape(adl5, direction = "long", 
+  idvar = c("hhid", "Date", "MonthsElapsed"),
+  varying = grepout("^val", colnames(adl5)))
+setnames(adl5, "time", "Variables")
+adl6 <- adl5[grepl("Eff.*Rate|^CumN.*R|^CumR.*R", Variables), ]
+adl6[, Variables2 := "Effective repayment"]
+adl6[grepl("^CumN.*R", Variables), Variables2 := "Net saving"]
+adl6[grepl("^CumR.*R", Variables), Variables2 := "Repayment"]
+adl6[, Variables2 := factor(Variables2, levels = c("Effective repayment", 
+  "Repayment", "Net saving"))]
+ggplot(adl6, 
+  aes(x = MonthsElapsed, y = value, colour = povertystatus, group = hhid)) +
+  geom_point(data = adl6[grepl("Eff.*Rate", Variables), ], 
+    aes(colour = povertystatus), size = .05, 
+    position = position_jitterdodge(jitter.width = .5, jitter.height = .1)) +
+  geom_point(data = adl6[grepl("^Cum", Variables), ], 
+    aes(colour = povertystatus), size = .05, 
+    position = position_jitterdodge(jitter.width = .5, jitter.height = .1)) +
+  geom_smooth(data = adl6[grepl("Eff.*Rate", Variables), ], 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  geom_smooth(data = adl6[grepl("^Cum", Variables), ], 
+    span = .5, aes(colour = povertystatus, group = povertystatus)) +
+  geom_hline(aes(yintercept = 1), colour = "green", size = .3) +
+  theme(strip.text.y = 	element_text(colour = "blue"), 
+    legend.position="bottom", legend.key = element_rect(fill = "white")) + 
+  scale_x_continuous(limits = c(0, 48), breaks = seq(0, 48, 12)) +
+  scale_y_continuous(limits = c(0, 2), breaks = seq(0, 2, .5)) +
+  ylab("Ratios against cumulative scheduled installment") + 
+  xlab("Months elapsed since initial loan disbursement") +
+  facet_grid(Variables2 ~ Arm, scales = "free_y")
+@
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	Net saving is almost always nonnegative (it does not have to be). Is there a rule for monthly overdraft?
+\end{itemize}
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Figure \ref{Figure monthly net saving}} shows that members accumulate saving during the grace period, followed by lower saving after repayment begins.  \textsc{\small Figure \ref{Figure cumulative net saving}} shows mean cumulative saving is smallest with traditional loans (note also they have the lowest mean repayment rates) but it is most steady as other arms plateaus after 36 months, possibly due to repaying the past shortfalls. Saving is positive prior to disbursement, more so for large scale loans. Given revenues are rarely reported, net saving is more informative than revenue.
+\end{finding}
+\end{palepinkleftbar}
+
+\begin{palepinkleftbar}
+\begin{finding}
+It has been reported that lenders resort to forfeiting defaulter's saving in an effort to collect loans. \textsc{\small Figure \ref{Figure effective repayment}} shows, in the top panel, cumulative effective repayment rate, a ratio of cash flows into the lender divided by the cumulative planned installment. Mean cumulative effective repayment rate is lowest for the traditional arm. The bottom panel shows cumulative repayment rate (not including net saving). 
+\end{finding}
+\end{palepinkleftbar}
+
+
+
+
+
+\section{Within group outcomes}
+
+
+The aim here is to find dynamic patterns in repayment among group members. Rudimentary hypothesises:
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[positive dynamic covariance of group repayment shortfall/misses]	Informal sanctions are costly, so, larger the group repayment shortfall $h_{g,t}$, smaller the size of sanctions for each members with repayment shortfall, leading to moral hazard in the future hence greater future group repayment shortfall. Group repayment shortfall is dynamically positively correlated for the groups with large group repayment shortfall. Shortfalls are: sum of individual shortfall.
+\item[negative covariance with past saving and group repayment shortfall/misses]	Rather than accepting costs of sanctions, it may be cheaper for members to extend a credit to the member with shortfall. Feasibility of such an action is greater if the members have more saving. Greater per member group saving $s_{g,t}$ or per member cumulative group saving $S_{g,t}$ leads to smaller future shortfall.
+\item[negative covariance of repayment/misses between group members]	Free riding on other's repayment capacity induces negative covariance of repayments within a group, or negative covariance between other mamber's net saving $\bar{s}^{-i}_{g,t}$ and repayment $r_{g,t}$. 
+\end{description}
+I choose the sample as:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	MonthsElapsed $> 0$ \& MonthsElapsed $\leqslant 36$, and,
+\item	grepl(``es", creditstatus), and,
+\item	$!$grepl(``twice$|$double", TradGroup), and,
+\item	FullyRepaid$== 0$, and,
+\item	as.Date(DisDate1) $\leqslant$ as.Date(2015-01-01).
+\end{itemize}
+
+Group fixed effect estimator estimating equations: 
+\[
+x_{g,i,t}
+=
+a_{11}x_{g,i,t-1}+a_{12}\bar{x}_{g,-i,t-1}+a_{21}s_{g,i,t-1}+a_{22}\bar{s}_{g,-i, t-1}+a_{31}S_{g,i,t-1}+a_{32}\bar{S}_{g,-i,t-1}+Arms*year+\delta_{g}+e_{g,i,t},\quad x=h, r.
+\]
+What is the effect of having other members outcomes as a covariate?
+\[
+\begin{aligned}
+x_{g,i,t}
+&=
+d_{10}+d_{11}x_{g,-i,t}+d_{12}s_{g,i,t}+e_{g,i,t}.\\
+x_{g,-i,t}
+&=
+d_{20}+d_{21}x_{g,i,t}+d_{22}s_{g,-i,t}+e_{g,-i,t}.
+\end{aligned}
+\]
+%\begin{comment}
+Solving the system gives:
+\[
+\begin{aligned}
+x_{g,i,t}
+&=
+d_{10}+d_{11}\left(d_{20}+d_{21}x_{g,i,t}+d_{22}s_{g,-i,t}+e_{g,-i,t}\right)+d_{12}s_{g,i,t}+e_{g,i,t},\\
+&=
+\frac{1}{1-d_{11}d_{21}}\left\{d_{10}+d_{11}\left(d_{20}+d_{22}s_{g,-i,t}+e_{g,-i,t}\right)+d_{12}s_{g,i,t}+e_{g,i,t}\right\}.
+\end{aligned}
+\]
+So
+\[
+\begin{aligned}
+\plim d_{11}&=
+\frac{d_{11}d_{22}}{1-d_{11}d_{21}}\frac{\cov[s_{g,-i,t}, e_{g,i,t}]}{\NU[s_{g,-i,t}]}+
+\frac{d_{11}}{1-d_{11}d_{21}}\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]},\\
+&=
+\frac{d_{11}}{1-d_{11}d_{21}}\left(
+d_{22}\frac{\cov[s_{g,-i,t}, e_{g,i,t}]}{\NU[s_{g,-i,t}]}+
+\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]}\right).
+\end{aligned}
+\]
+%\end{comment}
+Assuming $\cov[s_{g,-i,t}, e_{g,i,t}]=0$, we have:
+\[
+\plim d_{11}
+=
+d_{11}\frac{1}{1-d_{11}d_{21}}
+\frac{\cov[e_{g,-i,t}, e_{g,i,t}]}{\NU[e_{g,-i,t}]}.
+\]
+If we further assume $\NU[e_{g,i,t}]=\NU[e_{g,-i,t}]$, then
+\[
+\plim \hat{d}_{11}
+=
+d_{11}\frac{1}{1-d_{11}d_{21}}\rho\left(e_{g,-i,t}, e_{g,i,t}\right).
+\]
+If we impose symmetry that $d_{ij}=d_{-ij}$, the above becomes
+\[
+\plim \hat{d}_{1}
+=
+d_{1}\frac{1}{1-d^{2}_{1}}\rho\left(e_{g,-i,t}, e_{g,i,t}\right).
+\]
+If we impose a `stability' condition in the sense that repurcussions between $x_{g,i,t}, x_{g,-i,t}$ converge to a finite value $|d_{1}|<1$, the sign of $\rho\left(e_{g,-i,t}, e_{g,i,t}\right)$ is likely to be positive hence we can presume $\sign \left(\hat{d}_{1}\right) = \sign \left(d_{1}\right)$. This conclusion will hold when we have other covariates than $s$ provided that their covariances with error terms are zero. Moreover, this conclusion also holds under multiple other members provided that their respective zero covariances assumptions hold. If we have an averaged term $\bar{x}_{g,-i,t}$ in place of $x_{g,-i,t}$, we have an average of all $\rho$'s as terms in the curly bracket. What we want to note from this consideration is that while $\plim \hat{d}_{1}\neq d_{1}$, there is no reason to expect $\plim \hat{d}_{1}\simeq 1$.
+
+<<cache = F>>=
+adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+@
+Create other member's mean cumulative shortfall ratio. 
+\begin{dinglist}{43}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	There are 2 ways: {\tiny (\url{https://github.com/Rdatatable/data.table/issues/1363})}
+	\begin{itemize}
+	\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+	\item	Use \textsf{.BY} and specify the leave-one-out conditions.
+	\item	Use algebraic expressions that follow leave-one-out conditions.
+	\end{itemize}
+2nd way is way much faster, but the code is more undestandable with the 1st way. Median can only be coded in the 1st way.
+\end{dinglist}
+<<eval= F, echo = F>>=
+atest <- adw2[groupid == 70101 & as.Date(Date) <= as.Date("2014-1-1"), 
+  .(groupid, hhid, Date, value.repay, value.sav)]
+setkey(atest, groupid, Date)
+rbind(system.time(atest[, c("LOOGMeanRepaid", "LOOGMeanSave") := atest[
+    Date == .BY$Date & groupid == .BY$groupid & 
+    hhid != .BY$hhid, .(mean(value.repay), mean(value.sav))], 
+  by = .(Date, groupid, hhid)]),
+system.time(atest[, c("LOOGMeanRepaid2", "LOOGMeanSave2") := 
+  .((sum(value.repay) - value.repay)/(.N-1), (sum(value.sav) - value.sav)/(.N-1)),
+  by = .(Date, groupid)]))
+system.time(atest[, c("LOOGMedianRepaid", "LOOGMedianSave") := atest[
+    Date == .BY$Date & groupid == .BY$groupid & 
+    hhid != .BY$hhid, .(median(value.repay), median(value.sav))], 
+  by = .(Date, groupid, hhid)])
+<<eval = F>>=
+OtherMean <- function(varname) {
+  sum(eval(parse(text=varname))) - eval(parse(text=varname))/(.N-1)
+#https://stackoverflow.com/questions/9705488/using-data-table-i-and-j-arguments-in-functions#9707035
+}
+<<preparing X>>=
+variablesToBeLagged <- 
+  c("Shortfall", "value.repay", "value.sav", "value.NetSaving", 
+   "value.cost", "value.rev", "value.missw", "Profit",
+   "CumRepaid", "CumRepaidRate", "CumEffectiveRepaidRate", "CumMisses", 
+   "CumNetSaving", "CumProfit",
+    "MeanGroupShortfall", "GroupNetSaving", "CumGroupNetSaving", 
+    "OtherShortfall", "OtherRepaid", "CumOtherRepaid", "CumOtherRepaidRate",
+    "OtherNetSaving", "CumOtherNetSaving", "OtherProfit", "CumOtherProfit",
+    "OtherMisses", "CumOtherMisses", "OtherCost", "OtherRevenue")
+adw2[, paste0("Lag", variablesToBeLagged) :=  
+  shift(.SD, type = "lag"), by = hhid, .SDcols=variablesToBeLagged]
+source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+# MonthsRepaid > 0: Only traditional has FirstYear as repayment
+X <- adw2[MonthsElapsed > 0 & MonthsElapsed <= 36 & 
+    grepl("es", creditstatus) & FullyRepaid == 0 & as.Date(DisDate1) <= as.Date("2015-01-01"),
+    .(value.repay, Lagvalue.repay, value.missw, Lagvalue.missw,
+    value.sav, Lagvalue.sav, value.NetSaving, Lagvalue.NetSaving,  
+    Profit, LagProfit, value.cost, value.rev, Lagvalue.cost, Lagvalue.rev, 
+    Shortfall, LagShortfall, ShortfallRate, 
+    MeanGroupShortfall, LagMeanGroupShortfall, OtherShortfall, LagOtherShortfall,
+    CumNetSaving, LagCumNetSaving, 
+    LagGroupNetSaving, LagCumGroupNetSaving, 
+    OtherNetSaving, LagOtherNetSaving, 
+    CumOtherNetSaving, LagCumOtherNetSaving, 
+    CumProfit, LagCumProfit,
+    CumRepaid, LagCumRepaid, 
+    CumRepaidRate, LagCumRepaidRate, 
+    CumEffectiveRepaidRate, LagCumEffectiveRepaidRate, 
+    CumOtherRepaidRate, LagCumOtherRepaidRate, 
+    OtherRepaid, LagOtherRepaid, OtherMisses, LagOtherMisses, 
+    OtherProfit, LagOtherProfit, CumOtherProfit, LagCumOtherProfit,
+    OtherCost, LagOtherCost, OtherRevenue, LagOtherRevenue,
+    CumOtherRepaid, LagCumOtherRepaid, 
+    Arm, groupid, hhid, povertystatus, creditstatus, membershipstatus, GRSR,
+    TradGroup, Date, LoanYear,
+    MonthsElapsed, MonthsRepaid, Year, Month, StartedIn2013,
+    FirstYear, SecondYear, ThirdYear)]
+X[, c("LagCumRepaidRateSQ", "LagCumOtherRepaidRateSQ") := 
+  .(LagCumRepaidRate^(2), LagCumOtherRepaidRate^(2))]
+X[, c("LagMeanGroupNetSaving", "LagMeanCumGroupNetSaving") := 
+  .(LagGroupNetSaving/.N, LagCumGroupNetSaving/.N), by = .(groupid, Date)]
+X[, LagMeanCumGroupNetSaving := LagCumGroupNetSaving/1000]
+X[, c("UltraPoor", "ModeratelyPoor") := 0L]
+X[grepl("ltra", povertystatus), UltraPoor := 1L]
+X[!grepl("ltra", povertystatus), ModeratelyPoor := 1L]
+@
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+<<Take village and LoanYear deviation of value and lags except for group level variables>>=
+for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
+ !grepl("GroupShortf|LagGroupNetSav", colnames(X)))) {
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = groupid]
+  X[, colnames(X)[i] := eval(parse(text=colnames(X)[i])) - 
+    mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
+    by = Date]
+}
+<<shortfall regressions>>=
+# take only 1st member to form group level data
+X[, gnum := 1:.N, by = .(groupid, Date)]
+X[, Attributes := "traditional"]
+X[!grepl("tra", Arm), Attributes := "LargeSize"]
+X[grepl("gr|co", Arm), Attributes := "WithGrace"]
+X[grepl("co", Arm), Attributes := "InKind"]
+X[, Attributes := factor(Attributes, 
+  levels = c("traditional", "LargeSize", "WithGrace", "InKind"))]
+X1 <- X[gnum == 1, ]
+<<group shortfall regressions, eval = F>>=
+# full analysis in ShortfallRegressionAtIndivLevelAndGroupLevel.rnw
+vfesg1 <- lm(MeanGroupShortfall  ~ 
+  GRSR + GRSR:LagMeanGroupShortfall, data = X1)
+vfesg2 <- lm(MeanGroupShortfall ~  
+  Arm + Arm:SecondYear + Arm:ThirdYear, 
+  data = X1)
+vfesg3 <- lm(MeanGroupShortfall ~  
+  Attributes + Attributes:SecondYear + Attributes:ThirdYear, 
+  data = X1)
+vfesg4 <- lm(MeanGroupShortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear +
+  UltraPoor + UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+vfesg5 <- lm(MeanGroupShortfall ~ 
+  GRSR + Attributes + GRSR:LagMeanGroupShortfall + 
+  Attributes:SecondYear + Attributes:ThirdYear +
+  UltraPoor + UltraPoor:Attributes:SecondYear + UltraPoor:Attributes:ThirdYear +
+  LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X1)
+# individual shortfall regressions
+vfes1 <- lm(Shortfall  ~ 
+  GRSR + GRSR:LagMeanGroupShortfall, data = X)
+vfes2 <- lm(Shortfall  ~ 
+  Arm + Arm:SecondYear + Arm:ThirdYear, 
+  data = X)
+vfes3 <- lm(MeanGroupShortfall ~  
+  Attributes + Attributes:SecondYear + Attributes:ThirdYear, 
+  data = X)
+vfes4 <- lm(Shortfall ~ 
+  GRSR + Arm + GRSR:LagMeanGroupShortfall + 
+  Arm:SecondYear + Arm:ThirdYear +
+  UltraPoor + UltraPoor:Arm:SecondYear + UltraPoor:Arm:ThirdYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+vfes5 <- lm(Shortfall ~ 
+  GRSR + Attributes + GRSR:LagMeanGroupShortfall + 
+  Attributes:SecondYear + Attributes:ThirdYear +
+  UltraPoor + UltraPoor:Attributes:SecondYear + UltraPoor:Attributes:ThirdYear +
+  LagShortfall + LagMeanGroupShortfall +
+  LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+  data = X)
+# Below is older version regressions
+# vfesg1 <- lm(MeanGroupShortfall  ~ -1 + GRSR:LagMeanGroupShortfall, data = X1)
+# vfesg2 <- lm(MeanGroupShortfall ~ -1 + 
+#   Arm:FirstYear + Arm:SecondYear + Arm:ThirdYear, 
+#   data = X1)
+# vfesg3 <- lm(MeanGroupShortfall ~ -1 + GRSR:LagMeanGroupShortfall + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+#   data = X1)
+# vfesg4 <- lm(MeanGroupShortfall ~ -1 + LagMeanGroupShortfall + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   LagMeanGroupNetSaving + LagMeanCumGroupNetSaving,
+#   data = X1)
+# # individual shortfall regressions
+# vfes1 <- lm(Shortfall  ~ -1 + GRSR:LagShortfall + LagOtherShortfall, 
+#   data = X)
+# vfes2 <- lm(Shortfall  ~ -1 + GRSR:LagShortfall + LagOtherShortfall + 
+#   Arm:FirstYear + Arm:SecondYear + Arm:ThirdYear, 
+#   data = X)
+# vfes3 <- lm(Shortfall  ~ -1 + GRSR:LagShortfall + LagOtherShortfall + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   Lagvalue.NetSaving + LagOtherNetSaving + 
+#   LagCumNetSaving + LagCumOtherNetSaving,
+#   data = X)
+# vfes4 <- lm(Shortfall  ~ -1 + GRSR:LagShortfall + LagOtherShortfall + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   Lagvalue.NetSaving + LagOtherNetSaving + OtherShortfall +
+#   LagCumNetSaving + LagCumOtherNetSaving,
+#   data = X)
+# vfes5 <- lm(Shortfall  ~ -1 + GRSR:I(LagOtherShortfall - LagShortfall) + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   Lagvalue.NetSaving + LagOtherNetSaving + 
+#   LagCumNetSaving + LagCumOtherNetSaving,
+#   data = X)
+# vfes6 <- lm(Shortfall  ~ -1 + GRSR:I(LagOtherShortfall - LagShortfall) + 
+#   Arm:SecondYear + Arm:ThirdYear +
+#   povertystatus +
+#   Lagvalue.NetSaving + LagOtherNetSaving + OtherShortfall +
+#   LagCumNetSaving + LagCumOtherNetSaving,
+#   data = X)
+reglists <- eval(parse(text=paste("list(", paste0("vfesg", 1:5), ")")))
+lapply(
+if (!is.null(x$na.action)) matrix(X1[-vfesg1$na.action, groupid]) else
+matrix(X1[, groupid])
+vfesgXlist <- list(matrix(X1[-vfesg1$na.action, groupid]),
+  matrix(X1[, groupid]),
+  matrix(X1[-vfesg3$na.action, groupid]),
+  matrix(X1[-vfesg4$na.action, groupid]),
+  matrix(X1[-vfesg5$na.action, groupid])
+  )
+vfesXlist <- list(matrix(X[-vfes1$na.action, groupid]),
+  matrix(X[-vfes2$na.action, groupid]),
+  matrix(X[-vfes3$na.action, groupid]),
+  matrix(X[-vfes4$na.action, groupid]),
+  matrix(X[-vfes5$na.action, groupid]),
+  matrix(X[-vfes6$na.action, groupid]))
+vfesglist <- list(vfesg1, vfesg2, vfesg4)
+vfeslist <- list(vfes1, vfes2, vfes3, vfes4, vfes5, vfes6)
+reglists.header <- c("vfesg", "vfes")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  #ro <- lapply(ro.list, clx, cluster = matrix(get(c("X1", "X")[i])[, groupid]), 
+  #  returnV = T, deviation = F)
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+vfes.list <- c(vfesg.estlist[1:3], vfes.estlist)
+vfes.tab <- tabs2latex3(vfes.list, digits = 2,
+  roworder = "^OtherS|^LagOtherS|G.*LagO.*Short|LagMeanGroupSh|^LagS|^G.*LagS.*l$|Net|First|Secon|Thir")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*", "",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*?)-Lag", "\\1$_{t-1}-$Lag",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    "MeanGroupS.*l\\$", "per member group shortfall$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving\\$", "Net saving$",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(vfes.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+vfes.tb <- rbind(as.matrix(cbind(covariates = rn, vfes.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", c(vfesg.M, vfes.M)),
+  c("\\bar{R}^{2}", c(vfesg.R, vfes.R)),
+  c("N", c(vfesg.N, vfes.N)))
+vfes.ltxtb <- latextab(vfes.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.1, ncol(vfes.tb)-1)), hright = "$", 
+  #hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.7, 4), rep(1.3, 4)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 3, separatingcolwidth = .2)
+vfes.ltxtb <- rbind(vfes.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{11}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{3}{c}{\\scriptsize\\hfil Per member group shortfall (Tk)} & & \\multicolumn{6}{c}{\\scriptsize\\hfil Shortfall (Tk)}\\\\",
+  "\\cline{2-4} \\cline{6-11}\\\\",
+  vfes.ltxtb[-(1:2), , drop = F])
+write.tablev(vfes.ltxtb, 
+  paste0(pathsaveHere, "ShortfallVFEEstimationResults.tex"), colnamestrue = F)
+@
+
+\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults.rnw"))}
+
+
+Check correlations between repayment, saving, revenues, costs.
+<<vfer regressions>>=
+# individual level regressions
+vfer5 <- lm(value.repay  ~ -1 + Lagvalue.repay + LagOtherRepaid, 
+  data = X)
+vfer6 <- lm(value.repay ~ -1 + Lagvalue.repay + LagOtherRepaid +
+  Arm:FirstYear +   Arm:SecondYear + Arm:ThirdYear, 
+ data = X)
+vfer10 <- lm(value.repay  ~ -1 + Lagvalue.repay +
+  value.NetSaving  + value.cost + value.rev + UltraPoor + ModeratelyPoor, data = X)
+vfer11 <- lm(value.repay  ~ -1 + Lagvalue.repay +
+  UltraPoor + ModeratelyPoor +
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving +
+  OtherRepaid + OtherNetSaving + LagCumOtherNetSaving + 
+  OtherCost + OtherRevenue, data = X)
+vfer12 <- lm(value.repay  ~ -1  + Lagvalue.repay +
+  UltraPoor + ModeratelyPoor + 
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving +
+  OtherRepaid + OtherNetSaving + LagCumOtherNetSaving + 
+  OtherCost + OtherRevenue +
+  Arm:SecondYear + Arm:ThirdYear, data = X)
+vfer13 <- lm(value.repay  ~ -1  + Lagvalue.repay + 
+  UltraPoor + ModeratelyPoor + 
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving +
+  OtherRepaid + OtherNetSaving + LagCumOtherNetSaving + 
+  OtherCost + OtherRevenue +
+  Arm:SecondYear + Arm:ThirdYear, data = X)
+vfer14 <- lm(value.repay  ~ -1  + Lagvalue.repay + 
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving +
+  OtherRepaid + OtherNetSaving + LagCumOtherNetSaving + 
+  OtherCost + OtherRevenue +
+  Arm:FirstYear + Arm:SecondYear + Arm:ThirdYear, data = X)
+library(AER)
+iv10 <- ivreg(value.repay  ~ -1 + Lagvalue.repay +
+  value.NetSaving  + value.cost + value.rev + 
+  UltraPoor + ModeratelyPoor | Lagvalue.repay + Lagvalue.NetSaving + Lagvalue.cost + Lagvalue.rev + 
+  UltraPoor + ModeratelyPoor, data = X)
+iv11 <- ivreg(value.repay  ~ -1 + Lagvalue.repay +
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving + LagCumOtherNetSaving + 
+  UltraPoor + ModeratelyPoor + Arm:SecondYear + Arm:ThirdYear |
+  Lagvalue.repay + Lagvalue.NetSaving + Lagvalue.cost + Lagvalue.rev + 
+  UltraPoor + ModeratelyPoor + LagCumNetSaving + LagCumOtherNetSaving + 
+  Arm:SecondYear + Arm:ThirdYear, data = X)
+iv12 <- ivreg(value.repay  ~ -1 + Lagvalue.repay +
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving + LagCumOtherNetSaving + 
+  UltraPoor + ModeratelyPoor + OtherNetSaving + 
+  OtherRepaid + OtherCost + OtherRevenue |
+  Lagvalue.repay + Lagvalue.NetSaving + Lagvalue.cost + Lagvalue.rev + 
+  UltraPoor + ModeratelyPoor + LagCumNetSaving + LagCumOtherNetSaving + 
+  LagOtherNetSaving + LagOtherRepaid + LagOtherCost + LagOtherRevenue, 
+  data = X)
+iv13 <- ivreg(value.repay  ~ -1 + Lagvalue.repay +
+  value.NetSaving  + value.cost + value.rev + LagCumNetSaving + LagCumOtherNetSaving + 
+  UltraPoor + ModeratelyPoor + 
+  Arm:SecondYear + Arm:ThirdYear + OtherNetSaving + OtherRepaid + OtherCost + OtherRevenue |
+  Lagvalue.repay + Lagvalue.NetSaving + Lagvalue.cost + Lagvalue.rev + 
+  LagOtherNetSaving + LagOtherRepaid + LagOtherCost + LagOtherRevenue + 
+  LagCumNetSaving + LagCumOtherNetSaving + 
+  UltraPoor + ModeratelyPoor + Arm:SecondYear + Arm:ThirdYear, data = X)
+vferXlist <- list(matrix(X[-vfer10$na.action, groupid]), 
+  matrix(X[-vfer11$na.action, groupid]),
+  matrix(X[-vfer12$na.action, groupid]),
+  matrix(X[-vfer13$na.action, groupid]),
+  matrix(X[-vfer14$na.action, groupid]))
+ivrXlist <- list(matrix(X[-iv10$na.action, groupid]), 
+  matrix(X[-iv11$na.action, groupid]),
+  matrix(X[-iv12$na.action, groupid]),
+  matrix(X[-iv13$na.action, groupid]))
+vferlist <- list(vfer10, vfer11, vfer12, vfer14)
+ivrlist <- list(iv10, iv11, iv12)
+reglists.header <- c("vfer", "ivr")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+ivr.weak <- lapply(ivrlist, function(x) 
+    data.table(t(summary(x, diagnostic=T)$diag[, "statistic", drop = F])))
+ivr.weak <- t(rbindlist(ivr.weak, use.names = T, fill = T))
+ivr.weak <- rbind(ivr.weak[grepl("We", rownames(ivr.weak)), ], 
+  ivr.weak[!grepl("We", rownames(ivr.weak)), ])
+ivr.weak <- a2b(round(ivr.weak, 2), NA, "")
+ivr.list <- c(vfer.estlist, ivr.estlist)
+ivr.tab <- tabs2latex3(ivr.list, roworder = "^Lag|^val|^Oth|First|Secon|Thir")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*", "",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    "MeanGroupS.*l\\$", "per member group shortfall$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving", "Net saving$_{t}$",
+    "value.cost", "costs$_{t}$",
+    "value.rev", "revenues$_{t}$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(ivr.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+ivr.tb <- rbind(as.matrix(cbind(covariates = rn, ivr.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", c(vfer.M, ivr.M)),
+  cbind(paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rownames(ivr.weak), "}"), "", "", "", "", ivr.weak),
+  c("\\bar{R}^{2}", c(vfer.R, ivr.R)),
+  c("N", c(vfer.N, ivr.N)))
+rn <- ivr.tb[, 1]
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+ivr.tb[, 1] <- rn
+ivr.ltxtb <- latextab(ivr.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.4, ncol(ivr.tb)-1)), hright = "$", 
+  #hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.7, 4), rep(1.3, 4)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 4, separatingcolwidth = .2)
+ivr.ltxtb <- rbind(ivr.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{9}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{4}{c}{\\scriptsize\\hfil Group fixed effects} & & \\multicolumn{3}{c}{\\scriptsize\\hfil GFE instrumental variables}\\\\",
+  "\\cline{2-5} \\cline{7-9}\\\\",
+  ivr.ltxtb[-(1:2), , drop = F])
+write.tablev(ivr.ltxtb, 
+  paste0(pathsave, "RepaymentIVEstimationResults.tex"), colnamestrue = F)
+@
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects and IV estimation of repayment\label{tab repay}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/RepaymentIVEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Endogenous variables: Net saving, cost, revenue, other costs, other revenue. Instruments are lagged net saving, other member's mean costs, other member's mean revenues. For (7), additional instruments of lagged other member's mean costs, lagged other member's mean revenues are used. For (8), instruments are lagged net saving, lagged costs, lagged revenue, lagged other member's mean costs, lagged other member's mean revenues.\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab repay}} shows repayment is strongly positively correlated with others' concurrent repayment. This indicates a strong, positive correlation within a group, which holds even after controlling for costs, revenues, and net saving. Lagged cumulative net saving is positively correlated, indicating solvency is related with saving. IV estimates (=choice of IVs) are poor.
+\end{finding}
+\end{palepinkleftbar}
+
+
+Check correlations between repayment, saving, revenues, costs.
+<<vfecost regressions>>=
+# individual level regressions
+vfecost1 <- lm(value.cost  ~ -1 + Lagvalue.cost + povertystatus, 
+  data = X)
+vfecost2 <- lm(value.cost  ~ -1 + Lagvalue.cost + Arm:povertystatus, 
+  data = X)
+vfecost3 <- lm(value.cost  ~ -1 + Lagvalue.cost + povertystatus +
+  Arm:SecondYear + Arm:ThirdYear, 
+ data = X)
+vfecost3 <- lm(value.cost  ~ -1 + 
+  Arm:FirstYear + Arm:SecondYear + Arm:ThirdYear, 
+ data = X)
+vfecost4 <- lm(value.cost  ~ -1 + Lagvalue.cost + povertystatus +
+  Arm:SecondYear + Arm:ThirdYear + OtherCost, 
+ data = X)
+vfecost5 <- lm(value.cost  ~ -1 + Lagvalue.cost + 
+ FirstYear + Arm:SecondYear + Arm:ThirdYear + OtherCost, 
+ data = X)
+vfecostlist <- list(vfecost1, vfecost2, vfecost3, vfecost4, vfecost5)
+#lapply(vfecostlist, function(x) any(grepl("^na", names(x))))
+vfecostXlist <- list(matrix(X[-vfecost1$na.action, groupid]),
+  matrix(X[-vfecost2$na.action, groupid]),
+  matrix(X[-vfecost3$na.action, groupid]),
+  matrix(X[-vfecost4$na.action, groupid]),
+  matrix(X[-vfecost5$na.action, groupid]))
+reglists.header <- c("vfecost")
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+vfecost.tab <- tabs2latex3(vfecost.estlist, roworder = "^Lag|^Other|^Arm")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*", "",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    "MeanGroupS.*l\\$", "per member group shortfall$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving", "Net saving$_{t}$",
+    "value.cost", "costs$_{t}$",
+    "value.rev", "revenues$_{t}$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(vfecost.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+vfecost.tb <- rbind(as.matrix(cbind(covariates = rn, vfecost.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", vfecost.M),
+  c("\\bar{R}^{2}", vfecost.R),
+  c("N", vfecost.N))
+rn <- vfecost.tb[, 1]
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+vfecost.tb[, 1] <- rn
+vfecost.ltxtb <- latextab(vfecost.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.3, ncol(vfecost.tb)-1)), hright = "$", 
+  #hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.7, 4), rep(1.3, 4)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90")
+write.tablev(vfecost.ltxtb, 
+  paste0(pathsave, "CostVFEEstimationResults.tex"), colnamestrue = F)
+@
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects estimation of costs\label{tab cost}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/CostVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab cost}} shows costs are positively autocorrelated (persistent) and strongly, positively correlated with other members' concurrent costs. 
+\end{finding}
+\end{palepinkleftbar}
+
+
+Cumulative profits.
+<<cumulative profits regressions>>=
+monthpoints <- c(12, 24, 36)
+for (i in 1:length(monthpoints)) {
+  X2 <- X[MonthsElapsed == monthpoints[i], ]
+  assign(paste0("X.", monthpoints[i]), X2)
+  # individual level regressions: 
+  lm1 <- lm(CumProfit  ~ -1 + Arm:povertystatus, data = X2)
+  lm2 <- lm(CumProfit  ~ -1 + Arm:povertystatus + CumOtherProfit, data = X2)
+  assign(paste0("vfecp", monthpoints[i], ".1"), lm1)
+  assign(paste0("vfecp", monthpoints[i], ".2"), lm2)
+  assign(paste0("vfecp", monthpoints[i], "list"), list(lm1, lm2))
+  #lapply(, function(x) any(grepl("^na", names(x))))
+  vfecpXlist <- list(matrix(X2[, groupid]),
+    matrix(X2[, groupid]))
+  assign(paste0("vfecp", monthpoints[i], "Xlist"), vfecpXlist)
+}
+reglists.header <- paste0("vfecp", monthpoints)
+for (i in 1:length(reglists.header)) {
+  ro.list <- get(paste0(reglists.header[i], "list"))
+  ro <- lapply(1:length(ro.list), function(j) 
+   clx(ro.list[[j]], cluster = get(paste0(reglists.header[i], "Xlist"))[[j]],  returnV = T, deviation = F))
+  ro.estlist <- lapply(ro, "[[", 1)
+  assign(paste0(reglists.header[i], ".estlist"), lapply(ro.estlist, function(x) x[, -3, drop = F]))
+  assign(paste0(reglists.header[i], ".N"), unlist(lapply(ro, "[[", 8)))
+  assign(paste0(reglists.header[i], ".M"), unlist(lapply(ro, "[[", 6)))
+  assign(paste0(reglists.header[i], ".R"), unlist(lapply(ro.list, function(x) round(summary(x)$adj, 3))))
+}
+vfecp.estlist <- c(vfecp12.estlist, vfecp24.estlist, vfecp36.estlist)
+vfecp.tab <- tabs2latex3(vfecp.estlist, digits = 1, roworder = "^Other|poverty")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*", "",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    "MeanGroupS.*l\\$", "per member group shortfall$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving", "Net saving$_{t}$",
+    "value.cost", "costs$_{t}$",
+    "value.rev", "revenues$_{t}$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(vfecp.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+vfecp.tb <- rbind(as.matrix(cbind(covariates = rn, vfecp.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", c(vfecp12.M, vfecp24.M, vfecp36.M)),
+  c("\\bar{R}^{2}", c(vfecp12.R, vfecp24.R, vfecp36.R)),
+  c("N", c(vfecp12.N, vfecp24.N, vfecp36.N)))
+rn <- vfecp.tb[, 1]
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+vfecp.tb[, 1] <- rn
+vfecp.ltxtb <- latextab(vfecp.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.4, ncol(vfecp.tb)-1)), hright = "$", 
+  #hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.7, 4), rep(1.3, 4)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90",
+  addseparatingcols = 2, separatingcolwidth = .2)
+vfecp.ltxtb <- rbind(vfecp.ltxtb[1:2, , drop = F], 
+  "\\multicolumn{8}{c}{}\\\\[-.5ex]",
+  "\\makebox[3cm]{\\scriptsize\\hfil } & \\multicolumn{2}{c}{\\scriptsize\\hfil 12 months} & & \\multicolumn{2}{c}{\\scriptsize\\hfil 24 months} & \\multicolumn{2}{c}{\\scriptsize\\hfil 36 months}\\\\",
+  "\\cline{2-3} \\cline{5-6} \\cline{7-8}\\\\",
+  vfecp.ltxtb[-(1:2), , drop = F])
+write.tablev(vfecp.ltxtb, 
+  paste0(pathsave, "CumProfitVFEEstimationResults.tex"), colnamestrue = F)
+@
+
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects estimation of cumulative profit\label{tab CumProfit}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/CumProfitVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. Profit is (revenue) - (costs).\\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab CumProfit}} shows cumulative profits are positively only in the first year. 
+\end{finding}
+\end{palepinkleftbar}
+
+<<miss regressions>>=
+miss10 <- lm(value.missw  ~ -1 + 
+  Lagvalue.missw, data = X)
+miss11 <- lm(value.missw  ~ -1 + 
+  Lagvalue.missw + LagOtherMisses +
+  Arm:SecondYear + Arm:ThirdYear, data = X)
+miss12 <- lm(value.missw  ~ -1 + 
+  Lagvalue.missw + OtherMisses + LagOtherMisses +
+  Arm:SecondYear + Arm:ThirdYear, data = X)
+missreglist <- list(miss10, miss11, miss12)
+missXlist <- list(matrix(X[-miss10$na.action, groupid]), 
+  matrix(X[-miss11$na.action, groupid]),
+  matrix(X[-miss12$na.action, groupid]))
+miss.results <- lapply(1:length(missreglist), function(i) 
+   clx(missreglist[[i]], cluster = missXlist[[i]],  returnV = T, deviation = F))
+miss.estlist <- lapply(miss.results, "[[", 1)
+miss.estlist <- lapply(miss.estlist, function(x) x[, -3, drop = F])
+miss.N <- unlist(lapply(miss.results, "[[", 8))
+miss.M <- unlist(lapply(miss.results, "[[", 6))
+miss.R <- unlist(lapply(missreglist, function(x) round(summary(x)$adj, 3)))
+miss.tab <- tabs2latex3(miss.estlist, roworder = "^val|^Lag|^Oth|First|Secon|Thir")
+subst.table <- matrix(
+  c("Arm|povertystatus|^se\\$.*", "",
+    "MonthsE", "Months E",
+    "Month([JFMASOND])", "\\1",
+    ":", " $\\\\times$ ",
+    "I\\((.*?)\\)", "\\1",
+    "Lag(.*)", "\\1$_{t-1}$",
+    "value.repay", "repayment",
+    "MeanGroupS.*l\\$", "per member group shortfall$",
+    "^OtherR.*d\\$", "Mean other repayment$",
+    "^CumR.*d\\$", "Cumulative repayment$",
+    "^CumR.*e\\$", "Cumulative repayment rate$",
+    "^CumR.*Q\\$", "Cumulative repayment rate$^{2}",
+    "^CumN.*g\\$", "Cumulative net saving$",
+    "CumOtherO.*d\\$", "Other cumulative repayments$",
+    "CumOtherR.*e\\$", "Other cumulative repayment rate$",
+    "CumOtherR.*Q\\$", "Other cumulative repayment rate$^{2}",
+    "MeanCumGroupNet.*g\\$", "Per member cumulative group net saving (1000Tk)$",
+    "value.NetSaving", "Net saving$_{t}$",
+    "value.cost", "costs$_{t}$",
+    "value.rev", "revenues$_{t}$",
+    "instruments \\((.*?)\\)", "IV: \\1",
+    "MeanG.*g\\$", "Per member group net saving$",
+    "\\^2", "$^{2}$"), byrow = T, ncol = 2)
+rn <- rownames(miss.tab)
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
+miss.tb <- rbind(as.matrix(cbind(covariates = rn, miss.tab)), 
+  c("\\makebox[3cm]{\\scriptsize\\hfill number of clusters}", miss.M),
+  c("\\bar{R}^{2}", miss.R),
+  c("N", miss.N))
+rn <- miss.tb[, 1]
+for (i in 1:nrow(subst.table)) 
+  rn <- gsub(subst.table[i, 1], subst.table[i, 2], rn)
+miss.tb[, 1] <- rn
+miss.ltxtb <- latextab(miss.tb, 
+  hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.3, ncol(miss.tb)-1)), hright = "$", 
+  #hleft = "\\scriptsize\\hfil$", hcenter = c(3, rep(1.7, 4), rep(1.3, 4)), hright = "$", 
+  headercolor = "gray90", adjustlineskip = "-.6ex", delimiterline= NULL,
+  alternatecolor2 = "gray90")
+write.tablev(miss.ltxtb, 
+  paste0(pathsave, "MissVFEEstimationResults.tex"), colnamestrue = F)
+@
+
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Group fixed effects of missed repayment\label{tab miss}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{c:/data/GUK/analysis/save/MissVFEEstimationResults.tex}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & Group fixed effects are controlled by differncing out respecive means from the data matrix. Intercept terms are omitted in estimating equations. \\
+& 2. & ${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\begin{palepinkleftbar}
+\begin{finding}
+\textsc{\small Table \ref{tab miss}} shows number of missed repayments are positively autocorrelated (persistent) and are positively correlated (almost more than proportional) with others' concurrent misses. Other members' lagged misses are negatively correlated, which implies some stability in group repayment. Missed repayment is smaller in the third year.
+\end{finding}
+\end{palepinkleftbar}
+
+<<eval= F>>=
+summary(glm(CumRepaidRate ~ -1 + Arm + povertystatus + 
+  MonthsRepaid + I(MonthsRepaid^2), 
+  family = quasibinomial,
+  data = adw2[MonthsRepaid > 12 & MonthsRepaid <= 48 & 
+  CumRepaidRate <= 1, ]))
+summary(glm(CumRepaidRate ~ -1 + Arm*MonthsRepaid + Arm*I(MonthsRepaid^2) +
+  povertystatus*MonthsRepaid + povertystatus*I(MonthsRepaid^2), 
+  family = quasibinomial,
+  data = adw2[MonthsRepaid > 12 & MonthsRepaid <= 48 & 
+  CumRepaidRate <= 1, ]))
+summary(glm(CumRepaidRate ~ -1 + Arm*MonthsRepaid + Arm*I(MonthsRepaid^2) +
+  LagOtherRepaid + LagCumOtherRepaid, 
+  family = quasibinomial,
+  data = adw2[MonthsRepaid > 12 & MonthsRepaid <= 48 & 
+  CumRepaidRate <= 1, ]))
+summary(glm(CumRepaidRate ~ -1 + Arm*MonthsRepaid + Arm*I(MonthsRepaid^2) +
+ factor(groupid) + Month + 
+ LagOtherRepaid + LagCumOtherRepaid, 
+  family = quasibinomial,
+  data = adw2[MonthsRepaid > 12 & MonthsRepaid <= 48 & 
+  CumRepaidRate <= 1, ]))
+@
+
+\end{document}
