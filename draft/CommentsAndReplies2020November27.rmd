@@ -1,0 +1,129 @@
+---
+title: "Comments and replies: GUK paper, 2020 Nov 27"
+author: "Seiro Ito"
+date: "`r format(Sys.time(), '%Y年%m月%d日 %R')`"
+output:
+  #tufte::tufte_html:
+  bookdown::html_document2:
+    theme: readable
+    citation_package: natbib
+    toc: true
+    toc_depth: 1
+    number_sections: false
+  pdf_document:
+     latex_engine: xelatex
+header-includes:
+    - \usepackage{amsmath}
+    - \usepackage{amssymb}
+    - \usepackage{amsfonts}
+    - \usepackage{bookmark} 
+    - \usepackage{xltxtra} 
+    - \usepackage{zxjatype} 
+    - \usepackage[ipa]{zxjafont} 
+bibliography: c:/seiro/settings/Tex/seiro.bib
+link-citations: yes
+# c:\seiro\languages\R\R-4.2.1\bin\x64\Rscript.exe -e "path <- 'c:/data/NameRight/analysis/program/'; rmarkdown::render('c:/data/NameRight/analysis/program/DeStat_Tufte.Rmd')"
+# path <- "c:/data/GUK/"; setwd(paste0(path, "analysis/draft/")); bookdown::render_book("CommentsAndReplies2020November27.Rmd"); file.rename("_main.html", "CommentsAndReplies2020November27.html")
+#### rmarkdown::render(paste0(path, "CommentsAndReplies2020November27.Rmd"), output_format = "pdf_document")
+---
+
+### &#x1F44D; shows an agreement.
+
+# On abstract:
+
+1. &#x1F44D; not very smooth. Please consider revising it. 1. &#x1F44D; Better to start with the question. "Can we extend traditional micro-credit contracts to the ultra-poor, who are typically excluded from the credit access? 1. &#x1F44D; please mention some numbers, or estimates of the effects to anchor the impacts. 1. we need to cite papers (not here but in the main text) related to the impact of managerial training and support on micro-enterprises. David McKenzie and Chris Woodruff has a few papers on it, to being with.  
+   * This is written extensively in main text. I want to keep the abstract simple without citations.1. &#x1F44D; possibility of a 1. &#x1F44D; this sentence is not punchy and does not convincingly convey the findings. Please consider rewriting. We need to highlight three things 1) micro-credit can be expanded to ultra poor and can help poor to escape poverty trap but this can be achieved with a revised design of th credit program where longer loan contract with a large upfront liquidity is offered. 2) This proposed design does not trigger any systematic or strategic default compered to traditional contracts. 3)  Investment supporting aid by MFIs could help more poor to join. 
+
+# On revision memo
+
+1. we can show results using the repayment at the 36th Months, demonstrating that our conclusion is valid even at the 36th month, without the repayment extension.  We can also create the repayment-month wave data with monthly aggregates (0-48 months) or (0-36 months). Then stack this data and run a pooled regression with treatment assignment to check the treatment impacts on timely repayment, missing weeks and other outcome variable of interest for loan repayment. This will be the case of large T, small N as defined by David McKenzie JDE 2012 paper.  
+   * Showing effects of an unforeseen 1 year extension is impossible because there is no control group (of not receiving extensions). We may just say this should have reduced the loan defaults and calls for a caution in interpreting repayment outcomes.     * How is this relevant to autocorrelation and ANCOVA dealt in Mckenzie2012? Not sure what you suggest. 
+   * If our impacts are not time-varying, then pooling post-periods to estimate ATT makes a good sense. 
+   * ANCOVA leaps the benefits of randomisation from which its estimator gains its efficiency (better than DID). If we want to throw it away, it must be for a good reason. 
+1. &#x1F44D; Yes, perfect. 1. I think we can add one additional analysis in the current draft. we asked our sample about their preferred loan choices in section 22 (panel 3)  and again in section 18 &amp; 24 in endline. Please consider checking their stated preference for loan choices. Also the fact that our poor repaid a large portion of the debt, it reminds me of the this book: Poor always payback (https://www.amazon.com/Poor-Always-Pay-Back-Grameen/dp/1565492315)  
+   * An excellent point, but probably in a separate paper? We have not examined any of these stated preferences.1. I think this is very interesting findings and we should dig deeper. Let's try to understand the mechanism. I think this is the issue of risk averseness. Risk averse poor uptake more cattle arm due to the investment supporting aid offered by the MFI and also a clear investment portfolio given for success. We can estimate risk averseness, which was asked to our sample in Wave 2 [panel 2, section 13]. The data-set is available in the Dropbox. Let me know if you can not locate the data or questionnaire.  
+   * Again, excellent, but I suggest it to be in a separate paper.1. &#x1F44D; This also confirms what I wrote earlier that risk averseness plays a role here. previous experience of cattle farming reduces the risk of managing the portfolio and repayment.  
+   * Please see the reply [here][Experimental design].  1. &#x1F44D; Primary education: age 6-10, Secondary education (high school): 11-16, Higher Secondary education: 17-181. &#x1F44D; I actually don't have the book with me and given the COVID situation difficult to access the book from FIU library.  
+   * When everything is normal, let us add this.1. &#x1F44D; Will do it. By when you need this section to be done? Please also let em know the length of this section or sub-section and where it will fit.  
+   * Length is up to you. You will come up with succinct length. 1. &#x1F44D; The char selection was done based on two criterion, no existence of Micro-finance program by the NGOs/MFIs or by CLP program of DFID there and the islands are water-locked.  
+
+# Intro
+
+1. I don't think this is the only question we are addressing. I would rewrite the third paragraph focusing on the the following things: 
+   * I will edit to incorporate all functional attributes to the research question. 
+   * But a, c, d, e are all written in the neighbouring paragraphs, so I do not want to repeat them here.  
+   1. a) Global push for reduction of poverty using intervention like cash transfer, BRAC TUP program, universal basic income etc. 
+     * This is written in the first paragraph and its footnote.
+   2. &#x1F44D; b) However the such interventions are resource intensive and one-way transfer in nature. Not possible for wide adoption and scalability for the resource poor countries
+   3. c) Micro-credit could potentially bridge this gap, (credit access to reduce poverty and money recycled for greater outreach). However micro-credit being criticized for not very trans-formative to reduce poverty. 
+     * This is written in the preceding parapgrah. 
+   4. d) two things may have triggered such a null effect. the small credit amount and low entrepreneurial ability. 
+     * This is written in the next paragraph.
+   5. e) to shed light on this we experimented with a large upfront micro-credit with longer loan maturity contract for ultra poor with Investment supporting aid by MFIs to maintain the asset.   
+     * This is wriiten in the second next paragraph. 
+1. &#x1F44D; This RCT design would address two crucial questions  
+   1. Can large upfront micro-credit contract help ultra poor to escape poverty trap? 
+   1. Can Investment supporting aid by MFIs encourage more ultrapoor to uptake the credit 
+   1. can it be a viable business model for the MFI?  
+   * I added cost reduction by using loans and fees in introduction. 
+1. please refer a %, like 15% more ultrapoor, from the base  
+   * You will see that it is not possible. All we know is that low asset holders are participating, but we do not define the \"asset poor\" or ultra poor with some arbitrary cutoff.  And I do not think it is necessary to do so in showing the lower asset holders participated.1. &#x1F44D; experimental arms1. &#x1F44D; upfront 1. &#x1F44D; this is not clear.1. &#x1F44D; please re-write, not clear to comprehend.  
+
+# Study design
+
+1. &#x1F44D; typo  
+
+# Experimental design
+
+1. &#x1F44D; or may be they are risk averase and would not want to take the contract without the support.  
+   * It is implied.
+   * You only wrote the same content of main text in a different way. I will edit the main text for the ease of understanding.  
+   * Note: we know that the same return (under a heiffer) with less uncertainty (under T4) is preferred by any risk averse individual (without relevant knowledge). And we do not expect greater risk aversion of members of a particular arm given the randomisation. So it is the enhanced knowledge that reduces the uncertainty of investments that prompts more participation under T4.  
+
+# Results
+
+1. To me these two subsections, namely Participation and Attrition coming after empirical strategy for ITT estimation is not consistent with the flow. Attrition should come in the study sample, section V. If we include the participation then there should be a subsection in the empirical strategy section about equation to estimate uptake along woht the ITT measures. Also result should have subsections, one for uptake and one for ITT.  
+   * Uptake estimation is JDS paper, so it is left in the Background section. 1. &#x1F44D; 1 USD is 78-84 BDT1. should we not have previous experience of livestock raising as a variable here to show previous entrepreneurial experience matters for take up of the loan and cattle arm helped folks to adopt more without such an experience. We gathered such information at the baseline. Let's tag them as \"experienced livestock farmers\" or something similar. I think this is an important finding and similar to the recent Banerjee et al (2019) paper.  
+   * There were many NAs so sample size is not sufficient with this variable. 1. not sure what this variable captures.  
+   * It was written in the footnote just below the table but you may have missed it. Now I added this sentence to the main text.
+     * "The variable `Arm` is the ratio of `traditional` arm members in individual nonrejecters and individual rejecters." 
+     * I will change the variable name `Arm` to something more understandable such as `trad ratio`.1. &#x1F44D; I think this is important and we need to go deeper, as I commented in Table 4 above. 1. &#x1F44D; same as before. 1. It might also be useful to show the ATE (average treatment effect), which is equation 1 but pooled regression combining all the waves. We should report such pooled regression first, which shows the overall impact of the treatment averaging over the study period. And then we show this diagram which shows the time course of the impact. Please see McKenzie JDE (2012) paper.  
+   * I think you misunderstand this. We are showing cumulative relative impacts. Please read the estimation section.1. If se believe that one should not abruptly change how one treat the relationship between a covariate and the outcome before and after 5% or 10%, because p-values values are continuous variables, then our vertical bars can be generous showing 90% confidence intervals, not at the 95%.  
+   * I agree with the principle, should use p values, not error bars. But error bar plots are convenient in showing results even at the costs of 95% discrete change. And to rectify its costs, it has an advantage of being able show if crossing zero is only at the fringe or not. There are papers using 90% CI, but very few, and this can induce unnecessary doubts about the precision of estimates on the readers.1. I beg to disagree. your specification 1 shows ANCOVA estimator. It should be there before jumping to the Specification 2, time varying treatment effect. it should be a pooled regression, stacking all the periods. Please see McKenzie JDE (2012). See this: 
+   1. http://siteresources.worldbank.org/DEC/Resources/Beyond_Baseline_and_FollowUpJDE_final.pdf 
+   1. https://blogs.worldbank.org/impactevaluations/why-difference-difference-estimation-still-so-popular-experimental-analysis  
+   * I have no clue what you write here. I only see OLS in specification (1), because that is how I wrote the code.  
+   * I could have renumbered the specifications from 2-6 to 1-5, without showing OLS results, if that is less confusing.
+   * If our impacts are not time-varying, then pooling post-periods to estimate ATT makes a good sense.    * Please be specific about the pages on Mackenzie paper. Have you read @FrisonPocock1992? It is clearly written and the Mackenzie paper is like a rewrite of their theoretical results. They endorse ANCOVA in most cases, not a pooled regression.  
+1. &#x1F44D; or risk averseness.  
+   * Knowledge provision reduced perceived risks, so it is implied.   * Please see the reply [here][Experimental design].  
+1. &#x1F44D; we also need to show an overall effect of the intervention, on top of this time varying ones.  
+   * Period 4.1. &#x1F44D; why lease?1. why not seperate the intensive and extensive margings in the figure 5?  
+   * It *is* shown separately, as written in the figure footnote.
+   * Shall we reorder the rows and put intensive and extensive margins as panel titles?1. &#x1F44D; this is brilliant. thanks! Can we show this same picture with functional attributes?1. &#x1F44D; should it not be white color rather than blue?1. don't know why we are claiming repayment is causing consumption suppresssion. we have no evidence for that.  
+   * I will edit. 
+   * But if you read the paragrah, you will see. It is not the results, it is about our data's capacity of being able to identify impacts, if there is one. 
+   * This sentence claims that "can still identify", and followed by "(b)oth consumption and labour incomes do not show any impact".  1. &#x1F44D; also need an overall mean impact averaging over the study period. 1. we can also re-create this picture at the 36 month (original design withou the estention due to flood) and demonstrate relative position of repayment in each arm and % in each arm on track.  
+   * It *is* shown in the figure. 1. &#x1F44D; lets also estimate this at the 36 month. 1. are you sure?  
+   * Yes. Why do you ask? Have you found something different in their paper? It is not helpful without the specifics.1. please mention what is the definition here. Since the beginning of the paper we are saying poor or ultra poor overall so suddenly saying moderate poor is confusing. Lets say ultra poor and subsistent poor (or asset poor) or something like that and explain the classification used and reason for that. one reason is MFI targeting is based on asset holding at the household level. We can show that non or zeros asset holders are equally likely to repay.  
+   * This is written in the Study design section. 
+   * It is classification judged by the villagers, so I do not think we have a clear definition.  If my understanding is wrong, please correct it.1. &#x1F44D; higher secondary level1. &#x1F44D; higher secondary level
+1. &#x1F44D; higher secondary level
+1. &#x1F44D; there is a role of risk averseness here as well and previous experience of catle raising matters, which also hints that previsu experience reduces the risk on uncertain investment return and large debt contract.  
+
+# Conclusion
+
+1. we need a cost benefit analysis from the MFI and also internal return of return (irr) analysis to show the return to investment. Also the conclusion need to say % of people got our of poverty (or escaped poverty trap) in the Upfront liquidity group compared to traditional arms.  
+   * I do not have the cost data. All the benefits are shown in the estimated tables. I welcome you to go ahead and try some exercises. 1. &#x1F44D; higher secondary level1. &#x1F44D; for girls. 1. low return, shorter maturity projects.  
+   * The point of our findings is smaller scale (which implies lower returns). Not maturity.1. this is confusing. transfer may mean CCT. better to say cash loan rahter than in-kind loan.  
+   * Traditionally in econ, it is described as a transfer.  1. &#x1F44D; better to say uptake of such loan contract is higher. 1. Investment supporting aid by MFIs in the form of consulting and VET service.  
+   * Changed to: managerial support services.
+   * Normally, "consulting services" (as written previously) include sourcing out certain tasks, and we are clear about what is included in the Study design section.
+
+# References 
+
+```{r bib, include=FALSE}
+#### create a bib file for the R packages used in this document
+knitr::write_bib(x = "rmarkdown", file = paste0(path, 'seiro.bib'))
+```
+

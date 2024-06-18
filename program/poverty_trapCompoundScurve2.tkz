@@ -19,17 +19,15 @@ background rectangle/.style = {fill = gray90},
 \path[name path=yaxis] (origin) -- (axis cs: 0, 10);
 \addplot+ [name path=SSline, black, no marks, line width = .5pt] plot coordinates {(0, 0) (9, 9)};
 \node[above] at (axis cs: 9, 9) {\small $k_{t+1}=k_{t}$};
-\coordinate (mone) at (axis cs: .5, 0.2) ;		% k_{1}
-\coordinate (mtwo) at (axis cs: .5, 1.25);	% equil 2
-\coordinate (mthree) at (axis cs: 1.5, 2);	% equil3, goat equilibrium
-\coordinate (mfour) at (axis cs: 1.75, 2.5);	% 
-\coordinate (mfive) at (axis cs: 5, 3);		% 
+\coordinate (mone) at (axis cs: .5, 0.2) ;	% k_{1}
+\coordinate (mtwo) at (axis cs: .5, 1.25);	% Bend upwards toward this point 1
+\coordinate (mthree) at (axis cs: 1.25, 1.5);	% Bend upwards toward this point 2
 \draw[name path=GoatFlexzero2, blue, very thick] (origin) -- (mone);
 \draw[name path=GoatFlexvisible2, blue, very thick] 
-  (mone) .. controls ($(mtwo) + (-1, 0)$) and ($(mfour) + (-1, -1)$) .. 
-  (axis cs: 4.3, 2.7);
+  (mone) .. controls ($(mtwo) + (-1, 0)$) and ($(mthree) + (-1, -1)$) .. 
+  (axis cs: 4.3, 3.5);
 \addplot+ [name path=cowspart2, blue, no marks, smooth, line width=1.5pt] table {
-4.3 2.7
+4.3 3.5
 4.63 4.63
 };
 \addplot+ [name path=cows2, blue, no marks, smooth, line width=1.5pt] table {
@@ -45,10 +43,10 @@ background rectangle/.style = {fill = gray90},
 \path [name intersections={of=GoatFlexvisible2 and cowspart2, by={gcone2}}];
 \path [name intersections={of=SSline and cows2, by={cone2, ctwo2}}];
 
-\fill[blue] (gfone2) circle (3pt) (cone2) circle (3pt);
+\fill[blue] (gfone2) circle (3pt) (cone2) circle (3pt) node[above left] {\small $M$};
 \fill[red] (origin) circle (3pt) (gftwo2) circle (3pt) node[above left] {\small goats} (ctwo2) circle (3pt) node[above left] {\small cattle};
 \draw [name path=kunderline, blue, dashed] (cone2) -- (cone2 |- origin) node [below] {\small $k_{2}$};
-% draw dashed lines
+% draw convergig arrows
 \def\thisspace{3.5}
 \def\raisespace{2}
   % left of gone

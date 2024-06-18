@@ -1,0 +1,66 @@
+not very smooth. Please consider revising it. Better to start with the question. "Can we extend traditional micro-credit contracts to the ultra-poor, who are typically excluded from the credit access? please mention some numbers, or estimates of the effects to anchor the impacts. "we need to cite papers (not here but in the main text) related to the impact of managerial training and support on micro-enterprises. David McKenzie and Chris Woodruff has a few papers on it, to being with.  
+==>
+This is written extensively in text,"possibility of a this sentence is not punchy and does not convincingly convey the findings. Please consider rewriting. We need to highlight three things 1) micro-credit can be expanded to ultra poor and can help poor to escape poverty trap but this can be achieved with a revised design of th credit program where longer loan contract with a large upfront liquidity is offered. 2) This proposed design does not trigger any systematic or strategic default compered to traditional contracts. 3)  Investment supporting aid by MFIs could help more poor to join. 
+"we can show results using the repayment at the 36th Months, demonstrating that our conclusion is valid even at the 36th month, without the repayment extension.  We can also create the repayment-month wave data with monthly aggregates (0-48 months) or (0-36 months). Then stack this data and run a pooled regression with treatment assignment to check the treatment impacts on timely repayment, missing weeks and other outcome variable of interest for loan repayment. This will be the case of large T, small N as defined by David McKenzie JDE 2012 paper. 
+==>
+How is this relevant to autocorrelation and ANCOVA dealt in Mckenzie2012? Not sure what you suggest.   "Yes, perfect. "I think this is very interesting findings and we should dig deeper. Let's try to understand the mechanism. I think this is the issue of risk averseness. Risk averse poor uptake more cattle arm due to the investment supporting aid offered by the MFI and also a clear investment portfolio given for success. We can estimate risk averseness, which was asked to our sample in Wave 2 [panel 2, section 13]. The data-set is available in the Dropbox. Let me know if you can not locate the data or questionnaire.    
+==>
+Again, excellent, but I suggest it to be in a separate paper.""I think we can add one additional analysis in the current draft. we asked our sample about their preferred loan choices in section 22 (panel 3)  and again in section 18 &amp; 24 in endline. Please consider checking their stated preference for loan choices. Also the fact that our poor repaid a large portion of the debt, it reminds me of the this book: Poor always payback (https://www.amazon.com/Poor-Always-Pay-Back-Grameen/dp/1565492315) 
+==>
+An excellent point, but probably in a separate paper? We have not examined any of these stated preferences."This also confirms what I wrote earlier that risk averseness plays a role here. previous experience of cattle farming reduces the risk of managing the portfolio and repayment. Primary education: age 6-10, Secondary education (high school): 11-16, Higher Secondary education: 17-18"I actually don't have the book with me and given the COVID situation difficult to access the book from FIU library. 
+==>
+When everything is normal, let us add this.""Will do it. By when you need this section to be done? Please also let em know the length of this section or sub-section and where it will fit.
+==>
+Length is up to you. You will come up with succinct length. "The char selection was done based on two criterion, no existence of Micro-finance program by the NGOs/MFIs or by CLP program of DFID there and the islands are water-locked.  "I don't think this is the only question we are addressing. I would rewrite the third paragraph focusing on the the following things
+a) Global push for reduction of poverty using intervention like cash transfer, BRAC TUP program, universal basic income etc. 
+b) However the such interventions are resource intensive and one-way transfer in nature. Not possible for wide adoption and scalability for the resource poor countries. 
+c) Micro-credit could potentially bridge this gap, (credit access to reduce poverty and money recycled for greater outreach). However micro-credit being criticized for not very trans-formative to reduce poverty. 
+d) two things may have triggered such a null effect. the small credit amount and low entrepreneurial ability. 
+e) to shed light on this we experimented with a large upfront micro-credit with longer loan maturity contract for ultra poor with Investment supporting aid by MFIs to maintain the asset.     
+this RCT design would address two crucial questions
+1) Can large upfront micro-credit contract help ultra poor to escape poverty trap? 2) Can Investment supporting aid by MFIs encourage more ultrapoor to uptake the credit 3) can it be a viable business model for the MFI?
+==>
+I added cost reduction by using loans and fees in introduction.
+(a) (c) (d) (e) are written elsewhere in the text, so I do not want to repeat them here.      ""please refer a %, like 15% more ultrapoor, from the base
+==>
+You will see that it is not possible. All we know is that low asset holders are participating, but we do not define the \"asset poor\" or ultra poor with some arbitrary cutoff.  And I do not think it is necessary to do so in showing the lower asset holders participated."experimental armsupfront this is not clear.please re-write, not clear to comprehend. typo"or may be they are risk averase and would not want to take the contract without the support.
+==>
+It is implied and I will edit for the ease of understanding. But we know that the same return (under a heiffer) with less uncertainty (under T4) is preferred by any risk averse individual (without relevant knowledge). And we do not expect greater risk aversion of members of a particular arm given the randomisation. So it is the enhanced knowledge that reduces the uncertainty of investments that prompts more participation under T4.""To me these two subsections, namely Participation and Attrition coming after empirical strategy for ITT estimation is not consistent with the flow. Attrition should come in the study sample, section V. If we include the participation then there should be a subsection in the empirical strategy section about equation to estimate uptake along woht the ITT measures. Also result should have subsections, one for uptake and one for ITT.   
+==>
+Uptake estimation is JDS paper, so it is left in the background. "1 USD is 78-84 BDT"should we not have previous experience of livestock raising as a variable here to show previous entrepreneurial experience matters for take up of the loan and cattle arm helped folks to adopt more without such an experience. We gathered such information at the baseline. Let's tag them as \"experienced livestock farmers\" or something similar. I think this is an important finding and similar to the recent Banerjee et al (2019) paper.
+==>
+There were many NAs so sample size is not sufficient with this variable. ""not sure what this variable captures. 
+==>
+Please read the footnote. I also added this sentence to the main text."I think this is important and we need to go deeper, as I commented in Table 4 above. same as before. "It might also be useful to show the ATE (average treatment effect), which is equation 1 but pooled regression combining all the waves. We should report such pooled regression first, which shows the overall impact of the treatment averaging over the study period. And then we show this diagram which shows the time course of the impact. Please see McKenzie JDE (2012) paper.
+==>
+I think you misunderstand this. We are showing cumulative relative impacts. Please read the estimation section.""If se believe that one should not abruptly change how one treat the relationship between a covariate and the outcome before and after 5% or 10%, because p-values values are continuous variables, then our vertical bars can be generous showing 90% confidence intervals, not at the 95%.
+==>
+I agree with the principle, should use p values, not error bars. But error bar plots are convenient in showing results even at the costs of 95% discrete change. And to rectify its costs, it has an advantage of being able show if crossing zero is only at the fringe or not. There are papers using 90% CI, but very few, and this can induce unnecessary doubts about the precision of estimates on the readers.""I beg to disagree. your specification 1 shows ANCOVA estimator. It should be there before jumping to the Specification 2, time varying treatment effect. it should be a pooled regression, stacking all the periods. Please see McKenzie JDE (2012). See this:
+1.http://siteresources.worldbank.org/DEC/Resources/Beyond_Baseline_and_FollowUpJDE_final.pdf
+2. https://blogs.worldbank.org/impactevaluations/why-difference-difference-estimation-still-so-popular-experimental-analysis
+==>
+I have no clue what you write here. I only see OLS in (1), because it is. Please be specific about the pages on Mackenzie paper. Have you read Frison and Pockok? It is clearly written and the Mackenzie paper is like a rewrite of their theoretical results. They endorse ANCOVA in most cases, not a pooled regression.""or risk averseness. 
+==>
+Knowledge provision reduced perceived risks, so it is implied.""we also need to show an overall effect of the intervention, on top of this time varying ones. 
+==>
+Period 4."why lease?"why not seperate the intensive and extensive margings in the figure 5?
+==>
+It IS shown separately, I do not understand what you are pointing at."this is brilliant. thanks! Can we show this same picture with functional attributes?should it not be white color rather than blue?"don't know why we are claiming repayment is causing consumption suppresssion. we have no evidence for that. 
+==>
+Note that we are seeing \"relative to trad arm\". So we have evidence."also need an overall mean impact averaging over the study period. "we can also re-create this picture at the 36 month (original design withou the estention due to flood) and demonstrate relative position of repayment in each arm and % in each arm on track. 
+==>
+It IS shown in the figure."lets also estimate this at the 36 month. "are you sure?
+==>
+Yes. Why do you ask? Please be specific.""please mention what is the definition here. Since the beginning of the paper we are saying poor or ultra poor overall so suddenly saying moderate poor is confusing. Lets say ultra poor and subsistent poor (or asset poor) or something like that and explain the classification used and reason for that. one reason is MFI targeting is based on asset holding at the household level. We can show that non or zeros asset holders are equally likely to repay. 
+==>
+This is written in the study sample section in how we recruited the participants. It is classification judged by the villagers, so I do not think we have a clear definition.  If my understanding is wrong, please correct it."higher secondary levelhigher secondary level
+higher secondary level
+there is a role of risk averseness here as well and previous experience of catle raising matters, which also hints that previsu experience reduces the risk on uncertain investment return and large debt contract.  "we need a cost benefit analysis from the MFI and also internal return of return (irr) analysis to show the return to investment. Also the conclusion need to say % of people got our of poverty (or escaped poverty trap) in the Upfront liquidity group compared to traditional arms.  
+==>
+I do not have the cost data. All the benefits are shown in the estimated tables. I welcome you to go ahead and try some exercises. "higher secondary levelfor girls. "low return, shorter maturity projects.
+==>
+The point is smaller scale (which implies lower returns). Not maturity.""this is confusing. transfer may mean CCT. better to say cash loan rahter than in-kind loan.
+==>
+Traditionally in econ, it is described as a transfer.  "better to say uptake of such loan contract is higher. "Investment supporting aid by MFIs in the form of consulting and VET service. 
+==>
+Normally, consulting services include sourcing out certain tasks, and we are clear about what is included in the main text."
