@@ -96,7 +96,7 @@ g <- ggplot(data = assL,
 # assL0 <- lclass[assL]
 # assl <- assL0[, .(LCval, num = .N), by = .(Arm, LandClass, survey)]
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",
     "LandHoldingScatterWithZero.png")
     , g,
     width = 13, height = 4, units = "cm", dpi = 300
@@ -126,7 +126,7 @@ g <- ggplot(data = subset(assL, AmountFilled > 0),
    )+
   facet_grid(. ~ survey)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",
     "LandHoldingScatterWithoutZero.png")
     , g,
     width = 13, height = 4, units = "cm", dpi = 300
@@ -163,7 +163,7 @@ g <- ggplot(data = subset(assL, AmountFilled > 0 & BStatus == "borrower"),
       margin = margin(t=0, r=.0, b=0, l=.0, "cm"))) + 
   facet_grid(Arm ~ survey)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",
     "LandHoldingHistogramByRound.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300
@@ -200,7 +200,7 @@ ggplot(data = subset(assL, AmountFilled > 0 & BStatus == "borrower"),
       margin = margin(t=0, r=.0, b=0, l=.0, "cm"))) + 
   facet_grid(Arm ~ survey)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",
     "LandHoldingHistogramByRoundRealValues.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300
@@ -247,7 +247,7 @@ Note:& Loan recipients only.\\[1ex]
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, including zero holding\label{fig LandWithZero}}\\
-\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/LandHoldingScatterWithZero.png")}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/LandHoldingScatterWithZero.png")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -257,7 +257,7 @@ Note:& Log of 1+land holding is displayed on horizontal axises. Red squares are 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, excluding zero holding\label{fig LandWithoutZero}}\\
-\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/LandHoldingScatterWithoutZero.png")}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/LandHoldingScatterWithoutZero.png")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -267,7 +267,7 @@ Note:& Log of land holding is displayed on horizontal axises. Zero land holders 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero\label{fig LandClass}}\\
-\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/", "LandHoldingHistogramByRound.png")}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/LandHoldingHistogramByRound.png")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -277,7 +277,7 @@ Note:&  Loan recipients only. Logarithm of land holding is displayed on horizont
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero, real values\label{fig LandClass real}}\\
-\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "EstimationMemo/figure/", "LandHoldingHistogramByRoundRealValues.png")}}\\
+\hfil\includegraphics{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/LandHoldingHistogramByRoundRealValues.png")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\

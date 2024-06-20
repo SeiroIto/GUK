@@ -54,14 +54,14 @@ ggplot(data = NeAfig,
     legend.position = "bottom")
 ggsave(
   paste0(pathprogram, 
-    "EstimationMemo/figure/NarrowProdAssets.png"),
+    "figure/EstimationMemo/NarrowProdAssets.png"),
   g,
   width = 12*2, height = 8*2, units = "cm",
   dpi = 300
  )
 pdf(file =  
   paste0(pathprogram, 
-    "EstimationMemo/figure/NarrowProdAssets.pdf"),
+    "figure/EstimationMemo/NarrowProdAssets.pdf"),
   , width = 12*2/2.54, height = 8*2/2.54, pointsize = 10) # native unit: inch
 print(g)
 whatever <- dev.off()
@@ -71,7 +71,7 @@ whatever <- dev.off()
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Narrow productive asset holding\label{fig narrow prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/NarrowProdAssets.pdf")
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/NarrowProdAssets.pdf")
 }}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}

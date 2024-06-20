@@ -94,17 +94,7 @@ In what follows,
 
 
 
-\begin{Schunk}
-\begin{Soutput}
-Warning in dir.create(pathprogramfigure <- paste0(pathprogram, "figure/EstimationMemo/")): 'c:\data\GUK\analysis\program\figure\EstimationMemo' はすでに存在します
-\end{Soutput}
-\begin{Soutput}
-Warning in dir.create(pathprogramtable <- paste0(pathprogram, "table/EstimationMemo/")): 'c:\data\GUK\analysis\program\table\EstimationMemo' はすでに存在します
-\end{Soutput}
-\begin{Soutput}
-Warning in dir.create(pathsaveHere <- pathsaveEstimationMemo <- paste0(pathsave, : 'c:\data\GUK\analysis\save\EstimationMemo' はすでに存在します
-\end{Soutput}
-\end{Schunk}
+
 
 
 
@@ -194,10 +184,10 @@ Tabulate number of obs in each files. Read: c:/data/GUK/analysis/save/Estimation
 Tabulate number of obs in each files for original 800 households. 
 \begin{Schunk}
 \begin{Soutput}
-x
+
 traditional       large large grace      cattle         Sum 
         168         192         171         177         708 
-x
+
 traditional       large large grace      cattle         Sum 
         168         191         170         176         705 
 \end{Soutput}
@@ -333,104 +323,11 @@ One sees changes in investment choices when one compares \textsf{traditional} an
 
 
 
-
-\begin{Schunk}
-\begin{Soutput}
-Warning in `[.data.table`(s1xR, , `:=`(c("Age_1", grepout("Primary", colnames(s1xR))), : Column 'Age_1' does not exist to remove
-\end{Soutput}
-\begin{Soutput}
-Dropped 902 obs due to NA.
-Dropped 902 obs due to NA.
-Dropped 184 obs due to T<2.
-Dropped 616 obs due to NA.
-\end{Soutput}
-\end{Schunk}
-Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
-\begin{Schunk}
-\begin{Soutput}
-         SchPattern
-ObPattern 0000 0001 000n 0011 001n 00n0 00n1 00nn 010n 0111 011n 01nn 0n00 0n0n
-     0111    0    0    0    0    0    0    0    0    0    0    0    0    0    0
-     1000    0    0    0    0    0    0    0    0    0    0    0    0    0    0
-     1010    0    0    0    0    0    0    0    0    0    0    0    0    0    1
-     1011    0    0    0    0    0    0    0    0    0    0    0    0    0    0
-     1100    0    0    0    0    0    0    0    0    0    0    0    3    0    0
-     1110    0    0    5    0    2    0    0    1    0    0    3    0    0    0
-     1111   21    2   16   12    1    4    1   25    1   83    4    4    1    0
-         SchPattern
-ObPattern 0n11 0n1n 0nn0 0nn1 0nnn 1000 1001 100n 1011 101n 10n1 10nn 1100 1101
-     0111    2    1    0    0    2    0    0    0    0    0    0    0    0    0
-     1000    0    0    0    0   32    0    0    0    0    0    0    0    0    0
-     1010    0    0    0    0    2    0    0    0    0    0    0    0    0    0
-     1011    0    0    0    0    0    0    0    0    0    0    0    0    0    0
-     1100    0    0    0    0    1    0    0    0    0    0    0    0    0    0
-     1110    0    0    0    0    2    0    0    1    0    1    0    0    0    0
-     1111    4    1    3    1   68    5    1    3    6    1    1    8    8    1
-         SchPattern
-ObPattern 110n 1110 1111 111n 11n1 11nn 1n00 1n01 1n0n 1n11 1n1n 1nn0 1nn1 1nnn
-     0111    0    0    0    0    0    0    0    0    0    6    0    0    0    1
-     1000    0    0    0    0    0    0    0    0    0    0    0    0    0   22
-     1010    0    0    0    0    0    0    0    0    0    0    1    0    0    2
-     1011    0    0    0    0    0    0    0    0    0    0    0    0    0    0
-     1100    0    0    0    0    0    6    0    0    0    0    0    0    0    0
-     1110    0    0    0   25    0    2    0    0    0    0    1    0    0    0
-     1111    9    3  397   30    4   26    1    1    1    8    1    1    2   42
-\end{Soutput}
-\end{Schunk}
-Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
-\begin{Schunk}
-\begin{Soutput}
-Error in eval(jsub, SDenv, parent.frame()): オブジェクト 'RArm' がありません
-\end{Soutput}
-\end{Schunk}
-\textsf{sch} has 2913 rows. Drop 174 observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
-%and nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ]) observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with nrow(s1x) rows. 
-
-With OLS,  89, 135, 539 individuals are repeatedly observed for 2, 3, 4 times, respectively. With FD, \textsf{sch} is reduced to 1837 rows after first-differencing with 64, 106, 499 individuals with repeatedly observed for 1, 2, 3 times, respectively.
-Individuals with NAs in \textsf{Enrolled}: 0 obs for \textsf{sch}. 
-%Mostly older children (round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1) in \textsf{s1x}, round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1) in \textsf{s.2}) but with a high reported enrollment rate (round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1) for \textsf{s1x}, round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1) for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
-Check missingness in schooling level information.
-\begin{Schunk}
-\begin{Soutput}
-x
-   0    1 
-1575 1164 
-\end{Soutput}
-\end{Schunk}
-Drop 1575 obs without school level information.
-
-%Check missingness in arm information.
-
-%An example of dummy interactions: \textsf{\footnotesize tobeintSchdumTimdum}.
-%Obs for \textsf{sch} after FD.
-
-%Obs for \textsf{s1x} and admin repayment data.
-
-\begin{Schunk}
-\begin{Soutput}
-Dropped 902 obs due to NA.
-Dropped 902 obs due to NA.
-Dropped 184 obs due to T<2.
-Dropped 616 obs due to NA.
-\end{Soutput}
-\end{Schunk}
-
-
-
-\begin{Schunk}
-\begin{Soutput}
-Error in dimnames(tab) <- dimnames(est[[i]]): 'dimnames' の長さ [1] が配列の大きさと違っています
-\end{Soutput}
-\end{Schunk}
-
-
-
 \newpage
 
 
-\section{Data preparation}
 
-\subsection{Define initial sample}
+\section{Define initial sample}
 
 
 Initial Sample is marked as the members with \textsf{o800==1}. This is derived from Trimmed Sample and is produced by dropping 26 HHs of traditional arm. (Drop members who received only 2 loans (twice and double in \textsf{TradGroup}) and save as an estimating sample. \textcolor{red}{Save: c:/data/GUK/analysis/save/EstimationMemo/RepaymentInitialSample.rds}. \textcolor{red}{Save: c:/data/GUK/analysis/save/EstimationMemo/RepaymentTrimmed.rds} keeps all 800 members which will be used in attrition and randomisation tests.)
@@ -501,6 +398,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -580,7 +480,7 @@ Notes: & 1. & Information of original 800 households. Values are means, values i
 & 2 & \textsf{HeadLiteracy}, \textsf{HeadAge} are literacy and ages of household heads. \textsf{HHsize} is total number of household members. \textsf{FloodInRd1} is flood exposure at baseline. \textsf{NLHAssetAmount} is non-land household asset holding value, \textsf{PAssetAmount} is productive asset holding value, \textsf{TotalImputedAmount} is imputed value of livestock holding. 
 \textsf{NumCows} is cattle holding per household. \textsf{NetValue} is net asset values per housheold for asset items observed in all 4 rounds given by \textsf{NLHAssetAmount}+\textsf{PAssetAmount}+\textsf{TotalImputedAmount} - total debt. %\textsf{NarrowNetValue} is net asset values per housheold for asset items observed in all 4 rounds excluding cassette players, radios. 
 \textsf{BroadNetValue} is net asset values per housheold for all asset items. %\textsf{RNetValue} is net asset values per housheold for asset items observed in all 4 rounds with cassette players, radios winsorised at BDT 20000 and bicycles at BDT 2000. \textsf{RNarrowNetValue} and \textsf{RBroadNetValue} are winsorised equivalents to \textsf{NarrowNetValue} and \textsf{BroadNetValue}. 
-All asset values are expressed in BDT. \textsf{Attrited} indicates attrition rates in the household survey, and \textsf{GRejected} and \textsf{IRejected} show group rejection rates and individual rejection rates to the lending program. \textsf{Active} indicates the nonattrited borrower ratios. Because attrition and rejection are separate events, a household can reject and attrit, so active members $\geqslant$ total - (rejected members + attrited members). \textsf{Risk preference} is the respondent's choice of the acceptable minimum excess monetary value of the risky option over a certainty option. Lower values indicate a greater risk tolerance. \textsf{Time preference 1} is the respondent's choice of the acceptable minimum excess monetary value in 3 months that is no smaller than present monetary benefit, and \textsf{Time preference 2} is the the minimum excess value in 1 year and 3 months that is no smaller than monetary benefits of 1 year from now. Lower values indicate a greater patience. If a respondent's \textsf{Time preference 1} is greater than \textsf{Time preference 2}, the respondent is considered to be present-biased. \textsf{Present bias} is an indicator function that takes the value of 1 if the respondent is considered to be present-biased, 0 otherwise.
+All asset values are expressed in BDT. \textsf{Attrited} indicates attrition rates in the household survey, and \textsf{GRejected} and \textsf{IRejected} show group rejection rates and individual rejection rates to the lending program. \textsf{Active} indicates the nonattrited borrower ratios. Because attrition and rejection are separate events, a household can reject and attrit, so active members $\geqslant$ total - (rejected members + attrited members). \textsf{RiskPrefVal} is the respondent's choice of the acceptable minimum excess monetary value of the risky option over a certainty option. Lower values indicate a greater risk tolerance. \textsf{TimePref1val} is the respondent's choice of the acceptable minimum excess monetary value in 3 months that is no smaller than present monetary benefit, and \textsf{TimePref2Val} is the the minimum excess value in 1 year and 3 months that is no smaller than monetary benefits of 1 year from now. Lower values indicate a greater patience. If a respondent's \textsf{TimePref1val} is greater than \textsf{TimePref2val}, the respondent is considered to be present-biased. \textsf{PresentBias} is an indicator function that takes the value of 1 if the respondent is considered to be present-biased, 0 otherwise.
 \end{tabular}
 \end{minipage}
 
@@ -597,24 +497,22 @@ After winsorising cassette players, radios, and bicycles, there is no HH with an
 %When radios and casset players are excluded from/winsorised in total, there are length(dna50K) households among \textsf{o800==1L} whose changes in net total asset $< -10000$ and have assets of values greater than 10000. Note that residential land is only included in BroadHAssetAmount. 
 \begin{Schunk}
 \begin{Soutput}
-Key: <hhid>
-            Arm    hhid     t             type amount     H     BH NLHAssetNum
-         <fctr>   <num> <num>           <char>  <int> <int>  <int>       <int>
- 1: traditional 8169717     1         tubewell   1500  1500   1500           1
- 2: traditional 8169717     2         tubewell   1600  1600   7600           1
- 3: traditional 8169717     2 residential land   6000  1600   7600           1
- 4: traditional 8169717     3         tubewell   1200 82600 121600           3
- 5: traditional 8169717     3  almirah/cabinet   2600 82600 121600           3
- 6: traditional 8169717     3          jewelry    400 82600 121600           3
- 7: traditional 8169717     3     mobile phone   1400 82600 121600           3
- 8: traditional 8169717     3 residential land  36000 82600 121600           3
- 9: traditional 8169717     3     rickshaw/van  80000 82600 121600           3
-10: traditional 8169717     4         tubewell    400  3300  46400           3
-11: traditional 8169717     4  almirah/cabinet   2500  3300  46400           3
-12: traditional 8169717     4          jewelry    600  3300  46400           3
-13: traditional 8169717     4 residential land  40000  3300  46400           3
-14: traditional 8169717     4          bicycle   2500  3300  46400           3
-15: traditional 8169717     4     mobile phone    400  3300  46400           3
+            Arm    hhid t             type amount     H     BH NLHAssetNum
+ 1: traditional 8169717 1         tubewell   1500  1500   1500           1
+ 2: traditional 8169717 2         tubewell   1600  1600   7600           1
+ 3: traditional 8169717 2 residential land   6000  1600   7600           1
+ 4: traditional 8169717 3         tubewell   1200 82600 121600           3
+ 5: traditional 8169717 3  almirah/cabinet   2600 82600 121600           3
+ 6: traditional 8169717 3          jewelry    400 82600 121600           3
+ 7: traditional 8169717 3     mobile phone   1400 82600 121600           3
+ 8: traditional 8169717 3 residential land  36000 82600 121600           3
+ 9: traditional 8169717 3     rickshaw/van  80000 82600 121600           3
+10: traditional 8169717 4         tubewell    400  3300  46400           3
+11: traditional 8169717 4  almirah/cabinet   2500  3300  46400           3
+12: traditional 8169717 4          jewelry    600  3300  46400           3
+13: traditional 8169717 4 residential land  40000  3300  46400           3
+14: traditional 8169717 4          bicycle   2500  3300  46400           3
+15: traditional 8169717 4     mobile phone    400  3300  46400           3
 \end{Soutput}
 \end{Schunk}
 
@@ -691,6 +589,9 @@ BStatus                  2   3   4   9 Sum
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
 \end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
+\end{Soutput}
 \end{Schunk}
 
 One also sees that \textsf{traditional} has lower repayment rates in the 2nd and 3rd loan years. This can be due to lower returns on small assets, or, moral hazard that they get new disbursements irrespective of loan delinquency. 
@@ -710,42 +611,38 @@ One may worry if flood affected repayments. Split sample into flood affected and
 ar 
 arA 
 Flood dummy = 0
-              variables traditional    large large grace   cattle   stat
-                 <char>      <char>   <char>      <char>   <char> <char>
-1: repay in Loan Year-1       56.47    35.57        0.00     0.00    sum
-2:  repay in Loan Year1     3238.29  4253.51      566.28   597.21    sum
-3:  repay in Loan Year2     2218.53  3924.16     4998.00  4973.81    sum
-4:  repay in Loan Year3     2046.90  3836.48     5403.50  4679.49    sum
-5:  repay in Loan Year4     3046.93  2820.97     3031.19  2764.97    sum
-6:      Total repayment    10607.12 14870.69    13998.96 13015.47    sum
+              variables traditional    large large grace   cattle stat
+1: repay in Loan Year-1       56.47    35.57        0.00     0.00  sum
+2:  repay in Loan Year1     3238.29  4253.51      566.28   597.21  sum
+3:  repay in Loan Year2     2218.53  3924.16     4998.00  4973.81  sum
+4:  repay in Loan Year3     2046.90  3836.48     5403.50  4679.49  sum
+5:  repay in Loan Year4     3046.93  2820.97     3031.19  2764.97  sum
+6:      Total repayment    10607.12 14870.69    13998.96 13015.47  sum
 Flood dummy = 1
-              variables traditional    large large grace   cattle   stat
-                 <char>      <char>   <char>      <char>   <char> <char>
-1: repay in Loan Year-1       41.30    50.65        0.00     0.00    sum
-2:  repay in Loan Year1     3244.31  4355.89      528.25   497.85    sum
-3:  repay in Loan Year2     2052.53  3716.43     4879.90  4303.48    sum
-4:  repay in Loan Year3     1920.05  3813.12     5007.63  4362.31    sum
-5:  repay in Loan Year4     3190.27  3259.28     2787.62  4714.35    sum
-6:      Total repayment    10448.48 15195.37    13203.41 13878.00    sum
+              variables traditional    large large grace   cattle stat
+1: repay in Loan Year-1       41.30    50.65        0.00     0.00  sum
+2:  repay in Loan Year1     3244.31  4355.89      528.25   497.85  sum
+3:  repay in Loan Year2     2052.53  3716.43     4879.90  4303.48  sum
+4:  repay in Loan Year3     1920.05  3813.12     5007.63  4362.31  sum
+5:  repay in Loan Year4     3190.27  3259.28     2787.62  4714.35  sum
+6:      Total repayment    10448.48 15195.37    13203.41 13878.00  sum
 arACompletePanel 
 Flood dummy = 0
-              variables traditional    large large grace   cattle   stat
-                 <char>      <char>   <char>      <char>   <char> <char>
-1: repay in Loan Year-1       55.32    40.54        0.00     0.00    sum
-2:  repay in Loan Year1     2941.92  4347.92      590.32   494.34    sum
-3:  repay in Loan Year2     2104.38  3927.98     5139.65  5210.10    sum
-4:  repay in Loan Year3     2004.32  3972.16     5451.62  5197.27    sum
-5:  repay in Loan Year4     3126.27  2625.90     3052.12  2553.86    sum
-6:      Total repayment    10232.21 14914.50    14233.71 13455.58    sum
+              variables traditional    large large grace   cattle stat
+1: repay in Loan Year-1       55.32    40.54        0.00     0.00  sum
+2:  repay in Loan Year1     2941.92  4347.92      590.32   494.34  sum
+3:  repay in Loan Year2     2104.38  3927.98     5139.65  5210.10  sum
+4:  repay in Loan Year3     2004.32  3972.16     5451.62  5197.27  sum
+5:  repay in Loan Year4     3126.27  2625.90     3052.12  2553.86  sum
+6:      Total repayment    10232.21 14914.50    14233.71 13455.58  sum
 Flood dummy = 1
-              variables traditional    large large grace   cattle   stat
-                 <char>      <char>   <char>      <char>   <char> <char>
-1: repay in Loan Year-1       12.50    55.75        0.00     0.00    sum
-2:  repay in Loan Year1     3399.77  4511.78      526.88   572.72    sum
-3:  repay in Loan Year2     2580.30  3827.31     4804.22  4219.91    sum
-4:  repay in Loan Year3     2220.68  3858.15     4630.91  3776.60    sum
-5:  repay in Loan Year4     3371.37  3057.95     2818.86  4915.04    sum
-6:      Total repayment    11584.61 15310.94    12780.87 13484.27    sum
+              variables traditional    large large grace   cattle stat
+1: repay in Loan Year-1       12.50    55.75        0.00     0.00  sum
+2:  repay in Loan Year1     3399.77  4511.78      526.88   572.72  sum
+3:  repay in Loan Year2     2580.30  3827.31     4804.22  4219.91  sum
+4:  repay in Loan Year3     2220.68  3858.15     4630.91  3776.60  sum
+5:  repay in Loan Year4     3371.37  3057.95     2818.86  4915.04  sum
+6:      Total repayment    11584.61 15310.94    12780.87 13484.27  sum
 \end{Soutput}
 \end{Schunk}
 Combine descriptive statistics and produce \LaTeX  tables.
@@ -828,12 +725,15 @@ In estimating impacts on repayment and saving, we use borrower only data \textsf
 
 \begin{Schunk}
 \begin{Soutput}
-            used   (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells   3205721  171.3    4711329  251.7         NA   4711329  251.7
-Vcells 620165535 4731.5  911587133 6954.9      56320 911577900 6954.8
+           used  (Mb) gc trigger  (Mb) max used  (Mb)
+Ncells  1127661  60.3    2257001 120.6  2257001 120.6
+Vcells 61630004 470.2  101624854 775.4 84620509 645.7
+\end{Soutput}
+\begin{Soutput}
+Warning in `[.data.table`(ux, , `:=`(grepout("^dummy.*dummyHad|HadCows\\.", : length(LHS)==0; no columns to delete or assign RHS to.
 \end{Soutput}
 \end{Schunk}
-By survey rounds, in repayment and saving file, there are 28, 558, 552, 551 observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the \textsf{InitialSample} size of 772 in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.
+By survey rounds, in repayment and saving file, there are 28, 558, 552, 551 observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the \textsf{InitialSample} size of 796 in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.
 
 Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In repayment and saving regressions, we aggregate the data at survey rounds. This is because we have no household survey information at the monthly frequency that we can attribute the causes of monthly repayment and saving fluctuations.
 
@@ -878,11 +778,7 @@ Left panel in \textsc{\normalsize Table \ref{tab IniSampByArmArA}} is initial 80
 
 
 Read administrative meeting data attached with HH information \textsf{AllMeetingsRepayment} (\textsf{arA}). Note all binary interaction terms are demeaned and then interacted.
-\begin{Schunk}
-\begin{Soutput}
-Error in file(filename, "r", encoding = encoding): コネクションを開くことができません
-\end{Soutput}
-\end{Schunk}
+
 %NAs in \textsf{CumRepaid}.
 
 Tabulation at rd 1 (12th month):
@@ -900,12 +796,14 @@ Mstatus        traditional large large grace cattle Sum
 \end{Soutput}
 \end{Schunk}
 \begin{Schunk}
-\begin{Soutput}
-Error in library(gridExtra): 'gridExtra' という名前のパッケージはありません
-\end{Soutput}
-\begin{Soutput}
-Error in grid.arrange(g1, g2, heights = c(2, 2.5), ncol = 1): 関数 "grid.arrange" を見つけることができませんでした
-\end{Soutput}
+\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/EstimationMemo/net_saving_and_cumulative_repayment-1} 
+
+}
+
+\caption[Weekly net saving and cumulative repayment]{Weekly net saving and cumulative repayment}\label{Figure net saving and cumulative repayment}
+\end{figure}
 \end{Schunk}
 
 
@@ -929,6 +827,30 @@ Note:& Each dot represents weekly observations. Only members who received loans 
 
 
 \begin{Schunk}
+\begin{Soutput}
+ 要求されたパッケージ sandwich をロード中です 
+\end{Soutput}
+\begin{Soutput}
+ 要求されたパッケージ lmtest をロード中です 
+\end{Soutput}
+\begin{Soutput}
+Warning:  パッケージ 'lmtest' はバージョン 4.1.3 の R の下で造られました 
+\end{Soutput}
+\begin{Soutput}
+ 要求されたパッケージ zoo をロード中です 
+\end{Soutput}
+\begin{Soutput}
+Warning:  パッケージ 'zoo' はバージョン 4.1.3 の R の下で造られました 
+\end{Soutput}
+\begin{Soutput}
+
+ 次のパッケージを付け加えます: 'zoo' 
+\end{Soutput}
+\begin{Soutput}
+ 以下のオブジェクトは 'package:base' からマスクされています: 
+
+     as.Date, as.Date.numeric 
+\end{Soutput}
 \begin{Soutput}
 [1] excl
 [[1]]
@@ -1262,9 +1184,9 @@ Repaid ~ FloodInRd1 + LY3 + LY4 + dummyLargeSize + dummyWithGrace +
     dummyInKind + HeadLiteracy0 + HHsize0 + Repaid0 + NetSaving0
 \end{Soutput}
 \begin{Soutput}
-            used   (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells   3212636  171.6    4711329  251.7         NA   4711329  251.7
-Vcells 624218828 4762.5  911587133 6954.9      56320 911585152 6954.9
+            used   (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells   2358313  126.0    4165175  222.5   4165175  222.5
+Vcells 244215554 1863.3  365173491 2786.1 304236024 2321.2
 \end{Soutput}
 \end{Schunk}
 
@@ -1426,7 +1348,7 @@ Check missingness in junior or high school level information at baseline.
 table0(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum))
 \end{Sinput}
 \begin{Soutput}
-x
+
   0   1 
 610 153 
 \end{Soutput}
@@ -1435,9 +1357,9 @@ Drop 610 obs without school level information.
 
 \begin{Schunk}
 \begin{Soutput}
-            used   (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells   3212688  171.6    4711329  251.7         NA   4711329  251.7
-Vcells 621990758 4745.5  911587133 6954.9      56320 911585152 6954.9
+            used   (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells   2366485  126.4    4165175  222.5   4165175  222.5
+Vcells 248249331 1894.0  365173491 2786.1 304236024 2321.2
 \end{Soutput}
 \end{Schunk}
 
@@ -1845,9 +1767,6 @@ Enrolled ~ FloodInRd1 + ChildAgeOrderAtRd1 + EldestSon + EldestDaughter +
 \end{Schunk}
 
 
-
-% Old: Below is created in FDEstimationFile.R via ImpactEstimationOriginal1600Memo3_body3.rnw
-% Below is created in FDEstimationFile.R via SchoolingOriginal1600HHsToProduce2Tables.rnw
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
 \hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\
@@ -2629,7 +2548,6 @@ Nonzero reported residential land holding among 800 (776) HHs. Around 40-50\% of
 \begin{Schunk}
 \begin{Soutput}
             Arm survey  NonZero
-         <fctr>  <num>    <num>
  1: traditional      1 0.470588
  2: traditional      2 0.517647
  3: traditional      3 0.552941
@@ -2652,7 +2570,6 @@ HHs reporting zero residential land holding are, except for the \textsf{traditio
 \begin{Schunk}
 \begin{Soutput}
            Arm ZeroLandHolding MeanNetValue
-        <fctr>          <lgcl>        <num>
 1: traditional           FALSE     11259.46
 2: traditional            TRUE     10612.93
 3:       large           FALSE     22738.46
@@ -2689,7 +2606,7 @@ Note:& Loan recipients only.\\[1ex]
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, including zero holding\label{fig LandWithZero}}\\
-\hfil\includegraphics{c:/data/GUK/analysis/program/figure/EstimationMemo/LandHoldingScatterWithZero.png}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/EstimationMemo/figure/LandHoldingScatterWithZero.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -2699,7 +2616,7 @@ Note:& Log of 1+land holding is displayed on horizontal axises. Red squares are 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, excluding zero holding\label{fig LandWithoutZero}}\\
-\hfil\includegraphics{c:/data/GUK/analysis/program/figure/EstimationMemo/LandHoldingScatterWithoutZero.png}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/EstimationMemo/figure/LandHoldingScatterWithoutZero.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -2709,7 +2626,7 @@ Note:& Log of land holding is displayed on horizontal axises. Zero land holders 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero\label{fig LandClass}}\\
-\hfil\includegraphics{c:/data/GUK/analysis/program/figure/EstimationMemo/LandHoldingHistogramByRound.png}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/EstimationMemo/figure/LandHoldingHistogramByRound.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -2719,7 +2636,7 @@ Note:&  Loan recipients only. Logarithm of land holding is displayed on horizont
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Homestead land holding of loan recipients, exclduing zero, real values\label{fig LandClass real}}\\
-\hfil\includegraphics{c:/data/GUK/analysis/program/figure/EstimationMemo/LandHoldingHistogramByRoundRealValues.png}\\
+\hfil\includegraphics{c:/data/GUK/analysis/program/EstimationMemo/figure/LandHoldingHistogramByRoundRealValues.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -2736,25 +2653,22 @@ By round 4, distributions become more skewed to left in all arms, indicating tha
 
 \begin{Schunk}
 \begin{Soutput}
-Key: <tee>
-     tee traditional large large grace cattle   Sum
-   <int>       <int> <int>       <int>  <int> <int>
-1:     1         174   199         198    199   770
-2:     2         166   193         176    194   729
-3:     3         162   190         173    187   712
-4:     4         133   179         155    151   618
+   tee traditional large large grace cattle Sum
+1:   1         174   199         198    199 770
+2:   2         166   193         176    194 729
+3:   3         162   190         173    187 712
+4:   4         133   179         155    151 618
 \end{Soutput}
 \end{Schunk}
 Land entries by arm and round:
 \begin{Schunk}
 \begin{Soutput}
-           Arm   NA.1   NA.2   NA.3   NA.4 NonNA.1 NonNA.2 NonNA.3 NonNA.4
-        <fctr> <char> <char> <char> <char>  <char>  <char>  <char>  <char>
-1:       large     85     84     84     85     139     142     140     141
-2:      cattle    108    107    107     96      84      96      98      95
-3: large grace     98     78     82     81     103     104     103     101
-4: traditional     85     82     81     71      83      91      89      81
-5:       Total    376    351    354    333     409     433     430     418
+           Arm NA.1 NA.2 NA.3 NA.4 NonNA.1 NonNA.2 NonNA.3 NonNA.4
+1:       large   85   84   84   85     139     142     140     141
+2:      cattle  108  107  107   96      84      96      98      95
+3: large grace   98   78   82   81     103     104     103     101
+4: traditional   85   82   81   71      83      91      89      81
+5:       Total  376  351  354  333     409     433     430     418
 \end{Soutput}
 \end{Schunk}
 
@@ -3171,7 +3085,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{minipage}
 
 \textsc{\normalsize Table \ref{tab ANCOVA land period}} shows that, compared to \textsf{traditional} arm, land holding is larger for \textsf{large}, \textsf{large grace}, and \textsf{cattle} arms in round 2. The difference with \textsf{traditional} arm is maintained only for \textsf{large} arm throughout the rounds, and become negligible for \textsf{large grace} and \textsf{cattle} arms. 
-
 
 %\subsubsection{Farm land}
 
@@ -3779,24 +3692,23 @@ Note:& \\[1ex]
 \end{itemize}
 \begin{Schunk}
 \begin{Soutput}
-            Arm survey MeanImputedVal MeanNumCows     N
-         <fctr>  <num>          <num>       <num> <int>
- 1: traditional      1        4557.82    0.227891   294
- 2: traditional      2       18965.26    1.601449   234
- 3: traditional      3       21270.53    1.502703   262
- 4: traditional      4       23364.52    1.591195   217
- 5:       large      1        5513.78    0.275689   399
- 6:       large      2       29214.50    1.979253   327
- 7:       large      3       31623.09    1.798799   379
- 8:       large      4       33248.21    1.882175   375
- 9: large grace      1        6666.67    0.333333   399
-10: large grace      2       24273.25    1.648649   302
-11: large grace      3       28044.08    1.532051   341
-12: large grace      4       31599.85    1.744108   328
-13:      cattle      1        4360.90    0.218045   399
-14:      cattle      2       22239.38    1.457031   336
-15:      cattle      3       26102.42    1.474522   355
-16:      cattle      4       29716.61    1.655405   330
+            Arm survey MeanImputedVal MeanNumCows   N
+ 1: traditional      1        4557.82    0.227891 294
+ 2: traditional      2       18965.26    1.601449 234
+ 3: traditional      3       21270.53    1.502703 262
+ 4: traditional      4       23364.52    1.591195 217
+ 5:       large      1        5513.78    0.275689 399
+ 6:       large      2       29214.50    1.979253 327
+ 7:       large      3       31623.09    1.798799 379
+ 8:       large      4       33248.21    1.882175 375
+ 9: large grace      1        6666.67    0.333333 399
+10: large grace      2       24273.25    1.648649 302
+11: large grace      3       28044.08    1.532051 341
+12: large grace      4       31599.85    1.744108 328
+13:      cattle      1        4360.90    0.218045 399
+14:      cattle      2       22239.38    1.457031 336
+15:      cattle      3       26102.42    1.474522 355
+16:      cattle      4       29716.61    1.655405 330
 \end{Soutput}
 \end{Schunk}
 
@@ -4091,8 +4003,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{palepinkleftbar}
 
 
-
-
 \subsubsection{Productive assets}
 
 
@@ -4119,6 +4029,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -4387,12 +4300,16 @@ PAssetAmount ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor +
     dummyHadCows.InKind + dummyHadCows.InKind.Time3 + dummyHadCows.InKind.Time4
 \end{Soutput}
 \end{Schunk}
-
+\begin{Schunk}
+\begin{Soutput}
+Error in subset(NeAfig, !is.na(Arm)):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\end{Schunk}
 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/ProdAssets.png}\\
+\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/EstimationMemo/figure/ProdAssets.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -4498,8 +4415,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{tabular}
 \end{minipage}
 
-
-
 \subsubsection{Narrow productive assets}
 
 
@@ -4530,6 +4445,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -4801,12 +4719,22 @@ NarrowPAssetAmount ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor +
     dummyHadCows.InKind + dummyHadCows.InKind.Time3 + dummyHadCows.InKind.Time4
 \end{Soutput}
 \end{Schunk}
-
+\begin{Schunk}
+\begin{Soutput}
+Error in eval(expr, envir, enclos):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in eval(expr, envir, enclos):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in ggplot(data = NeAfig, aes(y = NarrowPAssetAmount + 1, fill = Arm, :  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\end{Schunk}
 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Narrow productive asset holding\label{fig narrow prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NarrowProdAssets.pdf}\\
+\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/EstimationMemo/figure/NarrowProdAssets.pdf}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -4912,8 +4840,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{tabular}
 \end{minipage}
 
-
-
 \subsubsection{Productive assets+livestock}
 
 
@@ -4940,6 +4866,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -5199,7 +5128,11 @@ ProdValue ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor + dummyLargeSize +
     dummyHadCows.InKind + dummyHadCows.InKind.Time3 + dummyHadCows.InKind.Time4
 \end{Soutput}
 \end{Schunk}
-
+\begin{Schunk}
+\begin{Soutput}
+Error in subset(NeAfig, !is.na(Arm)):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\end{Schunk}
 
 
 
@@ -5302,15 +5235,13 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Livestock and productive asset holding\label{fig livestock prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/ProdAssetLivestock.png}\\
+\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/EstimationMemo/figure/ProdAssetLivestock.png}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
 Note:& \\[1ex]
 \end{tabular}
 }
-
-
 % \subsubsection{Assets+Livestock}
 
 % \subsubsection{GUK broad net assets: Broad assets+Livestock-GUK Debt}
@@ -5342,6 +5273,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -5955,16 +5889,68 @@ Net2Value ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor + dummyLargeSize +
     dummyHadCows.InKind + dummyHadCows.InKind.Time3 + dummyHadCows.InKind.Time4
 \end{Soutput}
 \end{Schunk}
-
-
-
+\begin{Schunk}
+\begin{Soutput}
+Error in subset(NeAfig, !is.na(Arm)):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in subset(d2, tee == 2 & 0 <= BroadNetValue & BroadNetValue < 100000):  オブジェクト 'd2' がありません 
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Error in subset(NeAfig, !is.na(Arm)):  オブジェクト 'NeAfig' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in eval(expr, envir, enclos):  オブジェクト 'd2' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in ggplot(data = d2):  オブジェクト 'd2' がありません 
+\end{Soutput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Soutput}
+Error in eval(expr, envir, enclos):  オブジェクト 'NeAFig' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in reshape(assC[tee == i | tee == j, ], direction = "wide", idvar = c("hhid", :  オブジェクト 'assC' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in rbindlist(list(a12, a13, a14, a23, a24, a34), use.names = F):  オブジェクト 'a12' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in is.data.frame(x):  オブジェクト 'd2W' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in eval(expr, envir, enclos):  オブジェクト 'd2W' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in ggplot(data = d2W, aes(x = NetValue.before, y = NetValue.after, :  オブジェクト 'd2W' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in `combine_vars()`:
+! At least one layer must contain all faceting variables: `before`, `after`.
+* Plot is missing `before`, `after`
+* Layer 1 is missing `before`, `after`
+* Layer 2 is missing `before`, `after`
+* Layer 3 is missing `before`, `after`
+\end{Soutput}
+\begin{Soutput}
+Error in `combine_vars()`:
+! At least one layer must contain all faceting variables: `before`, `after`.
+* Plot is missing `before`, `after`
+* Layer 1 is missing `before`, `after`
+* Layer 2 is missing `before`, `after`
+* Layer 3 is missing `before`, `after`
+\end{Soutput}
+\end{Schunk}
 
 
 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Total and broad net asset values\label{fig TotalAndNetAssetValues}}\\
-\hfil\includegraphics[height = 6cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NetAssets.pdf}\\
+\hfil\includegraphics[height = 6cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NetAssets.eps}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -6226,7 +6212,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{tabular}
 \end{minipage}
 
-
 %\subsubsection{Narrow net assets: NarrowAssets+Livestock-GUK Debt-Other Debts}
 
 \subsubsection{Net assets: Assets+Livestock-GUK Debt-Other Debts}
@@ -6257,6 +6242,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -6597,7 +6585,7 @@ NetValue ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor + dummyLargeSize +
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Total and net asset values\label{fig TotalAndNetAssetValues}}\\
-\hfil\includegraphics[height = 6cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NetAssets.pdf}\\
+\hfil\includegraphics[height = 6cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/NetAssets.eps}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -6731,7 +6719,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
-
 %\subsubsection{Revised net assets: Winsorised Assets+Livestock-GUK Debt-Other Debts}
 
 %\subsubsection{Broad net non-livestock assets: Broad non-livestock assets-GUK Debt-Other Debts}
@@ -6764,6 +6751,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -7217,7 +7207,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 %${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
-
 
 %\subsubsection{Narrow net non-livestock assets: Non-livestock assets-GUK Debt-Other Debts}
 
@@ -8550,7 +8539,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{minipage}
 
 
-
 \subsubsection{Livestock, experienced vs. inexperienced}
 
 
@@ -9619,7 +9607,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{minipage}
 
 
-
 \subsubsection{Cattle holding, experienced vs. inexperienced}
 
 
@@ -10685,7 +10672,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 
 
 
-
 \section{Estimation using complete panel HHs in household assets}
 
 
@@ -10722,6 +10708,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -10990,12 +10979,19 @@ PAssetAmount ~ FloodInRd1 + Time.3 + Time.4 + dummyUltraPoor +
     dummyHadCows.InKind + dummyHadCows.InKind.Time3 + dummyHadCows.InKind.Time4
 \end{Soutput}
 \end{Schunk}
-
+\begin{Schunk}
+\begin{Soutput}
+Error in FUN(X[[i]], ...):  オブジェクト 'PAssetAmount' がありません 
+\end{Soutput}
+\begin{Soutput}
+Error in FUN(X[[i]], ...):  オブジェクト 'PAssetAmount' がありません 
+\end{Soutput}
+\end{Schunk}
 
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/CompletePanelProdAssets.pdf}\\
+\hfil\includegraphics[width = 12cm]{c:/data/GUK/analysis/program/EstimationMemo/figure/CompletePanelProdAssets.pdf}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -11132,6 +11128,9 @@ BStatus                  2   3   4   9 Sum
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
   Sum                   38  14  37 705 794
+\end{Soutput}
+\begin{Soutput}
+Error in eval(ei, envir):  オブジェクト 'NeA1R8' がありません 
 \end{Soutput}
 \end{Schunk}
 
@@ -11659,64 +11658,61 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 
 \begin{Schunk}
 \begin{Soutput}
-    survey         Arm              BStatus   Num     N
-     <num>      <fctr>               <fctr> <int> <int>
- 1:      1 traditional             borrower     1   109
- 2:      2 traditional             borrower     1   108
- 3:      3 traditional             borrower     1   108
- 4:      4 traditional             borrower     1   107
- 5:      1 traditional individual rejection     1    30
- 6:      2 traditional individual rejection     1    26
- 7:      3 traditional individual rejection     1    26
- 8:      4 traditional individual rejection     1    25
- 9:      1 traditional      group rejection     1    40
-10:      2 traditional      group rejection     1    39
-11:      3 traditional      group rejection     1    36
-12:      4 traditional      group rejection     1    36
-13:      1 traditional   rejection by flood     1    20
-14:      2 traditional   rejection by flood     1    17
-15:      3 traditional   rejection by flood     1    18
-16:      1       large             borrower     1   170
-17:      2       large             borrower     1   162
-18:      3       large             borrower     1   164
-19:      4       large             borrower     1   163
-20:      1       large individual rejection     1     9
-21:      2       large individual rejection     1     8
-22:      3       large individual rejection     1     9
-23:      4       large individual rejection     1     9
-24:      1       large      group rejection     1    20
-25:      2       large      group rejection     1    20
-26:      3       large      group rejection     1    19
-27:      4       large      group rejection     1    19
-28:      1 large grace             borrower     1   166
-29:      2 large grace             borrower     1   162
-30:      3 large grace             borrower     1   162
-31:      4 large grace             borrower     1   159
-32:      1 large grace individual rejection     1    13
-33:      2 large grace individual rejection     1     9
-34:      3 large grace individual rejection     1    11
-35:      4 large grace individual rejection     1    11
-36:      1 large grace      group rejection     1    10
-37:      1 large grace   rejection by flood     1    10
-38:      1      cattle             borrower     1   152
-39:      2      cattle             borrower     1   150
-40:      3      cattle             borrower     1   149
-41:      4      cattle             borrower     1   146
-42:      1      cattle individual rejection     1    37
-43:      2      cattle individual rejection     1    29
-44:      3      cattle individual rejection     1    30
-45:      4      cattle individual rejection     1    30
-46:      1      cattle   rejection by flood     1    10
-47:      2      cattle   rejection by flood     1    10
-48:      3      cattle   rejection by flood     1    10
-    survey         Arm              BStatus   Num     N
+    survey         Arm              BStatus Num   N
+ 1:      1 traditional             borrower   1 109
+ 2:      2 traditional             borrower   1 108
+ 3:      3 traditional             borrower   1 108
+ 4:      4 traditional             borrower   1 107
+ 5:      1 traditional individual rejection   1  30
+ 6:      2 traditional individual rejection   1  26
+ 7:      3 traditional individual rejection   1  26
+ 8:      4 traditional individual rejection   1  25
+ 9:      1 traditional      group rejection   1  40
+10:      2 traditional      group rejection   1  39
+11:      3 traditional      group rejection   1  36
+12:      4 traditional      group rejection   1  36
+13:      1 traditional   rejection by flood   1  20
+14:      2 traditional   rejection by flood   1  17
+15:      3 traditional   rejection by flood   1  18
+16:      1       large             borrower   1 170
+17:      2       large             borrower   1 162
+18:      3       large             borrower   1 164
+19:      4       large             borrower   1 163
+20:      1       large individual rejection   1   9
+21:      2       large individual rejection   1   8
+22:      3       large individual rejection   1   9
+23:      4       large individual rejection   1   9
+24:      1       large      group rejection   1  20
+25:      2       large      group rejection   1  20
+26:      3       large      group rejection   1  19
+27:      4       large      group rejection   1  19
+28:      1 large grace             borrower   1 166
+29:      2 large grace             borrower   1 162
+30:      3 large grace             borrower   1 162
+31:      4 large grace             borrower   1 159
+32:      1 large grace individual rejection   1  13
+33:      2 large grace individual rejection   1   9
+34:      3 large grace individual rejection   1  11
+35:      4 large grace individual rejection   1  11
+36:      1 large grace      group rejection   1  10
+37:      1 large grace   rejection by flood   1  10
+38:      1      cattle             borrower   1 152
+39:      2      cattle             borrower   1 150
+40:      3      cattle             borrower   1 149
+41:      4      cattle             borrower   1 146
+42:      1      cattle individual rejection   1  37
+43:      2      cattle individual rejection   1  29
+44:      3      cattle individual rejection   1  30
+45:      4      cattle individual rejection   1  30
+46:      1      cattle   rejection by flood   1  10
+47:      2      cattle   rejection by flood   1  10
+48:      3      cattle   rejection by flood   1  10
+    survey         Arm              BStatus Num   N
 \end{Soutput}
 \begin{Soutput}
-      Arm    hhid   tee MaxTee AttritIn              BStatus creditstatus
-   <fctr>   <num> <int>  <int>    <int>               <fctr>       <fctr>
-1: cattle 7054319     1      3        9 individual rejection           No
+      Arm    hhid tee MaxTee AttritIn              BStatus creditstatus
+1: cattle 7054319   1      3        9 individual rejection           No
       Mgroup
-      <fctr>
 1: drop outs
 \end{Soutput}
 \begin{Soutput}
@@ -11739,7 +11735,6 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 \end{Soutput}
 \begin{Soutput}
            Arm            BStatus     hhid survey NumCows
-        <fctr>             <fctr>    <num>  <num>   <int>
 1: traditional           borrower  7031513      1       1
 2: traditional rejection by flood  7054408      1       0
 3: traditional rejection by flood  7054413      1       0
@@ -11747,32 +11742,30 @@ Notes: & 1. & ANCOVA estimates using administrative and survey data. Post treatm
 5: traditional rejection by flood 81710203      3       2
 \end{Soutput}
 \begin{Soutput}
-Key: <hhid, tee>
 Empty data.table (0 rows and 3 cols): BStatus,hhid,tee
 \end{Soutput}
 \begin{Soutput}
-    survey              BStatus   Num     N
-     <num>               <fctr> <int> <int>
- 1:      1             borrower     1   102
- 2:      2             borrower     1   106
- 3:      3             borrower     1   108
- 4:      4             borrower     1   107
- 5:      1 individual rejection     1    28
- 6:      2 individual rejection     1    26
- 7:      3 individual rejection     1    26
- 8:      4 individual rejection     1    25
- 9:      1      group rejection     1    35
-10:      2      group rejection     1    39
-11:      3      group rejection     1    36
-12:      4      group rejection     1    36
-13:      1   rejection by flood     1    19
-14:      2   rejection by flood     1    17
-15:      3   rejection by flood     1    18
+    survey              BStatus Num   N
+ 1:      1             borrower   1 102
+ 2:      2             borrower   1 106
+ 3:      3             borrower   1 108
+ 4:      4             borrower   1 107
+ 5:      1 individual rejection   1  28
+ 6:      2 individual rejection   1  26
+ 7:      3 individual rejection   1  26
+ 8:      4 individual rejection   1  25
+ 9:      1      group rejection   1  35
+10:      2      group rejection   1  39
+11:      3      group rejection   1  36
+12:      4      group rejection   1  36
+13:      1   rejection by flood   1  19
+14:      2   rejection by flood   1  17
+15:      3   rejection by flood   1  18
 \end{Soutput}
 \begin{Soutput}
-            used   (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells   3211802  171.6    4711329  251.7         NA   4711329  251.7
-Vcells 618591514 4719.5  911587133 6954.9      56320 911585152 6954.9
+            used   (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells   2673356  142.8    4165176  222.5   4165176  222.5
+Vcells 330190162 2519.2  526025826 4013.3 362992754 2769.5
 \end{Soutput}
 \begin{Soutput}
 [1] 1
@@ -11843,7 +11836,7 @@ In \textsf{traditional} arm, there are 33 borrowing members who report cattle as
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: First IGA choices \label{fig IGAChoices}}\\
-\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/FirstIGAChoices.pdf}\\
+\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/FirstIGAChoices.eps}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -11853,7 +11846,7 @@ Note:&  The first income generating activity (IGA) choices are plotted. The rows
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices \label{fig All IGAChoices}}\\
-\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/AllIGAChoices.pdf}\\
+\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/AllIGAChoices.eps}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -11863,7 +11856,7 @@ Note:&  \\[1ex]
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: All IGA choices (collapsed view)\label{fig All IGAChoicesCollapsed}}\\
-\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/AllIGAChoicesCollapsed.pdf}\\
+\hfil\includegraphics[height = 5cm]{c:/data/GUK/analysis/program/figure/EstimationMemo/AllIGAChoicesCollapsed.eps}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
@@ -12038,8 +12031,6 @@ Note:&  Asset values are expressed in BDT. \textsf{Net assets}=total assets - de
 \end{tabular}
 }
 
-\end{document}
-
 \renewcommand{\arraystretch}{.6}
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative impacts on cattle holding relative to traditional arm by experience\label{fig NumCowsRelativeToCumulativeConcurrentTradEffectsByExperience}}\\
@@ -12168,7 +12159,7 @@ year_1st  0 2015
 Tabulation of loan projects shows that there is no member invested all in goats and goats are not the members' main assets. Among the 85 \textsf{tradtional} loan recipients who report their loan projects, there are 27 members who report to have purchased a goat twice and 15 who have invested in a retail trade twice. It is also puzzling that, among \textsf{traditional} arm members, 27 report to have invested in a cow twice, which seems unlikely with their purchasing powers. 
 \begin{Schunk}
 \begin{Soutput}
-x
+
    2 cows,goat    2 cows,land   2 cows,trade    2 goats,cow  2 goats,trade   2 trades,cow 
              5              3             19             12             15             11 
  2 trades,goat  cow,goat,land cow,goat,trade cow,land,trade 
@@ -12187,7 +12178,7 @@ cow            NaN    NaN   0
 <NA>         97.34   2.66 188
 \end{Soutput}
 \begin{Soutput}
-x
+
    2 cows,goat    2 cows,land   2 cows,trade    2 goats,cow  2 goats,trade   2 trades,cow 
              5              3             19             12             15             11 
  2 trades,goat  cow,goat,land cow,goat,trade cow,land,trade 
@@ -12264,24 +12255,23 @@ Arm             0   1   2   3   4   5   6   8   9 <NA> Sum
   Sum           4 249 216  56  12   4   2   1   1  106 651
 \end{Soutput}
 \begin{Soutput}
-            Arm survey     N MeanNumCow MedianNumCow
-         <fctr>  <num> <int>      <num>        <num>
- 1: traditional      1   175   0.217143            0
- 2: traditional      2   140   1.542169            1
- 3: traditional      3   157   1.440678            1
- 4: traditional      4   132   1.495050            1
- 5:       large      1   199   0.306533            0
- 6:       large      2   171   1.937008            2
- 7:       large      3   187   1.784810            2
- 8:       large      4   188   1.930818            2
- 9: large grace      1   199   0.256281            0
-10: large grace      2   153   1.535088            1
-11: large grace      3   170   1.496599            1
-12: large grace      4   161   1.766423            2
-13:      cattle      1   199   0.206030            0
-14:      cattle      2   177   1.365517            1
-15:      cattle      3   181   1.436709            1
-16:      cattle      4   170   1.662162            2
+            Arm survey   N MeanNumCow MedianNumCow
+ 1: traditional      1 175   0.217143            0
+ 2: traditional      2 140   1.542169            1
+ 3: traditional      3 157   1.440678            1
+ 4: traditional      4 132   1.495050            1
+ 5:       large      1 199   0.306533            0
+ 6:       large      2 171   1.937008            2
+ 7:       large      3 187   1.784810            2
+ 8:       large      4 188   1.930818            2
+ 9: large grace      1 199   0.256281            0
+10: large grace      2 153   1.535088            1
+11: large grace      3 170   1.496599            1
+12: large grace      4 161   1.766423            2
+13:      cattle      1 199   0.206030            0
+14:      cattle      2 177   1.365517            1
+15:      cattle      3 181   1.436709            1
+16:      cattle      4 170   1.662162            2
 \end{Soutput}
 \end{Schunk}
 Last observed round.
@@ -12395,7 +12385,7 @@ Note:& Each column uses respective year cattle ownership information. For ANOVA 
 4  0  0  0  0 0 0 0   0     0         NaN
 \end{Soutput}
 \begin{Soutput}
-Warning: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+Warning in `[.data.table`(lvocL, , `:=`(Livestock, lvstkName[k])): Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
 \end{Soutput}
 \end{Schunk}
 \begin{Schunk}
@@ -12409,7 +12399,7 @@ Arm             0   1 Sum
   Sum         633 139 772
 \end{Soutput}
 \begin{Soutput}
-Warning: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+Warning in `[.data.table`(lvocL2, , `:=`(Livestock, lvstkName[k])): Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
 \end{Soutput}
 \end{Schunk}
 Given the misreporting in large loans arms, the power may get affected and only \textsf{large} seems to stand out from all other arms, while \textsf{large grace, cattle} are not different in terms of cattle ownership against \textsf{traditional}. 
@@ -12477,14 +12467,5 @@ Note:& Reported largest one-off investment amounts of the lending. Top figure is
 \footnotesize\bibliographystyle{aer}
 \setlength{\baselineskip}{10pt}
 \bibliography{c:/seiro/settings/TeX/seiro}
-
-
-\begin{Schunk}
-\begin{Soutput}
-Error in parse(text = x): <text>:1:8: 想定外のシンボルです
-1: Number of
-           ^
-\end{Soutput}
-\end{Schunk}
 
 \end{document}

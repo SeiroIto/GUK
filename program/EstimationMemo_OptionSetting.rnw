@@ -56,13 +56,15 @@ opts_chunk$set(
 )
 options(digits = 6, width = 80)
 library(data.table)
+library(qs)
 pathsave <- paste0(path, "save/")
 pathprogram <- paste0(path, "program/")
 pathreceived <- paste0(path0, "received/")
 pathsaveReadFilesMergeAdminRoster <- 
   paste0(pathsave, "ReadFilesMergeAdminRoster/")
-pathsaveEstimationMemo <- paste0(pathsave, "EstimationMemo/")
-pathsaveHere <- pathsaveEstimationMemo
+dir.create(pathprogramfigure <- paste0(pathprogram, "figure/EstimationMemo/"))
+dir.create(pathprogramtable <- paste0(pathprogram, "table/EstimationMemo/"))
+dir.create(pathsaveHere <- pathsaveEstimationMemo <- paste0(pathsave, "EstimationMemo/"))
 pathsaveHere2 <- pathsaveReadFilesMergeAdminRoster
 pathsaveNoFlood <- paste0(pathsave, "NoFlood/")
 pathsavePerm <- paste0(pathsave, "PermutationTests/")

@@ -1,0 +1,79 @@
+<<ReadTrimSchoolingFDData original 1600 HHs, cache = F, eval = T, child='c:/data/GUK/analysis/program/ReadTrimSchoolingOriginalHHsFDData2.rnw'>>=
+#source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
+<<Enrollment pattern in original 1600 panel>>=
+table0(s.1x[tee == 1, .(ObPattern, SchPattern)])
+@
+Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
+<<Left panel is before dropping nnn right panel is after original 1600 panel>>=
+cbind(table0(s.1x[, .(tee, RArm)]), 
+  table0(s1x[, .(tee, RArm)]))
+@
+\textsf{sch} has \Sexpr{nrow(s.1x)} rows. Drop \Sexpr{nrow(s.1x[grepl("nnn", SchPattern), ])} observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
+%and \Sexpr{nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ])} observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with \Sexpr{nrow(s1x)} rows. 
+<<schooling FD read data original 1600 HHs, warning = F>>=
+#s.1 <- s.1[!grepl("1001", EnrollPattern), ]
+s1x[, Enrolled := as.numeric(Enrolled)]
+s1x[, Tee := .N, by = HHMid]
+ds1xd[, Tee := .N, by = HHMid]
+@
+With OLS,  \Sexpr{table(s1x[tee == 1, Tee])} individuals are repeatedly observed for \Sexpr{names(table(s1x[tee == 1, Tee]))} times, respectively. With FD, \textsf{sch} is reduced to \Sexpr{nrow(ds1xd)	} rows after first-differencing with \Sexpr{table(ds1xd[tee == 2, Tee])} individuals with repeatedly observed for \Sexpr{as.numeric(names(table(ds1xd[tee == 2, Tee])))} times, respectively.
+Individuals with NAs in \textsf{Enrolled}: \Sexpr{nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])} obs for \textsf{sch}. 
+%Mostly older children (\Sexpr{round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s.2}) but with a high reported enrollment rate (\Sexpr{round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
+Check missingness in schooling level information.
+<<tab s1x dummyprimary 1600>>=
+table0(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum))
+@
+Drop \Sexpr{sum(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum)==0)} obs without school level information.
+<<Drop obs without school level information 1600>>=
+s1x <- s1x[apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum) == 1, ]
+ds1xd[, grepout("^Tee$", colnames(ds1xd)) := NULL]
+@
+%Check missingness in arm information.
+<<tab s1x arm info 1600, eval = F>>=
+table0(apply(s1x[, .(dummyTraditional, dummyLarge, dummyLargeGrace, dummyCow)], 1, sum))
+@
+%An example of dummy interactions: \textsf{\footnotesize \Sexpr{tobeintSchdumTimdum}}.
+%Obs for \textsf{sch} after FD.
+<<Obs for s1x 1600, eval = F>>=
+table(ds1xd[, tee])
+@
+%Obs for \textsf{s1x} and admin repayment data.
+<<Obs for s1x and admin repayment data, eval = F>>=
+table(ds1xRd[, tee])
+@
+<<ReadTrimSchoolingFDData2 original 1600 HHs in R file, cache = F, warning = F>>=
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+@
+<<schooling FD select covariates original 1600 HHs>>=
+FileName <- "Schooling"
+Regressands <- rep("Enrolled", 4)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+<<schooling FD estimation covariate selection original 1600 HHs>>=
+Scsuffixes <- c("", "g", "p", "s", "a", "T", "Tg", "Ts", "D", "Dg", "Da")
+exclheader <- paste0("excl", Scsuffixes)
+source(paste0(pathprogram, "SchoolingCovariateSelection.R"))
+<<schooling FD estimation original 1600 HHs, warning = F, results = 'hide'>>=
+# Need to place ED14Diff after k > 5.
+FileNameHeaderSchooling <- c("", "Grace", "PovertyStatus", "Size", "Attributes",
+  "Rd14Diff", "Rd14DiffGrace", "Rd14DiffAttributes")
+FileNameHeader <- paste0(FileNameHeaderSchooling, "OriginalHHs")
+Scsuffixes <- c("", "g", "p", "s", "a", "D", "Dg", "Da")
+listheader <- paste0("sc", Scsuffixes)
+exclheader <- paste0("excl", Scsuffixes)
+DataToUse1 <- rep("ds1xd", 4)
+DataToUse2 <- rep("ds1x34d", 4)
+source(paste0(pathprogram, "FDEstimationFile.R"))
+<<schooling FD estimation original 1600 HHs time interactions, warning = F, results = 'hide'>>=
+FileNameHeaderSchooling <- c("TInt", "TIntGrace", "TIntSize")
+FileNameHeader <- paste0(FileNameHeaderSchooling, "OriginalHHs")
+Scsuffixes <- c("T", "Tg", "Ts")
+exclheader <- paste0("excl", Scsuffixes)
+listheader <- paste0("sc", Scsuffixes)
+source(paste0(pathprogram, "FDEstimationFileSchooling.R"))
+saveRDS(fdplist, paste0(pathsave, "FD_schooling.rds"))
+<<>>=
+#dummy chunk
+@

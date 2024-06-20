@@ -5,7 +5,7 @@
 .Ruserdata
 .Rapp.history
 .DS_Store
-program.7z
+program*.7z
 paper/*
 slides/*
 save/*
@@ -27,7 +27,7 @@ program/*.blg
 program/*.out
 program/*.toc
 program/*.dvi
-program/EstimationMemo/*
+program/EstimationMemo*/*
 program/cache/*
 program/figure/*
 program/table/*

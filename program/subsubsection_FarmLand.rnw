@@ -24,7 +24,7 @@ g <- ggplot(data = subset(assL, BStatus == "borrower"),
    strip.text = element_text(size = 6, colour = "blue"))+
   facet_grid(survey ~ Arm)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",,
     "FarmLandClassesByRound.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300

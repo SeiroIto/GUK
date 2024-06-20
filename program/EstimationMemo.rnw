@@ -103,8 +103,17 @@ if (ThisIsNoFlood)
 <<EstimationMemo child file 1, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ChildFile1.rnw'>>=
 <<Summary, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Summary.rnw'>>=
 <<original HH regressions this is to be deleted, eval = F, cache = F, child='c:/data/GUK/analysis/program/ImpactEstimationOriginal1600Memo3_body2.rnw'>>=
+<<original HH regressions for schooling, eval = T, cache = F, child='c:/data/GUK/analysis/program/SchoolingOriginal1600HHsToProduce2Tables.rnw'>>=
 # Below reads XXXTrimmed.rds from folder pathsaveOriginal1600Memo3, 
 # flags InitialSample in XXXInitialSample.rds and estimates. 
-<<original HH regressions, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA2.rnw'>>=
+# EstimationMemo_ANCOVA2.rnw is for 2020 Nov
+<<original HH regressions for 2020 Nov, eval = F, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA2.rnw'>>=
+# EstimationMemo_ANCOVA2.rnw is for 2024 June
+<<original HH regressions, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA3.rnw'>>=
 @
+
+<<ShowMemUse, eval = T>>=
+ShowMemUse(decreasing = T, limit = 20)
+@
+
 \end{document}

@@ -40,7 +40,7 @@ g <- ggplot(data = subset(NeAfig, !is.na(Arm)), aes(group = tee)) +
   facet_grid(. ~ Arm)
 ggsave(
   paste0(pathprogram, 
-    "EstimationMemo/figure/ProdAssetLivestock.png"),
+    "figure/EstimationMemo/ProdAssetLivestock.png"),
   g,
   width = 10, height = 4, units = "cm",
   dpi = 300
@@ -53,7 +53,7 @@ ggsave(
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Livestock and productive asset holding\label{fig livestock prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/ProdAssetLivestock.png")
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/ProdAssetLivestock.png")
 }}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}

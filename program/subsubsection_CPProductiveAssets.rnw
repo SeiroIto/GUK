@@ -63,14 +63,14 @@ ggplot(data = dsub,
 #  geom_point(pch = 21, position = position_jitterdodge())
 ggsave(
   paste0(pathprogram, 
-    "EstimationMemo/figure/CompletePanelProdAssets.png"),
+    "figure/EstimationMemo/CompletePanelProdAssets.png"),
   g,
   width = 12*2, height = 8*2, units = "cm",
   dpi = 300
  )
 pdf(file =  
   paste0(pathprogram, 
-    "EstimationMemo/figure/CompletePanelProdAssets.pdf"),
+    "figure/EstimationMemo/CompletePanelProdAssets.pdf"),
   , width = 12*2/2.54, height = 8*2/2.54, pointsize = 10) # native unit: inch
 print(g)
 whatever <- dev.off()
@@ -80,7 +80,7 @@ whatever <- dev.off()
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Productive asset holding\label{fig prod asset survey round}}\\
-\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "EstimationMemo/figure/CompletePanelProdAssets.pdf")
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/CompletePanelProdAssets.pdf")
 }}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}

@@ -55,12 +55,15 @@ Addseparatingcols = NULL; Separatingcolwidth = .2
 <<schooling ANCOVA estimation>>=
 dig.depmean <- 2
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 
 <<>>=
 #dummy chunk
 @
+
+% Old: Below is created in FDEstimationFile.R via ImpactEstimationOriginal1600Memo3_body3.rnw
+% Below is created in FDEstimationFile.R via SchoolingOriginal1600HHsToProduce2Tables.rnw
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
 \hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: FD estimation of school enrollment, round 1 vs. round 4 differences\label{tab FD enroll5 original HH}}\\

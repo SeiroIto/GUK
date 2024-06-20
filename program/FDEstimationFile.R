@@ -16,6 +16,7 @@ for (k in 1:length(listheader)) {
         Group = GroupVar[j], TimeVar = "tee", Cluster = "^groupid$", 
         Exclude = paste(get(paste0(exclheader[k], ".base")), 
           get(paste0(exclheader[k], j)), sep = "|"),
+        SmallClusterCorrection = "LiangZeger",
         intercept = T, return.V = T, print.messages = T)
     )
 # Tests: Serial correlation in FD errors (Wooldridge textbook 10.71)
@@ -38,6 +39,8 @@ for (k in 1:length(listheader)) {
     fdAR <- NULL else
     fdAR <- cbind(c("\\hat{\\rho}", "\\mbox{Pr}[\\hat{\\rho}=0]"), formatC(fdAR, 3, format = "f"))
 # Format and save
+## Note this only works when FDestimation uses LiangZeger CRSEs.
+## In other CRSEs, dimension of est differs.
   fdp.estlist <- lapply(fdplist, "[[", "est")
   fdp.estlist <- lapply(fdp.estlist, function(x) x[, -3, drop = F])
   fdp.N <- unlist(lapply(fdplist, "[[", "N"))

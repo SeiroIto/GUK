@@ -1007,7 +1007,7 @@ g <- ggplot(data = subset(assP, BStatus == "borrower"),
    strip.text = element_text(size = 6, colour = "blue"))+
   facet_grid(tee ~ Arm, scales = "free_y")
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",,
     "ProdAssetClassesByRound.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300
@@ -1024,7 +1024,7 @@ g <- ggplot(data = subset(assP, BStatus != "borrower"), aes(PAssetClass)) +
    strip.text = element_text(colour = "blue"))+
   facet_grid(tee ~ Arm, scales = "free_y")
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",,
     "ProdAssetClassesByRoundLoanNonrecipients.png")
     , g, 
     width = 13, height = 8, units = "cm", dpi = 300
@@ -1183,7 +1183,7 @@ g <- ggplot(data = subset(assL, BStatus == "borrower" & year != 2012),
    strip.text = element_text(size = 6, colour = "blue"))+
   facet_grid(year ~ Arm)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",,
     "LandClassesByRound.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300
@@ -1207,7 +1207,7 @@ g <- ggplot(data = subset(assl, BStatus == "borrower" & year != 2012),
    strip.text = element_text(size = 6, colour = "blue"))+
   facet_grid(year ~ Arm)
 ggsave(
-  paste0(pathprogram, "EstimationMemo/figure/",
+  paste0(pathprogram, "figure/EstimationMemo/",,
     "RawLandClassesByRound.png")
     , g,
     width = 13, height = 8, units = "cm", dpi = 300

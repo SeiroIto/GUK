@@ -1,6 +1,6 @@
 Net assets = Assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors). 
 
-<<net assets merge assets livestock saving data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+<<net assets merge assets livestock saving data for est and figure, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
 #  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
 @
 <<Net asset set parameters original HHs>>=
@@ -11,12 +11,35 @@ FileNameHeader <- c("", "PovertyStatus", "Attributes",
 regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
 listheader <- paste0("nea", regsuffixes)
 <<net asset regression select covariates original HHs>>=
+library(qs)
 source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
 <<get jay from net assets covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
 NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 NeA1[, grepout("Net2|Na|Br|^R|Pro|PAss", colnames(NeA1)) := NULL]
+# ls(pattern = "^incl\\d"): created in NetAssetCovariateSelectionANCOVA2.R 
+# "incl1" "incl2" "incl3" "incl4" "incl5" "incl6"
+# So jay = 6, 6 data sets to be supplied for estimation.
+#  incl1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+#  incla1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+#  inclP1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+#  inclT1: ^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^Time\\.)(?!.*Had)
+#  inclTa1: ^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^Time\\.)(?!.*Had)
+#  inclTPa1: ^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|^d.*Poor)(?!.*Had)
+# Supplied NeA1. It is created in MergeAllNetAssetsANCOVA.R
+# 	ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
+# 	obr <- readRDS(paste0(pathsaveHere, DataFileNames[11], "Trimmed.rds"))
+# 	arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
+# 	lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+# 	asso <- obr[ass]
+# 	assD <- asso[!is.na(IntDate), .(Arm, BStatus, hhid, survey, IntDate)]
+# 	arD <- arA[, .(hhid, survey, tee, Date, AttritIn, CumLoanAmount, 
+# 	arDebt <- assDW[arD]
+# 	assoD <- arDebtW[asso]
+# 	ass1R <- assoD[, grepout(paste0(assstrings, "|RM"), colnames(assoD)), with = F]
+# 	NeA1R <- merge(ass1R, lvo1, by = commoncols, all.x = T)
+# 	NeA1 <- NeA1R[tee > 1, ]
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
 # Previously, Rd 1-4 diff: DataToUse2 <- rep("NeA2", jay)
@@ -30,9 +53,10 @@ inclheader <- gsub("ex", "in", exclheader)
 <<net assets ANCOVA estimation>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<figure net asset values at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
+# MergeAllNarrowNetAssetsANCOVA.rnw
 NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
 d2 <- subset(NeAfig, !is.na(Arm))
@@ -65,8 +89,7 @@ ggsave(
 # print(g)
 # dev.off()
 pdf(file =  
-  paste0(pathprogram, 
-    "figure/EstimationMemo/NetAssetsAtRd1.pdf"),
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.pdf"),
   , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
 print(g)
 whatever <- dev.off()
@@ -99,13 +122,13 @@ ggsave(
   width = 12, height = 6, units = "cm",
   dpi = 300
  )
-setEPS()
-postscript(file =  
-  paste0(pathprogram, 
-    "figure/EstimationMemo/NetAssets.eps"),
-  , horizontal = F)
-print(g)
-whatever <- dev.off()
+# setEPS()
+# postscript(file =  
+#   paste0(pathprogram, 
+#     "figure/EstimationMemo/NetAssets.eps"),
+#   , horizontal = F)
+# print(g)
+# whatever <- dev.off()
 pdf(file =  
   paste0(pathprogram, 
     "figure/EstimationMemo/NetAssets.pdf"),
@@ -235,7 +258,7 @@ for (i in 1:2) {
 
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Total and net asset values\label{fig TotalAndNetAssetValues}}\\
-\hfil\includegraphics[height = 6cm]{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/NetAssets.eps")}}\\
+\hfil\includegraphics[height = 6cm]{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/NetAssets.pdf")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Survey data.\\
