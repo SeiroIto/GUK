@@ -1,5 +1,8 @@
-<<merge prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
+<<merge prod assets, eval = F, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
 #  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+@
+<<net assets merge assets livestock saving data for prodassets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<ProdAsset set parameters original HHs>>=
 FileName <- "ProdAsset"
@@ -19,15 +22,17 @@ Regressands <- rep("PAssetAmount", jay)
 tableboxwidth <- 4.5
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
 NeA1[, grepout("Value|Narrow", colnames(NeA1)) := NULL]
 <<display covariates prod asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
 <<prod asset regression estimation original HHs>>=
 dig.depmean <- 0
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<prod asset values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 g <- ggplot(data = subset(NeAfig, !is.na(Arm)), aes(group = tee)) + 
 #  geom_point(size = .1, position = position_dodge(width = .5)) +
 #  geom_smooth(span = .5, aes(colour = Arm, group = Arm)) +

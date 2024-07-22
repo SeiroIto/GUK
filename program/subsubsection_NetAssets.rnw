@@ -1,7 +1,7 @@
 Net assets = Assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors). 
 
-<<net assets merge assets livestock saving data for est and figure, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+<<net assets merge assets livestock saving data for est and figure, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<Net asset set parameters original HHs>>=
 FileName <- "NetAssets"
@@ -15,7 +15,13 @@ library(qs)
 source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
 <<get jay from net assets covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
-NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
+
+NeA1[, .(dummyLarge, dummyLargeSize, dummyLargeGrace, dummyWithGrace, dummyCattle, dummyInKind)]
+all(NeA1[, dummyLarge + dummyLargeGrace + dummyCattle == dummyLargeSize])
+all(NeA1[, dummyLargeGrace + dummyCattle == dummyWithGrace])
+all(NeA1[, dummyCattle == dummyInKind])
+
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 NeA1[, grepout("Net2|Na|Br|^R|Pro|PAss", colnames(NeA1)) := NULL]
 # ls(pattern = "^incl\\d"): created in NetAssetCovariateSelectionANCOVA2.R 
@@ -56,7 +62,7 @@ AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<figure net asset values at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
-# MergeAllNarrowNetAssetsANCOVA.rnw
+# ComputeNetAssetsANCOVA.rnw
 NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
 d2 <- subset(NeAfig, !is.na(Arm))
@@ -277,3 +283,4 @@ Note:& Net asset values = total gross asset values - debt outstanding. Debt outs
 }
 
 \Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsAnnualPricesResults.rnw"))}

@@ -1,6 +1,7 @@
 \section{Randomisation checks}
 \label{AppSecRandomisation}
 \setcounter{table}{0}
+\setcounter{figure}{0}
 
 % Created in PermutationTestsContents.rnw(87)
 \hspace{-1.5cm}\begin{minipage}[t]{14cm}
@@ -40,6 +41,7 @@ Note:& Each column uses respective year cattle ownership information. Columns (1
 \section{Rejection}
 \label{AppSecRejection}
 \setcounter{table}{0}
+\setcounter{figure}{0}
 
 <<Rejection tests main text, cache = F, child='c:/data/GUK/analysis/program/RejectionTestsMainText4.rnw'>>=
 @
@@ -47,6 +49,32 @@ Note:& Each column uses respective year cattle ownership information. Columns (1
 \section{Attrition}
 \label{AppSecAttrition}
 \setcounter{table}{0}
+\setcounter{figure}{0}
 
 <<Attrition Tests main text, cache = F, child='c:/data/GUK/analysis/program/AttritionTestsMainText4.rnw'>>=
 @
+
+\section{Repayment}
+\setcounter{table}{0}
+\setcounter{figure}{0}
+
+\hfil\begin{minipage}[t]{12cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Permutation test results on repayment equality by poverty class\label{tab perm repay by poverty}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorRepaymentPermTestResults.tex")
+}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{.1cm}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{6.75cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\mpage{7.1cm}{\scriptsize Estimated with GUK administrative and survey data. Mid term (July) values are used in each year. }}\\
+Notes: & 1. & Cumulative shortfall ratio = 1 - (cumulative sum of repayment)/(cumulative sum of planned installments). A positive value indicates shortfall, a negative value indicates overrepayment ahead of planned istallments. \textsf{R}'s package \textsf{coin} is used to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. 
+\\
+& 2. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. 
+\end{tabular}
+\end{minipage}
+

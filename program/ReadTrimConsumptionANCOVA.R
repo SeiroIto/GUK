@@ -59,6 +59,7 @@ conD <- con[!grepl("tw|dou", TradGroup), .(
       )]
 conD[, Arm := factor(Arm, labels = c("traditional", "large", "large grace", "cattle"))]
 saveRDS(conD, paste0(pathsaveHere, "ConsumptionFigure.rds"))
+conOLS = copy(con)
 con <- con[tee > 2 & !grepl("tw|dou", TradGroup), ]
 con[, TradGroup := NULL]
 if (Only800) con <- con[o800 == 1, ]

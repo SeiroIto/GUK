@@ -34,7 +34,7 @@ for (a in regsuffixes) {
       # allow level covariates
       #"^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
       # allow level covariates but not HadConw
-      "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|Poor)(?!.*Had)")
+      "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|dummyUltraPoor)(?!.*Had)")
   for (m in 2:length(additions)) 
     if (m == 5) # if m==5, addo to inclX3
       assign(paste0("incl", a, 5), 

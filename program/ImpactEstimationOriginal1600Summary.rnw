@@ -33,6 +33,7 @@ fnd <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn)))
 
 \subsection{Definitions}
 
+\subsubsection{Arms}
 (125*45*3) or, CumRepaid/(190*45*2)
 \begin{description}
 \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
@@ -45,6 +46,24 @@ fnd <- tolower(gsub(" ", "\\_", gsub("^.*\\/(.*).dta", "\\1", fn)))
 \item[InKind]	Same as Cow.
 \end{description}
 When one uses covariates \textsf{Large, Large Grace, Cow} in estimation, their estimates represent each arm's characteristics relative to \textsf{Traditional}. When one uses covariates \textsf{LargeSize, WithGrace, InKind}, their estimates represent their labeled names.
+
+\subsubsection{Assets}
+
+
+Net assets, net broad assets, and livestock values are computed/defined in \textsf{MergeAllNarrowNetAssetsANCOVA.R}. All other asset components are summed/defined in \textsf{read\_cleaned\_data.rnw}. 
+\begin{description}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item[Household assets]	Non-livestock asset items, excluding land holding, reported in all rounds. Tubewell, mobile phone, bicycle, wrist watch, sewing machine, rickshaw/van, wall clock, radio/tv, solar, electric fan, cassette player.
+\item[Broad household assets]	All non-livestock asset items (some are reported only in some rounds). Land holding at baseline is asked as a recall in round 2. When land is added, we assume its baseline value to be zero. This may inflate the asset growth.
+\item[Total imputed value of livestock]	Livestock holding. Median sales price through out the survey rounds are used to impute values.
+\item[Total imputed 2 value of livestock]	Livestock holding. Median annual sales price are used to impute values.
+\item[Productive assets]	Tractor, thresher, power tiller, power pump, hand pump, deep tube-well, shallow tube-well, treddle pump, rower pump, done/swing basket, plough and yoke, spray, husking machine, ginning machine, country boat, engine boat, fishing net, cage incubator, brooder, bees-box, weeder, ladder (moi), sickle/dao/axe/spade, gola (grain storage), dheki, jata, sewing machine, rickshaw, etc.
+\item[Net assets]	TotalImputedValue + NLAssetAmount - DebtOutstanding.before - NonNGOBal. I.e., household assets + productive assets + livestock holding + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors) but exclusing land. 
+\item[Net broad assets]	TotalImputedValue + BroadNLAssetAmount - DebtOutstanding.before - NonNGOBal. I.e., broad household assets + productive assets + livestock holding + net saving - debt to GUK - debts to relatives and money lenders. Assets use all items observed for household assets, including land. 
+\item[Net non-livestock assets]	 NLAssetAmount - DebtOutstanding.before - NonNGOBal. I.e., household assets + productive assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors) but exclusing land. 
+\item[Cattle holding]	Number of cattlle holding in counts, not in monetary units. 
+\end{description}
+
 
 \subsection{Inference}
 

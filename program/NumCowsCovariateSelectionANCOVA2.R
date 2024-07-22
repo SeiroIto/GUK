@@ -22,11 +22,20 @@ for (a in regsuffixes) {
     # and {^dummyUltraPoor$}
     assign(paste0("incl", a, 1), 
       "^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$") else 
+  if (grepl("Ta?$", a))
     assign(paste0("incl", a, 1), 
       # disallow level covariates
       #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.") 
       # allow level covariates
-      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.")
+      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.") else
+   # if TP, TPa: add any variable with "Poor"
+    assign(paste0("incl", a, 1), 
+      # disallow level covariates
+      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.|Poor") 
+      # allow level covariates
+      #"^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
+      # allow level covariates but not HadConw
+      "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|dummyUltraPoor)(?!.*Had)")
   for (m in 2:length(additions)) 
    # drop m == 5 because TotalImputedValue0 and NumCows0 are collinear
    # if (m >= 5) # if m==5 or 6, add to inclX3 or inclX4

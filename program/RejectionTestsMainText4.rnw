@@ -58,10 +58,11 @@ c(
   "of attri.* non-traditional arm$", "of attri.* of",
   "active status$", "active.*race$", "acti.*other"
   )
+#TabLabelStrings <- TabLabelStrings[c(6, 7, 12)]
 @
 
 <<print trimmed sample rejection, results = "asis">>=
-for (i in 1:13) {
+for (i in 1:length(TabLabelStrings)) {
   ii <- grep(TabLabelStrings[i], TabLabel1)
   cat(eval(parse(text=paste0("Tb1", ii))))
 }

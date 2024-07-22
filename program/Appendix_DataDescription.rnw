@@ -1,22 +1,5 @@
 \section{Data description}
 
-\hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Descriptive statistics by arm in administrative data\label{tab DestatByArm}}\\
-\setlength{\tabcolsep}{1pt}
-\setlength{\baselineskip}{8pt}
-\renewcommand{\arraystretch}{.55}
-\hfil\begin{tikzpicture}
-\node (tbl) {\input{\Sexpr{paste0(pathsaveHere, "DestatByArm.tex")}}};
-\end{tikzpicture}\\
-\renewcommand{\arraystretch}{.8}
-\setlength{\tabcolsep}{1pt}
-\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
-Notes: & 1. & Information of original 800 households. Net saving as percentage of loan amount is a mean over loan recipients whose first disbursement is in 2013. Effective repayment is a sum of repayment and net saving. \\
-& 2. & \textsf{Loan year} -1 is preparation period for loan disbursement when only saving is allowed. \\
-\end{tabular}
-\end{minipage}
-
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Net asset values at baseline\label{fig NetAssetValuesAtRd1}}\\
 \hfil\includegraphics[width = 10cm]{\Sexpr{  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.pdf")}}\\
@@ -27,15 +10,6 @@ Note:& Net asset values = total gross asset values - debt outstanding. Debt outs
 \end{tabular}
 }
 
-\mpage{\linewidth}{
-\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Livestock holding at baseline\label{fig LivestockValuesAtRd1}}\\
-\hfil\includegraphics[width = 8cm, height = 5cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/LivestockValuesAtRd1.eps")}}\\
-\renewcommand{\arraystretch}{1}
-\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Source: & Survey data.\\
-Note:& Livestock holding at baseline. Median market price is used to convert holding to values. \\[1ex]
-\end{tabular}
-}
 
 \renewcommand{\arraystretch}{.55}
 \mpage{\linewidth}{
@@ -47,36 +21,4 @@ Source: & Survey data.\\
 Note:&  \\[1ex]
 \end{tabular}
 }
-
-
-\renewcommand{\arraystretch}{.55}
-\mpage{\linewidth}{
-\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations used in estimation by borrower status and arm at period 1\label{tab NumObsByBStatusArmRegUsedMin}}\\
-\hfil\input{\Sexpr{  paste0(pathprogram, "table/EstimationMemo/NumObsByBStatusArmRegUsedMin.tex")}}\\
-\renewcommand{\arraystretch}{1}
-\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Source: & Survey data.\\
-Note:&  \\[1ex]
-\end{tabular}
-}
-
-\renewcommand{\arraystretch}{.55}
-\mpage{\linewidth}{
-\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Number of observations used in estimation by borrower status and arm at last period\label{tab NumObsByBStatusArmRegUsedMax}}\\
-\hfil\input{\Sexpr{  paste0(pathprogram, "table/EstimationMemo/NumObsByBStatusArmRegUsedMax.tex")}}\\
-\renewcommand{\arraystretch}{1}
-\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Source: & Survey data.\\
-Note:&  \\[1ex]
-\end{tabular}
-}
-
-
-\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Weekly net saving and cumulative repayment\label{fig weeklysavingrepay}}\\
-\hfil\includegraphics[width = 12cm]{\Sexpr{paste0(pathprogram, "figure/ImpactEstimationOriginal1600Memo2/",   "CumulativeWeeklyNetSavingAndRepayment.png")}}\\
-\renewcommand{\arraystretch}{1}
-\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Note:& Each dot represents weekly observations. Only members who received loans are shown. Each panel shows weekly net saving (saving - withdrawal) or cumulative repayment against weeks after first disbursement. Lines are smoothed lines with a penalized cubic regression spline in \textsf{ggplot2::geom\_smooth} function, originally from \textsf{mgcv::gam} with \textsf{bs=`cs'}. \\[-1ex]
-\end{tabular}
-
 

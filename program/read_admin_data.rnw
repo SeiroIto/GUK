@@ -361,6 +361,7 @@ adw[, EverRepaid := any(CumRepaid > 0), by = hhid]
 setkey(adw, hhid, Date)
 adw[, Shortfall := PlannedInstallment - value.repay]
 adw[, ShortfallRate := Shortfall/PlannedInstallment]
+adw[abs(ShortfallRate)==Inf | is.nan(ShortfallRate), ShortfallRate := NA]
 adw[, MaxRepayment := as.integer(125*52*3)]
 adw[grepl("gr|cat", Arm), MaxRepayment := as.integer(190*52*2)]
 adw[MonthsElapsed > 36, CumPlannedInstallment := as.integer(MaxRepayment)]
@@ -477,8 +478,8 @@ Borrowing patterns among the traditional arm:
 \begin{description}
 \vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
 \item[planned]	Original traditional loan of 5600*3.
-\item[double]	Second loan is double of the first, 5600, 11200.
-\item[twice]	Two loans (roughly) equally split, 7840, 8960, or two disbursement dates are recorded.
+\item[double]	Second loan is double of the first 5600, 11200.
+\item[twice]	Two loans (roughly) equally split, 7840, 8960, or two disbursement dates are recorded and not amounts are not under the ``double.''
 \end{description}
 <<define TradGroup>>=
 adw[(loanamount1st == 5600 & loanamount2nd == 5600 & loanamount3rd == 5600) |
@@ -487,7 +488,7 @@ adw[(loanamount1st == 5600 & loanamount2nd == 5600 & loanamount3rd == 5600) |
 adw[loanamount1st == 5600 & loanamount2nd == 11200, 
   TradGroup := "double"]
 adw[(loanamount1st == 7840 & loanamount2nd == 8960) | 
-  (!is.na(DisDate1) & !is.na(DisDate2) & is.na(DisDate3)), 
+  (!is.na(DisDate1) & !is.na(DisDate2) & is.na(DisDate3) & !(loanamount1st == 5600 & loanamount2nd == 11200)), 
   TradGroup := "twice"]
 adw[is.na(loanamount1st) & is.na(DisDate1) & !EverRepaid, 
   TradGroup := "twice"]
@@ -559,7 +560,9 @@ adw2 <- adw
 @
 Save.
 <<save adw2, echo = T>>=
+library(qs)
 saveRDS(adw2, paste0(path1234, "admin_data_wide2.rds"))
+qsave(adw2, paste0(path1234, "admin_data_wide2.qs"))
 fwrite(adw2, paste0(path1234, "admin_data_wide2.prn"), sep = "\t", quote = F)
 @
 

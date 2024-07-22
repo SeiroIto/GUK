@@ -1,21 +1,24 @@
-source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
-# this gives NarrowNetAssetsANCOVATrimmed.rds
+source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
+# this gives NetAssetsANCOVATrimmed.rds
 #  trimmed sample are data before dropping 26 traditional HHs.
 ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
 ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
 lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
-#NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
-NeA1R <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
+NeA1R <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
 # NeA1R2 drops (from NeA1R) 24 members in trad who were disbursed loans only twice or once
-NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
 rsk <- readRDS(paste0(pathsaveHere, "RiskPreferences.rds"))
 rsk2 <- rsk[, .(hhid, RiskPrefVal, TimePref1Val, TimePref2Val, PresentBias)]
 if (Only800) ar <- ar[o800 == 1L, ]
+addmargins(table(ar[tee == 1, .(Arm)]))
 #To set to the trimmed sample, set the parameter \textsf{UseTrimmedSample} to T. Here, we set to F.
+#Trimmed sample: Has all 800 HHs. Initial sample: Has 776 HHs.
 UseTrimmedSample <- F
 TestMedian <- F
-if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+cat("UseTrimmedSample is", UseTrimmedSample, "\n")
+if (!UseTrimmedSample) 
+  ar <- ar[!grepl("tw|dou", TradGroup), ]
 addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
 addmargins(table0(ar[tee==1 & o800==1 & AttritIn<9, .(BStatus,AttritIn)]))
 #addmargins(table(ar[mid == 1 & Time == 1, .(BStatus, Arm)]), 1:2, sum, T)
@@ -30,7 +33,6 @@ ar[, Tee := max(survey), by = hhid]
 arA[, Tee := max(survey), by = hhid]
 ass[, Tee := max(survey), by = hhid]
 lvo[, Tee := max(survey), by = hhid]
-#Correct \textsf{AttritIn} for these \Sexpr{nrow(ar[grepl("tw|dou", TradGroup) & tee == 1, ])} members. Keep only the 1st obs for all members.
 #addmargins(table(ar[tee == 1 & grepl("tw|dou", TradGroup), AttritIn]))
 #ar[Tee == 1 & AttritIn == 9 & grepl("tw|dou", TradGroup), AttritIn := 2L]
 psas <- ass[o800 == 1 & tee == 1, 
@@ -38,10 +40,10 @@ psas <- ass[o800 == 1 & tee == 1,
 pslv <- lvo[o800 == 1 & tee == 1, 
   .(hhid, tee, TotalImputedValue, NumCows)]
 nne <- NeA1R[o800 == 1 & tee == 1, 
-  # BroadNetValue is similar to NetValue, so drop it.
-  .(hhid, tee, NetValue, #NarrowNetValue, 
-  BroadNetValue
-  #, RNetValue, RNarrowNetValue, RBroadNetValue
+  # NetBroadValue is similar to NetValue, so drop it.
+  .(hhid, tee, NetValue , #NarrowNetValue, 
+  NetBroadValue
+  #, RNetValue, RNarrowNetValue, RNetBroadValue
   )]
 source(paste0(pathprogram, "AttritionPermutationTableHeaders5.R"))
 armerge <- ar[, c("groupid", "hhid", "mid", "o800", "TradGroup", 

@@ -14,7 +14,7 @@ psdata <- asv[, .(
   MeanHAssetAmount = mean(HAssetAmount), 
   MeanPAssetAmount = mean(PAssetAmount), 
   MeanNetValue = mean(NetValue), 
-  MeanBroadNetValue = mean(BroadNetValue),
+  MeanNetBroadValue = mean(NetBroadValue),
   MeanAttrition = mean(Attrited),
   MeanIRejected = mean(IRejected),
   MeanGRejected = mean(GRejected),

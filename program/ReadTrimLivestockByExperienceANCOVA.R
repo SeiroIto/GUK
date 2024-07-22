@@ -1,7 +1,7 @@
 # this is the sample to use (July 30, 2019)
 lvo0 <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
 print(addmargins(table(lvo0[o800 == 1L & tee == 1, .(Arm, AttritIn)])))
-# get narrow net asset values
+# get net asset values
 NeAE1 <- readRDS(paste0(pathsaveHere, "NetAssetsExperienceRegData.rds"))
 nev <- unique(NeAE1[, .(hhid, NetValue0)])
 setkey(nev, hhid); setkey(lvo0, hhid)

@@ -1,5 +1,5 @@
-<<merge prod assets livestock, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+<<net assets merge assets livestock saving data for prodassetliv, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<ProdAssetLivestock set parameters original HHs>>=
 FileName <- "ProdAssetLivestock"
@@ -25,7 +25,7 @@ NeA1[, grepout("Net|PAs|Total", colnames(NeA1)) := NULL]
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<Prod asset livestock values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
 g <- ggplot(data = subset(NeAfig, !is.na(Arm)), aes(group = tee)) + 

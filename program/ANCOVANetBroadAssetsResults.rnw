@@ -4,13 +4,13 @@ FileNameHeader <- c("", "PovertyStatus", "Attributes",
   "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
 @
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets\label{tab ANCOVA net assets}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets\label{tab ANCOVA net assets}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere, "NetAssetsANCOVAEstimationResults.tex")
+paste0(pathsaveHere, "NetBroadAssetsANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\
@@ -25,13 +25,13 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm)} Household assets do not in
 \end{minipage}
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets by attributes\label{tab ANCOVA net assets attributes}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets by attributes\label{tab ANCOVA net broad assets attributes}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere,"NetAssetsAttributesANCOVAEstimationResults.tex")
+paste0(pathsaveHere,"NetBroadAssetsAttributesANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\
@@ -46,13 +46,13 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Household assets do
 \end{minipage}
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets by period\label{tab ANCOVA net assets timevarying}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets by period\label{tab ANCOVA net broad assets timevarying}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere, "NetAssetsTimeVaryingANCOVAEstimationResults.tex")
+paste0(pathsaveHere, "NetBroadAssetsTimeVaryingANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\
@@ -67,13 +67,13 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNRound234)}  Household 
 \end{minipage}
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets by attributes and period\label{tab ANCOVA net assets timevarying attributes}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets by attributes and period\label{tab ANCOVA net broad assets timevarying attributes}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere, "NetAssetsTimeVaryingAttributesANCOVAEstimationResults.tex")
+paste0(pathsaveHere, "NetBroadAssetsTimeVaryingAttributesANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\
@@ -89,13 +89,13 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes, TabFNRound234)} Hous
 
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets by arm, poverty status, and period\label{tab ANCOVA net assets timevarying poverty status}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets by arm, poverty status, and period\label{tab ANCOVA net broad assets timevarying poverty status}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere, "NetAssetsTimeVaryingPovertyStatusANCOVAEstimationResults.tex")
+paste0(pathsaveHere, "NetBroadAssetsTimeVaryingPovertyStatusANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\
@@ -110,13 +110,13 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNUP, TabFNArm, TabFNRound234)} Ho
 \end{minipage}
 
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of broad net assets by attributes, poverty status, and period\label{tab ANCOVA net assets timevarying poverty status attributes}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of net broad assets by attributes, poverty status, and period\label{tab ANCOVA net broad assets timevarying poverty status attributes}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.55}
 \hfil\begin{tikzpicture}
 \node (tbl) {\input{\Sexpr{
-paste0(pathsaveHere,"NetAssetsTimeVaryingPovertyStatusAttributesANCOVAEstimationResults.tex")
+paste0(pathsaveHere,"NetBroadAssetsTimeVaryingPovertyStatusAttributesANCOVAEstimationResults.tex")
 }}};
 %\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
 \end{tikzpicture}\\

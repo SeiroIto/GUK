@@ -7,8 +7,8 @@ patblWPC <- a2b.data.table(patblWPC, NA, 0)
 Narrow productive assets are productive assets that are reported in all rounds. They are \Sexpr{tolower(patblWPC[!grepl("Sum|Total", pa), pa])}
 
 
-<<merge narrow prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+<<merge narrow prod assets, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<NarrowProdAsset set parameters original HHs>>=
 FileName <- "NarrowProdAsset"
@@ -28,15 +28,17 @@ Regressands <- rep("NarrowPAssetAmount", jay)
 tableboxwidth <- 4.5
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
 NeA1[, grepout("Value|Total|NL|HAs|^Prod|Net", colnames(NeA1)) := NULL]
 <<display covariates narrow prod asset ancova, cache = F, warning = F, eval = F, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
 <<narrow prod asset regression estimation original HHs>>=
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<narrow prod asset values, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Total asset values", "\\\\ {\\footnotesize Sum of assets and livestock holding values. \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 NeAfig[, Arm := factor(Arm, labels = armsC)]
 NeAfig[, teeArm := factor(paste0(Arm, tee), levels = (paste0(armsC, rep(1:4, each = 4))))]
 g <- 

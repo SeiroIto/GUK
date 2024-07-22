@@ -345,7 +345,7 @@ jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 jay
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 
 \Sexpr{knit_child(paste0(pathprogram, "ANCOVALandResults.rnw"))}

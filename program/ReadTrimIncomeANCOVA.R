@@ -6,20 +6,48 @@ lab[, tee := survey]
 lab[, UDpcHHLabourIncome := TotalHHLabourIncome/HHsize]
 lab[, UDTotalHHLabourIncome := TotalHHLabourIncome]
 far[, UDTotalRevenue := TotalRevenue]
-lab[, pcHHLabourIncome := UDpcHHLabourIncome - mean(UDpcHHLabourIncome)]
-lab[, TotalHHLabourIncome := UDTotalHHLabourIncome - mean(UDTotalHHLabourIncome)]
-far[, TotalRevenue := UDTotalRevenue - mean(UDTotalRevenue)]
+lab[, pcHHLabourIncome := UDpcHHLabourIncome - 
+  mean(UDpcHHLabourIncome, na.rm = T)]
+lab[, TotalHHLabourIncome := UDTotalHHLabourIncome - 
+  mean(UDTotalHHLabourIncome, na.rm = T)]
+far[, TotalRevenue := UDTotalRevenue - mean(UDTotalRevenue, na.rm = T)]
 far[, grepout("Forced|^Time$|LoanY", colnames(far)) := NULL]
 lab[, grepout("Forced|^Time$|LoanY", colnames(lab)) := NULL]
-# get HadCows
-lvo0 <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
-lvo0 <- unique(lvo0[, .(hhid, dummyHadCows)])
-lab[, dummyHadCows := 0L]
-lab[hhid %in% lvo0[dummyHadCows == 1L, hhid], dummyHadCows := 1L]
-far[, dummyHadCows := 0L]
-far[hhid %in% lvo0[dummyHadCows == 1L, hhid], dummyHadCows := 1L]
+# get NumCows0, HadCows
+# add livestock values
+lvo00 <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+lvo00[, NumCows0 := NumCowsOwnedAtRd1]
+lvo0 <- unique(lvo00[, .(hhid, NumCows0, dummyHadCows)])
+lvo0[is.na(NumCows0), NumCows0 := 0L]
+lvo0[is.na(dummyHadCows), dummyHadCows := 0L]
+lab <- merge(lab, lvo0, by = "hhid", all.x = T)
+far <- merge(far, lvo0, by = "hhid", all.x = T)
+# lab[, dummyHadCows := 0L]
+# lab[hhid %in% lvo0[dummyHadCows == 1L, hhid], dummyHadCows := 1L]
+# far[, dummyHadCows := 0L]
+# far[hhid %in% lvo0[dummyHadCows == 1L, hhid], dummyHadCows := 1L]
+# Following is to be done in CreateDemeanedUndemeanedInteractions.R in line 73
+# # HadCows*Time interactions
+# lab[, dHadCows := dummyHadCows - mean(dummyHadCows, na.rm = T)]
+# lab[, dTime3 := Time.3 - mean(Time.3, na.rm = T)]
+# lab[, dTime4 := Time.4 - mean(Time.4, na.rm = T)]
+# dtcols <- c("dTime3", "dTime4")
+# lab[, (paste0("dummyHadCows.Time", 3:4)) := lapply(.SD, function(x) 
+#   dHadCows*x), .SDcols = dtcols]
+# # HadCows*Arm interactions
+# lab[, dHadCows := dummyHadCows - mean(dummyHadCows, na.rm = T)]
+# atts0 <- c("Large", "LargeGrace", "Cattle", "LargeSize", "WithGrace", "InKind")
+# atts <- paste0("dummy", atts0)
+# lab[, (paste0("dummyHadCows.", atts)) := lapply(.SD, function(x) 
+#   dHadCows*(x-mean(x, na.rm = T))), .SDcols = atts]
+# # HadCows*Arm*Time interactions
+# lab[, (paste0("dummyHadCows.", atts, ".Time3")) := lapply(.SD, function(x) 
+#   dHadCows*(x-mean(x, na.rm = T))*dTime3), .SDcols = atts]
+# lab[, (paste0("dummyHadCows.", atts, ".Time4")) := lapply(.SD, function(x) 
+#   dHadCows*(x-mean(x, na.rm = T))*dTime4), .SDcols = atts]
+# lab[, c("dHadCows", "dTime3", "dTime4") := NULL]
 lab <- lab[, 
-  grepout("groupid|HMi|hhid|tee|^dummy[A-Z]|Floo|Tim|RM|Head|^HH|pcHH|T.*H.*L|^Arm$|BSta|00$|TradG", 
+  grepout("groupid|HMi|hhid|tee|^dummy[A-Z]|Floo|Tim|RM|Head|^HH|pcHH|T.*H.*L|^Arm$|BSta|00$|TradG|NumCows0", 
   colnames(lab)), with = F]
 far <- far[, 
   grepout("groupid|hhid|HMi|tee|^dummy[A-Z]|Floo|Tim|RM|Head|^HH|T.*R|^Arm$|BSta|00$", 
@@ -60,23 +88,23 @@ if (Only800) {
 }
 # data for raw plot figure
 labDHH <- lab[!grepl("tw|dou", TradGroup) & o800 == 1L, .(
-    MeanC = mean(TotalHHLabourIncome, na.rm = T), 
-    StdC = var(TotalHHLabourIncome, na.rm = T)^(.5),
+    MeanC = mean(UDTotalHHLabourIncome, na.rm = T), 
+    StdC = var(UDTotalHHLabourIncome, na.rm = T)^(.5),
     N = .N
   ), by = .(tee, Arm)][, 
     .(Arm, tee, mean = MeanC, 
       upper = MeanC + 1.96*StdC/sqrt(N),
       lower = MeanC - 1.96*StdC/sqrt(N)
-      )]
+      )][order(Arm, tee), ]
 labDpc <- lab[!grepl("tw|dou", TradGroup) & o800 == 1L, .(
-    MeanC = mean(pcHHLabourIncome, na.rm = T), 
-    StdC = var(pcHHLabourIncome, na.rm = T)^(.5),
+    MeanC = mean(UDpcHHLabourIncome, na.rm = T), 
+    StdC = var(UDpcHHLabourIncome, na.rm = T)^(.5),
     N = .N
   ), by = .(tee, Arm)][, 
     .(Arm, tee, mean = MeanC, 
       upper = MeanC + 1.96*StdC/sqrt(N),
       lower = MeanC - 1.96*StdC/sqrt(N)
-      )]
+      )][order(Arm, tee), ]
 labDHH[, Arm := factor(Arm, labels = armsC)]
 labDpc[, Arm := factor(Arm, labels = armsC)]
 saveRDS(labDHH, paste0(pathsaveHere, "HHLabourIncomeFigure.rds"))

@@ -1,6 +1,7 @@
 \section{Impact estimation results}
 \label{AppendixEstimationTables}
 \setcounter{table}{0}
+\setcounter{figure}{0}
 
 	In this section, the ANCOVA estimates on various outcomes using %\eqref{1steq} and 
 	\eqref{EstimatingEqTimeVarying} are presented. In each table, the first column shows the covariate names and their means and standard deviations in the second column in the sample of the richest specification of the table. Specification (1) is OLS estimates on the intercept, $\bfdee_{i}$, and its period interactions. This is intended to provide a reference to ANCOVA estimates shown in the specification (2) onwards. Specification (2) follows the most basic specification under \eqref{EstimatingEqTimeVarying}. From (3), we progressively add more covariates to control for the differences in initial conditions in an attempt to get more precise ANCOVA estimates. In the figures (\textsc{\footnotesize Figure \ref{fig NarrowNetAssetsLivestockEffects}}, \textsc{\small Figure \ref{fig IncomeConsumptionEffects}}, \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}) shown in main texts, we omit OLS estimates of specification (1). 
@@ -10,61 +11,99 @@
 	For \textsc{\footnotesize Figure \ref{fig NarrowNetAssetsLivestockEffects}}, \textsc{\small Figure \ref{fig IncomeConsumptionEffects}}, we show cumulative impacts of the arm or functional attribute $k$ relative to the \textsf{traditional} arm as given by $b_{2k}$, $b_{2k}+b_{3k}$,  $b_{2k}+b_{4k}$ for periods 2, 3, and 4. In \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}, we show contemporaneous impacts relative to the \textsf{traditional} arm as given by $b_{2k}$, $b_{3k}$,  $b_{4k}$ for periods 2, 3, and 4.
 
 % Shortfall regression is done in ShortfallRegressionAtIndivLevelAndGroupLevel.rnw
-\Sexpr{knit_child(paste0(pathprogram, "KeepOnlyTablesReferredInText.rnw"))}
+\Sexpr{
+#knit_child(paste0(pathprogram, "KeepOnlyTablesReferredInText.rnw"))
+}
+
+
+
+\subsection{Repayment}
+\label{Sec App Repay}
+\subsubsection{Saving and repayment}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVARepaymentResults.rnw"))}
+\subsubsection{Shortfall}
+\label{AppendixShortfall}
+\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults.rnw"))}
+
+\subsection{Schooling}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVASchoolingResults.rnw"))}
+
+\subsection{Net assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetBroadAssetsResults.rnw"))}
+
+\subsection{Non land Assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetNLAssetsResults0.rnw"))}
+
+\subsection{Livestock}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVALivestockResults.rnw"))}
+
+\subsection{Cattle holding}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsResults.rnw"))}
+
+\subsection{Consumption}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAConsumptionResults.rnw"))}
+
+\subsection{Income}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAIncomeResults.rnw"))}
+
+\subsection{By experience}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsExperienceResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsByExperienceResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsExperienceResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsByExperienceResults.rnw"))}
+
+\subsection{By poverty class}
+\label{Subsec By poverty class}
+
+\renewcommand{\arraystretch}{.6}
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Table \refstepcounter{table}\thetable: Baseline variables of ultra poor relative to the moderately poor\label{tab UltraPoorVsModeratelyPoorBaselineVarsPermTestResults)}}\\
+\setlength{\tabcolsep}{.5pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.50}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorBaselineVarsPermTestResults.tex")
+}}};
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{.1cm}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. \\
+& 2. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. 
+\end{tabular}
+}
+
+\mpage{\linewidth}{
+\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Impacts of the ultra poor relative to the moderately poor\label{fig NetAssetsNLAssetsCattleUltraPoorEffects}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, 
+  "figure/EstimationMemo/NetAssetsNLAssetsCattleUltraPoorEffects.pdf")
+}}\\
+\renewcommand{\arraystretch}{1}
+\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source: & Estimated with administrative and survey data in \textsc{Table \ref{tab NetAssetsTimeVaryingPovertyStatusANCOVA1}}. \\
+Note:&  Impacts of ultra poor members - impacts of moderately poor members. \Sexpr{FNAssetDefinitions} \\[1ex]
+\end{tabular}
+}
+
+
+\textsc{Figure \ref{fig NetAssetsNLAssetsCattleUltraPoorEffects}} shows net asset impacts are no different for the ultra poor borrowers at period 4. However, their time paths may be different. In \textsf{Large grace} and \textsf{Cattle} arms, the ultra poor borrowers accumulate smaller net assets in period 2 than their moderately poor counterparts of the same arms. Period 2 is the grace period and the repayment commence in the next period. The ultra poor borrowers may have saved up during the grace period to get ready for the installments of period 3 and 4. If this interpretation is correct, a grace period may have encouraged the ultra poor individuals to take up the loans. The ultra poor of \textsf{Large} arm does not show difference relative to the moderately poor borrowers. This hints that there may be self-selection of the ultra poor of the \textsf{Large} arm that they are better prepared for repayment than the ultra poor borrowers of \textsf{Large grace} and \textsf{Cattle} arms. There is no difference between arms for \textsf{Net non-livestock assets}, while the ultra poor of \textsf{Large} arm may have more cattle holding in period 4 than the moderately poor of the same arm. 
+
+\textsc{Figure \ref{fig IncomeConsumptionPovertyEffects}} shows negative impacts on consumption relative to moderately poor members among \textsf{Large} and \textsf{Cattle} arms in period 4. This hints that repayment efforts may have resulted in consumption suppression for the ultra poor borrowers. Together with slower net asset accumulation, we may need to incorporate smaller, more distributed repayment installments and/or longer saving opportunities before the disbursement of loans for the ultra poor relative to the moderately poor. 
+
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVAByPovertyClassResults.rnw"))}
 
 
 \renewcommand{\arraystretch}{.6}
 \mpage{\linewidth}{
 \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Assets by period\label{fig AssetCumRelativeToConcurrentTradEffects}}\\
-\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/AssetsByPeriod.png")}}\\
+\hfil\includegraphics[width = 12cm]{\Sexpr{    paste0(pathprogram, "figure/EstimationMemo/AssetsByPeriod.pdf")}}\\
 \renewcommand{\arraystretch}{1}
 \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source: & Tabulated with survey data.\\
 Note:&  Red squares are means of respective data. \Sexpr{FNAssetDefinitions} All net assets are in logarithms, number of cattle is in natural numbers. \\[1ex]
 \end{tabular}
 }
-
-\renewcommand{\arraystretch}{.6}
-\mpage{\linewidth}{
-\hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative impacts on assets relative to concurrent traditional arm\label{fig ImpactsOnAllAssetsCumRelativeToConcurrentTradEffects}}\\
-\hfil\includegraphics[width = 14cm]{\Sexpr{    paste0(pathprogram,   
-  "figure/EstimationMemo/AssetCumRelativeToConcurrentTradEffects.pdf")
-  }}\\
-\renewcommand{\arraystretch}{1}
-\hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
-Source: & Estimated with survey data.\\
-Note:&  Cumulative impacts on various asset measures. \textsf{Net assets, broad net assets, net non livestock assets, land} are in BDT, cattle holding is in natural units.\\[1ex]
-\end{tabular}
-}
-
-% \mpage{12cm}{
-% \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Cumulative effects on livestock, net assets, and narrow net assets\label{fig NetAssetsLivestockEffects}}\\
-% 
-% \vspace{2ex}
-% \hfil\includegraphics[height = 8cm, width = 12cm]{\Sexpr{      paste0(pathprogram, "figure/EstimationMemo/NarrowNetAssetsNetAssetsNumCowsCumRelativeToConcurrentTradEffects.eps")}}\\
-% \renewcommand{\arraystretch}{1}
-% \setlength{\tabcolsep}{1pt}
-% \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12.5cm}<{\hfill}}
-% Source: & Constructed from ANCOVA estimation results \textsc{Table \ref{tab ANCOVA net assets timevarying}}, \textsc{Table \ref{tab ANCOVA net assets timevarying attributes}}, \textsc{Table \ref{tab ANCOVA cow time varying}}, \textsc{Table \ref{tab ANCOVA cow time varying attributes}}. \textsf{NarrowNetAssets} and \textsf{NetAssets} has 5 specifications (2-6), \textsf{NumCows} have 4 specifications (2-5).\\
-% Note:& \Sexpr{CumImpactText3} Net assets = assets + net saving - debt to GUK - debts to relatives and money lenders. \\[1ex]
-% \end{tabular}
-% }
-
-
-
-% \begin{figure}
-% \mpage{12cm}{
-% \hfil\textsc{\footnotesize Figure \refstepcounter{figure}\thefigure: Effects on land, livestock, and net assets\label{fig LivestockEffects}}\\
-% 
-% \vspace{2ex}
-% \hspace{-2em}\includegraphics[height = 12cm, width = 14cm]{\Sexpr{      paste0(pathprogram, "figure/EstimationMemo/AssetRelativeToConcurrentTradEffects.eps")}}\\
-% \renewcommand{\arraystretch}{1}
-% \setlength{\tabcolsep}{1pt}
-% \hfil\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\scriptsize}p{12.5cm}<{\hfill}}
-% Source: & Constructed from ANCOVA estimation results.\\
-% Note:& \Sexpr{ConcurrentImpactText}\\[1ex]
-% \end{tabular}
-% }
-%\end{figure}
 
 

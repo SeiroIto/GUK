@@ -1,0 +1,81 @@
+<<read shortfall data>>=
+X <- qread(paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+X1 <- X[gnum == 1, ]
+X[, o800 := 0L]
+# need to use groupid because some hhid in admin record is missing in jds data
+X[groupid %in% jds[grepl("trea", treat), groupid], o800 := 1L]
+X2 <- X[o800 == 1L, ]
+addmargins(table0(X2[, .(TeeInLY = 1:.N), by = .(groupid, LoanYear)][
+  TeeInLY == 1, LoanYear]))
+addmargins(table0(X2[, TeeInLY := 1:.N, by = .(hhid, LoanYear)][,
+  .(maxTee = max(TeeInLY)), LoanYear]))
+# Repayment + net saving
+library(ggplot2)
+p <- ggplot(data = X2[TeeInLY == 12 & !is.na(CumShortfallRatio), ], aes(CumShortfallRatio)) +
+  geom_histogram(bins = 10) + facet_grid(LoanYear ~ Arm, scales = "free_y")
+p
+library(coin)
+X2[, cnc := "Cattle"]
+X2[!grepl("cat", Arm), cnc := "NonCattle"]
+X2[, cnc := factor(cnc)]
+X2[, tradnontrad := "Traditional"]
+X2[!grepl("rad", Arm), tradnontrad := "NonTraditional"]
+X2[, tradnontrad := factor(tradnontrad, levels = c("Traditional", "NonTraditional"))]
+X2[, poor := "UltraPoor"]
+X2[hhid %in% hhid[ModeratelyPoor == 1], poor := "ModeratelyPoor"]
+X2[, poor := factor(poor)]
+RepayPermTestByPoor <- vector(mode = "list", 4)
+RepayPermTestByArm <- vector(mode = "list", 3)
+RepayPermTestByArm <- list(Traditional = RepayPermTestByArm, Cattle = RepayPermTestByArm)
+#### TeeInLY = 7 is chosen because there are fewer obs at TeeInLY = 12 in LoanYear = 4
+for (i in 2:4) {
+  RepayPermTestByArm[[1]][[i-1]] <-  independence_test(
+      CumShortfallRatio ~ tradnontrad, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+  RepayPermTestByArm[[2]][[i-1]] <-  independence_test(
+      CumShortfallRatio ~ cnc, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+}
+for (i in 1:4) 
+  RepayPermTestByPoor[[i]] <-  independence_test(
+      CumShortfallRatio ~ poor, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+qsave(RepayPermTestByArm, 
+  paste0(pathsaveEstimationMemo, "RepayPermTestByArm.qs"))
+qsave(RepayPermTestByPoor, 
+  paste0(pathsaveEstimationMemo, "RepayPermTestByPoor.qs"))
+@
+<<tabulate repayment permutation test>>=
+RepayPermTestByPoor <- qread(paste0(pathsaveEstimationMemo, "RepayPermTestByPoor.qs"))
+X2m <- X2[TeeInLY == 6, .(mean = round(mean(CumShortfallRatio, na.rm = T), 3)), by = .(LoanYear, poor)] 
+X2mW <- reshape(X2m, direction  = "wide", idvar = "LoanYear", timevar = "poor")
+X2mW[, pvalue := unlist(lapply(RepayPermTestByPoor, 
+  function(x) paste0(formatC(coin::midpvalue(x)[1]*100, format = "f", digits = 2), "\\%")))]
+numcol <- c("mean.UltraPoor", "mean.ModeratelyPoor")
+X2mW[, (numcol) := lapply(.SD, formatC, format = "f", digits = 3), .SDcol = numcol]
+X2mW[1:3, mean.UltraPoor := paste0("\\phantom{-}", mean.UltraPoor)]
+X2mW[1:3, mean.ModeratelyPoor := paste0("\\phantom{-}", mean.ModeratelyPoor)]
+x2mw <- as.matrix(X2mW)
+colnames(x2mw) <- c("Loan year", "Ultra poor", "Moderately poor", "") 
+x2tab <- latextab(x2mw, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(1, rep(2.25, ncol(x2mw)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 2, 
+  separatingcolwidth = .1,
+  separatingcoltitle = c("Mean cumulative shortfall ratio", "$p$ value"),
+  addsubcoltitlehere = T
+  )
+write.tablev(x2tab,  
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorRepaymentPermTestResults.tex")
+, colnamestrue = F)
+@

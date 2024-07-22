@@ -79,7 +79,7 @@ ux[, grepout("^dummy.*dummyHad|HadCows\\.", colnames(ux)) := NULL]
 ux[, UDdummyHadCows := dummyHadCows]
 ux[, dummyHadCows := UDdummyHadCows - mean(UDdummyHadCows, na.rm = T)]
 # create HadCows*Attributes*Time interactions
-if (grepl("^AL|lvo0|NeA", FileNameForUD)) {
+if (grepl("^AL|lvo0|^lab$|NeA", FileNameForUD)) {
   for (aa in c(ArmsC2[-1], "LargeSize", "WithGrace", "InKind")) {
     ux[, paste0("UDdummyHadCows.", aa) := 
        UDdummyHadCows * (eval(parse(text=paste0("UDdummy", aa))))]

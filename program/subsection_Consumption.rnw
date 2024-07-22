@@ -8,12 +8,12 @@ Consumption is observed in rd 2-4. There are \Sexpr{nrow(con)} observations.
 <<consumption regression set parameters original HHs>>=
 # Page 6 of rd 4 questionnaire.
 FileName <- "Consumption"
-regsuffixes <- c("", "a", "P", "T", "Ta")
+regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 listheader <- paste0("cn", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 <<consumption select covariates original HHs>>=
-source(paste0(pathprogram, "ConsumptionCovariateSelectionANCOVA2.R"))
+source(paste0(pathprogram, "ConsumptionCovariateSelectionANCOVA4.R"))
 <<get jay from consumption covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
@@ -26,7 +26,7 @@ Separatingcoltitle = c("", "Per capita consumption (Tk)",
 dig.depmean <- 0
 AddMeanStdColumn <- T
 UseRawDataForDestat <- F
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<>>=
 #dummy chunk
 @

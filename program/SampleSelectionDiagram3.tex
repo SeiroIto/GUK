@@ -2,7 +2,7 @@
 [rectangle, rounded corners, text width = 2.5cm, minimum height=1cm, text centered, fill=blue!10,
  drop shadow={opacity=.5, shadow scale=1.05}]
 \tikzstyle{dummybox} = 
-[draw = none, fill = {\BGColour}, text width = 0cm, drop shadow={opacity=1, fill = {\BGColour}, shadow scale=1.01}]
+[draw = none, fill = {yellow!10}, text width = 0cm, drop shadow={opacity=1, fill = {yellow!10}, shadow scale=1.01}]
 \begin{tikzpicture}[
     every node/.style={
         font=\sffamily,
@@ -149,7 +149,7 @@
 	\draw[myline, shorter, ->] ([xshift = .5cm] cattle.south west) -- ([xshift = .5cm] cattleLast.north west);
 
 \begin{pgfonlayer}{background}
-\node [fill={\BGColour}, fit=(trad) (startnode) (cattleAttrit4) (cattleLast)] {};
+\node [fill={yellow!10}, fit=(trad) (startnode) (cattleAttrit4) (cattleLast)] {};
 \end{pgfonlayer}
 
 \end{tikzpicture}

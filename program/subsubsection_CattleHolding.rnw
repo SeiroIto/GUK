@@ -1,0 +1,39 @@
+<<ReadTrim NumCows, cache = F, child='c:/data/GUK/analysis/program/ReadTrimLivestockByExperienceANCOVA.rnw', warning = F>>=
+@
+%  source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
+<<>>=
+remove(list = ls(pattern = "^incl.?\\d"))
+lvoEN = copy(lvoE) # all periods
+lvoEN[, grepout("TotalImp.*Value$|Self|edV.*0", colnames(lvoEN)) := NULL]
+# consistency between cattle ownership/leaseship at baseline and livestock holding information
+lvoEN[, Cattle := "None"]
+lvoEN[OwnCattle == 1L, Cattle := "Own"]
+lvoEN[AdiCattle == 1L, Cattle := "Adi"]
+addmargins(table0(lvoEN[tee == 2, .(Cattle, NumCows0)]))
+<<Numcows set parameters original HHs>>=
+FileName <- "NumCows"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nae", regsuffixes)
+<<numcows regression select covariates original HHs>>=
+source(paste0(pathprogram, "NumCowsCovariateSelectionANCOVA2.R"))
+<<get jay from numcows experience covariate selection>>=
+# number of regressions per specification k=1, ..., length(regsuffixes)
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("lvoEN", 7)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NumCows", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+<<display covariates numcows experience ancova, cache = F, warning = F, eval = T, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+# source(paste0(pathprogram, "DisplayCovariates.R"))
+<<numcows with experience covariates>>=
+dig.depmean <- 2
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+@
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsResults.rnw"))}

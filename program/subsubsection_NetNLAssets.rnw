@@ -1,8 +1,7 @@
 Net non-livestock assets = Non livestock assets + net saving - debt to GUK - debts to relatives and money lenders. 
 
-<<merge NL assets livestock saving data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
-# same file as net assets, broad net assets
+<<net assets merge assets livestock saving data for livestock, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<net NL asset set parameters original HHs>>=
 FileName <- "NetNLAssets"
@@ -15,7 +14,7 @@ listheader <- paste0("nl", regsuffixes)
 source(paste0(pathprogram, "NetNLAssetCovariateSelectionANCOVA2.R"))
 <<get jay from net NL assets covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
-NeA1 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
 NeA1[, grepout("Net2?Va|Out|Adi|Own", colnames(NeA1)) := NULL]
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
@@ -31,7 +30,7 @@ inclheader <- gsub("ex", "in", exclheader)
 if (Only800) NeA1 <- NeA1[o800 == 1L, ]
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 
 

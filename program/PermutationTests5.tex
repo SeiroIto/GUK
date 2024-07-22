@@ -1,6 +1,6 @@
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/PermutationTests5/"); library(knitr); knit("PermutationTests5.rnw", "PermutationTests5.tex"); system("platex PermutationTests5"); system("dvipdfmx PermutationTests5")
 
-\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
 \renewcommand\Routcolor{\color{gray30}}
 \newtheorem{finding}{Finding}[section]
 \makeatletter
@@ -83,7 +83,7 @@ The majority of descriptive statistics are related to assets. We base our descri
 
 \begin{Schunk}
 \begin{Sinput}
-source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 \end{Sinput}
 \begin{Soutput}
 
@@ -92,21 +92,21 @@ Number of obs by Arm and attrition
              AttritIn
 Arm             2   3   4   9 Sum
   traditional   6   4  20 144 174
-  large         5   2   1 191 199
-  large grace  22   3   3 170 198
-  cattle        5   5  13 176 199
-  Sum          38  14  37 681 770
+  large         5   2   1 192 200
+  large grace  22   3   3 171 199
+  cattle        5   5  13 177 200
+  Sum          38  14  37 684 773
 
 
 Number of obs by membership status and attrition
                       AttritIn
 BStatus                  2   3   4   9 Sum
-  borrower               8   6   8 575 597
+  borrower               8   6   8 578 600
   pure saver             0   0   0   0   0
   individual rejection   9   4   1  75  89
   group rejection        9   4   0  55  68
   rejection by flood    12   0  28   0  40
-  Sum                   38  14  37 705 794
+  Sum                   38  14  37 708 797
 \end{Soutput}
 \end{Schunk}
 \begin{Schunk}
@@ -116,39 +116,52 @@ ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
 ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
 lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
-#NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
-NeA1R <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
+NeA1R <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
 # NeA1R2 drops (from NeA1R) 24 members in trad who were disbursed loans only twice or once
-NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
 rsk <- readRDS(paste0(pathsaveHere, "RiskPreferences.rds"))
 rsk2 <- rsk[, .(hhid, RiskPrefVal, TimePref1Val, TimePref2Val, PresentBias)]
 if (Only800) ar <- ar[o800 == 1L, ]
+addmargins(table(ar[tee == 1, .(Arm)]))
 \end{Sinput}
+\begin{Soutput}
+Arm
+traditional       large large grace      cattle         Sum 
+        200         200         200         200         800 
+\end{Soutput}
 \end{Schunk}
 There are 24 members with TradGroup = twice, double. They were dropped from estimation sample. If \textsf{UseTrimmedSample==T}, attrition is based on all 800 members, if \textsf{F}, attrition is analysed using 776 members. We use the `initial' sample (has only 776 members after dropping members who received loans only twice), not the `trimmed' sample (has all 800 members). \gobblepars
 \begin{Schunk}
 \begin{Sinput}
 #To set to the trimmed sample, set the parameter \textsf{UseTrimmedSample} to T. Here, we set to F.
+#Trimmed sample: Has all 800 HHs. Initial sample: Has 776 HHs.
 UseTrimmedSample <- F
 TestMedian <- F
 \end{Sinput}
 \end{Schunk}
 \begin{Schunk}
 \begin{Sinput}
-if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+cat("UseTrimmedSample is", UseTrimmedSample, "\n")
+\end{Sinput}
+\begin{Soutput}
+UseTrimmedSample is FALSE 
+\end{Soutput}
+\begin{Sinput}
+if (!UseTrimmedSample) 
+  ar <- ar[!grepl("tw|dou", TradGroup), ]
 addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
 \end{Sinput}
 \begin{Soutput}
      AttritIn
 Tee     2   3   4   9 Sum
-  1    40   0   0   0  40
+  1    41   0   0   0  41
   2     0  14   0   0  14
   3     0   0  37   0  37
-  4     0   0   0 681 681
-  Sum  40  14  37 681 772
+  4     0   0   0 684 684
+  Sum  41  14  37 684 776
 \end{Soutput}
 \end{Schunk}
-Out of 772 members, there are 91 members who attrited.
+Out of 776 members, there are 92 members who attrited.
 \begin{Schunk}
 \begin{Sinput}
 addmargins(table0(ar[tee==1 & o800==1 & AttritIn<9, .(BStatus,AttritIn)]))
@@ -158,10 +171,10 @@ addmargins(table0(ar[tee==1 & o800==1 & AttritIn<9, .(BStatus,AttritIn)]))
 BStatus                 2  3  4 Sum
   borrower              8  6  8  22
   pure saver            0  0  0   0
-  individual rejection  9  4  1  14
+  individual rejection 10  4  1  15
   group rejection      11  4  0  15
   rejection by flood   12  0 28  40
-  Sum                  40 14 37  91
+  Sum                  41 14 37  92
 \end{Soutput}
 \begin{Sinput}
 #addmargins(table(ar[mid == 1 & Time == 1, .(BStatus, Arm)]), 1:2, sum, T)
@@ -196,10 +209,10 @@ psas <- ass[o800 == 1 & tee == 1,
 pslv <- lvo[o800 == 1 & tee == 1, 
   .(hhid, tee, TotalImputedValue, NumCows)]
 nne <- NeA1R[o800 == 1 & tee == 1, 
-  # BroadNetValue is similar to NetValue, so drop it.
+  # NetBroadValue is similar to NetValue, so drop it.
   .(hhid, tee, NetValue , #NarrowNetValue, 
-  BroadNetValue
-  #, RNetValue, RNarrowNetValue, RBroadNetValue
+  NetBroadValue
+  #, RNetValue, RNarrowNetValue, RNetBroadValue
   )]
 \end{Sinput}
 \end{Schunk}
@@ -220,11 +233,11 @@ addmargins(table0(asv[!grepl("tw|dou", TradGroup), .(Arm, AttritIn)]))
 \begin{Soutput}
              AttritIn
 Arm             2   3   4   9 Sum
-  traditional   7   4  20 144 175
-  large         5   2   1 191 199
-  large grace  23   3   3 170 199
-  cattle        5   5  13 176 199
-  Sum          40  14  37 681 772
+  traditional   8   4  20 144 176
+  large         5   2   1 192 200
+  large grace  23   3   3 171 200
+  cattle        5   5  13 177 200
+  Sum          41  14  37 684 776
 \end{Soutput}
 \begin{Sinput}
 # keep only rational respondents of risk preferences
@@ -241,11 +254,11 @@ addmargins(table0(asv[!grepl("tw|dou", TradGroup), .(Arm, Attrited)]))
 \begin{Soutput}
              Attrited
 Arm             0   1 Sum
-  traditional 144  31 175
-  large       191   8 199
-  large grace 170  29 199
-  cattle      176  23 199
-  Sum         681  91 772
+  traditional 144  32 176
+  large       192   8 200
+  large grace 171  29 200
+  cattle      177  23 200
+  Sum         684  92 776
 \end{Soutput}
 \begin{Sinput}
 asv[, c("Rejected", "GRejected", "IRejected") := 0L]
@@ -269,9 +282,9 @@ addmargins(table0(asv[!grepl("flo", BStatus) & Rejected == 0, .(Attrited, Arm)])
 \begin{Soutput}
         Arm
 Attrited traditional large large grace cattle Sum
-     0            83   163         159    146 551
+     0            83   164         160    147 554
      1             2     7           7      6  22
-     Sum          85   170         166    152 573
+     Sum          85   171         167    153 576
 \end{Soutput}
 \begin{Sinput}
 # these are HHs with two disbursements under traditional; read_admin_data.rnw(472)
@@ -453,73 +466,73 @@ for (k in 1:3) {
   for (m in 1:M) {
     set.seed(100+m)
     if (grepl("^Attrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("a", addchar), dataList) else
+      DataList <- gsub("$", paste0("a", addchar), dataList) else 
     if (grepl("^AttritedInTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Ta", addchar), dataList) else
+      DataList <- gsub("$", paste0("Ta", addchar), dataList) else 
     if (grepl("^AttritedInNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTa", addchar), dataList) else 
     if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else 
     if (grepl("^NonFloodAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedInTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedInNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else 
     if (grepl("^NonFloodTradNonTradAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedCowL", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else 
     if (grepl("^Active$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("s", addchar), dataList) else
+      DataList <- gsub("$", paste0("s", addchar), dataList) else 
     if (grepl("^ActiveInTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Ts", addchar), dataList) else
+      DataList <- gsub("$", paste0("Ts", addchar), dataList) else 
     if (grepl("^ActiveInNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTs", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTs", addchar), dataList) else 
     if (grepl("^ActiveTradNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else 
     if (grepl("^ActiveCowN", addtofilename[m]))
-      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else 
     if (grepl("^ActiveCowL", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CGs", addchar), dataList) else
+      DataList <- gsub("$", paste0("CGs", addchar), dataList) else 
     if (grepl("^Random", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else 
     if (grepl("^Rejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("r", addchar), dataList) else
+      DataList <- gsub("$", paste0("r", addchar), dataList) else 
     if (grepl("^Rej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tr", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tr", addchar), dataList) else 
     if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTr", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTr", addchar), dataList) else 
     if (grepl("^TradNonTradR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else 
     if (grepl("^GRejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("gr", addchar), dataList) else
+      DataList <- gsub("$", paste0("gr", addchar), dataList) else 
     if (grepl("^GRej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else 
     if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else 
     if (grepl("^TradNonTradGR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else 
     if (grepl("^IRejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("ir", addchar), dataList) else
+      DataList <- gsub("$", paste0("ir", addchar), dataList) else 
     if (grepl("^IRej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tir", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tir", addchar), dataList) else 
     if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTir", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTir", addchar), dataList) else 
     if (grepl("^TradNonTradIR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else 
     if (grepl("^GRejectedTradPar", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else 
     if (grepl("^RejectedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else 
     if (grepl("^RejectedCowLa", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else
+      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else 
     if (grepl("^AcceptedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else 
     if (grepl("^AcceptedCowLa", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else
+      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else 
       DataList <- gsub("$", addchar, dataList)
     pmresults <- permmedian <- vector(mode = "list", length(vartobetested))
     for (i in 1:length(vartobetested)) {
@@ -533,7 +546,7 @@ for (k in 1:3) {
       # selection.criteria[m] has has uniform values (otherwise returns an error)
       if (length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1|
           length(unique(unlist(pmdata[, selection.criteria[m], with = F]))) == 1) 
-        pmresults[[i]] <- NULL else
+        pmresults[[i]] <- NULL else 
         pmresults[[i]] <- independence_test(eval(parse(text=
           paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")")
           )), 
@@ -575,7 +588,7 @@ for (k in 1:3) {
         # use 0 for all zero entries or 1 for unique nonzero entries
         if (allzerovalues <- unique(unlist(z[, vartobetested[i], with = F])) == 0)
           Pmtresults <- rbind(Pmtresults, 
-            c(vartobetested[i], 0, 0, rep(NA, 3))) else
+            c(vartobetested[i], 0, 0, rep(NA, 3))) else 
           Pmtresults <- rbind(Pmtresults, 
             c(vartobetested[i], 1, 1, rep(NA, 3)))
       } else if (length(unique(unlist(pmdata[, selection.criteria[m], with = F]))) == 1) 
@@ -638,7 +651,8 @@ for (k in 1:3) {
       #Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
       Pmtresults <- Pmtresults[!grepl("^Propo", variables), ]
     # CowArm => Cattle arm
-    if (grepl("Cow", names(Pmtresults))) {
+    # This is a legacy part. We already use "Cattle" as its name.
+    if (any(grepl("Cow", names(Pmtresults)))) {
       setnames(Pmtresults, 
         grepout("Cow", names(Pmtresults))
         , gsub("Cow", "Cattle", grepout("Cow", names(Pmtresults))))
@@ -739,6 +753,202 @@ write.tablev(suv,
 \end{Sinput}
 \end{Schunk}
 
+
+\begin{Schunk}
+\begin{Sinput}
+X <- qread(paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+X1 <- X[gnum == 1, ]
+X[, o800 := 0L]
+# need to use groupid because some hhid in admin record is missing in jds data
+X[groupid %in% jds[grepl("trea", treat), groupid], o800 := 1L]
+X2 <- X[o800 == 1L, ]
+addmargins(table0(X2[, .(TeeInLY = 1:.N), by = .(groupid, LoanYear)][
+  TeeInLY == 1, LoanYear]))
+\end{Sinput}
+\begin{Soutput}
+x
+  1   2   3   4 Sum 
+ 69  69  69  69 276 
+\end{Soutput}
+\begin{Sinput}
+addmargins(table0(X2[, TeeInLY := 1:.N, by = .(hhid, LoanYear)][,
+  .(maxTee = max(TeeInLY)), LoanYear]))
+\end{Sinput}
+\begin{Soutput}
+        maxTee
+LoanYear 12 Sum
+     1    1   1
+     2    1   1
+     3    1   1
+     4    1   1
+     Sum  4   4
+\end{Soutput}
+\begin{Sinput}
+# Repayment + net saving
+library(ggplot2)
+p <- ggplot(data = X2[TeeInLY == 12 & !is.na(CumShortfallRatio), ], aes(CumShortfallRatio)) +
+  geom_histogram(bins = 10) + facet_grid(LoanYear ~ Arm, scales = "free_y")
+p
+library(coin)
+X2[, cnc := "Cattle"]
+X2[!grepl("cat", Arm), cnc := "NonCattle"]
+X2[, cnc := factor(cnc)]
+X2[, tradnontrad := "Traditional"]
+X2[!grepl("rad", Arm), tradnontrad := "NonTraditional"]
+X2[, tradnontrad := factor(tradnontrad, levels = c("Traditional", "NonTraditional"))]
+X2[, poor := "UltraPoor"]
+X2[hhid %in% hhid[ModeratelyPoor == 1], poor := "ModeratelyPoor"]
+X2[, poor := factor(poor)]
+RepayPermTestByPoor <- vector(mode = "list", 4)
+RepayPermTestByArm <- vector(mode = "list", 3)
+RepayPermTestByArm <- list(Traditional = RepayPermTestByArm, Cattle = RepayPermTestByArm)
+#### TeeInLY = 7 is chosen because there are fewer obs at TeeInLY = 12 in LoanYear = 4
+for (i in 2:4) {
+  RepayPermTestByArm[[1]][[i-1]] <-  independence_test(
+      CumShortfallRatio ~ tradnontrad, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+  RepayPermTestByArm[[2]][[i-1]] <-  independence_test(
+      CumShortfallRatio ~ cnc, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+}
+for (i in 1:4) 
+  RepayPermTestByPoor[[i]] <-  independence_test(
+      CumShortfallRatio ~ poor, 
+      data = X2[LoanYear == i & TeeInLY == 6 & !is.na(CumShortfallRatio), ], 
+      distribution = approximate(nresample=PermRepTimes)
+    )
+qsave(RepayPermTestByArm, 
+  paste0(pathsaveEstimationMemo, "RepayPermTestByArm.qs"))
+qsave(RepayPermTestByPoor, 
+  paste0(pathsaveEstimationMemo, "RepayPermTestByPoor.qs"))
+\end{Sinput}
+
+
+{\centering \includegraphics[width=\maxwidth]{PermutationTests5/figureread_shortfall_data-1} 
+
+}
+
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+RepayPermTestByPoor <- qread(paste0(pathsaveEstimationMemo, "RepayPermTestByPoor.qs"))
+X2m <- X2[TeeInLY == 6, .(mean = round(mean(CumShortfallRatio, na.rm = T), 3)), by = .(LoanYear, poor)] 
+X2mW <- reshape(X2m, direction  = "wide", idvar = "LoanYear", timevar = "poor")
+X2mW[, pvalue := unlist(lapply(RepayPermTestByPoor, 
+  function(x) paste0(formatC(coin::midpvalue(x)[1]*100, format = "f", digits = 2), "\\%")))]
+numcol <- c("mean.UltraPoor", "mean.ModeratelyPoor")
+X2mW[, (numcol) := lapply(.SD, formatC, format = "f", digits = 3), .SDcol = numcol]
+X2mW[1:3, mean.UltraPoor := paste0("\\phantom{-}", mean.UltraPoor)]
+X2mW[1:3, mean.ModeratelyPoor := paste0("\\phantom{-}", mean.ModeratelyPoor)]
+x2mw <- as.matrix(X2mW)
+colnames(x2mw) <- c("Loan year", "Ultra poor", "Moderately poor", "") 
+x2tab <- latextab(x2mw, 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(1, rep(2.25, ncol(x2mw)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 2, 
+  separatingcolwidth = .1,
+  separatingcoltitle = c("Mean cumulative shortfall ratio", "$p$ value"),
+  addsubcoltitlehere = T
+  )
+write.tablev(x2tab,  
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorRepaymentPermTestResults.tex")
+, colnamestrue = F)
+\end{Sinput}
+\end{Schunk}
+
+
+\begin{Schunk}
+\begin{Sinput}
+asv <- readRDS(paste0(pathsaveHere, "DestatData.rds"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+asv[, poor := "Moderately poor"]
+asv[hhid %in% jds[grepl("up", pov), hhid], poor := "Ultra poor"]
+asv[, poor := factor(poor)]
+# asv already dropped anomalous disbursements under trad (776)
+asv1 <- asv[!grepl("tw|dou", TradGroup), ]
+# drop 2 loan receivers and group rejecters (706)
+asv3 <- asv[!grepl("gr", BStatus) & !grepl("tw|dou", TradGroup), ]
+X = copy(asv1)
+# 
+library(coin)
+X2[, tradnontrad := "Traditional"]
+X2[!grepl("rad", Arm), tradnontrad := "NonTraditional"]
+X2[, tradnontrad := factor(tradnontrad, levels = c("Traditional", "NonTraditional"))]
+
+RepayPermTestByArm <- vector(mode = "list", 3)
+RepayPermTestByArm <- list(Traditional = RepayPermTestByArm, Cattle = RepayPermTestByArm)
+
+VarsUP <- c("NetValue", "NumCows", "IRejected", "HHsize")
+VarsPermTestByPoor <- vector(mode = "list", length(VarsUP))
+for (i in 1:length(VarsUP)) 
+  VarsPermTestByPoor[[i]] <-  independence_test(
+      eval(parse(text=paste0(VarsUP[i], " ~ poor"))), 
+      data = X, distribution = approximate(nresample=PermRepTimes)
+    )
+qsave(VarsPermTestByPoor, 
+  paste0(pathsaveEstimationMemo, "VarsPermTestByPoor.qs"))
+\end{Sinput}
+\end{Schunk}
+\begin{Schunk}
+\begin{Sinput}
+VarsPermTestByPoor <- qread(paste0(pathsaveEstimationMemo, "VarsPermTestByPoor.qs"))
+
+Xm <- X[, .(lapply(.SD,  function(x) round(mean(x, na.rm = T), 3))), 
+  .SDcols = VarsUP, by = poor] 
+Xo <- X[, .(lapply(.SD,  function(x) round(mean(x, na.rm = T), 3))), 
+  .SDcols = VarsUP] 
+setnames(Xm, "V1", "val")
+setnames(Xo, "V1", "valo")
+Xm[, val := as.numeric(val)]
+Xm[, vars := rep(VarsUP, 2)]
+XmW <- reshape(Xm, direction  = "wide", idvar = "poor", 
+  timevar = "vars", v.names = "val")
+x2 <- t(XmW)
+x2 <- cbind(x2, c("overall", unlist(Xo)))
+x2[grepl("NetV", rownames(x2)), ] <- 
+  formatC(as.numeric(x2[grepl("NetV", rownames(x2)), ]), format = "f", digits = 0)
+x2 <- data.table(variables = rownames(x2), x2)
+setnames(x2, c("Variables", "Ultra poor", "Moderately poor", "Overall"))
+x2 <- x2[-1, ]
+x2[, Variables := gsub("val.", "", Variables)]
+x2[, pvalue := unlist(lapply(VarsPermTestByPoor, 
+  function(x) paste0(formatC(coin::midpvalue(x)[1]*100, format = "f", digits = 2), "\\%")))]
+rn <- x2[, Variables]
+source(paste0(pathprogram, "SubstTableANCOVA.R"))
+for (i in 1:nrow(subst.tableA)) 
+  rn <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\hfill ", rn, "}")
+x2[, Variables := rn]
+x2 <- as.matrix(x2)
+colnames(x2)[grep("pv", colnames(x2))] <- " " 
+x2tab <- latextab(x2, 
+  hleft = c("\\hfill\\scriptsize ", rep("\\scriptsize\\hfil$", ncol(x2)-1)), 
+  hcenter = c(3, rep(1.75, ncol(x2)-1)), 
+  hright = c("", rep("$", ncol(x2)-1)), 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 3, 
+  separatingcolwidth = .1,
+  separatingcoltitle = c("Mean", "$p$ value"),
+  addsubcoltitlehere = T
+  )
+write.tablev(x2tab,  
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorBaselineVarsPermTestResults.tex")
+, colnamestrue = F)
+\end{Sinput}
+\end{Schunk}
+
+
+
+
 % This is a child file of PermutationTests5.rnw
 \begin{Schunk}
 \begin{Sinput}
@@ -758,7 +968,7 @@ ar[, Tee := .N, by = .(hhid, mid, Time)]
 ar <- ar[En == 1 & Time == 1, ]
 \end{Sinput}
 \end{Schunk}
-Among 776 observations, there are 40 whose villages are washed away and 70 who by group rejected the assigned arms (traditional, large, large grace with 40, 20, 10 individuals, respectively). There are 30, 9, 13, 37 individuals who individually rejected traditional, large, large grace, cattle, respectively. %Among attrited HHs, when were they lost?
+Among 776 observations, there are 40 whose villages are washed away and 70 who by group rejected the assigned arms (traditional, large, large grace with 40, 20, 10 individuals, respectively). There are 31, 9, 13, 37 individuals who individually rejected traditional, large, large grace, cattle, respectively. %Among attrited HHs, when were they lost?
 \begin{Schunk}
 \begin{Sinput}
 table(ar[Attrited == 1L, Tee])
@@ -853,7 +1063,7 @@ for (i in 1:13) {
 
 %	\noindent\textsc{\normalsize Table \ref{grep(TabLabelStrings[1], TabLabel1)}} to \textsc{\normalsize Table \ref{grep(TabLabelStrings[13], TabLabel1)}}: Trimmed sample.\\
 
-	\textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on the analysis sample of 772 members. It shows that lower head literacy, smaller household size, being affected by flood at the baseline, smaller cattle/livestock holding, and smaller net assets are correlated with opting out the offered type of lending. Smaller net assets based on broader items also show a tendency to reject a participation offer. \textsf{Risk preference} indicates that the minimum expected payoff to choose a risky option is greater, albeit to a small degree, for the rejecters. Time preference variables show statistically indistinguishable differences. Ratio of \textsf{PresentBias} is high but there is no statistically large difference between the two groups.
+	\textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}} shows test results of independence between loan receivers and nonreceivers (group, individual rejecters) on the analysis sample of 776 members. It shows that lower head literacy, smaller household size, being affected by flood at the baseline, smaller cattle/livestock holding, and smaller net assets are correlated with opting out the offered type of lending. Smaller net assets based on broader items also show a tendency to reject a participation offer. \textsf{Risk preference} indicates that the minimum expected payoff to choose a risky option is greater, albeit to a small degree, for the rejecters. Time preference variables show statistically indistinguishable differences. Ratio of \textsf{PresentBias} is high but there is no statistically large difference between the two groups.
 	\textsc{\normalsize Table \ref{tab1 Permutation test results of rejection among traditional arm}} indicates that contrasts of smaller net asset holding and cattle/livestock holding are more pronounced among \textsf{traditional} rejecters than in the case of all rejecters of \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}}. It also shows that flood exposure among the rejecters is less frequent than in \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}}. 
 	\textsc{\normalsize Table \ref{tab1 Permutation test results of rejection among non-traditional arm}} indicates that lower head literacy, smaller household size, higher flood exposure, are more pronounced among non-\textsf{traditional} rejecters than in the case of all rejecters of \textsc{\normalsize Table \ref{tab1 Permutation test results of rejection}}. \textsf{Risk preference} shows greater risk torelance among non-rejeceters than rejecters of the non-\textsf{traditional} arms. It also shows that asset and livestock holding is not statistically different between rejecters and non-rejecters. The only difference between rejecters of \textsf{traditional} and non-\textsf{traditiona} arms we observe in \textsc{\normalsize Table \ref{tab1 Permutation test results of rejecters, traditional vs. non-traditional arm}}is lower flood exposure of the former. Due possibly to a small sample size, smaller asset and livestock holding of the \textsf{traditional} arm rejecters is merely suggestive. 
 	

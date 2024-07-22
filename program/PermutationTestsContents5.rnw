@@ -169,7 +169,7 @@ for (k in 1:3) {
     assign(paste0(dd, "TNTrandom", addchar), xTNTrandom)
   }
 }
-<<permutation tests, warning = F, eval = T>>=
+<<permutation tests, warning = F, eval = F>>=
 # data names: ..af, ..rf  (full), ..at, ..rt (drop 2 loan receivers), ..aj, ..rj (drop group rejeceters)
 # data to use: datalist (full), datalist1 (drop 2 loan receivers), datalist2 (drop group rejeceters)
 library(coin)
@@ -182,73 +182,73 @@ for (k in 1:3) {
   for (m in 1:M) {
     set.seed(100+m)
     if (grepl("^Attrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("a", addchar), dataList) else
+      DataList <- gsub("$", paste0("a", addchar), dataList) else 
     if (grepl("^AttritedInTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Ta", addchar), dataList) else
+      DataList <- gsub("$", paste0("Ta", addchar), dataList) else 
     if (grepl("^AttritedInNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTa", addchar), dataList) else 
     if (grepl("^TradNonTradAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTa", addchar), dataList) else 
     if (grepl("^NonFloodAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedInTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFTa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedInNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFNTa", addchar), dataList) else 
     if (grepl("^NonFloodTradNonTradAttrited$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFTNTa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFCNCa", addchar), dataList) else 
     if (grepl("^NonFloodAttritedCowL", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else
+      DataList <- gsub("$", paste0("NFCGa", addchar), dataList) else 
     if (grepl("^Active$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("s", addchar), dataList) else
+      DataList <- gsub("$", paste0("s", addchar), dataList) else 
     if (grepl("^ActiveInTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Ts", addchar), dataList) else
+      DataList <- gsub("$", paste0("Ts", addchar), dataList) else 
     if (grepl("^ActiveInNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTs", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTs", addchar), dataList) else 
     if (grepl("^ActiveTradNonTrad", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTs", addchar), dataList) else 
     if (grepl("^ActiveCowN", addtofilename[m]))
-      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCs", addchar), dataList) else 
     if (grepl("^ActiveCowL", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CGs", addchar), dataList) else
+      DataList <- gsub("$", paste0("CGs", addchar), dataList) else 
     if (grepl("^Random", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTrandom", addchar), dataList) else 
     if (grepl("^Rejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("r", addchar), dataList) else
+      DataList <- gsub("$", paste0("r", addchar), dataList) else 
     if (grepl("^Rej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tr", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tr", addchar), dataList) else 
     if (grepl("^Rej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTr", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTr", addchar), dataList) else 
     if (grepl("^TradNonTradR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTr", addchar), dataList) else 
     if (grepl("^GRejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("gr", addchar), dataList) else
+      DataList <- gsub("$", paste0("gr", addchar), dataList) else 
     if (grepl("^GRej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tgr", addchar), dataList) else 
     if (grepl("^GRej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTgr", addchar), dataList) else 
     if (grepl("^TradNonTradGR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTgr", addchar), dataList) else 
     if (grepl("^IRejected$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("ir", addchar), dataList) else
+      DataList <- gsub("$", paste0("ir", addchar), dataList) else 
     if (grepl("^IRej.*InTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("Tir", addchar), dataList) else
+      DataList <- gsub("$", paste0("Tir", addchar), dataList) else 
     if (grepl("^IRej.*InNonTrad$", addtofilename[m])) 
-      DataList <- gsub("$", paste0("NTir", addchar), dataList) else
+      DataList <- gsub("$", paste0("NTir", addchar), dataList) else 
     if (grepl("^TradNonTradIR", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTir", addchar), dataList) else 
     if (grepl("^GRejectedTradPar", addtofilename[m])) 
-      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else
+      DataList <- gsub("$", paste0("TNTgrp", addchar), dataList) else 
     if (grepl("^RejectedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCr", addchar), dataList) else 
     if (grepl("^RejectedCowLa", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else
+      DataList <- gsub("$", paste0("CLGr", addchar), dataList) else 
     if (grepl("^AcceptedCowN", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else
+      DataList <- gsub("$", paste0("CNCa", addchar), dataList) else 
     if (grepl("^AcceptedCowLa", addtofilename[m])) 
-      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else
+      DataList <- gsub("$", paste0("CLGa", addchar), dataList) else 
       DataList <- gsub("$", addchar, dataList)
     pmresults <- permmedian <- vector(mode = "list", length(vartobetested))
     for (i in 1:length(vartobetested)) {
@@ -262,7 +262,7 @@ for (k in 1:3) {
       # selection.criteria[m] has has uniform values (otherwise returns an error)
       if (length(unique(unlist(pmdata[, vartobetested[i], with = F]))) == 1|
           length(unique(unlist(pmdata[, selection.criteria[m], with = F]))) == 1) 
-        pmresults[[i]] <- NULL else
+        pmresults[[i]] <- NULL else 
         pmresults[[i]] <- independence_test(eval(parse(text=
           paste(vartobetested[i], "~ as.factor(", selection.criteria[m], ")")
           )), 
@@ -304,7 +304,7 @@ for (k in 1:3) {
         # use 0 for all zero entries or 1 for unique nonzero entries
         if (allzerovalues <- unique(unlist(z[, vartobetested[i], with = F])) == 0)
           Pmtresults <- rbind(Pmtresults, 
-            c(vartobetested[i], 0, 0, rep(NA, 3))) else
+            c(vartobetested[i], 0, 0, rep(NA, 3))) else 
           Pmtresults <- rbind(Pmtresults, 
             c(vartobetested[i], 1, 1, rep(NA, 3)))
       } else if (length(unique(unlist(pmdata[, selection.criteria[m], with = F]))) == 1) 
@@ -367,7 +367,8 @@ for (k in 1:3) {
       #Pmtresults <- Pmtresults[!grepl("Arm", variables), ]
       Pmtresults <- Pmtresults[!grepl("^Propo", variables), ]
     # CowArm => Cattle arm
-    if (grepl("Cow", names(Pmtresults))) {
+    # This is a legacy part. We already use "Cattle" as its name.
+    if (any(grepl("Cow", names(Pmtresults)))) {
       setnames(Pmtresults, 
         grepout("Cow", names(Pmtresults))
         , gsub("Cow", "Cattle", grepout("Cow", names(Pmtresults))))
@@ -395,8 +396,10 @@ for (k in 1:3) {
 }
 names(PM) <- c("Full", "Drop2LoanReceivers", "DropGroupRejecters")
 saveRDS(PM, paste0(pathsavePerm, "AllPermutationTestResults.rds"))
+library(qs)
+qsave(PM, paste0(pathsavePerm, "AllPermutationTestResults.qs"))
 <<tabulate IndividualRejectionTestResults CowVsNonCowTestResults>>=
-PM <- readRDS(paste0(pathsavePerm, "AllPermutationTestResults.rds"))
+PM <- qread(paste0(pathsavePerm, "AllPermutationTestResults.qs"))
 # indiv rejecters
 Irej <- c("IRejectedInTrad", "IRejectedInNonTrad", "^IRejected$")
 ir12 <-  cbind(
@@ -414,16 +417,19 @@ setnames(ir123, c("variables", paste0("v", 1:(ncol(ir123)-1))))
 for (i in paste0("v", c(3, 6, 9))) 
   ir123[nrow(ir123), (i) := 
     paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
+ir123[, variables := gsub("3.75cm|2.85cm", "2.75cm", variables)]
+ir123[, variables := gsub("non-text", "non-\\\\text", variables)]
+ir123[, variables := gsub("Traditional", "Trad", variables)]
 #cnm <- t(c("\\makebox[3cm]{\\hfil variables}", 
 #  paste0("\\makebox[1.5cm]{\\hfil ", rep(c("Yes", "No", "$p$ value"), 3), "}")))
-cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+cnm <- t(c("\\makebox[2.75cm]{\\hfil }", 
   paste0("\\makebox[1.2cm]{(", 1:(ncol(ir123)-1), ")}")))
 irj <- as.matrix(rbind(cnm, ir123, use.names = F))
 irj[is.na(irj)] <- ""
 colnames(irj) <- c("variables", rep(c("Not rejected", "Rejected", "$p$ value"), 3))
 irj <- latextab(irj, 
   hleft = "\\scriptsize\\hfil$", 
-  hcenter = c(2.5, rep(1.2, ncol(irj)-1)), 
+  hcenter = c(2.75, rep(1.2, ncol(irj)-1)), 
   hright = "$", 
   headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
   alternatecolor = "gray90",
@@ -444,13 +450,14 @@ setnames(sv12, c("variables", paste0("v", 1:(ncol(sv12)-1))))
 for (i in paste0("v", c(3, 6))) 
   sv12[nrow(sv12), (i) := 
     paste0("(\\mbox{rate }", formatC(as.numeric(eval(parse(text=i))), digits = 3, format = "f"), ")") ]
-cnm <- t(c("\\makebox[2.5cm]{\\hfil }", 
+sv12[, variables := gsub("3.75cm|2.85cm", "2.75cm", variables)]
+cnm <- t(c("\\makebox[2.75cm]{\\hfil }", 
   paste0("\\makebox[1.2cm]{(", 1:(ncol(sv12)-1), ")}")))
 suv <- as.matrix(rbind(cnm, sv12, use.names = F))
 colnames(suv) <- c("variables", rep(c("Cattle arm", "Other arms", "$p$ value"), 2))
 suv <- latextab(suv, 
   hleft = "\\scriptsize\\hfil$", 
-  hcenter = c(2.5, rep(1.2, ncol(suv)-1)), 
+  hcenter = c(2.75, rep(1.2, ncol(suv)-1)), 
   hright = "$", 
   headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
   alternatecolor = "gray90",
@@ -463,3 +470,8 @@ write.tablev(suv,
   paste0(pathsavePerm, "CowVsNonCowTestResults.tex")
 , colnamestrue = F)
 @
+
+\Sexpr{knit_child(paste0(pathprogram, "RepaymentPermutationTest.rnw"))}
+
+\Sexpr{knit_child(paste0(pathprogram, "UltraPoorPermutationTest.rnw"))}
+

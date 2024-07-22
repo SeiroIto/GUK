@@ -91,6 +91,7 @@ saveRDS(lvLv, paste0(pathsaveHere, "LivestockExperienceAtBaselineCorrected.rds")
 
 <<merge assets livestock experience data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsExperienceANCOVA.rnw'>>=
 #  source(paste0(pathprogram, "MergeAllNetAssetsExperienceANCOVA.R"))
+#  This uses NetAssets, not NarrowNetAssets or BroadNetAssets
 @
 <<Net asset experience set parameters original HHs>>=
 FileName <- "NetAssetsExperience"
@@ -119,7 +120,7 @@ inclheader <- gsub("ex", "in", exclheader)
 if (Only800) NeAE1 <- NeAE1[o800 == 1L, ]
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 <<estimate with subsamples by experienced inexperienced>>=
 FileName0 <- "NetAssetsByExperience"
@@ -136,6 +137,9 @@ Addseparatingcols <- NULL; Separatingcolwidth <- NULL
 Separatingcoltitle <- NULL
 tableboxwidth <- 4.5
 dig.depmean <- 0
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
 regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
@@ -144,11 +148,12 @@ for (mm in c("a", "o", "n"))
   listheader <- paste0("naBe", mm, regsuffixes)
   FileName <- paste0(FileName0, mm)
   source(paste0(pathprogram, "NetAssetByExperienceCovariateSelectionANCOVA2.R"))
+  # No dummyHadCow or NumCattle0, reg spec m = 1, .., jay(= 4)
   jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
   DataToUse1 <- DataToUse2 <- rep(paste0("NeAE1", mm), jay)
   Regressands <- rep("NetValue", jay)
   AddMeanStdColumn <- UseRawDataForDestat <- T
-  source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+  source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 }
 centerBox <- 1.1
 for (k in 1:length(listheader)) {

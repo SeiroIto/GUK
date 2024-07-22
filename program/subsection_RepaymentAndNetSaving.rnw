@@ -278,7 +278,7 @@ jay <- 11
 DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 gc()
 @
 

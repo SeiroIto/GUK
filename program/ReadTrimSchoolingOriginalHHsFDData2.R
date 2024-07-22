@@ -55,6 +55,11 @@ if (any(grepl("Fromxid", colnames(s1x))))
   s1x <- s1x[(Fromxid), grepout(schstrings, colnames(s1x)), with = F] else
   s1x <- s1x[, grepout(schstrings, colnames(s1x)), with = F]
 s1x[, HHMid := paste(hhid, mid, sep = ".")]
+# NAs in mid (from shk file) have no schooling info
+if (any(s1x[, is.na(mid)])) {
+  summary(s1x[HHMid %in% HHMid[is.na(mid)], .(hhid, mid, o800, Enrolled, BStatus)])
+  s1x <- s1x[!(HHMid %in% HHMid[is.na(mid)]), ]
+}
 s1x[is.na(Schooling) & Age_1 >= 5 & Age_1 <= 13, Schooling := "primary0512"]
 s1x[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
 s1x[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]

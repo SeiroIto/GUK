@@ -20,25 +20,16 @@ additions <-     c(
     "|^dummyOwnCattle|^dummyAdiCattle"
   )
 for (a in regsuffixes) {
-  if (!grepl("T", a))
-    assign(paste0("incl", a, 1), 
-      "^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$|^dummyOwnCattle0$|^dummyAdiCattle0$") else 
-  if (grepl("Ta?$", a))
-    assign(paste0("incl", a, 1), 
-      # disallow level covariates
-      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.") 
-      # allow level covariates
-	#      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.") else
+  assign(paste0("incl", a, 1), 
+    if (!grepl("T", a))
+      "^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$|^dummyOwnCattle0$|^dummyAdiCattle0$" else 
+    if (grepl("Ta?$", a))
       # allow level covariates but not level of OwnCattle0 nor LeaseInCattle0
-       "^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^dummy.*tle0$|^Time\\.)") else
-   # if TP, TPa: add any variable with "Poor"
-    assign(paste0("incl", a, 1), 
-      # disallow level covariates
-      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.|Poor") 
-      # allow level covariates
-      #"^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
-      # allow level covariates but not HadConw
-      "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|^dummy.*tle0$|^d.*Poor)")
+      "^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^dummy.*tle0$|^Time\\.)" else
+      # if TP, TPa: add any variable with "Poor"
+      # allow level covariates including dummyOwnCattle0
+      "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|^dummy.*tle0$|^d.*Poor)"
+    )
   for (m in 2:length(additions)) 
       assign(paste0("incl", a, m), 
         paste0(get(paste0("incl", a, m-1)), additions[m])

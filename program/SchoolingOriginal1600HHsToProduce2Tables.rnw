@@ -7,8 +7,8 @@ table0(s.1x[tee == 1, .(ObPattern, SchPattern)])
 @
 Left panel is before dropping \textsf{nnn}, right panel is after: Original panel.
 <<Left panel is before dropping nnn right panel is after original 1600 panel>>=
-cbind(table0(s.1x[, .(tee, RArm)]), 
-  table0(s1x[, .(tee, RArm)]))
+cbind(table0(s.1x[, .(tee, Arm)]), 
+  table0(s1x[, .(tee, Arm)]))
 @
 \textsf{sch} has \Sexpr{nrow(s.1x)} rows. Drop \Sexpr{nrow(s.1x[grepl("nnn", SchPattern), ])} observations in \textsf{sch} with nnn in \textsf{SchPattern}. 
 %and \Sexpr{nrow(s.1x[!grepl("nnn", Spattern) & grepl("1001", EnrollPattern), ])} observations with 1001 in \textsf{EnrollPattern} because they are likely to be errors. This leaves us with \Sexpr{nrow(s1x)} rows. 
@@ -72,8 +72,8 @@ FileNameHeader <- paste0(FileNameHeaderSchooling, "OriginalHHs")
 Scsuffixes <- c("T", "Tg", "Ts")
 exclheader <- paste0("excl", Scsuffixes)
 listheader <- paste0("sc", Scsuffixes)
-source(paste0(pathprogram, "FDEstimationFileSchooling.R"))
-saveRDS(fdplist, paste0(pathsave, "FD_schooling.rds"))
+#source(paste0(pathprogram, "FDEstimationFileSchooling.R"))
+#saveRDS(fdplist, paste0(pathsave, "FD_schooling.rds"))
 <<>>=
 #dummy chunk
 @

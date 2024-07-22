@@ -5,24 +5,27 @@ Income sources are mainly labour incomes (\textsf{lab}) and farm revenues (\text
 
 <<Labour income regression set parameters original HHs>>=
 FileName <- "LabourIncome"
-FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
-regsuffixes <- c("", "a", "P", "T", "Ta")
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 listheader <- paste0("lb", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 <<Labour incomes select covariates original HHs>>=
-source(paste0(pathprogram, "LabourIncomeCovariateSelectionANCOVA2.R"))
+source(paste0(pathprogram, "LabourIncomeCovariateSelectionANCOVA3.R"))
 <<get jay from income covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
-Regressands <- c(rep("TotalHHLabourIncome", 3))
-DataToUse1 <- DataToUse2 <- rep("lab", 3)
+#Regressands <- c(rep("pcHHLabourIncome", 3)) results do not differ
+Regressands <- c(rep("TotalHHLabourIncome", 6))
+DataToUse1 <- DataToUse2 <- rep("lab", 6)
 Addseparatingcols = NULL; Separatingcolwidth = NULL
 Separatingcoltitle = NULL
 <<income ANCOVA estimation>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<Farm income regression set parameters original HHs>>=
 FileName <- "FarmIncome"
 FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
@@ -40,7 +43,7 @@ Separatingcoltitle = NULL
 <<Farm income ANCOVA estimation>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<>>=
 #dummy chunk
 @

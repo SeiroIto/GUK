@@ -1,5 +1,5 @@
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding, cattle rearing experiences\label{tab ANCOVA net assets experience 1}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding, subsamles by cattle rearing experiences\label{tab ANCOVA net assets experience 1}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -13,7 +13,7 @@ paste0(pathsaveHere, "NumCowsByExperience1ANCOVAEstimationResults.tex")
 
 \addtocounter{table}{-1}
 \vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding, cattle rearing experiences (continued)\label{tab ANCOVA net assets experience 2}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding, subsamles by cattle rearing experiences (continued)\label{tab ANCOVA net assets experience 2}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -36,7 +36,7 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm)} Narrow net assets uses onl
 
 
 \vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes, cattle rearing experiences\label{tab ANCOVA livestock holding Experience attributes}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes, subsamles by cattle rearing experiences\label{tab ANCOVA livestock holding Experience attributes}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -50,7 +50,7 @@ paste0(pathsaveHere,"NumCowsByExperience1AttributesANCOVAEstimationResults.tex")
 
 \addtocounter{table}{-1}
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes, cattle rearing experiences (continued)\label{tab ANCOVA livestock holding Experience attributes 2}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes, subsamles by cattle rearing experiences (continued)\label{tab ANCOVA livestock holding Experience attributes 2}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -73,7 +73,7 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNAttributes)} Narrow net assets u
 
 
 \vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by period, cattle rearing experiences\label{tab ANCOVA livestock holding Experience timevarying}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by period, subsamles by cattle rearing experiences\label{tab ANCOVA livestock holding Experience timevarying}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -87,7 +87,7 @@ paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingANCOVAEstimationResults.tex
 
 \addtocounter{table}{-1}
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by period, cattle rearing experiences (continued) \label{tab ANCOVA livestock holding Experience timevarying 2}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by period, subsamles by cattle rearing experiences (continued) \label{tab ANCOVA livestock holding Experience timevarying 2}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -111,7 +111,7 @@ Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNRound234)} Narrow net 
 
 
 \vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes and period, cattle rearing experiences\label{tab ANCOVA livestock holding Experience timevarying attributes}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes and period, subsamles by cattle rearing experiences\label{tab ANCOVA livestock holding Experience timevarying attributes}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}
@@ -125,7 +125,7 @@ paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingAttributesANCOVAEstimationR
 
 \addtocounter{table}{-1}
 \hspace{-1cm}\begin{minipage}[t]{14cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes and period, cattle rearing experiences (continued)\label{tab ANCOVA livestock holding Experience timevarying attributes 2}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of livestock holding by attributes and period, subsamles by cattle rearing experiences (continued)\label{tab ANCOVA livestock holding Experience timevarying attributes 2}}\\
 \setlength{\tabcolsep}{1pt}
 \setlength{\baselineskip}{8pt}
 \renewcommand{\arraystretch}{.52}

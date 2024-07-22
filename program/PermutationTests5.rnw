@@ -1,6 +1,6 @@
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/PermutationTests5/"); library(knitr); knit("PermutationTests5.rnw", "PermutationTests5.tex"); system("platex PermutationTests5"); system("dvipdfmx PermutationTests5")
 
-\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
 \renewcommand\Routcolor{\color{gray30}}
 \newtheorem{finding}{Finding}[section]
 \makeatletter

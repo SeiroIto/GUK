@@ -2,7 +2,12 @@
 
 \Sexpr{NotPrintFileNames} \textcolor{red}{Read: \Sexpr{paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds")}}.
 
-Further data preparations (trimming, adding shocks, round numbering, creating dummy vectors, interaction terms) for estimation. Produces files: \textsf{\footnotesize \Sexpr{paste0(DataFileNames, "AdminDataUsedForEstimation.prn")}}.
+Original data files (incl. Abu-san's correction files) $\rightarrow$ (read\_cleaned\_data.rnw) $\rightarrow$  
+\verb+data_read_in_a_list_with_baseline_patched.rds+ $\rightarrow$ 
+add admin data in ReadFilesMergeAdminRoster.rnw $\rightarrow$ 
+Individual data files (RosterAdminSchoolingData.rds, RosterAdminData.rds, AllMeetingsRosterAdminData.rds, AssetAdminData.rds, LivestockAdminData.rds, LivestockLongAdminData.rds, LivestockProductsAdminData.rds, LabourIncomeAdminData.rds, FarmRevenueAdminData.rds, ConsumptionAdminData.rds, OtherBorrowingAdminData.rds, Shocks.rds) in \Sexpr{pathsaveHere}.
+
+Further data preparations (trimming, adding shocks, round numbering, creating dummy vectors, interaction terms) are done in this file for estimation. Produces files: \textsf{\footnotesize \Sexpr{paste0(DataFileNames, "AdminDataUsedForEstimation.prn")}}.
 <<common data preparations, warning = F>>=
 # Name it as sch1, sch2 rather than s1, s2 (as in other files) to display "s1" in TrimmingNumObsTable
 # Following files are created in ReadFilesMergeAdminRoster.rnw 
@@ -28,6 +33,7 @@ povertystatus <- c("UltraPoor", "ModeratelyPoor")
 s1[, tee := survey]
 shk <- shk[survey == 1, ]
 shk[, grepout("gid|Dat|Ye|Mo|surv|code", colnames(shk)) := NULL]
+shk[is.na(groupid), groupid := as.integer(substr(hhid, 1, 8))]
 setkey(shk, groupid, hhid)
 # shk[, Month := factor(Month, levels = 
 #   c("January", "February", "March", "April", 
@@ -122,21 +128,38 @@ write.tablev(
   paste0(pathsaveHere, "TrimmingNumObsTable.tex"), colnamestrue = F)
 #print0(rbind(paste("(old|iRej|^g in Mstatus)", "==>", "(con|^dro|^rep in Mgroup)", "==>", "(No tw|dou in TradGroup)"), dimchange))
 @
-Check asset file entries. There are \Sexpr{nrow(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
-by = .(hhid)][tee == 1, ])} households who respond at least once to asset questionnaire, but only
-\Sexpr{nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])} households respond at baseline (out of \Sexpr{nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])}, response rate of \Sexpr{round((nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])/nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ]))*100, 2)}\%).
-<<Check asset file entries, echo = T>>=
-addmargins(table0(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
-  by = .(hhid)][tee == 1, .(survey, Arm)]))
+
+
+Create \textsf{\Sexpr{paste0(DataFileNames[3], "Trimmed.rds")}} sample from \textsf{RosterAdminData.rds}.
+
+<<>>=
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+ar[, ini := 1:.N, by = .(survey, hhid)]
 @
-Among which, if we drop the sample in \textsf{traditional} arm who receive the loan only twice, we have:
-<<Check asset file entries 2, echo = T>>=
-addmargins(table0(ass[o800 == 1L & !grepl("tw|dou", TradGroup) & 
-  hhid %in% hhid[survey==1], 
-  .(Arm, tee = 1:.N), by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
-@
-Add \textsf{BStatus} etc. to all files and save as \textcolor{red}{\Sexpr{gsub("\\_", "\\\\_", paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))}} for example. It is trimmed as we keep only \verb+grepl("old|iRej|^g", Mstatus)+ and drop \verb+grepl("tw|dou", TradGroup)+.
+Original HHs are \Sexpr{ar[ini == 1 & o800 == 1L & survey == 1, length(unique(hhid))]} HHs at the baseline, whose size shrinks by attrition: \Sexpr{ar[ini == 1 & o800 == 1L & survey != 1, .(num=length(unique(hhid))), by = survey][, num]}. They are used for attrition and randomisation tests. 
+
+Add \textsf{BStatus} etc. to all files and save as: 
+
+\textcolor{red}{\Sexpr{gsub("\\_", "\\\\_", paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))}}
+
+for example. It is trimmed as we keep only \verb+grepl("old|iRej|^g", Mstatus)+ (old members, individual rejection, group rejection, group erosion). Here, we have not yet dropped \verb+grepl("tw|dou", TradGroup)+ (twice received, double received in tradional arm). 
 <<keep based on Mstatus Mgroup create dummies interactions, warning = F>>=
+# All files are created by merging admin files in ReadFilesMergeAdminRoster.rnw
+s1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds")) # dummyHadCows?
+lvoL <- readRDS(paste0(pathsaveHere, "LivestockLongAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+obr <- readRDS(paste0(pathsaveHere, "OtherBorrowingAdminData.rds"))
+# Do not read shk file as it is modified in the chunk (common data preparations) and not saved.
+# shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+setnames(s1, "tee", "meet.tee") # meeting periods
+setnames(s1, "i.tee", "tee") # tee = survey rounds
 Obs <- NULL
 for (j in 1:length(datafiles)) {
   dd <- get(datafiles[j])
@@ -149,6 +172,7 @@ for (j in 1:length(datafiles)) {
     dd[, Year :=  as.integer(strftime(Date, format = "%Y"))]
   # 1. Keep only membership = 1 or 4, which corresponds to 
   # Mstatus old, iRej, gR, gE (on going members, indiv rejecters, group rejecters, group erosion)
+  addmargins(table(dd[o800 == 1L & tee == 1, .(Arm)]))
   dd <- dd[grepl("old|iRej|^g", Mstatus), ]
   # 2. Keep only continuing, dropouts members in Mgroup.
   #dd <- dd[grepl("con|dro", Mgroup), ]
@@ -156,7 +180,7 @@ for (j in 1:length(datafiles)) {
   # Remark out the following:
   # dd <- dd[grepl("Yes", creditstatus), ]
   #  dd <- dd[as.Date(DisDate1) < as.Date("2015-01-01"), ]
-  # drop TradGroup = twice, double. This drops 24 members in traditional. When I do this, they will not be included in any data that merged with ar.
+  # drop TradGroup = twice, double. This drops 24 members in traditional. When I do this, they will not be included in any data that are merged with ar.
   tb <- as.data.frame.matrix(table(ar[o800 == 1 & tee == 1 & grepl("tw|dou", TradGroup), 
     .(gid, DisDate1)]))
   # DisDates of 24 traditional arm members disbursement is less than 3 times.
@@ -177,9 +201,13 @@ for (j in 1:length(datafiles)) {
 #   dd[, BStatus := factor(BStatus, levels = c("borrower", "pure saver", 
 #     "individual rejection", "group rejection", "rejection by flood"))]
   # merge shock module
-  setkey(dd, hhid, Year, Month)
   setkey(dd, groupid, hhid)
-  dd2 <- shk[dd]
+  # Below way of merge drops 4 HHs in roster admin data: 800 => 796. Should be avoided.
+  # setkey(dd, hhid, Year, Month)
+  # shk[, o800 := NULL]
+  # Use this merge instead.
+  dd2 <- merge(dd, shk, by = c("groupid", "hhid", "o800"), all.x = T)
+  addmargins(table0(dd2[o800 == 1L, .(tee, Arm)]))
   dd2[, c("en") := NULL]
   dd2[, teeyr := 1]
   dd2[Year == 2014, teeyr := 2]
@@ -230,13 +258,13 @@ for (j in 1:length(datafiles)) {
     ]
   # Arm-Time interactions
   for (i in interterms) {
-  # interterms are TimeX
+  # interterms are Time.T, T = 2, 3, 4
   # Demeand interactions between characteristics dummies (Arm, poverty, etc.) * time
     i1 <- unlist(strsplit(i, "\\."))
-    i2 <- i1[2]; i1 <- i1[1]
+    i2 <- i1[2]; i1 <- i1[1] # i2 = T, i1 = Time
     i0 <- gsub("\\.", "", i)
     dd2[, (i) := as.numeric(eval(parse(text=i1)) == i2)]
-    # DemeanedTimeX
+    # DemeanedTimeT
     dd2[, paste0("Demeaned", i0) := 
       eval(parse(text=i)) - mean(eval(parse(text=i)), na.rm = T)] 
     # dummyArm.TimeX = DemeanedArm*DemeanedTimeX
@@ -278,23 +306,29 @@ for (j in 1:length(datafiles)) {
     sep = "\t", quote = F)
 }
 @
-Drop members who received only 2 loans (twice and double in \textsf{TradGroup}) and save as an estimating sample. \textcolor{red}{Save: \Sexpr{gsub("\\_", "\\\\_", paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))}}. \textcolor{red}{Save: \Sexpr{gsub("\\_", "\\\\_", paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))}} keeps all 800 members which will be used in attrition and randomisation tests.
-<<check late disbursement, warning = F>>=
-ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
-ar[, MonthGap := min(DisDate1, na.rm = T), by = groupid]
-ar[MonthGap == Inf, MonthGap := NA]
-ar[, MonthGap := round(
-  as.numeric(DisDate1 - MonthGap)/(60*60*24*30.4375), 2)]
-# ar[, BStatus := BorrowerStatus]
-# ar[grepl("gRe", Mstatus), BStatus := "group rejection"]
-# ar[grepl("iRej", Mstatus), BStatus := "individual rejection"]
-# ar[grepl("gEr", Mstatus), BStatus := "rejection by flood"]
-# ar[, BStatus := factor(BStatus, levels = c("borrower", "pure saver", 
-#   "individual rejection", "group rejection", "rejection by flood"))]
-ar <- ar[!grepl("tw|dou", TradGroup), ]
-addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
-saveRDS(ar, paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))
+
+This is done in \textsf{EstimationMemo\_ANCOVA3.rnw}: Dropping members who received only 2 loans (twice and double in \textsf{TradGroup}) and save as an estimating sample, for example:
+
+\textcolor{red}{Save: \Sexpr{gsub("\\_", "\\\\_", paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))}}
+
+As we use 
+\textcolor{red}{\Sexpr{paste0(DataFileNames[3], "InitialSample.rds")}} as our base to merge other files, files ending with \textsf{InitialSample.rds} are the data we use.
+
+
+Check asset file entries. There are \Sexpr{nrow(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
+by = .(hhid)][tee == 1, ])} households who respond at least once to asset questionnaire, but only
+\Sexpr{nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])} households respond at baseline (out of \Sexpr{nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])}, response rate of \Sexpr{round((nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])/nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ]))*100, 2)}\%). Below displays the timing of first reponse on assets by HHs. 
+<<Check asset file entries, echo = T>>=
+addmargins(table0(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
+  by = .(hhid)][tee == 1, .(survey, Arm)]))
 @
+Among which, if we drop the sample in \textsf{Traditional} arm who receive the loan only twice, we have:
+<<Check asset file entries 2, echo = T>>=
+addmargins(table0(ass[o800 == 1L & !grepl("tw|dou", TradGroup) & 
+  hhid %in% hhid[survey==1], 
+  .(Arm, tee = 1:.N), by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
+@
+
 
 
 
@@ -412,7 +446,7 @@ write.tablev(amt,  paste0(pathsaveHere, "NumObsOriginalHHs_all.tex"),
 write.tablev(amt.o1600,  paste0(pathsaveHere, "NumObsOriginalHHs_o1600.tex"),
   colnamestrue = F)
 @
-Tabulate number of obs in each files for original 800 households. 
+Tabulate number of obs in each files for original 800 households (before dropping 24 HHs in trad). 
 <<tabulation of obs InitialSample>>=
 # for (i in 1:length(DataFileNames))
 #   assign(datafiles[i], readRDS(
@@ -539,7 +573,7 @@ Notes: & 1. & Sample is original 1600 households who agree to join the group. Th
 \end{minipage}
 
 \hfil\begin{minipage}[t]{12cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 800 HHs\label{tab NObsOHo800 AdminData}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 800 HHs admin data before trimming\label{tab NObsOHo800 AdminData}}\\
 \setlength{\tabcolsep}{.5pt}
 \setlength{\baselineskip}{10pt}
 \renewcommand{\arraystretch}{.7}
@@ -551,13 +585,13 @@ Notes: & 1. & Sample is original 1600 households who agree to join the group. Th
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
-Notes: & 1. & Sample is original 800 households who agree to join the group. This includes households who later dropped out due to flood, group rejections, and individual rejections. All original 800 households are tracked but some attrit from the sample.\\
+Notes: & 1. & Sample is original 800 households who agree to join the group in \textsf{RosterAdmin.rds}. This includes households who later dropped out due to flood, group rejections, and individual rejections. All original 800 households are tracked but some attrit from the sample.\\
 & 2. &  
 \end{tabular}
 \end{minipage}
 
 \hfil\begin{minipage}[t]{12cm}
-\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 800 HHs trimmed\label{tab NObsOHo800 Trimmed}}\\
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Number of observations in each file at round 1 from original 800 HHs trimmed for Mstatus\label{tab NObsOHo800 Trimmed}}\\
 \setlength{\tabcolsep}{.5pt}
 \setlength{\baselineskip}{10pt}
 \renewcommand{\arraystretch}{.7}
@@ -569,7 +603,7 @@ Notes: & 1. & Sample is original 800 households who agree to join the group. Thi
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{10cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
-Notes: & 1. & Sample is original 800 households who agree to join the group. This includes households who later dropped out due to flood, group rejections, and individual rejections. All original 800 households are tracked but some attrit from the sample.\\
+Notes: & 1. & Sample is based on original 800 households who agree to join the group in \textsf{RosterAdmin.rds}, and keeping old member, individual and group rejecters, and flood eroded households. Some households later drop out due to flood, group rejections, and individual rejections. \\
 & 2. &  
 \end{tabular}
 \end{minipage}

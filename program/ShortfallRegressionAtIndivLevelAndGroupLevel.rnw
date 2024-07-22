@@ -1,6 +1,6 @@
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ShortfallRegressionAtIndivLevelAndGroupLevel/"); library(knitr); knit("ShortfallRegressionAtIndivLevelAndGroupLevel.rnw", "ShortfallRegressionAtIndivLevelAndGroupLevel.tex"); system("platex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("pbibtex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("dvipdfmx ShortfallRegressionAtIndivLevelAndGroupLevel")
 
-\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
 \renewcommand\Routcolor{\color{gray30}}
 \newtheorem{finding}{Finding}[section]
 \makeatletter
@@ -58,10 +58,6 @@ connection/.style={thick, dotted},
 
 \hfil Seiro Ito
 
-\setcounter{tocdepth}{3}
-\tableofcontents
-\newpage
-
 \setlength{\parindent}{1em}
 \vspace{2ex}
 
@@ -69,10 +65,21 @@ Need: packages \textsf{lmtest, sandwich}.
 
 This is a file whose regression results to be used in read\_admin\_data.rnw.
 
+
+Key variables defined in read\_admin\_data.rnw:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\verb|adw[, Shortfall := PlannedInstallment - value.repay]|
+\item	\verb|adw[, ShortfallRate := Shortfall/PlannedInstallment]|
+\item	PlannedInstallment := 120, with a grace period, PlannedInstallment := 190
+\item	\verb|EffectiveRepayment := value.repay + value.NetSaving| (same def as value.Paid...)
+\end{itemize}
+
 <<all chunks0, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_OptionSetting.rnw'>>=
 <<>>=
 opts_chunk$set(cache = F, echo = T, results = 'markup', 
 tidy.opts=list(blank=FALSE, width.cutoff=40))
+library(qs)
 pathsaveHere <- paste0(pathsave, "read_admin_data/")
 pathsaveEstimationMemo <- paste0(pathsave, "EstimationMemo/")
 adw <- readRDS(paste0(path1234, "admin_data_wide.rds"))
@@ -95,10 +102,15 @@ MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR],
 # MedianGRSR <- median(unique(adw[, .(groupid, MeanGRSR)])[, MeanGRSR], 
 #   na.rm = T)
 # merge(adw2, adwG, by = intersect(colnames(adw2), colnames(adwG)), all.X = T)
-adw2 <- readRDS(paste0(path1234, "admin_data_wide2.rds"))
+## adw2 is created in read_admin_data.rnw
+#   adw2 = adw + generated variables, such as group repayment shortfall rates (GRSR) 
+#      Shortfall := (planned installments)-(amount repaid), 
+#      ShortfallRate := Shortfall/PlannedInstallment, 
+#      value.Paid = repayment + net saving.
+adw2 <- qread(paste0(path1234, "admin_data_wide2.qs"))
 variablesToBeLagged <- 
   c("Shortfall", "value.repay", "value.sav", "value.NetSaving", 
-   "value.cost", "value.rev", "value.missw", "Profit",
+   "value.Paid", "value.cost", "value.rev", "value.missw", "Profit",
    "CumRepaid", "CumRepaidRate", "CumEffectiveRepaidRate", "CumMisses", 
    "CumNetSaving", "CumProfit",
     "MeanGroupShortfall", "GroupNetSaving", "CumGroupNetSaving", 
@@ -107,7 +119,7 @@ variablesToBeLagged <-
     "OtherMisses", "CumOtherMisses", "OtherCost", "OtherRevenue")
 adw2[, paste0("Lag", variablesToBeLagged) :=  
   shift(.SD, type = "lag"), by = hhid, .SDcols=variablesToBeLagged]
-source("c:/migrate/R/startRbat/panel_estimator_functions.R")
+source("c:/seiro/settings/Rsetting/panel_estimator_functions.R")
 # MonthsRepaid > 0: Only traditional has FirstYear as repayment
 X <- adw2[
     #MonthsElapsed > 0 & MonthsElapsed <= 36 & 
@@ -116,6 +128,7 @@ X <- adw2[
     as.Date(DisDate1) <= as.Date("2015-01-01"),
     .(value.repay, Lagvalue.repay, value.missw, Lagvalue.missw,
     value.sav, Lagvalue.sav, value.NetSaving, Lagvalue.NetSaving,  
+    EffectiveRepayment,
     Profit, LagProfit, value.cost, value.rev, Lagvalue.cost, Lagvalue.rev, 
     Shortfall, LagShortfall, ShortfallRate, 
     MeanGroupShortfall, LagMeanGroupShortfall, OtherShortfall, LagOtherShortfall,
@@ -146,8 +159,10 @@ X[, LagMeanCumGroupNetSaving := LagCumGroupNetSaving/1000]
 X[, c("UltraPoor", "ModeratelyPoor") := 0L]
 X[grepl("ltra", povertystatus), UltraPoor := 1L]
 X[!grepl("ltra", povertystatus), ModeratelyPoor := 1L]
+cumcols <- grepout("^Cum", colnames(X))
+X[, (cumcols) := lapply(.SD, function(x) {x[abs(x)==Inf] <- NA; x}), .SDcols = cumcols]
 @
-If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interactions).
 <<Take village and LoanYear deviation of value and lags except for group level variables>>=
 for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
  !grepl("GroupShortf|LagGroupNetSav", colnames(X)))) {
@@ -158,19 +173,21 @@ for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) &
     mean(eval(parse(text=colnames(X)[i])), na.rm = T), 
     by = Date]
 }
-<<shortfall regressions>>=
+<<shortfall regressions, warning = F>>=
 # take only 1st member to form group level data
 X[, gnum := 1:.N, by = .(groupid, Date)]
 X[, c("LargeSize", "WithGrace", "InKind") := 0L]
 X[!grepl("tra", Arm), LargeSize := 1L]
-X[grepl("gr|co", Arm), WithGrace := 1L]
-X[grepl("co", Arm), InKind := 1L]
+X[grepl("gr|ca", Arm), WithGrace := 1L]
+X[grepl("ca", Arm), InKind := 1L]
 X[, Attributes := "traditional"]
 X[!grepl("tra", Arm), Attributes := "LargeSize"]
-X[grepl("gr|co", Arm), Attributes := "LargeSizeAndWithGrace"]
-X[grepl("co", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
+X[grepl("gr|ca", Arm), Attributes := "LargeSizeAndWithGrace"]
+X[grepl("ca", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
 X[, Attributes := factor(Attributes, levels = c("traditional", "LargeSize", 
   "LargeSizeAndWithGrace", "LargeSizeAndWithGraceAndInKind"))]
+qsave(X, paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
+X <- qread(paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
 X1 <- X[gnum == 1, ]
 jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
 X[, o800 := 0L]
@@ -329,7 +346,7 @@ subst.table <- matrix(
     "traditional:", "",
     "large g", "LargeG",
     "large", "Large",
-    "cow", "Cattle",
+    "cattle", "Cattle",
     "Attributes.*And", "",
     "Attributes", "",
     "LargeSize", "Upfront",
@@ -414,8 +431,8 @@ for (m in 1:length(reglists.header)) {
       rownames(x))
     x
     })
-  r.N <- unlist(lapply(ro, "[[", 8))
-  r.M <- unlist(lapply(ro, "[[", 6))
+  r.N <- unlist(lapply(ro, "[[", "N"))
+  r.M <- unlist(lapply(ro, "[[", "clusters.M"))
   r.R <- unlist(lapply(rlist, function(x) round(summary(x)$adj, 3)))
   r.tab <- tabs2latex3(ro.estlist, digits = 2, use.Pvalue = T, xx.yyy = T)
   # reorder rows: rn.new #

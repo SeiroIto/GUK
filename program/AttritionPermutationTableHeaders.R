@@ -2,7 +2,7 @@ vartobetested <- c(
   "HeadLiteracy", "HeadAge", 
   "HHsize", "Arm", "FloodInRd1", 
   "NLHAssetAmount", "PAssetAmount", 
-  "TotalImputedValue", "NumCows", "NetValue", "BroadNetValue",
+  "TotalImputedValue", "NumCows", "NetValue", "NetBroadValue",
   "RiskPrefVal", "TimePref1Val", "TimePref2Val", "PresentBias")
 selection.criteria <- c(
   "Attrited", 

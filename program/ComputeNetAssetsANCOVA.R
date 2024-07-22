@@ -110,49 +110,33 @@ addmargins(table(NeA1R[o800 == 1L,
 # NeA1R[, RNLAssetValue := RNLHAssetAmount + PAssetAmount] # not incl. livestock
 # NeA1R[, RBroadNLAssetValue := RBroadNLHAssetAmount + PAssetAmount] # not incl. livestock
 # NeA1R[, RNarrowNLAssetValue := RNarrowNLHAssetAmount + PAssetAmount] # not incl. livestock
-# Define NetValue, NarrowNetValue, etc.
-#   NarrowHAssetAmount, HAssetAmount are created in
-#   \subsubsection{Productive and household Assets} of read_cleaned_data.rnw
+# Define NetValue.
+#   NLAssetAmount is created in
+#    xas[, NLAssetAmount := NLHAssetAmount+PAssetAmount]
+#    xas[, BroadNLAssetAmount := BroadNLHAssetAmount+PAssetAmount]
+#   chunk: define asset amounts of read_cleaned_data.rnw
 NeA1R[, TotalValue := TotalImputedValue + NLAssetAmount]
 NeA1R[, Total2Value := TotalImputed2Value + NLAssetAmount]
-#NeA1R[, NarrowTotalValue := TotalImputedValue + NarrowNLAssetAmount]
-#NeA1R[, NarrowTotal2Value := TotalImputed2Value + NarrowNLAssetAmount]
-NeA1R[, BroadTotalValue := TotalImputedValue + BroadNLAssetAmount]
+NeA1R[, TotalBroadValue := TotalImputedValue + BroadNLAssetAmount]
 NeA1R[, ProdValue := TotalImputedValue + PAssetAmount]
-#NeA1R[, RTotalValue := TotalImputedValue + RNLAssetAmount]
-#NeA1R[, RNarrowTotalValue := TotalImputedValue + RNarrowNLAssetAmount]
-#NeA1R[, RBroadTotalValue := TotalImputedValue + RBroadNLAssetAmount]
 NeA1R[, TotalDebt := a2b(DebtOutstanding.before, NA, 0) + a2b(NonNGOBal, NA, 0)]
 # NetValueOld: Subtract GUK and nonGUK [NonNGOBal] borrowing.
 # NetValue: Subtract only nonGUK borrowing. Asset items: completeAsset
-# NarrowNetValue: Subtract only nonGUK borrowing. Asset items: NarrowCHAsset=completeAsset-radio-cassette player.
 NeA1R[, NetValue := TotalValue - TotalDebt]
-#NeA1R[, NetValueGUK := TotalValue - a2b(DebtOutstanding.before, NA, 0)]
 NeA1R[, NetValueOld := TotalValue - TotalDebt]
 NeA1R[, Net2Value := Total2Value - TotalDebt]
-#NeA1R[, NarrowNetValue := NarrowTotalValue - TotalDebt]
-#NeA1R[, NarrowNet2Value := NarrowTotal2Value - TotalDebt]
-NeA1R[, BroadNetValue := BroadTotalValue - TotalDebt]
-#NeA1R[, RNetValue := RTotalValue - TotalDebt]
-#NeA1R[, RNarrowNetValue := RNarrowTotalValue - TotalDebt]
-#NeA1R[, RBroadNetValue := RBroadTotalValue - TotalDebt]
+NeA1R[, NetBroadValue := TotalBroadValue - TotalDebt]
 # NetNLAssetValue: Net non livestock asset values.
-# NarrowNetNLAssetValue: Narrow net non livestock asset values.
 NeA1R[, NetNLAssetValue := NLAssetAmount - TotalDebt]
-# NeA1R[, NarrowNetNLAssetValue := NarrowNLAssetAmount - TotalDebt]
-# NeA1R[, BroadNetNLAssetValue := BroadNLAssetAmount - TotalDebt]
 NeA1R[, c(#"TotalImputedValue", "NLHAssetAmount", 
   "NarrowNLHAssetAmount", 
   "BroadNLHAssetAmount", "TotalValue", "Total2Value") := NULL]
 NeA1R[, grepout("before", colnames(NeA1R)) := NULL]
 cat("\n\nNumber of obs by membership status and attrition\n")
 print(addmargins(table0(NeA1R[o800 == 1L & tee == 1, .(BStatus, AttritIn)])))
-#print(addmargins(table0(NeA1R[o800 == 1L & tee == 1, .(TradGroup, AttritIn)])))
-#print(addmargins(table0(NeA1R[o800 == 1L & tee == 1, .(Arm, AttritIn)])))
-#print( addmargins(table0(NeA1R[!grepl("tw|dou", TradGroup)&o800==1L&tee==1, .(Arm, AttritIn)])))
 NeA1R <- unique(NeA1R)
 # Inital values
-IniVariables <- grepout("Total2?V|Net2?V|NL|PAsse|ProdV|HHsize|HeadL|NumCows$", colnames(NeA1R))
+IniVariables <- grepout("Total2?V|NetBroadV|Net2?V|NL|PAsse|ProdV|HHsize|HeadL|NumCows$", colnames(NeA1R))
 setkey(NeA1R, hhid, tee)
 NeA1R[, paste0(IniVariables, 0) := .SD[1, ], by = hhid, .SDcols = IniVariables]
 # create PureControl
@@ -189,28 +173,28 @@ NeA1R[
 NeA1R2 <- NeA1R[!grepl("tw|dou", TradGroup), ]
 # Select o800 but not dropping 24HHs in trad
 NeA1R8 <- NeA1R[o800 == 1L, ]
+# Define the estimation sample: NeA1
 # To drop 24 HHs in trad, set UseTrimmedSample = T in EstimationMemo_OptionSetting.rnw
 if (UseTrimmedSample) NeA1 <- NeA1R2[tee > 1, ] else NeA1 <- NeA1R[tee > 1, ]
 NeA1[, grepout("RM", colnames(NeA1)) := NULL]
 NeA1R8[, grepout("RM", colnames(NeA1R8)) := NULL]
 # Save data for estimation and summary error bar figure
-# We base our analysis on NeA1R2 (UseTrimmedSample == T).
-saveRDS(NeA1, paste0(pathsaveHere, "NarrowNetAssetsRegData.rds"))
-saveRDS(NeA1R, paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
-saveRDS(NeA1R2, paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
-saveRDS(NeA1R8, paste0(pathsaveHere, "NarrowNetAssetsOnly800ANCOVA.rds"))
-write.tablev(NeA1R2, paste0(pathsaveHere, "NarrowNetAssetsANCOVA.prn"), 
+# We base our analysis on NeA1R2 (UseTrimmedSample == T that dropped 24 HHs).
+saveRDS(NeA1, paste0(pathsaveHere, "NetAssetsRegData.rds"))
+saveRDS(NeA1R, paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
+saveRDS(NeA1R2, paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
+saveRDS(NeA1R8, paste0(pathsaveHere, "NetAssetsOnly800ANCOVA.rds"))
+write.tablev(NeA1R2, paste0(pathsaveHere, "NetAssetsANCOVA.prn"), 
   colnamestrue = F)
 
 ## NeAFig data for error bar plots
 # NeA1R2 is o800 members with 26 dropped from traditional
-NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
 NeAFig = copy(NeA1R2)
 # Note: NarrowNetValue = RNarrowNetValue because cassette players and radio are excluded
 NeAfig <- NeAFig[, .(Arm, groupid, hhid, o800, UDdummyUltraPoor, tee, BStatus,
-  NarrowPAssetAmount, PAssetAmount, ProdValue, #NarrowNetValue, 
-  NetValue, #RNetValue, 
-  BroadNetValue#, RBroadNetValue
+  NLHAssetAmount, PAssetAmount, ProdValue, 
+  NetValue, NetBroadValue
   )]
 setnames(NeAfig, "UDdummyUltraPoor", "UltraPoor")
 NeAfig[, povertystatus := "ultra poor"]
@@ -287,8 +271,6 @@ saveRDS(NeAfig, paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 saveRDS(NeAfig0, paste0(pathsaveHere, "NetAssetsFigureMeanData.rds"))
 saveRDS(NeAfigAll, paste0(pathsaveHere, "AllNetAssetsFigureMeanData.rds"))
 saveRDS(cpneaAll, paste0(pathsaveHere, "CPNetAssetsFigureMeanData.rds"))
-#saveRDS(nnetAD, paste0(pathsaveHere, "NarrowNetAssetsFigure.rds"))
-#saveRDS(rnnetAD, paste0(pathsaveHere, "RNarrowNetAssetsFigure.rds"))
 
 #cat("\n\nNumber of obs based on narrow assets\n")
 #print(addmargins(table0(NeA1R2[, .(Arm, tee)])))

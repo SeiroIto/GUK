@@ -28,6 +28,7 @@ program/*.out
 program/*.toc
 program/*.dvi
 program/EstimationMemo*/*
+program/2024July18Backup/*
 program/cache/*
 program/figure/*
 program/table/*

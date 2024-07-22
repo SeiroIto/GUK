@@ -1,0 +1,15 @@
+ hvMofTA	average change = 0 (of males in trad school i)	Intercept + School = MofT	\verb|"\\(Intercept\\)" "^dummyJunior$" "^dummyHigh$"|	addcovaMofT[c(1, i)]\\
+ hvFofTA	average change = 0 (of females in trad school i)	 Intercept+School+^Female$+Female.School = hvMofTA + FofT	\verb|^Female$, ^dummyJunior.Female$, ^dummyHigh.Female$|	addcovaFofT[c(1, i)]\\
+ hvMofNA	average change = 0 (of nontrad arm g at school i)	addcovaMofT	\verb|\\(Intercept\\), ^dummyJunior$, ^dummyHigh$|
+ addcovaMofN	 intercept + School + Arm + Arm.School = hvMofTA + MofN	\verb|^dummyLarge$, ^dummyLarge.dummyJunior$, ^dummyLarge.dummyHigh$|& addcovaMofN[c(1, i)]\\
+ hvFofNA	average change = 0 (of nontrad Arm g at School i for females)	Intercept+School+dummyInKind.School+Female+dummyInKind.School.Female= hvMofNA + FofN	& addcovaFofN[c(1, i)]\\
+ hvMofN	average difference = 0 (of nontrad Arm g relative to trad, at School i)	hvMofNA - hvMofTA = Arm + Arm.School	\verb|dummyInKind + dummyInKind.School|	addcovaMofN[c(1, i)]\\
+ hvFofN	difference = 0 (of nontrad Arm g females to trad females, at School i)	hvFofNA - hvFofTA = Arm.Female + Arm.School.Female Female + School.Female + dummyInKind.School+dummyInKind.School.Female - (Female + School.Female) = dummyInKind.School+dummyInKind.School.Female	addcovaFofN[i]\\
+ hvMofTinT	trad timeX school i = trad period 2 school i	School + TimeX + School.TimeX - School = TimeX + School.TimeX	addteeMofTinT[c(1 ,i)]\\
+ hvFofTinT	female trad timeX school i = female trad period 2 school i	School + TimeX + Female + School.TimeX + School.Female + Female.TimeX + School.Female.TimeX - (School + Female + School.Female)= TimeX + School.TimeX + Female.TimeX + School.Female.TimeX  = hvMofTinT + FofTinT	addteeFofTinT[c(1 ,i)]\\
+ hvMofTinTL	cumulative change = 0 (of trad school i in period X)	Intercept+School+TimeX+School.TimeX = hvMofTA + hvMofTinT	\\
+ hvFofTinTL	& hvMofTinTL + hvFofTA + hvFofTinT	\\
+hvMofNinT	diff = 0 (of nontrad relative to concurrent trad, of school i in period X)	TimeX + Arm.TimeX + School.TimeX + Arm.School.TimeX - (TimeX + School.TimeX)= Arm.TimeX + Arm.School.TimeX = MofNinT	addteeMofNinT[c(1 ,i)]\\
+hvFofNinT	diff = 0 (of female nontrad relative to concurrent female trad, of school i in period X)	Arm.TimeX + Arm.School.TimeX + Arm.Female.TimeX + Arm.School.Female.TimeX = hvMofNinT + FofNinT	addteeFofNinT[c(1 ,i)]\\
+ hvMofNinTL	cumulative change = 0 (of nontrad school i in period X)& (intercept) + School + TimeX + School.TimeX + Arm + Arm.School + Arm.TimeX + Arm.School.TimeX = hvMofTinTL + hvMofN + hvMofNinT	\\
+ hvFofNinTL	cumulative change = 0 (of female nontrad school i in period X)	(intercept) + School + TimeX + School.TimeX + Arm + Arm.School + Arm.TimeX + Arm.School.TimeX + Female + School.Female + Female.TimeX + School.Female.TimeX + Arm.Female + Arm.School.Female +  Arm.Female.TimeX + Arm.School.Female.TimeX = hvMofNinTL + hvFofT + hvFofTinT + hvFofN + hvFofNinT = hvFofTinTL + hvFofN + hvFofNinT	addteeFofNinT[c(1, i)]

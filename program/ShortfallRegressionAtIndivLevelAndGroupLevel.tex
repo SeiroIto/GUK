@@ -1,6 +1,6 @@
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); system("recycle c:/data/GUK/analysis/program/cache/ShortfallRegressionAtIndivLevelAndGroupLevel/"); library(knitr); knit("ShortfallRegressionAtIndivLevelAndGroupLevel.rnw", "ShortfallRegressionAtIndivLevelAndGroupLevel.tex"); system("platex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("pbibtex ShortfallRegressionAtIndivLevelAndGroupLevel"); system("dvipdfmx ShortfallRegressionAtIndivLevelAndGroupLevel")
 
-\input{c:/migrate/R/knitrPreamble/knitr_preamble.rnw}
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
 \renewcommand\Routcolor{\color{gray30}}
 \newtheorem{finding}{Finding}[section]
 \makeatletter
@@ -58,10 +58,6 @@ connection/.style={thick, dotted},
 
 \hfil Seiro Ito
 
-\setcounter{tocdepth}{3}
-\tableofcontents
-\newpage
-
 \setlength{\parindent}{1em}
 \vspace{2ex}
 
@@ -70,12 +66,22 @@ Need: packages \textsf{lmtest, sandwich}.
 This is a file whose regression results to be used in read\_admin\_data.rnw.
 
 
+Key variables defined in read\_admin\_data.rnw:
+\begin{itemize}
+\vspace{1.0ex}\setlength{\itemsep}{1.0ex}\setlength{\baselineskip}{12pt}
+\item	\verb|adw[, Shortfall := PlannedInstallment - value.repay]|
+\item	\verb|adw[, ShortfallRate := Shortfall/PlannedInstallment]|
+\item	PlannedInstallment := 120, with a grace period, PlannedInstallment := 190
+\item	\verb|EffectiveRepayment := value.repay + value.NetSaving| (same def as value.Paid...)
+\end{itemize}
 
 
 
 
 
-If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interaction).
+
+
+If I take village*Date fixed effects, mean of Arm*Date becomes zero hence changes by Arm*Year are elimiated. So I will take village fixed effects and date (=year-month) fixed effects (not their interactions).
 \begin{Schunk}
 \begin{Sinput}
 for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) & 
@@ -95,14 +101,16 @@ for (i in which(grepl("val|Lag|Shor|Savi|Prof|Miss|Othe|Cum", colnames(X)) &
 X[, gnum := 1:.N, by = .(groupid, Date)]
 X[, c("LargeSize", "WithGrace", "InKind") := 0L]
 X[!grepl("tra", Arm), LargeSize := 1L]
-X[grepl("gr|co", Arm), WithGrace := 1L]
-X[grepl("co", Arm), InKind := 1L]
+X[grepl("gr|ca", Arm), WithGrace := 1L]
+X[grepl("ca", Arm), InKind := 1L]
 X[, Attributes := "traditional"]
 X[!grepl("tra", Arm), Attributes := "LargeSize"]
-X[grepl("gr|co", Arm), Attributes := "LargeSizeAndWithGrace"]
-X[grepl("co", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
+X[grepl("gr|ca", Arm), Attributes := "LargeSizeAndWithGrace"]
+X[grepl("ca", Arm), Attributes := "LargeSizeAndWithGraceAndInKind"]
 X[, Attributes := factor(Attributes, levels = c("traditional", "LargeSize", 
   "LargeSizeAndWithGrace", "LargeSizeAndWithGraceAndInKind"))]
+qsave(X, paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
+X <- qread(paste0(pathsaveEstimationMemo, "ShortFallRegressionData.qs"))
 X1 <- X[gnum == 1, ]
 jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
 X[, o800 := 0L]
@@ -113,7 +121,7 @@ addmargins(table0(X2[, .(TeeInLY = 1:.N), by = .(groupid, LoanYear)][
   TeeInLY == 1, LoanYear]))
 \end{Sinput}
 \begin{Soutput}
-
+x
   1   2   3   4 Sum 
  69  69  69  69 276 
 \end{Soutput}
@@ -268,7 +276,7 @@ subst.table <- matrix(
     "traditional:", "",
     "large g", "LargeG",
     "large", "Large",
-    "cow", "Cattle",
+    "cattle", "Cattle",
     "Attributes.*And", "",
     "Attributes", "",
     "LargeSize", "Upfront",
@@ -353,8 +361,8 @@ for (m in 1:length(reglists.header)) {
       rownames(x))
     x
     })
-  r.N <- unlist(lapply(ro, "[[", 8))
-  r.M <- unlist(lapply(ro, "[[", 6))
+  r.N <- unlist(lapply(ro, "[[", "N"))
+  r.M <- unlist(lapply(ro, "[[", "clusters.M"))
   r.R <- unlist(lapply(rlist, function(x) round(summary(x)$adj, 3)))
   r.tab <- tabs2latex3(ro.estlist, digits = 2, use.Pvalue = T, xx.yyy = T)
   # reorder rows: rn.new #
@@ -442,7 +450,7 @@ for (m in 1:length(reglists.header)) {
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
@@ -461,7 +469,7 @@ Notes: & 1. & Estimates of repayment shortfall controlling for group/village and
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
@@ -491,7 +499,7 @@ Notes: & 1. & Estimates of repayment shortfall controlling for group/village and
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
@@ -510,7 +518,7 @@ Notes: & 1. & Estimates of repayment shortfall controlling for group/village and
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
@@ -540,7 +548,7 @@ Notes: & 1. & Estimates of repayment shortfall controlling for group/village and
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}
@@ -559,7 +567,7 @@ Notes: & 1. & Estimates of repayment shortfall controlling for group/village and
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
-Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}LY_{2}+\bfb'_{2}\bfdee_{i}LY_{2}+b_{3}LY_{3}+\bfb'_{3}\bfdee_{i}LY_{3}+b_{4}LY_{4}+\bfb'_{4}\bfdee_{i}LY_{4}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $LY_{2}, LY_{3}, LY_{4}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
+Notes: & 1. & Estimates of repayment shortfall controlling for group/village and year-month fixed effects using 48 month administrative records. The estimated model is $\tilde{y}_{it}=b_{1}+\bfb'_{1}\bfdee_{i}+b_{2}\mbox{\textsf{LY2}}+\bfb'_{2}\bfdee_{i}\mbox{\textsf{LY2}}+b_{3}\mbox{\textsf{LY3}}+\bfb'_{3}\bfdee_{i}\mbox{\textsf{LY3}}+b_{4}\mbox{\textsf{LY4}}+\bfb'_{4}\bfdee_{i}\mbox{\textsf{LY4}}+\tilde{e}_{it}$, where $\tilde{x}_{it}$ is group and time demeaned value of variable $x$, $t=1,\dots, 48$ is an ellapsed month index, $\bfdee_{i}$ is a three element vector of arms or functional attributes, $\mbox{\textsf{LY2}}, \mbox{\textsf{LY3}}, \mbox{\textsf{LY4}}$ are indicator variables of loan years 2, 3, 4. Loan years are defined with the ellapsed months since the first disbursement date, 13-24 for \textsf{LY2}, 25-36 for \textsf{LY3}, and 37-48 for \textsf{LY4}. Fixed effects are controlled by differencing out respecive means from the data matrix. Shortfall $y_{it}$ is (planned installment) - (actual repayment). \textsf{Group shortfall}$_{t-1}$ indicates a one month lagged mean shortfall amount of a group. \textsf{Per member group net saving}$_{t-1}$ and \textsf{Per member cumulative group net saving (BDT1000)}$_{t-1}$ give one month lagged average net saving in a group and their accumulated sums, respectively. Median group repayent shortfall rate is -1.42. 69 groups participated in the lending program. \\
 & 2. & Standard errors are clustered at group (village) level.
 \end{tabular}
 \end{minipage}

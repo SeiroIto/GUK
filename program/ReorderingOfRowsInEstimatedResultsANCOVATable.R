@@ -27,6 +27,7 @@ rn.new1 <- list(
   "^dummyWithGrace$",
   "^dummyInKind$",
   "^dummyOwnCattle0$",
+  "^dummyHadCows$",
   "^dummyAdiCattle0$",
   "^dummyCash$",
   "^dummyModeratelyPoor$",
@@ -34,8 +35,8 @@ rn.new1 <- list(
   "^PureControl$")
 Rn <- unlist(lapply(rn.new1, AppendThisMatch, rn))
 RN <- c(rbind(Rn, Rn+1))
-  # Arm*OwnCattle0, Arm*AdiCattle0
-Rn <- AppendThisMatch("(?=^dummy.*?le0\\.[TLCWI].*?[a-z]$)", rn, Perl = T)
+  # Arm*OwnCattle0, HadCows*Arm, Arm*AdiCattle0
+Rn <- AppendThisMatch("(?=^dummy.*?le0\\.[TLCWI].*?[a-z]$)(?=^dummyHadC\\.[TLCWI].*?[a-z]$)", rn, Perl = T)
 RN <- c(RN, c(rbind(Rn, Rn+1)))
   # dummy*School
 Rn <- AppendThisMatch("(?=^dummy[LCWMUNI].*dummy[JH])(?!.*Female)(?!.*Time)(?!.*HadCows)", rn, Perl = T)
@@ -111,15 +112,27 @@ rn.list6 <- list("^(?=dummy[TLCSWIUMNAO].*\\.Time.?4$)(?=.*Female)(?!.*HadCows)"
   "^(?=dummy[PJH].*\\.Time.?4$)(?=.*Female)(?!.*HadCows)(?!.*HadCows)")
 Rn <- unlist(lapply(rn.list6, AppendThisMatch, rn, T))
 RN <- c(RN, c(rbind(Rn, Rn+1)))
-  # Arm*HadCows
+  # Arm*HadCows*Time
 rn.list7 <- list("(?=^dummyHadCows$)", 
-  "(?=^dummyHadCows\\.dummy[TLCWI].*[a-z]$)",
+  "(?=^dummyHadCows\\.[TLCWI].*[a-z]$)",
   "(?=^dummyHadCows.T.*2)", 
-  "(?=^dummyHadCows\\.dummy[TLCWI].*\\.T.*2)", 
+  "(?=^dummyHadCows\\.[TLCWI].*\\.T.*2)", 
   "(?=^dummyHadCows.T.*3)", 
-  "(?=^dummyHadCows\\.dummy[TLCWI].*\\.T.*3)", 
+  "(?=^dummyHadCows\\.[TLCWI].*\\.T.*3)", 
   "(?=^dummyHadCows.T.*4)", 
-  "(?=^dummyHadCows\\.dummy[TLCWI].*\\.T.*4)", 
+  "(?=^dummyHadCows\\.[TLCWI].*\\.T.*4)", 
+  "(?=^NumCowsO)")
+Rn <- unlist(lapply(rn.list7, AppendThisMatch, rn, T))
+RN <- c(RN, c(rbind(Rn, Rn+1)))
+  # Arm*AdiCattle
+rn.list7 <- list("(?=^dummyAdiCattle0$)", 
+  "(?=^dummyAdiCattle0\\.dummy[TLCWI].*[a-z]$)",
+  "(?=^dummyAdiCattle0.T.*2)", 
+  "(?=^dummyAdiCattle0\\.dummy[TLCWI].*\\.T.*2)", 
+  "(?=^dummyAdiCattle0.T.*3)", 
+  "(?=^dummyAdiCattle0\\.dummy[TLCWI].*\\.T.*3)", 
+  "(?=^dummyAdiCattle0.T.*4)", 
+  "(?=^dummyAdiCattle0\\.dummy[TLCWI].*\\.T.*4)", 
   "(?=^NumCowsO)")
 Rn <- unlist(lapply(rn.list7, AppendThisMatch, rn, T))
 RN <- c(RN, c(rbind(Rn, Rn+1)))

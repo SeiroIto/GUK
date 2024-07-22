@@ -1548,7 +1548,7 @@ hasL[, Added := any(grepl("y", purchase_in_last_1_year)), by = hhid]
 hasL[, EarliestResAmount := amount[!is.na(amount)][1], by = hhid]
 hasL[!Added & is.na(amount), amount := EarliestResAmount, by = hhid]
 @
-There are 3 types of land reported. Use only aggregated total value. To do so, one needs to keep only the first type of land holding. In the file, all 3 types are stored so one needs to drop redundant entries whenever necessary.
+There are 3 types (agricultural, residential, fallow/submerged) of land reported. Use only aggregated total value. To do so, one needs to keep only the first type of land holding. In the file, all 3 types are stored so one needs to drop redundant entries whenever necessary.
 <<echo = T>>=
 # If purchased in last 1 year, assume that all value is acquired in last 1 year 
 # and set baseline amount to zero

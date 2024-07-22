@@ -1,5 +1,5 @@
 subst.tablePerm <- matrix(
-  c("^Arm$", "Prop. of non-\\textsf{Traditional} arms",
+  c("^Arm$", "Prop. of non-\\\\textsf{Traditional} arms",
     "HeadA.*", "Head age",
     "HHsize", "Household size",
     "HeadLi.*", "Head literate",
@@ -9,8 +9,8 @@ subst.tablePerm <- matrix(
     "Lives.*", "Livestock value",
     "NumC.*", "Number of cattle holding",
     "^NetValue$", "Net asset value",
-    "^BroadNetValue$", "Broad net asset value",
-    "Risk.*", "Risk preference",
-    "TimePr.*1.*", "Time preference 1",
-    "TimePr.*2.*", "Time preference 2",
+    "^NetBroadValue$", "Broad net asset value",
+    "Risk.*", "Risk preference value",
+    "TimePr.*1.*", "Time preference value 1",
+    "TimePr.*2.*", "Time preference value 2",
     "^PresentB.*", "Present bias"), byrow = T, ncol = 2)

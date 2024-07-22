@@ -108,7 +108,7 @@ if (ThisIsNoFlood)
 # flags InitialSample in XXXInitialSample.rds and estimates. 
 # EstimationMemo_ANCOVA2.rnw is for 2020 Nov
 <<original HH regressions for 2020 Nov, eval = F, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA2.rnw'>>=
-# EstimationMemo_ANCOVA2.rnw is for 2024 June
+# EstimationMemo_ANCOVA3.rnw is for 2024 June
 <<original HH regressions, eval = T, cache = F, child='c:/data/GUK/analysis/program/EstimationMemo_ANCOVA3.rnw'>>=
 @
 

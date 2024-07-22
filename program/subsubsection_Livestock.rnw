@@ -27,7 +27,7 @@ Separatingcoltitle <- NULL
 <<livestock regression estimation>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 <<TotalImputed2Value as regressand>>=
 FileName <- "LivestockAnnualPrice"
@@ -40,7 +40,7 @@ exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "LivestockCovariateSelectionANCOVA2.R"))
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 
 \subsubsection{Cattle holding}
@@ -69,7 +69,7 @@ source(paste0(pathprogram, "NumCowsCovariateSelectionANCOVA2.R"))
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 jay
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
 
 

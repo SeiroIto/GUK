@@ -5,6 +5,7 @@ if (grepl("Sch", FileName)) GroupVar <- rep("^HHMid$", jay)
 if (grepl("Con", FileName)) iniperiod <- 2 else iniperiod <- 1
 # k: index of regression tables
 estlist <- vector(mode = "list", length = length(listheader))
+FormulaList <- vector(mode = "list", length = length(listheader))
 # listheader (regression specifications) for net assets
 # "nea"    "neaP"   "neaa"   "neaT"   "neaTa"  "neaTP"  "neaTPa"
 #  nea: net assets, P: PovertyStatus, a:Attributes,
@@ -17,7 +18,7 @@ for (k in 1:length(listheader)) {
     DataToUse <- DataToUse2
 ###_ Estimate	###_
   Formulae <- DepMean <- IniMean <- e.T <- NULL
-  CovariateMean <- CovNames <- vector(mode = "list", length = jay)
+  CovariateMean <- CovNames <- formlist <- vector(mode = "list", length = jay)
   for (j in 1:jay) {
     x = copy(get(DataToUse[j]))
     # first, drop unnecessary variables for an ease of writing reg expr #
@@ -45,6 +46,9 @@ for (k in 1:length(listheader)) {
     CovNames[[j]] <- Covariates
     # third, write formula. If regression has time-varying slopes, drop intercept #
     # except for Assets, LabourIncome, FarmIncome
+    # Note: grepl("Sch|Income|Con|Ass|Liv|Num|Lan|Rep", FileNames) = T, so 
+    # 2nd conditioning !grepl("Sch|Income|Con|Ass|Liv|Num|Lan|Rep", FileName) is
+    # always F, so intercept is used for all estimation
     if (grepl("T", regsuffixes[k]) & !grepl("Sch|Income|Con|Ass|Liv|Num|Lan|Rep", FileName)) 
       fsim <- "~ -1 +" else fsim <- "~"
     # E.g., for j == 1, NetValue ~ dummyLarge + dummyLargeGrace + dummyCattle
@@ -88,9 +92,12 @@ for (k in 1:length(listheader)) {
     )
     CovM <- rbind("(Intercept)" = "", "p$_{(Intercept)}$" = "", CovM)
     CovariateMean[[j]] <- CovM
+  } # j: end of reg spec loop
+  FormulaList[[k]] <- Formulae
+  if ((PrintFormulae)) {
+    print0(exclheader[k])
+    print0(Formulae)
   }
-  print0(exclheader[k])
-  print0(Formulae)
 ###_ Collect estimates ###_
   # elist: list of ANCOVA estimation results objects #
   elist <- eval(parse(text = 
@@ -237,11 +244,14 @@ for (k in 1:length(listheader)) {
     c("N", e.N))
   centerBox <- 1.3
   if (grepl("Repay", FileName)) centerBox <- .88
+  ## Number of output tables: How many to be split into
+  #    Sch with T (3 tables), NumCows, NetAssets, income (2 tables), 
+  #    ByExperience (combine subsample tables after this file), others (1 table)
   if (
     grepl("Sch", FileName) & grepl("T", regsuffixes[k]) & 
      grepl("^s1$", DataToUse[k])
   )
-  { # if 1 starts
+  { # 1st if starts
     # save: divide a long table into 3 in time-varying regressions #
       e.ltxtb1 <- latextab(e.tb[1:(grep("hfill rd 3\\}$", rn)-1), ], 
         hleft = "\\scriptsize\\hfil$", 
@@ -283,13 +293,13 @@ for (k in 1:length(listheader)) {
           FileNameHeader[k], "ANCOVAEstimationResults_3.tex")
         , colnamestrue = F)
   } else if (
-    # if 1 ends
-     # NumCowsExperience, NetAssetExperience with Ta or TPa
-    grepl("NumCowsEx|NetAssetEx", FileName) & grepl("TP", regsuffixes[k])
+    # 1st if ends
+     # NumCows, NetAsset, Labour incomes, Schooling with TP or TPa
+    grepl("NumCows$|NetAssets$|inc|Sch", FileName) & grepl("TP", regsuffixes[k])
   )
-  { # if 2 starts
+  { # 2nd if starts
     # save: divide a long table into 2 in time-varying regressions #
-      e.ltxtb1 <- latextab(e.tb[1:(grep("hfill rd 3\\}$", rn)-1), ], 
+      e.ltxtb1 <- latextab(e.tb[1:(grep("hfill rd 4\\}$", rn)-1), ], 
         hleft = "\\scriptsize\\hfil$", 
         hcenter = c(3.5, rep(centerBox, ncol(e.tb)-1)), hright = "$", 
         headercolor = "gray80", adjustlineskip = "-.65ex", 
@@ -298,7 +308,7 @@ for (k in 1:length(listheader)) {
         separatingcolwidth = Separatingcolwidth, 
         separatingcoltitle = Separatingcoltitle, 
         addsubcoltitlehere = length(Addseparatingcols) > 0)
-      e.ltxtb2 <- latextab(e.tb[grep("hfill rd 3\\}$", rn):nrow(e.tb), ], 
+      e.ltxtb2 <- latextab(e.tb[grep("hfill rd 4\\}$", rn):nrow(e.tb), ], 
         hleft = "\\scriptsize\\hfil$", 
         hcenter = c(3.5, rep(centerBox, ncol(e.tb)-1)), hright = "$", 
         headercolor = "gray80", adjustlineskip = "-.65ex", 
@@ -320,18 +330,19 @@ for (k in 1:length(listheader)) {
           FileNameHeader[k], "ANCOVAEstimationResults_2.tex")
         , colnamestrue = F)
   } else if (
-    # if 2 ends
+    # 2nd if ends
      # livestock, net assets, num cows by cattle rearing experience: 
-     # unify (1), (2), ... of 3 tables into 1 table
-     # collect each (1), (2), ... and keep them to be cbind after running ANCOVAEstimationFile2.R
+     # To do so,  after running ANCOVAEstimationFile3.R:
+     #   unify (1), (2), ... of 3 tables into 1 table
+     #   collect each (1), (2), ... and keep them to be cbind
      # Each subsample is mm=a, o, n with k = 1, ..., length(listheader)
     grepl("ByExperience", FileName) 
   ) 
-  { # if 3 starts
+  { # 3rd if starts
     assign(paste0("etb", mm, k), e.tb)
-  } else { 
-  # if 3 ends
-  # all other starts
+  } else 
+   # 3rd if ends
+  { # all other starts
     # save: other tables #
       e.ltxtb <- latextab(e.tb, 
         hleft = "\\scriptsize\\hfil$", 
@@ -405,8 +416,9 @@ for (k in 1:length(listheader)) {
 }
 names(estlist) <- listheader
 # estlist[[k]][[j]][[c("lm", "robust", "data")]]
-# saveRDS(estlist, paste0(pathsaveHere, "ANCOVA_", FileName, ".rds"))
+saveRDS(estlist, paste0(pathsaveHere, "ANCOVA_", FileName, ".rds"))
 qsave(estlist, paste0(pathsaveHere, "ANCOVA_", FileName, ".qs"))
+qsave(FormulaList, paste0(pathsaveHere, "FormulaList", FileName, ".qs"))
 ###_  reset switches to default, drop inclX ###_
 remove(list = ls(pattern = "^incl.?\\d"))
 AddMeanStdColumn <- UseRawDataForDestat <- F

@@ -1,7 +1,7 @@
 Keep households with baseline household asset information. For productive assets, all households have baseline information but ownership is spattered. Net assets = Assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets \textit{including} radios and cassette players (which have possibly large errors). 
 
-<<cp net assets merge assets livestock saving data, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
+<<cp net assets merge assets livestock saving data for est and figure, cache = F, child='c:/data/GUK/analysis/program/MergeAllNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 @
 <<cp Net asset set parameters original HHs>>=
 FileName <- "CompletePanelNetAssets"
@@ -14,7 +14,7 @@ listheader <- paste0("nea", regsuffixes)
 <<cp net asset regression select covariates original HHs>>=
 source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
 <<get jay from cp net assets covariate selection>>=
-NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
 cat("NeA1R2")
 addmargins(table0(NeA1R2[, .(tee, NonNA = !is.na(ProdValue))]))
 addmargins(table0(NeA1R2[, .(tee, NonNA = !is.na(NetValue))]))
@@ -37,7 +37,7 @@ inclheader <- gsub("ex", "in", exclheader)
 <<cp net assets ANCOVA estimation>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 <<figure cp net asset values at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '>>=
 library(ggplot2)
 d2 <- subset(NeAfig, !is.na(Arm))

@@ -77,9 +77,7 @@ NeA1R[, NetValueGUK := TotalValue - a2b(DebtOutstanding.before, NA, 0)]
 # net assets old (subtract GUK and nonGUK borrowing)
 NeA1R[, NetValueOld := TotalValue - a2b(DebtOutstanding.before, NA, 0) - a2b(NetOutBal, NA, 0)]
 NeA1R[, NetValue := TotalValue - a2b(DebtOutstanding.before, NA, 0) - a2b(NonNGOBal, NA, 0)]
-#NeA1R[, NarrowNetValue := NarrowTotalValue - a2b(DebtOutstanding.before, NA, 0) - a2b(NonNGOBal, NA, 0)]
 NeA1R[, Net2Value := Total2Value - a2b(DebtOutstanding.before, NA, 0) - a2b(NonNGOBal, NA, 0)]
-#NeA1R[, NarrowNet2Value := NarrowTotal2Value - a2b(DebtOutstanding.before, NA, 0) - a2b(NonNGOBal, NA, 0)]
 NeA1R[, c("TotalImputedValue", "NLHAssetAmount", 
   "PAssetAmount", "TotalValue", "Total2Value") := NULL]
 NeA1R[, grepout("before|Narrow", colnames(NeA1R)) := NULL]

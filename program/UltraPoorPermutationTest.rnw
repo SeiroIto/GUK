@@ -1,0 +1,78 @@
+<<read destat data for ultra poor>>=
+asv <- readRDS(paste0(pathsaveHere, "DestatData.rds"))
+jds <- fread(paste0(pathreceived, "DataForJDS.prn"))
+asv[, poor := "Moderately poor"]
+asv[hhid %in% jds[grepl("up", pov), hhid], poor := "Ultra poor"]
+asv[, poor := factor(poor)]
+# asv already dropped anomalous disbursements under trad (776)
+asv1 <- asv[!grepl("tw|dou", TradGroup), ]
+# drop 2 loan receivers and group rejecters (706)
+asv3 <- asv[!grepl("gr", BStatus) & !grepl("tw|dou", TradGroup), ]
+X = copy(asv1)
+# 
+library(coin)
+X2[, tradnontrad := "Traditional"]
+X2[!grepl("rad", Arm), tradnontrad := "NonTraditional"]
+X2[, tradnontrad := factor(tradnontrad, levels = c("Traditional", "NonTraditional"))]
+
+RepayPermTestByArm <- vector(mode = "list", 3)
+RepayPermTestByArm <- list(Traditional = RepayPermTestByArm, Cattle = RepayPermTestByArm)
+
+VarsUP <- c("NetValue", "NumCows", "IRejected", "HHsize")
+VarsPermTestByPoor <- vector(mode = "list", length(VarsUP))
+for (i in 1:length(VarsUP)) 
+  VarsPermTestByPoor[[i]] <-  independence_test(
+      eval(parse(text=paste0(VarsUP[i], " ~ poor"))), 
+      data = X, distribution = approximate(nresample=PermRepTimes)
+    )
+qsave(VarsPermTestByPoor, 
+  paste0(pathsaveEstimationMemo, "VarsPermTestByPoor.qs"))
+@
+<<tabulate repayment UP permutation test>>=
+VarsPermTestByPoor <- qread(paste0(pathsaveEstimationMemo, "VarsPermTestByPoor.qs"))
+
+Xm <- X[, .(lapply(.SD,  function(x) round(mean(x, na.rm = T), 3))), 
+  .SDcols = VarsUP, by = poor] 
+Xo <- X[, .(lapply(.SD,  function(x) round(mean(x, na.rm = T), 3))), 
+  .SDcols = VarsUP] 
+setnames(Xm, "V1", "val")
+setnames(Xo, "V1", "valo")
+Xm[, val := as.numeric(val)]
+Xm[, vars := rep(VarsUP, 2)]
+XmW <- reshape(Xm, direction  = "wide", idvar = "poor", 
+  timevar = "vars", v.names = "val")
+x2 <- t(XmW)
+x2 <- cbind(x2, c("overall", unlist(Xo)))
+x2[grepl("NetV", rownames(x2)), ] <- 
+  formatC(as.numeric(x2[grepl("NetV", rownames(x2)), ]), format = "f", digits = 0)
+x2 <- data.table(variables = rownames(x2), x2)
+setnames(x2, c("Variables", "Ultra poor", "Moderately poor", "Overall"))
+x2 <- x2[-1, ]
+x2[, Variables := gsub("val.", "", Variables)]
+x2[, pvalue := unlist(lapply(VarsPermTestByPoor, 
+  function(x) paste0(formatC(coin::midpvalue(x)[1]*100, format = "f", digits = 2), "\\%")))]
+rn <- x2[, Variables]
+source(paste0(pathprogram, "SubstTableANCOVA.R"))
+for (i in 1:nrow(subst.tableA)) 
+  rn <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn)
+rn <- paste0("\\makebox[3cm]{\\hfill ", rn, "}")
+x2[, Variables := rn]
+x2 <- as.matrix(x2)
+colnames(x2)[grep("pv", colnames(x2))] <- " " 
+x2tab <- latextab(x2, 
+  hleft = c("\\hfill\\scriptsize ", rep("\\scriptsize\\hfil$", ncol(x2)-1)), 
+  hcenter = c(3, rep(1.75, ncol(x2)-1)), 
+  hright = c("", rep("$", ncol(x2)-1)), 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 3, 
+  separatingcolwidth = .1,
+  separatingcoltitle = c("Mean", "$p$ value"),
+  addsubcoltitlehere = T
+  )
+write.tablev(x2tab,  
+  paste0(pathsavePerm, "UltraPoorVsModeratelyPoorBaselineVarsPermTestResults.tex")
+, colnamestrue = F)
+@
+
+

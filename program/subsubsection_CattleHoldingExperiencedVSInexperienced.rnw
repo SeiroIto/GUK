@@ -3,8 +3,8 @@
 %  source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
 <<>>=
 remove(list = ls(pattern = "^incl.?\\d"))
-lvoEN = copy(lvoE)
-lvo3EN = copy(lvo3E)
+lvoEN = copy(lvoE) # all periods
+lvo3EN = copy(lvo3E) # period 4 only
 #lvoEN[, TotalImputedValue:= NULL]
 #lvo3EN[, TotalImputedValue:= NULL]
 lvoEN[, grepout("TotalImp.*Value$|Self|edV.*0", colnames(lvoEN)) := NULL]
@@ -23,7 +23,7 @@ regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
 listheader <- paste0("nae", regsuffixes)
 <<numcows experience regression select covariates original HHs>>=
 source(paste0(pathprogram, "NumCowsExperienceCovariateSelectionANCOVA2.R"))
-<<get jay from numcows experience covariate selection>>=
+<<get jay from numcows 2 experience covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 DataToUse1 <- DataToUse2 <- rep("lvoEN", 7)
@@ -33,14 +33,14 @@ Regressands <- rep("NumCows", jay)
 tableboxwidth <- 4.5
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
-<<display covariates numcows experience ancova, cache = F, warning = F, eval = T, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
+<<display covariates numcows 2 experience ancova, cache = F, warning = F, eval = T, child='c:/data/GUK/analysis/program/DisplayCovariates.rnw'>>=
 # source(paste0(pathprogram, "DisplayCovariates.R"))
-<<numcows experience ANCOVA estimation>>=
+<<numcows with 2 experience covariates>>=
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
-source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 @
-<<cow holding regression by experience>>=
+<<numcows 2 separate subsample by experience>>=
 FileName0 <- "NumCowsByExperience"
 Regressands <- rep("NumCows", 7)
 DataToUse1 <- rep("lvoEN", 7)
@@ -54,6 +54,7 @@ inclheader <- gsub("ex", "in", exclheader)
 dig.depmean <- 2
 if (any(grepl("NumCowsOwnedAtRd1", colnames(lvoEN)))) 
   setnames(lvoEN, "NumCowsOwnedAtRd1", "NumCows0")
+# numcows subsample by experience: own, adi, none
 lvoENo <- lvoEN[OwnCattle == 1L, ]
 lvoENa <- lvoEN[AdiCattle == 1L, ]
 lvoENn <- lvoEN[!(OwnCattle == 1L | AdiCattle == 1L), ]
@@ -77,7 +78,7 @@ for (mm in c("a", "o", "n"))
   exclheader <- paste0("excl", regsuffixes)
   inclheader <- gsub("ex", "in", exclheader)
   AddMeanStdColumn <- UseRawDataForDestat <- T
-  source(paste0(pathprogram, "ANCOVAEstimationFile2.R"))
+  source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 }
 centerBox <- 1.1
 for (k in 1:length(listheader)) {

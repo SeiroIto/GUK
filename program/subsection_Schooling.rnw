@@ -27,24 +27,29 @@ Number of individuals with NAs in \textsf{Enrolled}: \Sexpr{nrow(s1x[is.na(Enrol
 %Mostly older children (\Sexpr{round(mean(s.1[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled), Age_1], na.rm = T), 1)} in \textsf{s.2}) but with a high reported enrollment rate (\Sexpr{round(mean(s.1[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s1x}, \Sexpr{round(mean(s.2[is.na(Enrolled) & tee == 4, Enrolled]), 1)} for \textsf{s.2}) at rd 4. We will substitute relevant schooling levels to \textsf{Enrolled}.
 Check missingness in junior or high school level information at baseline.
 <<tab s1x dummyprimary, echo = T>>=
-table0(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum))
+addmargins(table0(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)]))
 @
-Drop \Sexpr{sum(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum)==0)} obs without school level information.
+Drop \Sexpr{sum(apply(s1x[o800 == 1L & tee == 1, .(dummyJunior, dummyHigh)], 1, sum)==0)} obs without school level information. (...?)
 <<Drop obs without school level information>>=
 s1x <- s1x[apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum) == 1, ]
 @
+Read school initial sample data.
 <<ReadTrimSchooling ANCOVA in R file, cache = F, warning = F>>=
 gc()
 source(paste0(pathprogram, "ReadTrimSchoolingANCOVA.R"))
 <<schooling regression set parameters ANCOVA>>=
 FileName <- "Schooling"
-FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+FileNameHeader <- c("", "Attributes", "PovertyStatus",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 regsuffixes <- c("", "a", "P", "T", "Ta")
 listheader <- paste0("sc", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 <<schooling select covariates ANCOVA>>=
-source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA2.R"))
+#source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA2.R"))
+source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA3.R"))
 <<get jay from schooling covariate selection>>=
 # number of regressions per specification k=1, ..., length(regsuffixes)
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))

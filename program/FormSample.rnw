@@ -1,29 +1,32 @@
 The majority of descriptive statistics are related to assets. We base our descriptive statistics on the asset data.
-<<merge narrow assets livestock saving data forming sample, cache = F, child='c:/data/GUK/analysis/program/MergeAllNarrowNetAssetsANCOVA.rnw'>>=
-#  source(paste0(pathprogram, "MergeAllNarrowNetAssetsANCOVA.R"))
-# this gives NarrowNetAssetsANCOVATrimmed.rds
+<<merge assets livestock saving data forming sample, cache = F, child='c:/data/GUK/analysis/program/ComputeNetAssetsANCOVA.rnw'>>=
+#  source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
+# this gives NetAssetsANCOVATrimmed.rds
 <<read trimmed sample files>>=
 #  trimmed sample are data before dropping 26 traditional HHs.
 ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
 ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
 lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "Trimmed.rds"))
-#NeA <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
-NeA1R <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVATrimmed.rds"))
+NeA1R <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
 # NeA1R2 drops (from NeA1R) 24 members in trad who were disbursed loans only twice or once
-NeA1R2 <- readRDS(paste0(pathsaveHere, "NarrowNetAssetsANCOVA.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
 rsk <- readRDS(paste0(pathsaveHere, "RiskPreferences.rds"))
 rsk2 <- rsk[, .(hhid, RiskPrefVal, TimePref1Val, TimePref2Val, PresentBias)]
 if (Only800) ar <- ar[o800 == 1L, ]
+addmargins(table(ar[tee == 1, .(Arm)]))
 @
-There are \Sexpr{nrow(ar[grepl("tw|dou", TradGroup) & tee == 1, ])} members with TradGroup = twice, double. They were dropped from estimation sample. If \textsf{UseTrimmedSample==T}, attrition is based on all 800 members, if \textsf{F}, attrition is analysed using 776 members. We use the `initial' sample (has only 776 members after dropping members who received loans only twice), not the `trimmed' sample (has all 800 members). \gobblepars
+There are \Sexpr{nrow(ar[grepl("tw|dou", TradGroup) & tee == 1, ])} members with TradGroup = twice, double. They were dropped from estimation sample. If \textsf{UseTrimmedSample==T}, attrition is based on all 800 members, if \textsf{F}, attrition is analysed using \Sexpr{nrow(ar[o800 == 1L & tee == 1, ])-nrow(ar[o800 == 1L & grepl("tw|dou", TradGroup) & tee == 1, ])} members. We use the `initial' sample (has only \Sexpr{nrow(ar[o800 == 1L & tee == 1, ])-nrow(ar[o800 == 1L & grepl("tw|dou", TradGroup) & tee == 1, ])} members after dropping members who received loans only twice), not the `trimmed' sample (has all \Sexpr{nrow(ar[o800 == 1L & tee == 1, ])} members). \gobblepars
 <<set UseTrimmedSample TestMedian in FormSample.rnw>>=
 #To set to the trimmed sample, set the parameter \textsf{UseTrimmedSample} to T. Here, we set to F.
+#Trimmed sample: Has all 800 HHs. Initial sample: Has 776 HHs.
 UseTrimmedSample <- F
 TestMedian <- F
 @
 <<drop 24 members if UseTrimmedSample is F, eval = T, echo = T>>=
-if (!UseTrimmedSample) ar <- ar[!grepl("tw|dou", TradGroup), ]
+cat("UseTrimmedSample is", UseTrimmedSample, "\n")
+if (!UseTrimmedSample) 
+  ar <- ar[!grepl("tw|dou", TradGroup), ]
 addmargins(table0(ar[o800 == 1L & tee == 1, .(Tee, AttritIn)]))
 @
 Out of \Sexpr{nrow(ar[tee==1 & o800==1, ])} members, there are \Sexpr{nrow(ar[tee==1 & o800==1 & AttritIn<9, ])} members who attrited.
@@ -54,10 +57,10 @@ psas <- ass[o800 == 1 & tee == 1,
 pslv <- lvo[o800 == 1 & tee == 1, 
   .(hhid, tee, TotalImputedValue, NumCows)]
 nne <- NeA1R[o800 == 1 & tee == 1, 
-  # BroadNetValue is similar to NetValue, so drop it.
+  # NetBroadValue is similar to NetValue, so drop it.
   .(hhid, tee, NetValue , #NarrowNetValue, 
-  BroadNetValue
-  #, RNetValue, RNarrowNetValue, RBroadNetValue
+  NetBroadValue
+  #, RNetValue, RNarrowNetValue, RNetBroadValue
   )]
 <<merge ar psas pslv>>=
 source(paste0(pathprogram, "AttritionPermutationTableHeaders5.R"))
