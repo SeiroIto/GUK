@@ -16,7 +16,7 @@
 \setlength{\tabcolsep}{1pt}
 \begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
 Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
-Notes: & 1. & \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Number of groups is 72. Holm's step-down method is used to adjust for multiple testing of a multi-factor grouping variable.
+Notes: & 1. & $P$ values of equality in mean between each arm and all other arms. \textsf{R}'s package \textsf{coin} is used for baseline group mean covariates to conduct approximate permutation tests. Number of repetition is set to \Sexpr{PermRepTimes}. Number of groups is 72. Holm's step-down method is used to adjust for multiple testing of a multi-factor grouping variable.
 \\
 & 2. & See the footnote of \textsc{Table \ref{tab MainTextIRjecters}} for description of variables. 
 \end{tabular}
@@ -51,7 +51,7 @@ Note:& Each column uses respective year cattle ownership information. Columns (1
 \setcounter{table}{0}
 \setcounter{figure}{0}
 
-<<Attrition Tests main text, cache = F, child='c:/data/GUK/analysis/program/AttritionTestsMainText4.rnw'>>=
+<<Attrition Tests main text, cache = F, child='c:/data/GUK/analysis/program/AttritionTestsMainText02.rnw'>>=
 @
 
 \section{Repayment}

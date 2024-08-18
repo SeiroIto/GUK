@@ -10,18 +10,18 @@ exclTP.base <- paste0("LY2|", exclP.base)
 exclTPa.base <- paste0("LY2|", exclP.base)
 # additions are common additional covariates after inclX1
 additions <-     c(
-    NA,
+    NA, # net saving regression
     "|^LY", # shows evolution of repayment without baseline outcome as a covariate
     "|^NetSaving0$",
     "|^LY",
     "|Head.*0|Flood|HHs.*0",
-    NA,
+    NA, # repayment regression
     "|^LY",
     "|^Repaid0$",
     "|^LY",
     "|Head.*0|Flood|HHs.*0",
     "|^NetSaving0$", #added for regressions only of net saving, repayment
-    NA,
+    NA, # effective repayment (repayment+net saving) regression (not used)
     "|^LY",
     "|^EffectiveRepayment0$",
     "|^LY",

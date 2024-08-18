@@ -1,0 +1,52 @@
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall\label{tab shortfall indiv o800}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults1.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults2.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: Individual level effects of repayment shortfall (continued)\label{tab shortfall indiv o800 3}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.6}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+    paste0(pathsaveHere, "Shortfall", ShortfallFileNames[3], "EstimationResults3.tex")}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative data.}\\
+Notes: & 1. & \Sexpr{ShortfallTabFN}\\
+& 2. & Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+

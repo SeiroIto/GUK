@@ -4,54 +4,59 @@
 \setcounter{figure}{0}
 
 	In this section, the ANCOVA estimates on various outcomes using %\eqref{1steq} and 
-	\eqref{EstimatingEqTimeVarying} are presented. In each table, the first column shows the covariate names and their means and standard deviations in the second column in the sample of the richest specification of the table. Specification (1) is OLS estimates on the intercept, $\bfdee_{i}$, and its period interactions. This is intended to provide a reference to ANCOVA estimates shown in the specification (2) onwards. Specification (2) follows the most basic specification under \eqref{EstimatingEqTimeVarying}. From (3), we progressively add more covariates to control for the differences in initial conditions in an attempt to get more precise ANCOVA estimates. In the figures (\textsc{\footnotesize Figure \ref{fig NarrowNetAssetsLivestockEffects}}, \textsc{\small Figure \ref{fig IncomeConsumptionEffects}}, \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}) shown in main texts, we omit OLS estimates of specification (1). 
+	\eqref{2ndeq} are presented. In each table, the first column shows the covariate names and their means and standard deviations in the second column in the sample of the richest specification of the table. Specification (1) follows the most basic specification under \eqref{2ndeq}. From (2), we progressively add more covariates to control for the differences in initial conditions in an attempt to get more precise ANCOVA estimates. In \textsc{\footnotesize Figure \ref{fig IncomeConsumptionEffects}}, we use OLS estimates. It regresses on the intercept, $\bfdee_{i}$, and its period interactions. 
 	
 	\Sexpr{TabFNAncovaTop.c}
 	
-	For \textsc{\footnotesize Figure \ref{fig NarrowNetAssetsLivestockEffects}}, \textsc{\small Figure \ref{fig IncomeConsumptionEffects}}, we show cumulative impacts of the arm or functional attribute $k$ relative to the \textsf{traditional} arm as given by $b_{2k}$, $b_{2k}+b_{3k}$,  $b_{2k}+b_{4k}$ for periods 2, 3, and 4. In \textsc{\footnotesize Figure \ref{fig SchoolingEffects}}, we show contemporaneous impacts relative to the \textsf{traditional} arm as given by $b_{2k}$, $b_{3k}$,  $b_{4k}$ for periods 2, 3, and 4.
 
-% Shortfall regression is done in ShortfallRegressionAtIndivLevelAndGroupLevel.rnw
+
+
+\subsection{Net assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults2.rnw"))}
 \Sexpr{
-#knit_child(paste0(pathprogram, "KeepOnlyTablesReferredInText.rnw"))
+knit_child(paste0(pathprogram, "ANCOVANetBroadAssetsResults2.rnw"))
 }
 
+\subsection{Non land Assets}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetNLAssetsResults2.rnw"))}
 
+%\subsection{Livestock}
+\Sexpr{
+#knit_child(paste0(pathprogram, "ANCOVALivestockResults.rnw"))
+}
+
+\subsection{Cattle holding}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsResults2.rnw"))}
 
 \subsection{Repayment}
 \label{Sec App Repay}
 \subsubsection{Saving and repayment}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVARepaymentResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVARepaymentResults2.rnw"))}
 \subsubsection{Shortfall}
 \label{AppendixShortfall}
-\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ShortfallRegressionResults2.rnw"))}
 
 \subsection{Schooling}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVASchoolingResults.rnw"))}
-
-\subsection{Net assets}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsResults.rnw"))}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetBroadAssetsResults.rnw"))}
-
-\subsection{Non land Assets}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetNLAssetsResults0.rnw"))}
-
-\subsection{Livestock}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVALivestockResults.rnw"))}
-
-\subsection{Cattle holding}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsResults.rnw"))}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVASchoolingResults2.rnw"))}
 
 \subsection{Consumption}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVAConsumptionResults.rnw"))}
+\Sexpr{
+#knit_child(paste0(pathprogram, "ANCOVAConsumptionResults.rnw"))
+}
+\Sexpr{knit_child(paste0(pathprogram, "OLSConsumptionResults.rnw"))}
 
 \subsection{Income}
 \Sexpr{knit_child(paste0(pathprogram, "ANCOVAIncomeResults.rnw"))}
 
 \subsection{By experience}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsExperienceResults.rnw"))}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsByExperienceResults.rnw"))}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsExperienceResults.rnw"))}
-\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsByExperienceResults.rnw"))}
+\Sexpr{
+#knit_child(paste0(pathprogram, "ANCOVANetAssetsExperienceResults.rnw"))
+}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANetAssetsByExperienceResults2.rnw"))}
+\Sexpr{
+#knit_child(paste0(pathprogram, "ANCOVANumCowsExperienceResults.rnw"))
+}
+\Sexpr{knit_child(paste0(pathprogram, "ANCOVANumCowsByExperienceResults2.rnw"))}
 
 \subsection{By poverty class}
 \label{Subsec By poverty class}

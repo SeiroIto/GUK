@@ -2,7 +2,7 @@ gc()
 GroupVar <- rep("^hhid$", jay)
 if (grepl("LabourInc", FileName)) GroupVar <- rep("^HMid$", jay)
 if (grepl("Sch", FileName)) GroupVar <- rep("^HHMid$", jay)
-if (grepl("Con", FileName)) iniperiod <- 2 else iniperiod <- 1
+if (grepl("Con.*n$", FileName)) iniperiod <- 2 else iniperiod <- 1
 # k: index of regression tables
 estlist <- vector(mode = "list", length = length(listheader))
 FormulaList <- vector(mode = "list", length = length(listheader))
@@ -113,7 +113,7 @@ for (k in 1:length(listheader)) {
   e.R <- unlist(lapply(lapply(lapply(elist, "[[", "lm"), summary), "[[", "adj.r.squared"))
   IniMean <- round(IniMean, dig.depmean)
   DepMean <- round(DepMean, dig.depmean)
-  e.R <- round(e.R, 3)
+  e.R <- formatC(e.R, digits = 3, format = "f")
   # sample T table #
     # labour income
   if (grepl("^lb", listheader[k])) {
@@ -148,7 +148,7 @@ for (k in 1:length(listheader)) {
     } else if (ncol(ttab) == 2) {
       setcolorder(ttab, 1:2)
       ttab <- a2b.data.table(ttab, NA, 0)
-      if (!grepl("Con", FileName))
+      if (!grepl("Con.*n$", FileName))
         e.T <- cbind(paste("T =", 3:4), t(ttab)) else
         e.T <- cbind(paste("T =", 2:3), t(ttab)) 
     }
@@ -244,6 +244,9 @@ for (k in 1:length(listheader)) {
     c("N", e.N))
   centerBox <- 1.3
   if (grepl("Repay", FileName)) centerBox <- .88
+  #### ConsumptionOLS: Drop reg spec 3. 
+  ####  (first 2 cols are variable name and mean)
+  if (grepl("Con.*O", FileName)) e.tb <- e.tb[, -5]
   ## Number of output tables: How many to be split into
   #    Sch with T (3 tables), NumCows, NetAssets, income (2 tables), 
   #    ByExperience (combine subsample tables after this file), others (1 table)
@@ -374,45 +377,52 @@ for (k in 1:length(listheader)) {
           FileNameHeader[k], "ANCOVAEstimationResults.tex")
         , colnamestrue = F)
   }
-###_ For slides ###_
-  if (grepl("Sav", FileName)) {
-    slt <- cbind(covariates = gsub("scriptsize", "tiny", rn), e.tab)
-    slt[, 1] <- gsub("3cm", "2.5cm", slt[, 1])
-    slt <- slt[-(rep(grep("fill rd [2-4]|Flood|Head|6M", rn), each = 2)+
-      rep(0:1, length(grep("fill rd [2-4]|Flood|Head|6M", rn)))), ]
-    addtoslt <- rbind(
-      c("HH controls", rep("", 2), rep(c("", "", "\\mbox{yes}"), 3))
-      ,
-      c("survey round controls", "", "\\mbox{yes}", 
-        rep(c("", "\\mbox{yes}", "\\mbox{yes}"), 3))
-      )
-    addtoslt[, 1] <- paste0("\\makebox[2.5cm]{\\tiny\\hfill ", addtoslt[, 1], "}")
-    slt <- rbind(as.matrix(slt), 
-      addtoslt, 
-      e.T,
-      c("\\bar{R}^{2}", round(e.R, 3)),
-      ancAR,
-      c("N", e.N))
-    slt <- slt[, 1:9]
-    centerBox <- 1.2
-    slt.ltxtb <- latextab(slt, 
-      hleft = "\\tiny\\hfil$", 
-      hcenter = c(2.5, rep(centerBox, ncol(slt)-1)), hright = "$", 
-      headercolor = "gray80", adjustlineskip = "-.5ex", delimiterline= NULL,
-      alternatecolor2 = "gray90", 
-      addseparatingcols = Addseparatingcols[-3], 
-      separatingcolwidth = Separatingcolwidth[-1], 
-      separatingcoltitle = Separatingcoltitle[-4], 
-      addsubcoltitlehere = length(Addseparatingcols) > 0)
-    slt.ltxtb[2, ] <- gsub("scriptsize", "tiny", slt.ltxtb[2, ])
-    slt.ltxtb[3, ] <- gsub("\\\\\\\\", "", slt.ltxtb[3, ])
-    write.tablev(slt.ltxtb, 
-      paste0(pathsaveHere, FileName, FileNameHeader[k], 
-        "ANCOVAEstimationResults_ForSlides.tex")
-      , colnamestrue = F)
-  }
 ###_ confidence interval data ###_
   estlist[[k]] <- elist
+###_ HTML table ###_
+  if (CreateHTMLTable) {
+    for (i in 1:nrow(subst.tableA)) 
+      rn0 <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn0)
+    rn0 <- gsub("^p\\$.*", "", rn0)
+    rn0 <- gsub("$\\times$", " * ", rn0)
+    slt <- cbind(covariates = gsub("\\scriptsize", "", rn0), e.tab)
+    #### slt <- slt[-(rep(grep("fill rd [2-4]|Flood|Head|6M", rn0), each = 2)+
+    ####  rep(0:1, length(grep("fill rd [2-4]|Flood|Head|6M", rn0)))), ]
+    slt <- rbind(as.matrix(slt), 
+      e.T,
+      c("R2", e.R),
+      c("Mean of dependent variable", DepMean), 
+      c("N", e.N))
+    #### ConsumptionOLS: Drop reg spec 3. 
+    ####  (first cols are variable names, mean/std)
+    if (grepl("Con.*O", FileName)) slt <- slt[, -5]
+    colnames(slt) <- c("covariates", "mean/std", 1:(ncol(slt)-2))
+    if (SimpleHTMLTable) {
+    ## kableExtra does not place tables correctly in Tufte
+####       kt <- kbl(slt, row.names = F, align = c("l", rep("c", ncol(slt)-1)),
+####         caption = paste0(FileName, ", ", FileNameHeader[k]),
+####         format = "html", label = paste0(FileName, FileNameHeader[k]))
+####       kt <- kable_styling(kt, full_width = FALSE, position="left")
+      kt <- kable(slt, row.names = F, align = c("l", rep("c", ncol(slt)-1)),
+        caption = paste0(FileName, ", ", FileNameHeader[k]),
+        format = "html", label = paste0(FileName, FileNameHeader[k]))
+      kt <- column_spec(kt, 1, width = "6cm; min-width:5cm;")
+      kt <- column_spec(kt, 2:ncol(slt), width = "2.5cm; min-width:2.5cm;")
+      assign(paste0("HTML_", FileName, FileNameHeader[k]), kt)
+    } else {
+      kt <- kbl(slt, 
+        caption = paste0(FileName, FileNameHeader[k]),
+        format = "html", table.attr = "style='width:70%;'")
+      TabFN1 <- TabFNArm
+      if (grepl("Attri", FileNameHeader[k])) TabFN1 <- TabFNAttributes
+      if (grepl("TimeV", FileNameHeader[k])) TabFN1 <- paste(TabFN1, TabFNRound234)
+      kt <- kableExtra::footnote(kt, general = paste(TabFNAncovaTop, TabFN1))
+      kt <- kable_paper(kt, full_width = F)
+      kt <- kable_styling(kt, fixed_thead = T)
+      assign(paste0("HTML_", FileName, FileNameHeader[k]), 
+        kable_classic(kt, full_width = F, html_font = "Cambria"))
+    }
+  }
 }
 names(estlist) <- listheader
 # estlist[[k]][[j]][[c("lm", "robust", "data")]]
@@ -421,4 +431,4 @@ qsave(estlist, paste0(pathsaveHere, "ANCOVA_", FileName, ".qs"))
 qsave(FormulaList, paste0(pathsaveHere, "FormulaList", FileName, ".qs"))
 ###_  reset switches to default, drop inclX ###_
 remove(list = ls(pattern = "^incl.?\\d"))
-AddMeanStdColumn <- UseRawDataForDestat <- F
+CreateHTMLTable <- AddMeanStdColumn <- UseRawDataForDestat <- F

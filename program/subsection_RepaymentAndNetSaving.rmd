@@ -1,0 +1,142 @@
+In estimating impacts on repayment and saving, we use borrower only data `r paste0(DataFileNames[2], "InitialSample.rds")` (group meeting data) saved in the above.
+
+```{r ReadTrimRepaymentData original HHs, echo = F, cache = F, results = "hide", message = F}
+gc()
+source(paste0(pathprogram, "ReadTrimRepaymentANCOVA.R"))
+```
+By survey rounds, in repayment and saving file, there are `r apply(table(arA[o800==1L, .(unqsvy = unique(survey)), by = hhid]), 2, sum)` observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the `InitialSample` size of `r nrow(ar[o800 == 1& tee == 1, ])` in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.
+
+Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In repayment and saving regressions, we aggregate the data at survey rounds. This is because we have no household survey information at the monthly frequency that we can attribute the causes of monthly repayment and saving fluctuations.
+
+
+Read administrative meeting data attached with HH information `r paste0(DataFileNames[2], ".rds")` (called `arA` in the below code). 
+
+```{r prepare data for saving regressions original HHs, warning = F, message = F, results = "hide"}
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+if (Only800) arA <- arA[o800 == 1L & !grepl("tw|dou", TradGroup) & 
+  !is.na(LoanYear), ]
+#### EffectiveRepayment := value.repay + value.NetSaving
+arA[, Arm := droplevels(Arm)]
+arA[, HeadLiteracy := HeadLiteracy + 0]
+setorder(arA, hhid, Date)
+arA[, grepout("^Time$", colnames(arA)) := NULL]
+table0(arA[LoanMonth == 1, .(LoanYear, Arm)])
+table0(arA[, .(survey, Arm)])
+#### 0 NAs in `CumRepaid`, so skip.
+#### table0(arA[is.na(CumRepaid), .(tee, Arm)])
+```
+Tabulation of group meeting data at rd 1 (12th month):
+```{r Tabulation at rd 1 for arA}
+addmargins(table0(arA[o800 == 1L & tee == 12, .(Mstatus, Arm)]))
+```
+
+
+```{r ReadTrimRepayment ANCOVA, echo = F, cache = F, warning = F, message = F, results = "hide"}
+gc()
+```
+<details><summary>Click here to see the code of repayment and saving regressions.</summary>
+```{r saving regressions estimation set parameters}
+source(paste0(pathprogram, "ReadTrimRepaymentANCOVA.R"))
+FileName <- "Repayment"
+FileNameHeader <- c("", "PovertyStatus", "Attributes", 
+  "TimeVarying", "TimeVaryingPovertyStatus", "TimeVaryingAttributes")
+####  length(arsuffixes) = Number of est results tables to be produced
+regsuffixes <- c("", "P", "a", "T", "TP", "Ta")
+listheader <- paste0("sv", regsuffixes)
+#### net saving (5), repayment (5), and a mean/std column for table
+Regressands <-  c(rep(c("NetSaving", "Repaid"), each = 5), "Repaid")
+Addseparatingcols = c(1, 6); Separatingcolwidth = rep(.1, 2)
+Separatingcoltitle = c("", "Net saving", "Repayment"
+#### We omit net saving + repayment as regressand because it is repetitive
+#### , "\\mpage{3cm}{\\hfil Net saving \\\\\\hfil + repayment}"
+)
+#### If LY*arm, LY*attribute interactions are used, we have a singular matrix
+source(paste0(pathprogram, "RepaymentCovariateSelectionANCOVA.R"))
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+#### jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+jay <- 11 # net saving (5), repayment (5), and a dummy column for table
+#### arA: all individuals, arA2: only borrowers (but arA=arA2, so redundant)
+DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- CreateHTMLTable <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+```{r , echo = F, results = "hide"}
+gc()
+```
+</details>
+
+<details><summary>Click here to see the table of time varying repayment impacts by arm.</summary>
+`r HTML_RepaymentTimeVarying`
+
+Note: Columns 1. - 5. show results for net saving, 6. - 10. show results for repayment. 
+</details>
+<details><summary>Click here to see the table of time varying repayment impacts by arm and by poverty class.</summary>
+`r HTML_RepaymentTimeVaryingPovertyStatus`
+
+Note: Columns 1. - 5. show results for net saving, 6. - 10. show results for repayment. 
+</details>
+
+
+```{r descriptive stat of repayment, echo = F}
+arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+if (Only800) arA <- arA[o800 == 1L & grepl("bo", BStatus), ]
+DesRep <- arA[, 
+  .(Arm, hhid, povertystatus, BStatus, 
+    Date, DisDate1, tee, MtgNum,
+    CumEffectiveRepayment, CumRepaid, CumPlannedInstallment,
+    CumEffectiveRepaidRate, CumRepaidRate, EffectivelyFullyRepaid
+  )]
+####  Note: when CumPlannedInstallment==0, RepaidRate is NA
+DesRep[, FullyRepaid := 0L]
+####  In read_admin_data.rnw
+####  CumRepaid = cumsum(value.repay)
+####  CumRepaidRate := CumRepaid/(125*45*3) or, CumRepaid/(190*45*2), 
+####  CumPlannedInstallment := 125 * floor(WeeksElapsed) or 190 * floor(WeeksElapsed)
+DesRep[, FullyRepaid := as.integer(any(
+  !is.na(CumRepaidRate) & tee > 24 & CumRepaidRate >= 1
+  )), 
+  by = hhid]
+#### FullyRepaid=1 if CumRepaidRate >= 1 after tee == 24 
+#### This may be a harsh def as there were floods that we 
+#### extended maturity by one year (tee==36).
+TabRe <- addmargins(table(DesRep[tee == 1, .(Arm, FullyRepaid)]),
+  1:2, sum, T)
+#### Turns out that accounting only for repayment misses the reality.
+#### Use EeffectivelyFullyRepaid (repayment+net saving)
+#### Defined in read_admin_data.rnw as the final period value of
+####   CumEffectiveRepayment > 125*45*3 for trad, larg arms
+####   CumEffectiveRepayment > 190*45*2 for large grace, cattle arms
+TabRepay <- addmargins(table(DesRep[tee == 1 & grepl("bo", BStatus), 
+  .(Arm, EffectivelyFullyRepaid)]), 1:2, sum, T)
+dnTR <- dimnames(TabRepay)
+TabRepay <- data.table(as.matrix.data.frame(TabRepay))
+TabRepay[, Arm := dnTR$Arm]
+TabRepay[, FullRepayRate := round(V2/V3*100, 2)]
+setcolorder(TabRepay, c(4, 1:3, 5))
+setnames(TabRepay, c("Arm", "no", "yes", "sum", "FullRepayRate"))
+TabRepay[grepl("sum", Arm), Arm := "overall"]
+saveRDS(TabRepay, paste0(pathprogram, 
+  "table/EstimationMemo/RepaymentTable.rds"))
+####  Use EeffectiveFullyRepaid at 37th month
+TabRepay2 <- addmargins(table(DesRep[tee == 37 & grepl("bo", BStatus), 
+  .(Arm, CumEffectiveRepaidRate>=1)]), 1:2, sum, T)
+dnTR2 <- dimnames(TabRepay2)
+TabRepay2 <- data.table(as.matrix.data.frame(TabRepay2))
+TabRepay2[, Arm := dnTR2$Arm]
+TabRepay2[, FullRepayRate := round(V2/V3*100, 2)]
+setcolorder(TabRepay2, c(4, 1:3, 5))
+setnames(TabRepay2, c("Arm", "no", "yes", "sum", "FullRepayRate"))
+TabRepay2[grepl("sum", Arm), Arm := "overall"]
+saveRDS(TabRepay2, paste0(pathprogram, 
+  "table/EstimationMemo/RepaymentAt37MonthTable.rds"))
+```
+
+ 
+
+```{r TabRepay, echo = F}
+kable(TabRepay, caption = "Effective repayment (repayment + net saving)")
+```
+
+

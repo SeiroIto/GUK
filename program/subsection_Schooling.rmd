@@ -1,0 +1,72 @@
+In enrollment regressions, initial enrollment is defined only for school age children at the initial period. 
+<!--
+ANCOVA estimates should be used only to school age children in 2012 who are not old enough that they may naturally stop schooling by the endline.
+-->
+
+```{r ReadTrimSchoolingFDData2 original HHs in R file one, echo = F, cache = F, warning = F, results = "hide", message = F}
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+```
+```{r schooling FD read data original HHs, echo = F, warning = F, message = F}
+s1x[, Enrolled := as.numeric(Enrolled)]
+s1x[, Tee := .N, by = HHMid]
+```
+```{r Enrollment pattern in original panel, echo = F, eval = F}
+addmargins(table0(s.1x[tee == 1, .(ObPattern, SchPattern)]))
+```
+Enrollment pattern in schooling panel. `n` indicates NA (either attrition or not reported). Schooling data has `r nrow(s.1x)` rows. Drop `r nrow(s.1x[grepl("nnn", SchPattern), ])` observations with `nnn` in `SchPattern`. With OLS,  `r table(s1x[tee == 1, Tee])` individuals are repeatedly observed for `r names(table(s1x[tee == 1, Tee]))` times, respectively. Number of individuals with NAs in `Enrolled`: `r nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])` obs. ANCOVA is estimated with data after dropping observations with `nnn` in `SchPattern`. 
+
+```{r schooling regression set parameters ANCOVA, warning = F, message = F}
+source(paste0(pathprogram, "ReadTrimSchoolingANCOVA.R"))
+FileName <- "Schooling"
+FileNameHeader <- c("", "Attributes", "PovertyStatus",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("sc", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA3.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- rep("Enrolled", jay)
+DataToUse1 <- DataToUse2 <- rep("s1", jay)
+Addseparatingcols = NULL; Separatingcolwidth = .2
+dig.depmean <- 2
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+
+<details><summary>Click here to see the table of time varying schooling impacts by arm.</summary>
+`Enrolled0` is the baseline dependent variable of ANCOVA, `ChilAgeOrderAtRd1, Household size0` are baseline covariates.  (1) is OLS, (2)-(5) are ANCOVA estimates.  
+
+`r HTML_Schooling`
+Notes:  
+
+1. `r paste(TabFNAncovaTop, TabFNArm, TabFNSch, TabFN1stCol)`  
+2. `r TabFNPval`
+</details>
+
+<details><summary>Click here to see the table of time varying schooling impacts by arm.</summary>
+
+<div class = "row">
+<div class = "col-md-6">
+```{r plot HTML_SchoolingTimeVarying, echo=FALSE}
+HTML_SchoolingTimeVarying
+```
+</div>
+<div class = "col-md-6">
+```{r plot HTML_SchoolingTimeVarying 2, echo=FALSE}
+HTML_SchoolingTimeVarying
+```
+</div>
+</div>
+</details>
+
+<details><summary>Click here to see the table of time varying schooling impacts by functional attribute.</summary>
+`r HTML_SchoolingTimeVaryingAttributes`
+</details>
+<details><summary>Click here to see the table of schooling impacts by poverty class.</summary>
+`r HTML_SchoolingPovertyStatus`
+</details>
+
+

@@ -1,0 +1,51 @@
+Net broad assets = Broad assets + net saving - debt to GUK - debts to relatives and money lenders.
+```{r net broad assets merge assets livestock saving data for est and figure, echo = F, results = "hide", cache = F, warning = F}
+source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
+```
+```{r Net broad asset set parameters original HHs}
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
+# Drop confusing variables
+NeA1[, grepout("^NetValue|Narrow|^R", colnames(NeA1)) := NULL]
+FileName <- "NetBroadAssets"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nea", regsuffixes)
+source(paste0(pathprogram, "NetBroadAssetCovariateSelectionANCOVA2.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NetBroadValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+NeA1[, grepout("Net2", colnames(NeA1)) := NULL]
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+
+We also examine net asset annual price ANCOVA estimation.
+```{r net asset annual price ancova estimation}
+NeA1R <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
+NeA1R2 <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVA.rds"))
+if (UseTrimmedSample) NeA1 <- NeA1R2[tee > 1, ] else NeA1 <- NeA1R[tee > 1, ]
+NeA1[, grepout("RM|NetV", colnames(NeA1)) := NULL]
+FileName <- "NetAssetsAnnualPrices"
+Regressands <- rep("Net2Value", jay)
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+
+
+
+
+
+
+
+

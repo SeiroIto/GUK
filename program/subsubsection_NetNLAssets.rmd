@@ -1,0 +1,37 @@
+Net non-livestock assets = Non livestock assets + net saving - debt to GUK - debts to relatives and money lenders. 
+
+<details><summary>Click here to see the code and results table of net non-livestock assets.</summary>
+```{r net assets merge assets livestock saving data for livestock, echo = F, results = "hide", warning = F, cache = F}
+source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
+```
+```{r net NL asset set parameters original HHs}
+FileName <- "NetNLAssets"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nl", regsuffixes)
+source(paste0(pathprogram, "NetNLAssetCovariateSelectionANCOVA2.R"))
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
+NeA1[, grepout("Net2?Va|Out|Adi|Own", colnames(NeA1)) := NULL]
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NetNLAssetValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+<div class="row">
+  <div class="col-sm-9"> `r HTML_NetNLAssetsTimeVarying` </div>
+</div>
+</details>
+
+
+
+

@@ -1,0 +1,172 @@
+Net assets = Assets + net saving - debt to GUK - debts to relatives and money lenders. Assets use only items observed for all 4 rounds for household assets *including* radios and cassette players (which may have large measurement errors). 
+
+```{r net assets merge assets livestock saving data for est and figure, results = "hide", cache = F, warning = F}
+source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
+```
+
+* In `ComputeNetAssetsANCOVA.R`, we subtract debts from assets. Then, we use livestock data (`r paste0(DataFileNames[5], "InitialSample.rds")`) to attach covariates.  
+<!--
+ such as:  
+
+<p class="description"><small>`r grepout(lvostrings, colnames(lvo))`</small></p>
+-->
+* To see the code, open [`ComputeNetAssetsANCOVA.R`](../program/ComputeNetAssetsANCOVA.R).  
+
+
+
+<details><summary>Click here to see the code of net asset regressions.</summary>
+```{r Net asset set parameters original HHs}
+FileName <- "NetAssets"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nea", regsuffixes)
+```{r net asset regression select covariates original HHs}
+library(qs)
+source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
+```
+```{r net assets ANCOVA estimation}
+####  number of regressions per specification k=1, ..., length(regsuffixes)
+NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
+if (Only800) NeA1 <- NeA1[o800 == 1L, ]
+NeA1[, grepout("Net2|Na|Br|^R|Pro|PAss", colnames(NeA1)) := NULL]
+####  ls(pattern = "^incl\\d"): created in NetAssetCovariateSelectionANCOVA2.R 
+####  "incl1" "incl2" "incl3" "incl4" "incl5" "incl6"
+####  So jay = 6, 6 reg specifications in estimation. 1 is OLS, 2-6 are ANCOVA.
+####   incl1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+####   incla1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+####   inclP1: ^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$
+####   inclT1: ^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^Time\\.)(?!.*Had)
+####   inclTa1: ^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^Time\\.)(?!.*Had)
+####   inclTPa1: ^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|^d.*Poor)(?!.*Had)
+####  Data=NeA1. It is created in MergeAllNetAssetsANCOVA.R
+####  Below is the snippets of it.
+####	  ass <- readRDS(paste0(pathsaveHere, DataFileNames[4], "Trimmed.rds"))
+####  	  obr <- readRDS(paste0(pathsaveHere, DataFileNames[11], "Trimmed.rds"))
+####  	  arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "Trimmed.rds"))
+####  	  lvo <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
+####  	  asso <- obr[ass]
+####  	  assD <- asso[!is.na(IntDate), .(Arm, BStatus, hhid, survey, IntDate)]
+####  	  arD <- arA[, .(hhid, survey, tee, Date, AttritIn, CumLoanAmount, 
+####  	  arDebt <- assDW[arD]
+####  	  assoD <- arDebtW[asso]
+####  	  ass1R <- assoD[, 
+####	      grepout(paste0(assstrings, "|RM"), colnames(assoD)), with = F]
+####  	  NeA1R <- merge(ass1R, lvo1, by = commoncols, all.x = T)
+####  	  NeA1 <- NeA1R[tee > 1, ]
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("NeA1", jay)
+####  Previously, Rd 1-4 diff: DataToUse2 <- rep("NeA2", jay)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NetValue", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+ktft <- TabVariableDescription
+```
+```{r display covariates net asset ancova, cache = F, echo = F, warning = F, eval = F}
+#### source(paste0(pathprogram, "DisplayCovariates.R"))
+```
+</details>
+
+
+<details><summary>Click here to see the code of plotting net assets.</summary>
+```{r figure net asset values at rd 1 by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values at baseline by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '}
+library(ggplot2)
+####  NetAssetsFigureData.rds created in ComputeNetAssetsANCOVA.rnw
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+d2 <- subset(NeAfig, !is.na(Arm))
+ColourForPoints <- c("darkblue", "darkred")
+g <- ggplot(data = subset(d2, tee == 2 & 0 <= NetValue & NetValue < 100000), 
+  aes(x=NarrowNetValue, fill = povertystatus)) + 
+  geom_histogram(bins=50, alpha=.5, position="identity",
+    aes(x = NetValue, y = ..density..)) +
+  scale_x_log10() +
+  theme(
+    axis.text.x = element_text(size = 6), 
+    axis.text.y = element_text(size = 6), 
+    axis.title = element_text(size = 7), 
+    legend.key.size = unit(.15, "cm"),
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 6),
+    legend.position = "bottom")
+ggsave(
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.png"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300
+ )
+####  postscript does not support transparency.
+####  setEPS()
+####  postscript(file =  
+####    paste0(pathprogram, 
+####      "figure/ImpactEstimationOriginal1600Memo3/NetAssetsAtRd1.eps"),
+####    , width = 5, height = 2.5, horizontal = F) # unit: inch
+####  print(g)
+####  dev.off()
+pdf(file =  
+  paste0(pathprogram, "figure/EstimationMemo/NetAssetsAtRd1.pdf"),
+  , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+```
+```{r figure net asset values by povertystatus, warning = F, message = F, fig.align='center', fig.height = 3, fig.width = 10, fig.cap = paste0("Net asset values by poverty class", "\\\\ {\\footnotesize Sum of assets and livestock holding values less outstanding debt. Original 800 HHs.\\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '}
+library(ggplot2)
+####  NetAssetsFigureData.rds created in ComputeNetAssetsANCOVA.rnw
+NeAfig <- readRDS(paste0(pathsaveHere, "NetAssetsFigureData.rds"))
+if (Only800) NeAfig <- NeAfig[o800 == 1L, ]
+d2 <- subset(NeAfig, !is.na(Arm))
+d2[, Type := "net assets"]
+g <- ggplot(data = d2) + 
+  geom_boxplot(aes(x= factor(tee), y = NetValue, colour = povertystatus), 
+    outlier.alpha = 0.1)+
+  scale_x_discrete(name = "survey round") +
+  scale_y_continuous(name = "asset values (Tk.)",
+    breaks = seq(0, 100000, 10000), limits = c(0, 100000)) +
+  theme(
+   axis.text.x = element_text(size = 6), 
+   axis.text.y = element_text(size = 6), 
+   axis.title = element_text(size = 7), 
+   strip.text.x = element_text(color = "blue", size = 6, 
+     margin = margin(0, .5, 0, .5, "cm")), 
+   strip.text.y = element_text(color = "blue", size = 6, 
+     margin = margin(.5, 0, .5, 0, "cm")),
+   legend.position = "bottom") +
+  facet_grid(. ~ Arm)
+ggsave(
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssets.jpg"),
+  g,
+  width = 12, height = 6, units = "cm",
+  dpi = 300*4
+ )
+pdf(file =  
+  paste0(pathprogram, 
+    "figure/EstimationMemo/NetAssets.pdf"),
+  , width = 8/2.54, height = 5/2.54, pointsize = 10) # native unit: inch
+print(g)
+whatever <- dev.off()
+```
+</details>
+
+
+
+```{r echo = F}
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+```
+
+<details><summary>Click here to see the table of time varying net asset impacts by arm.</summary>
+Net assets impacts by arm and period   
+`r HTML_NetAssetsTimeVarying`  
+<p class="description"><small>Note: `r ktft`</small></p>
+</details>
+
+

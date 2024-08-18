@@ -2019,6 +2019,7 @@ for (r in 2:length(ListHeaderListForQS)) {
       lattributes <- lattributeList[[1]]
     regobj <- robj[[r]][[rr]]
     if (grepl("cn", ListHeaderListForQS[r])) regobj <- regobj[1:3] # consumption: 4-6 are HH aggregates
+    if (grepl("co", ListHeaderListForQS[r])) regobj <- regobj[1:2] # consumption: 4-5 are HH aggregates
     lmlist <- lapply(regobj, "[[", "lm")
     coefflist <- lapply(lmlist, "[[", "coefficients")
     c(reglists[[r]][rr]) 
@@ -2943,8 +2944,9 @@ numcols <- c("period", "estimate", "lb", "ub", "num", "pvalue")
 confi[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
 faccols <- c("FileName", "regtype", "attributes", "experience", "hv", "ImpactType")
 confi[, (faccols) := lapply(.SD, as.factor), .SDcols = faccols]
-# Drop all num == 1 except for NumCows and NumCowsAdi, NumCowsNone, NumCowsOwn, 
-confi <- confi[grepl("NumCows", FileName) | (!grepl("NumCows", FileName) & num != 1), ]
+#### Drop all num == 1 except for ConsumptionOLS, 
+#### NumCows and NumCowsAdi, NumCowsNone, NumCowsOwn, 
+confi <- confi[grepl("NumCows|OLS", FileName) | (!grepl("NumCows", FileName) & num != 1), ]
 confi <- confi[!(grepl("NumCowsE", FileName) & num == 1), ]
 table(confi[, .(FileName, num)])
 confi[, ImpactType := factor(ImpactType, 
@@ -2993,19 +2995,21 @@ confi[, ImpactType := factor(ImpactType,
 ))]
 
 
-confi[grepl("Con", FileName) & regtype=="T" & grepl("ge$", attributes) & grepl("sum", ImpactType), ]
+confi[grepl("Con.*O", FileName) & regtype=="T" & grepl("ge$", attributes) & grepl("sum", ImpactType), ]
 
 
 
 confi[, period := period + 1]
 # period is NA for non-timevarying regressions
 confi[!grepl("T", regtype), period := NA]
-confi[!is.na(period) & grepl("Con", FileName) & num == 2 & grepl("Ta", regtype), ][
+confi[!is.na(period) & grepl("Con.*O", FileName) & num == 2 & grepl("Ta", regtype), ][
 order(attributes, ImpactType, period)]
 #confi <- rbindlist(list(confi, confis), use.names = T, fill = T)
 setcolorder(confi, c("FileName", "regtype", "num", "attributes", 
   "hv", "ImpactType", "period", "lb", "estimate", "ub"))
 confi <- confi[!(grepl("Con", FileName) & estimate == 0), ]
+#### Drop 3rd reg spec of Con. This is the same as 2nd reg spec.
+confi <- confi[!(grepl("Con", FileName) & num == 3), ]
 confi[, attributes := factor(attributes, 
   levels = c("trad", "Large", "LargeGrace", "Cattle",
   "LargeSize", "WithGrace", "InKind"))]
@@ -3543,8 +3547,8 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/NetAssetsEffects.jpg"),
   p,
-  width = 13, height = 6, units = "cm",
-  dpi = 300
+  width = 13*2, height = 6*2, units = "cm",
+  dpi = 600
  )
 pdf(
   paste0(pathprogram, 
@@ -3602,8 +3606,8 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/NetAssetsByExperienceEffects.jpg")
   , p,
-  width = 12, height = 8, units = "cm",
-  dpi = 300
+  width = 12*2, height = 6*2, units = "cm",
+  dpi = 300*4
  )
 pdf(
   paste0(pathprogram, 
@@ -3661,7 +3665,7 @@ ggsave(
   "figure/EstimationMemo/NetAssetsByExperienceEffectsFunAttribute.jpg")
   , p,
   width = 12, height = 8, units = "cm",
-  dpi = 300
+  dpi = 300*4
  )
 pdf(
   paste0(pathprogram, 
@@ -3726,7 +3730,7 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/NumCowsByExperienceEffects.jpg")
   , p,
-  width = 12, height = 8, units = "cm",
+  width = 12*2, height = 4*2, units = "cm",
   dpi = 300
  )
 pdf(
@@ -3784,10 +3788,10 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/NetAssetsNetBroadAssetsNLAssetsCattleEffects.jpg"),
   p,
-  width = 13, height = 12, units = "cm",
+  width = 13*1.5, height = 12*1.5, units = "cm",
   dpi = 300
  )
-pdf(
+spdf(
   paste0(pathprogram, 
   "figure/EstimationMemo/NetAssetsNetBroadAssetsNLAssetsCattleEffects.pdf")
   , width = 2*12/2.54, height = 2*8/2.54)
@@ -3873,7 +3877,8 @@ confi2[, attributes := factor(attributes, levels =
 confi3 <- confi2[!grepl("Tra", attributes), ]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
 confi3[, (cols) := droplevels(.SD), .SDcols = cols]
-confi3[, num := factor(num-1)]
+confi3[grepl("lab", regressand), num := num-1]
+confi3[, num := factor(num)]
 #confi2[grepl("Lab", FileName), estimate := estimate*100]
 #confi2[grepl("Lab", FileName), ub := ub*100]
 #confi2[grepl("Lab", FileName), lb := lb*100]
@@ -3910,8 +3915,8 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/IncomeConsumptionEffects.jpg"),
   p,
-  width = 13, height = 10, units = "cm",
-  dpi = 300
+  width = 13*2, height = 8*2, units = "cm",
+  dpi = 300*4
  )
 pdf(
   paste0(pathprogram, 
@@ -3929,7 +3934,8 @@ confi2[grepl("on", regressand), regressand := "Per capita consumption\n(BDT)"]
 confi2[!grepl("on", regressand), regressand := "Labour income\n(BDT)"]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
 confi2[, (cols) := droplevels(.SD), .SDcols = cols]
-confi2[, num := factor(num-1)]
+confi2[grepl("lab", regressand), num := num-1]
+confi2[, num := factor(num)]
 p <- ggplot(data = confi2
   , aes(x = factor(period), y = estimate, 
       colour = num, shape = num, group = num)) + 
@@ -3963,7 +3969,7 @@ ggsave(
   paste0(pathprogram, 
   "figure/EstimationMemo/IncomeConsumptionPovertyEffects.jpg"),
   p,
-  width = 13, height = 10, units = "cm",
+  width = 13*2, height = 6*2, units = "cm",
   dpi = 300
  )
 pdf(
@@ -4195,6 +4201,9 @@ table(confi3[,.(ImpactType, attributes)])
 confi3[, numgen := paste0(gender, ", spec", num)]
 confi3[, effects := "Level estimates"]
 confi3[!grepl("Trad", attributes), effects := "Marginal impacts relative to \nTraditional, Upfront, Upfront+WithGrace"]
+confi3[, attributes := factor(attributes, label = c("Traditional", 
+  "Upfront\nrelative to Traditional", "WithGrace\nrelative to Upfront", 
+  "InKind\nrelative to Upfront+WithGrace"))]
 p <- ggplot(data = confi3
   , aes(x = factor(period), y = estimate, 
       colour = numgen, shape = numgen, group = numgen)) + 
@@ -4210,7 +4219,7 @@ p <- p + facet_grid(school * gender ~ attributes, scales = "free_y") +
    axis.text.x = element_text(size = 7, angle = 0, vjust = 1, hjust = 1), 
    axis.text.y = element_text(size = 7), 
    axis.title = element_text(size = 7), 
-   strip.text.x = element_text(color = "blue", size = 9, 
+   strip.text.x = element_text(color = "blue", size = 8, 
      margin = margin(.1, 1.25, .1, 1.25, "cm")), 
    strip.text.y = element_text(color = "blue", size = 9, 
      margin = margin(1.5, .1, 1.5, .1, "cm")),

@@ -93,7 +93,8 @@ background rectangle/.style = {fill = gray90},
 \path [name intersections={of=SSline and cows, by={cone, ctwo}}];
 \fill[blue] (cone) circle (3pt) node[above left] {\small $M$};
 \fill[red] (ctwo) circle (3pt) node[above left] {\small $C$};
-\draw [name path=kunderline, blue, dashed] (cone) -- (cone |- origin) node [below] {\small $k_{2}$};
+\draw [name path=kunderline, blue, dashed] (cone) -- (cone |- origin) node [below] {\small $k_{M}$};
+\draw [name path=kunderlineG, blue, dashed, draw = none] (gftwo) -- (gftwo |- origin) node [below] {\small $k_{G}$};
 \end{axis}
 
 \end{tikzpicture}

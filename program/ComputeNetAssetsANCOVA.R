@@ -92,7 +92,7 @@ addmargins(table0(NeA1R[o800==1L, .(tee, NumCows)]))
 #   Imputed2Value: Median annual prices for cows are used, because cow prices vary a lot by years.
 NeA1R[is.na(TotalImputedValue), TotalImputedValue := 0]
 NeA1R[is.na(TotalImputed2Value), TotalImputed2Value := 0]
-addmargins(table(NeA1R[o800 == 1L, 
+addmargins(table0(NeA1R[o800 == 1L, 
   .(tee, 
     NonNAAllAssets = !is.na(TotalImputedValue))]))
 
@@ -179,7 +179,8 @@ if (UseTrimmedSample) NeA1 <- NeA1R2[tee > 1, ] else NeA1 <- NeA1R[tee > 1, ]
 NeA1[, grepout("RM", colnames(NeA1)) := NULL]
 NeA1R8[, grepout("RM", colnames(NeA1R8)) := NULL]
 # Save data for estimation and summary error bar figure
-# We base our analysis on NeA1R2 (UseTrimmedSample == T that dropped 24 HHs).
+# We base our analysis on NeA1R2 (i.e., if UseTrimmedSample == T, 
+# it drops 24 HHs and NeA1 bases on NeA1R2, if F, NeA1 bases on NeA1R).
 saveRDS(NeA1, paste0(pathsaveHere, "NetAssetsRegData.rds"))
 saveRDS(NeA1R, paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
 saveRDS(NeA1R2, paste0(pathsaveHere, "NetAssetsANCOVA.rds"))

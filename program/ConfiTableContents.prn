@@ -1,0 +1,19 @@
+Object	What it does	Typical terms	Code
+hvT0	Overall (period 2) level for trad	[[1]]Intercept	covadd.trad[[1]]
+hvN0	Overall (period 2) level for nontrad arm	[[1]]Intercept + dummyInKind	covadd.nontrad[[1]]
+hvN1	Arm - trad in period 2	[[1]][2] dummyInKind	covadd.nontrad[[1]][2]
+hvTinT	Difference = 0 (of trad in time X relative to trad in time 2)	[[2]]Time.4	covadd.trad[[i]] 
+hv	trad in each period	intercept + Time.T	hv = hvT0 + hvTinT
+hvNinT	Difference = 0 (of arm g in time X relative to arm g at period 2). =hvN0 if period 2.	[[2]]Time.4, dummyInKind.Time4	covadd.nontrad[[i]][c(1, 2)]
+dhvNinT	Difference = 0 (of Arm g and trad in time X)	[[2]][1] dummyInKind.Time4	covadd.nontrad[[i]][2]
+hvNinT2	difference = 0 (of arm g in time X relative to trad in time 2)	[[2]] Arm + TimeX + Arm.TimeX	hvN1+covadd.nontrad[[i]][c(1, 2)]
+periNrelativeT	Cumulative difference = 0 (of arm g and trad in time X)	dummyInKind dummyInKind.TimeX for cumulative effects relative to trad in time X	periNrelativeT=hvN1+dhvNinT
+hvN2	Level of nontrad in time X = cumulative trad + relative to concurrent trad = 0	Intercept+TimeX+Arm+TimeX.Arm	hvT0 + hvNinT 
+\multicolumn{4}{l}{\scriptsize Impacts by baseline experience \texttt{j} }			
+dhvJ0	Average difference = 0 (of experienced j and trad)	dummyAdiCattle0	j
+dhvJinT	Difference = 0 (of experienced j and trad in period X)	dummyAdiCattle0.TimeX	paste0(^, j,.Time.\$)
+hvJinT	Cumulative difference = 0 (of experience j and trad in period X)	dummyAdiCattle0 + dummyAdiCattle0.TimeX	dhvJ0+dhvJinT
+hvJG0	Average difference = 0 (of experience*arm j*g and arm g)	dummyAdiCattle0.Large	paste0(^, j,\$)
+dhvJGinT	Difference = 0 (of experience*arm j*g and arm g in period X)	dummyAdiCattle0.Large.TimeX	paste0(^, j, .',covadd.nontrad[[i]][2])
+hvJGinT	Cumulative difference = 0 (of experience*arm j*g and arm g in period X)	dummyAdiCattle0.Large+ dummyAdiCattle0.Large.TimeX	hvJG0 + dhvJGinT
+periJGinT	Cumulative difference = 0 (of experience*arm j*g and trad in time X)	dummyLarge + dummyLarge.TimeX+ dummyAdiCattle0 + dummyAdiCattle0.TimeX+ dummyAdiCattle0.Large+ dummyAdiCattle0.Large.TimeX	periNrelativeT+hvJinT+hvJGinT

@@ -1,0 +1,37 @@
+\vspace{-1cm}\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding by period, subsamples by cattle rearing experiences\label{tab ANCOVA NumCows Subsample by Experience timevarying}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience1TimeVaryingANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}
+\end{minipage}
+
+\addtocounter{table}{-1}
+\hspace{-1cm}\begin{minipage}[t]{14cm}
+\hfil\textsc{\normalsize Table \refstepcounter{table}\thetable: ANCOVA estimation of cattle holding by period, subsamples by cattle rearing experiences (continued) \label{tab ANCOVA NumCows Subsample by Experience timevarying2}}\\
+\setlength{\tabcolsep}{1pt}
+\setlength{\baselineskip}{8pt}
+\renewcommand{\arraystretch}{.52}
+\hfil\begin{tikzpicture}
+\node (tbl) {\input{\Sexpr{
+paste0(pathsaveHere, "NumCowsByExperience2TimeVaryingANCOVAEstimationResults.tex")
+}}};
+%\input{c:/dropbox/data/ramadan/save/tablecolortemplate.tex}
+\end{tikzpicture}\\
+\renewcommand{\arraystretch}{.8}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{>{\hfill\scriptsize}p{1cm}<{}>{\hfill\scriptsize}p{.25cm}<{}>{\scriptsize}p{12cm}<{\hfill}}
+Source:& \multicolumn{2}{l}{\scriptsize Estimated with GUK administrative and survey data.}\\
+Notes: & 1. & \Sexpr{paste(TabFNAncovaTop, TabFNArm, TabFNRound234)} Narrow net assets uses only assets observed for all 4 rounds in household assets. Household assets do not include livestock. \Sexpr{paste(TabFNAncovaExperience, FNNumCowsByExperience)}\\
+& 2. & \Sexpr{TabFNPval}
+%${}^{***}$, ${}^{**}$, ${}^{*}$ indicate statistical significance at 1\%, 5\%, 10\%, respetively. Standard errors are clustered at group (village) level.
+\end{tabular}
+\end{minipage}
+
+
+

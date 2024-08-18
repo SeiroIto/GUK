@@ -1,6 +1,6 @@
 # this is the sample to use (July 30, 2019)
 lvo0 <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
-print(addmargins(table(lvo0[o800 == 1L & tee == 1, .(Arm, AttritIn)])))
+#### print(addmargins(table(lvo0[o800 == 1L & tee == 1, .(Arm, AttritIn)])))
 # get net asset values
 NeAE1 <- readRDS(paste0(pathsaveHere, "NetAssetsExperienceRegData.rds"))
 nev <- unique(NeAE1[, .(hhid, NetValue0)])
@@ -42,6 +42,8 @@ saveRDS(lvstE, paste0(pathsaveHere, "NumCowAllMemberRegData.rds"))
 if (Only800) lvoE <- lvstE[o800 == 1, ]
 lvoER = copy(lvoE)
 lvoE[, grepout("RM", colnames(lvoE)) := NULL]
-print(addmargins(table0(lvoE[o800==1, .(tee, NumCows)])))
+if (CreateHTMLTable)
+  knitr::kable(addmargins(table0(lvoE[o800==1, .(tee, NumCows)])),
+    caption = "Number of cattle holding by survey round")
 lvo3E <- lvoE[tee == 4, ]
 lvoER3 <- lvoER[tee == 4, ]

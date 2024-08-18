@@ -1,0 +1,47 @@
+```{r ReadTrimIncome ANCOVA by R file, echo = F, warning = F}
+source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
+```
+Income sources are mainly labour incomes (`lab`) and farm revenues (`far`) with `r nrow(lab[o800 == 1L & tee == 2,])` and `r nrow(far[o800 == 1L & tee == 2,])` observations at baseline, respectively. We ignore farm incomes due to small number of observations.
+
+```{r Labour income regression set parameters original HHs, echo = F}
+source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
+FileName <- "LabourIncome"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
+listheader <- paste0("lb", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+source(paste0(pathprogram, "LabourIncomeCovariateSelectionANCOVA3.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- c(rep("TotalHHLabourIncome", 6))
+DataToUse1 <- DataToUse2 <- rep("lab", 6)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+```{r Farm income regression set parameters original HHs}
+FileName <- "FarmIncome"
+FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "a", "P", "T", "Ta")
+listheader <- paste0("fr", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+source(paste0(pathprogram, "FarmIncomeCovariateSelectionANCOVA2.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+Regressands <- rep("TotalRevenue", 3)
+DataToUse1 <- DataToUse2 <- rep("far", 3)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
+Separatingcoltitle = NULL
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+
+<details><summary>Click here to see the table of time varying labour income impacts by arm.</summary>
+`r HTML_LabourIncomeTimeVarying`
+</details>

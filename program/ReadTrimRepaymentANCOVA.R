@@ -45,9 +45,9 @@ arA <- arA[tee > 1, ]
 #   MeanFDCumNetSaving = mean(NetSaving),
 #   MeanFDCumExcessRepayment = mean(ExcessRepayment)), 
 #   by = survey][survey == 1, ]
-# use only borrowers
 if (Only800) arA <- arA[o800 == 1L & !is.na(LoanYear) &
   !grepl("tw|dou", TradGroup), ]
+# arA2: use only borrowers
 arA2 <- arA[grepl("bo", BorrowerStatus), 
   grepout("^groupid|^hhid|survey|tee|UD|LY|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|ExcessRepayment$|RMOther|RMvalue.[rN]|HeadA|HeadL|Floo|With|Size|^value\\.|^EffectiveR|^Arm$|BSta", 
   colnames(arA)), with = F]

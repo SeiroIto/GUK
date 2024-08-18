@@ -45,7 +45,8 @@ background rectangle/.style = {fill = gray90},
 
 \fill[blue] (gfone2) circle (3pt) (cone2) circle (3pt) node[above left] {\small $M$};
 \fill[red] (origin) circle (3pt) (gftwo2) circle (3pt) node[above left] {\small goats} (ctwo2) circle (3pt) node[above left] {\small cattle};
-\draw [name path=kunderline, blue, dashed] (cone2) -- (cone2 |- origin) node [below] {\small $k_{2}$};
+\draw [name path=kunderline, blue, dashed] (cone2) -- (cone2 |- origin) node [below] {\small $k_{M}$};
+\draw [name path=kunderlineG, blue, dashed, draw = none] (gftwo2) -- (gftwo2 |- origin) node [below] {\small $k_{G}$};
 % draw convergig arrows
 \def\thisspace{3.5}
 \def\raisespace{2}

@@ -1,0 +1,189 @@
+```{r ReadTrim NumCows for text, echo = F, cache = F, warning = F}
+source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
+```
+```{r tabulate Numcows, echo = F}
+remove(list = ls(pattern = "^incl.?\\d"))
+lvoEN = copy(lvoE) # all periods
+lvoEN[, grepout("TotalImp.*Value$|Self|edV.*0", colnames(lvoEN)) := NULL]
+#### consistency between cattle ownership/leaseship at baseline and 
+#### livestock holding information
+lvoEN[, Cattle := "None"]
+lvoEN[OwnCattle == 1L, Cattle := "Owner"]
+lvoEN[AdiCattle == 1L, Cattle := "Adi"]
+if (CreateHTMLTable)
+  knitr::kable(addmargins(table0(lvoEN[tee == 2, .(Cattle, NumCows0)])), 
+    caption = "Number of cattle holding at baseline by experience")
+```
+
+```{r ReadTrim NumCows By experience, cache = F, warning = F}
+source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
+remove(list = ls(pattern = "^incl.?\\d"))
+lvoEN = copy(lvoE) # all periods
+lvo3EN = copy(lvo3E) # period 4 only
+lvoEN[, grepout("TotalImp.*Value$|Self|edV.*0", colnames(lvoEN)) := NULL]
+lvo3EN[, grepout("TotalImp.*Value$|Self|edV.*0", colnames(lvo3EN))  := NULL]
+#### consistency between cattle ownership/leaseship 
+#### at baseline and livestock holding information
+lvoEN[, Cattle := "None"]
+lvoEN[OwnCattle == 1L, Cattle := "Own"]
+lvoEN[AdiCattle == 1L, Cattle := "Adi"]
+addmargins(table0(lvoEN[tee == 2, .(Cattle, NumCows0)]))
+FileName <- "NumCowsExperience"
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+  "TimeVarying", "TimeVaryingAttributes",
+  "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta", "TP", "TPa")
+listheader <- paste0("nae", regsuffixes)
+source(paste0(pathprogram, "NumCowsExperienceCovariateSelectionANCOVA2.R"))
+jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+DataToUse1 <- DataToUse2 <- rep("lvoEN", 7)
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+Regressands <- rep("NumCows", jay)
+tableboxwidth <- 4.5
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+dig.depmean <- 0
+AddMeanStdColumn <- UseRawDataForDestat <- T
+source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+```
+```{r numcows 2 separate subsample by experience}
+FileName0 <- "NumCowsByExperience"
+Regressands <- rep("NumCows", 7)
+DataToUse1 <- rep("lvoEN", 7)
+DataToUse2 <- rep("lvoE3N", 7)
+FileNameHeader <- c("", "PovertyStatus", "Attributes",
+    "TimeVarying", "TimeVaryingAttributes")
+regsuffixes <- c("", "P", "a", "T", "Ta")
+listheader <- paste0("cowE", regsuffixes)
+exclheader <- paste0("excl", regsuffixes)
+inclheader <- gsub("ex", "in", exclheader)
+dig.depmean <- 2
+if (any(grepl("NumCowsOwnedAtRd1", colnames(lvoEN)))) 
+  setnames(lvoEN, "NumCowsOwnedAtRd1", "NumCows0")
+#### numcows subsample by experience: own, adi, none
+lvoENo <- lvoEN[OwnCattle == 1L, ]
+lvoENa <- lvoEN[AdiCattle == 1L, ]
+lvoENn <- lvoEN[!(OwnCattle == 1L | AdiCattle == 1L), ]
+lvo3ENo <- lvo3EN[OwnCattle == 1L, ]
+lvo3ENa <- lvo3EN[AdiCattle == 1L, ]
+lvo3ENn <- lvo3EN[!(OwnCattle == 1L | AdiCattle == 1L), ]
+Addseparatingcols <- NULL; Separatingcolwidth <- NULL
+Separatingcoltitle <- NULL
+tableboxwidth <- 4.5
+dig.depmean <- 0
+for (mm in c("a", "o", "n"))
+{
+  CreateHTMLTable <- T
+  listheader <- paste0("cowE", mm, regsuffixes)
+  FileName <- paste0(FileName0, mm)
+  if (mm == "o") 
+    source(paste0(pathprogram, 
+      "NumCowsByExperienceForOwnCovariateSelectionANCOVA2.R")) else
+    source(paste0(pathprogram, 
+      "NumCowsByExperienceForAdiNoneCovariateSelectionANCOVA2.R"))
+  jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+  DataToUse1 <- rep(paste0("lvoEN", mm), jay)
+  DataToUse2 <- rep(paste0("lvo3EN", mm), jay)
+  exclheader <- paste0("excl", regsuffixes)
+  inclheader <- gsub("ex", "in", exclheader)
+  AddMeanStdColumn <- UseRawDataForDestat <- T
+  source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
+}
+centerBox <- 1.1
+for (k in 1:length(listheader)) {
+  etba <- get(paste0("etba", k)) # adi subsample
+  etbo <- get(paste0("etbo", k)) # own subsample
+  etbn <- get(paste0("etbn", k)) # no adi nor own subsample
+  # fill in empty rows to conform with own subsample
+  etba <- rbind(etba[1:grep("p.*HeadL", names(etba[, 1])), ], "", "", 
+    etba[-(1:grep("p.*HeadL", names(etba[, 1]))), ])
+  etbn <- rbind(etbn[1:grep("p.*HeadL", names(etbn[, 1])), ], "", "", 
+    etbn[-(1:grep("p.*HeadL", names(etbn[, 1]))), ])
+  etb1 <- cbind(
+    etbo[, 1], # covariate names
+    etba[, 2], etbo[, 2], etbn[, 2], 
+    etba[, 3], etbo[, 3], etbn[, 3]
+    )
+  etb2 <- cbind(
+    etbo[, 1], 
+    etba[, 4], etbo[, 4], etbn[, 4], 
+    etba[, 5], etbo[, 5], etbn[, 5] 
+    )
+  ltb1 <- latextab(etb1, 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3.25, rep(centerBox, ncol(etb1)-1)), hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90", 
+    addseparatingcols = 3, 
+    separatingcolwidth = .05, 
+    separatingcoltitle = c("mean/std", "(1)"), 
+    addsubcoltitlehere = T)
+  ltb2 <-  latextab(etb2, 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(3.25, rep(centerBox, ncol(etb2)-1)), hright = "$", 
+    headercolor = "gray80", adjustlineskip = "-.6ex", delimiterline= NULL,
+    alternatecolor2 = "gray90", 
+    addseparatingcols = c(3), 
+    separatingcolwidth = rep(.05, 1),
+    separatingcoltitle = c("(2)", "(3)"), 
+    addsubcoltitlehere = T)
+  ltb1 <- c(
+    ltb1[1:3, ],
+    paste(
+      "\\rowcolor{gray80}&", 
+      paste(
+        c(paste("\\makebox[", centerBox, "cm]{\\scriptsize\\sf\\hfil", 
+          c("Adi", "Own", "None"), "}")
+        , "",
+        paste("\\makebox[", centerBox, "cm]{\\scriptsize\\sf\\hfil", 
+          c("Adi", "Own", "None"), "}"))
+        , collapse = "&")
+      , "\\\\[-.0ex]", collapse = ""),
+    ltb1[-(1:4), ]
+    )
+  ltb2 <- c(
+    ltb2[1:3, ],
+    paste(
+      "\\rowcolor{gray80}&", 
+        paste(c(paste("\\makebox[", centerBox, "cm]{\\scriptsize\\sf\\hfil", 
+          c("Adi", "Own", "None"), "}")
+        , "&"), collapse = "&")
+      ,
+        paste(c(paste("\\makebox[", centerBox, "cm]{\\scriptsize\\sf\\hfil", 
+          c("Adi", "Own", "None"), "}")
+          ), collapse = "&")
+      , 
+      "\\\\[-.6ex]", collapse = ""),
+    ltb2[-(1:4), ]
+    )
+  write.tablev(ltb1, 
+    paste0(pathsaveHere, FileName0, 1, 
+      FileNameHeader[k], "ANCOVAEstimationResults.tex")
+    , colnamestrue = F)
+  write.tablev(ltb2, 
+    paste0(pathsaveHere, FileName0, 2, 
+      FileNameHeader[k], "ANCOVAEstimationResults.tex")
+    , colnamestrue = F)
+}
+```
+
+
+
+<details><summary>Click here to see the code of results table on owned cattle of owners.</summary>
+Number of owned cattle: Owners  
+`r HTML_NumCowsByExperienceoTimeVarying`
+</details>
+
+<details><summary>Click here to see the code of results table on owned cattle of Adi.</summary>
+Number of owned cattle: Adi  
+`r HTML_NumCowsByExperienceaTimeVarying`
+</details>
+
+<details><summary>Click here to see the code of results table on owned cattle of others.</summary>
+Number of owned cattle: Others  
+`r HTML_NumCowsByExperiencenTimeVarying` 
+</details>
+
+
+
