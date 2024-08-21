@@ -1,0 +1,1311 @@
+---
+title: "Reading and cleaning data for GUK"
+author: "Seiro Ito"
+date: "`r format(Sys.time(), '%Y年%m月%d日 %R')`"
+output:
+  tufte::tufte_html:
+    citation_package: natbib
+    tufte_features: ["fonts", "background", "italics"]
+    toc: true
+    toc_depth: 4
+    linkcolor: 'orange'
+    urlcolor: 'green'
+    citecolor: 'blue'
+    includes:
+      in_header: "../program/MathShorthand.html"
+  pdf_document:
+    latex_engine: xelatex
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
+    includes:
+      in_header: "../program/MathShorthand.html"
+header-includes:
+    - \usepackage{amsmath}
+    - \usepackage{amssymb}
+    - \usepackage{amsfonts}
+    - \usepackage{bookmark} 
+    - \usepackage{natbib} 
+    - \usepackage{xltxtra} 
+    - \usepackage{zxjatype} 
+    - \usepackage[ipa]{zxjafont} 
+    - \usepackage{marginnote}
+bibliography: c:/seiro/settings/Tex/seiro.bib
+link-citations: yes
+#### c:\seiro\languages\R\R-4.2.1\bin\x64\Rscript.exe -e "path <- 'c:/data/GUK/analysis/program/'; rmarkdown::render('c:/data/GUK/analysis/program/ReadAndCleanData_Tufte.Rmd')"
+#### path0 <- "c:/data/GUK/"; setwd(path <- paste0(path0, "analysis/")); pathprogram <- paste0(path, "program/"); rmarkdown::render(paste0(pathprogram, "ReadAndCleanData_Tufte.Rmd"))
+#### rmarkdown::render(paste0(path, "program/ReadAndCleanData_Tufte.Rmd"), output_format = "pdf_document")
+#### Below are git bash commands.  ####
+#### To publish on github, we are placing html under /root/program/RamadanEstimationJDE_Tufte.html.
+#### cd c:/data/GUK/analysis/
+#### git init
+#### git config --global user.name "SeiroIto"
+#### git remote add origin https://github.com/SeiroIto/GUK.git  ## specify remote
+#### git branch -M main
+#### Close git once and start again. 
+#### Before running below, create .gitignore and place it in c:/data/GUK/analysis/
+#### .gitignore has following lines (=asking git to ignore data files)
+####    /save/*.qs
+####    /save/*.rds
+####    /save/*.prn
+####    /progran/cache/
+#### git add c:/data/GUK/analysis/program   ## for most times, use this 
+#### Below may not be necessary if .gitignore works as intended. 
+#### git ls-tree -r main --name-only ## list all tracked files
+#### git commit -am "initial commit"
+#### git push -f origin main  ## push files to remote
+#### if error with push fatal: the remote end hung up unexpectedly, run below
+#### git config http.postBuffer 2000000000
+#### git push -f origin main  ## push files to remote
+---
+
+<!-- link to Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+```{css, echo=F}
+.SeiroBenign {
+  background-color: #FFEBCD;
+  padding: 0.5em; /*文字まわり（上下左右）の余白*/
+  /* border: 1px solid yellow; */
+  /* font-weight: bold; */
+}
+.SeiroLightGreen {
+  background-color: #D0F0C0; /* Tea green */
+  padding: 0.5em; /*文字まわり（上下左右）の余白*/
+  font-family: Noto Sans;
+  /* border: 1px solid yellow; */
+  /* font-weight: bold; */
+}
+#### Default height of a block
+pre {
+  max-height: 700px;
+  overflow-y: auto;
+}
+pre[class] {
+  max-height: 950px;
+}
+.scroll-100 {
+  #max-height: 50vh !important;
+  max-height: 50px !important;
+  overflow-y: auto;
+  background-color: inherit;
+}
+#### This is smaller size fonts environment
+.description {
+  color: black;
+}
+.description small {
+  font-size: 10pt;
+}
+.tex sub, .latex sub, .latex sup {
+    text-transform: uppercase;
+  }
+.tex sub, .latex sub {
+  vertical-align: -0.5ex;
+  margin-left: -0.1667em;
+  margin-right: -0.125em;
+}
+.tex, .latex, .tex sub, .latex sub {
+  font-size: 1em;
+}
+.latex sup {
+  font-size: 0.85em;
+  vertical-align: 0.15em;
+  margin-left: -0.36em;
+  margin-right: -0.15em;
+}
+.TableOnLeft {
+  margin-left: zero !important;
+}```
+```{r setup, echo = F, results = "hide"} 
+#### include = F <==> echo=F & results = F
+#### renv::init()
+#### library(renv)
+library(knitr)
+library(tufte)
+#### invalidate cache when the tufte version changes
+knitr::opts_chunk$set(
+  tidy = FALSE, cache.extra = packageVersion('tufte'), 
+  margin_references = TRUE,
+  #### remove leading hashes in html output
+  comment = "", 
+  echo = T, cache = F, 
+  class.source = "SeiroBenign", class.output = "SeiroLightGreen"
+  )
+options(htmltools.dir.version = FALSE, width = 100)
+gc()
+```
+
+```{r here setup, eval = F, echo = F}
+library(here)
+library(rprojroot)
+#### Need to set project root
+setwd("c:/data/GUK/analysis/")
+getwd()
+here::i_am("GUK/analysis/program/ReadAndCleanData_Tufte.Rmd")
+getwd()
+find_root_file("Workshop2024Mar26/code/EstimationCode/R", 
+  "data_simulated_20230426.csv", criterion = has_file(".git/index"))
+(RootFile <- find_root(has_file(".git/index")))
+#### List all files and directories below the root
+dir(find_root(has_file(".git/index")))
+FPath <- function(SubFolder, FileName) 
+  find_root_file(SubFolder, FileName, criterion = has_file(".git/index"))
+FPath("docs/Workshop2024Mar26/code/EstimationCode/R", "data_simulatedCD_20230426.csv")
+data_sim <- fread(FPath("docs/Workshop2024Mar26/code/EstimationCode/R", 
+  "data_simulatedCD_20230426.csv"))
+```
+
+# Overview
+
+This note uses ANCOVA as the estimator of choice. ANCOVA assumes the initial value of outcome variable is a pure nusissance that it only adds a noise and is uncorrelated with the main regressor of interest, hence uses it as a covariate. Under such assumptions, it is shown that ANCOVA is more efficient than DID as it renders data to control for baseline differences in outcomes [@FrisonPocock1992]. ANCOVA become numerically the same as DID if the estimated coefficient on the covariate is unity. As shown in the results, we see that it smaller and the claim that DID overcorrects for the initial values applies to our data.
+
+<details><summary>Click here to see the code of paths and definitions.</summary>
+```{r path and def files, echo = T, eval = T, cache = F, warning = F, results = "hide"}
+library(data.table)
+library(qs)
+library(kableExtra)
+pathprogram <- paste0(path, "program/");  
+pathsource <- paste0(path0, "source/")
+pathsave <- paste0(path, "save/")
+pathsaveHere <- paste0(pathsave, "EstimationMemo/")
+pathfigure <- pathsavefigure <- paste0(pathprogram, "figure/")
+pathtable <- paste0(pathprogram, "table/")
+pathreceived <- paste0(path0, "received/")
+pathcleaned <- paste0(pathreceived, "cleaned_by_RA/")
+path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
+dir.create(pathsave)
+dir.create(pathsaveHere)
+file.remove(list.files("program/cache", full.names = T))
+#### Uncommenting below deletes all input/output of R from html. Why???
+#### render_listings()	####	it changes "<-" to real arrows, etc., prettifying
+#### Tabulation functions
+source(paste0(pathprogram, "TabulationFunctions.R"))
+#### substitution table "sbt"
+source(paste0(pathprogram, "SubstTable.R"))
+source(paste0(pathprogram, "SubstTableANCOVA.R"))
+source(paste0(pathprogram, "SubstTablePerm.R"))
+#### Estimation functions
+source(paste0(pathprogram, "EstimationFunctions.R"))
+#### CombinenamesXYZ functions
+source(paste0(pathprogram, "GetCovariatesFunctions.R"))
+RMDenomination <- 1000
+datafiles <- c("s1", "arA", "ar", "ass", "lvo", "lvoL", "lvp", "lab", "far", "con", "obr")
+Datafiles <- c("S1", "ArA", "Ar", "Ass", "Lvo", "LvoL", "Lvp", "Lab", "Far", "Con", "Obr")
+DataFileNames <- c(
+  "Schooling", "AllMeetingsRepayment", "Repayment", "Asset", 
+  "Livestock", "LivestockLong", "LivestockProducts",
+  "LabourIncome", "FarmIncome", "Consumption", "OtherBorrowing")
+ShortfallFileNames<- c("Group", "Individual", "o800")
+FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes"),
+  "OriginalHHs")
+filenamelist <- c("Group", "Individual")
+arms <- c("traditional", "large", "large grace", "cow")
+Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
+armsC <- c("traditional", "large", "large grace", "cattle")
+ArmsC <- c("Traditional", "Large", "Large grace", "Cattle")
+ArmsC2 <- c("Traditional", "Large", "LargeGrace", "Cattle")
+Attributes <- c("Traditional", "LargeSize", "WithGrace", "InKind")
+InitialSampleMonthUpperBound <- 6
+Only800 <- T
+UseTrimmedSample <- T
+NotPrintFileNames <- ""
+#NotPrintFileNames <- "%"
+PrintFormulae <- F
+PermRepTimes <- 100000
+```
+</details>
+```{r TableFootnotes, file = "../program/TableFootnotePiecesHTML.R", echo = F}
+```
+
+
+
+
+# Read and format data
+
+
+<!-- Read: `r paste0(pathsave, "AllMeetingsRosterAdminData.rds")`. -->
+
+## Cleaning process (not done in this file)
+
+This file uses the cleaned data. Cleaning is done in the following steps. 
+
+1. `read_cleaned_data.rnw` cleans original data files (incl. Abu-san's correction files) and creates NewVariables $\rightarrow$ `data_read_in_a_list_with_baseline_patched.rds`  
+1. `ReadFilesMergeAdminRoster.rnw` adds admin data $\rightarrow$  <p class="description"> Individual data files  <small>(RosterAdminSchoolingData.rds, RosterAdminData.rds, AllMeetingsRosterAdminData.rds, AssetAdminData.rds, LivestockAdminData.rds, LivestockLongAdminData.rds, LivestockProductsAdminData.rds, LabourIncomeAdminData.rds, FarmRevenueAdminData.rds, ConsumptionAdminData.rds, OtherBorrowingAdminData.rds, Shocks.rds) in `r pathsaveHere`.</small></p>
+1. Trimming, adding shocks, survey round numbering, create dummy vectors, interaction terms $\rightarrow$ <p class="description"> <small> `r paste0(DataFileNames, "AdminDataUsedForEstimation.prn")` </small></p>
+
+
+<details><summary>Click here to see the code of data dimension check.</summary>
+```{r data dimension check, warning = F}
+#### Name as sch1, sch2 rather than s1, s2 (as in other files) 
+#### to display "s1" in TrimmingNumObsTable
+#### - Using data [data_read_in_a_list_with_baseline_patched.rds],
+####   the following data files are created in ReadFilesMergeAdminRoster.rnw 
+####   (with the child file ImpactEstimationOriginal1600Memo2_body1.rnw). 
+#### - Each file includes xid (admin) info.
+s1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds")) # dummyHadCows?
+lvoL <- readRDS(paste0(pathsaveHere, "LivestockLongAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+obr <- readRDS(paste0(pathsaveHere, "OtherBorrowingAdminData.rds"))
+shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+interterms <- c("Time.2", "Time.3", "Time.4")
+Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
+arms <- c("traditional", "large", "large grace", "cow")
+povertystatus <- c("UltraPoor", "ModeratelyPoor")
+s1[, tee := survey]
+dimchange <- dimchangeRd1 <- dimchangeRd1o800 <- NULL
+datafiles
+for (j in 1:length(datafiles)) {
+####  if (j == 1) print0(paste("old|iRej|^g in Mstatus", "==>", "con|^dro|^rep in Mgroup", "==>", "No tw|dou in TradGroup"))
+  dd <- get(datafiles[j])
+  if (!any(grepl("^tee$", colnames(dd)))) dd[, tee := 1:.N, by = hhid]
+  # show trimming results
+  # all sample
+  dimchange <- rbind(dimchange, paste(datafiles[j], ":", nrow(dd), 
+    "==>", 
+    nrow(dd[grepl("old|iRej|^g", Mstatus), ]),
+####    "==>", 
+####    nrow(dd[grepl("old|iRej|^g", Mstatus), ][grepl("con|dro", Mgroup), ]), 
+    "==>", 
+    nrow(dd[grepl("old|iRej|^g", Mstatus), ][!grepl("tw|dou", TradGroup), ])
+    ))
+  if (!grepl("con", datafiles[j])) {
+    # all sample, rd 1 only
+    dimchangeRd1 <- rbind(dimchangeRd1, paste(datafiles[j], ":", 
+      nrow(dd[tee == 1 & survey == 1, ]), 
+      "==>", 
+      nrow(dd[tee == 1 & survey == 1 & grepl("old|iRej|^g", Mstatus), ]),
+      "==>", 
+      nrow(dd[tee == 1 & survey == 1 & grepl("old|iRej|^g", Mstatus), ][!grepl("tw|dou", TradGroup), ])
+      ))
+    if (grepl("arA", datafiles[j])) TradTwice <- 
+        nrow(dd[tee == 1 & survey == 1 & o800 == 1L & grepl("old|iRej|^g", Mstatus) & grepl("rad", Arm), ]) -
+        nrow(dd[tee == 1 & survey == 1 & o800 == 1L & grepl("old|iRej|^g", Mstatus) & grepl("rad", Arm), ][!grepl("tw|dou", TradGroup), ])
+    # all sample, rd 1 only
+    dimchangeRd1o800 <- rbind(dimchangeRd1o800, 
+      paste(datafiles[j], ":", 
+      nrow(dd[tee == 1 & survey == 1 & o800 == 1L, ]), 
+      "==>", 
+      nrow(dd[tee == 1 & survey == 1 & o800 == 1L & grepl("old|iRej|^g", Mstatus), ]),
+      "==>", 
+      nrow(dd[tee == 1 & survey == 1 & o800 == 1L & grepl("old|iRej|^g", Mstatus), ][
+      !grepl("tw|dou", TradGroup), ])
+      ))
+  } else {
+  # consumption
+    # all sample, rd 2 only
+    dimchangeRd1 <- rbind(dimchangeRd1, paste(datafiles[j], ":", 
+      nrow(dd[tee == 1 & survey == 2, ]), 
+      "==>", 
+      nrow(dd[tee == 1 & survey == 2 & grepl("old|iRej|^g", Mstatus), ]),
+      "==>", 
+      nrow(dd[tee == 1 & survey == 2 & grepl("old|iRej|^g", Mstatus), ][!grepl("tw|dou", TradGroup), ])
+      ))
+    # all sample, rd 2 only
+    dimchangeRd1o800 <- rbind(dimchangeRd1o800, 
+      paste(datafiles[j], ":", 
+      nrow(dd[tee == 1 & survey == 2 & o800 == 1L, ]), 
+      "==>", 
+      nrow(dd[tee == 1 & survey == 2 & o800 == 1L & grepl("old|iRej|^g", Mstatus), ]),
+      "==>", 
+      nrow(dd[tee == 1 & survey == 2 & o800 == 1L & grepl("old|iRej|^g", Mstatus), ][
+      !grepl("tw|dou", TradGroup), ])
+      ))
+   }
+}
+dmch <- gsub("==>", " & $\\\\Rightarrow$ &", dimchange)
+dmch <- gsub(":", " & ", dmch)
+#dmch <- rbind("file & & old$|$iRej$|$\\^{}g in \`Mstatus` && con$|$dro in \`Mgroup` && No tw$|$dou in \`TradGroup` &", dmch)
+dmch <- rbind("file & & old$|$iRej$|$\\^{}g in \`Mstatus` && No tw$|$dou in \`TradGroup` &", 
+  "\\makebox[1.5cm]{\\footnotesize all rounds}&&&&&",
+  dmch)
+dmch <- gsub("$", " \\\\\\\\ ", dmch)
+dmchRd1 <- gsub("==>", " & $\\\\Rightarrow$ &", dimchangeRd1)
+dmchRd1 <- gsub(":", " & ", dmchRd1)
+dmchRd1 <- rbind("\\makebox[1.5cm]{\\footnotesize round 1 only}&&&&&",
+  dmchRd1)
+dmchRd1 <- gsub("$", " \\\\\\\\ ", dmchRd1)
+dmchRd1o800 <- gsub("==>", " & $\\\\Rightarrow$ &", dimchangeRd1o800)
+dmchRd1o800 <- gsub(":", " & ", dmchRd1o800)
+dmchRd1o800 <- rbind("\\multicolumn{6}{l}{\\footnotesize original 800, round 1 only}",
+  dmchRd1o800)
+dmchRd1o800 <- gsub("$", " \\\\\\\\ ", dmchRd1o800)
+hleft = c("\\sf", c(rbind(rep("\\hfill", 2), rep("\\hfil", 2)), "\\hfill"))
+hcenter = c(1.5, c(rbind(rep(1, 2), rep(1.5, 2)), 1))
+write.tablev(
+  rbind(paste("\\begin{tabular}{", 
+    paste(paste0(">{\\footnotesize ", hleft, "}", "p{", hcenter, "cm}", "<{}"), collapse = ""), "}\\rowcolor{paleblue}"),
+  dmch, 
+  dmchRd1, 
+  dmchRd1o800, 
+  "\\end{tabular}"), 
+  paste0(pathsaveHere, "TrimmingNumObsTable.tex"), colnamestrue = F)
+#print0(rbind(paste("(old|iRej|^g in Mstatus)", "==>", "(con|^dro|^rep in Mgroup)", "==>", "(No tw|dou in TradGroup)"), dimchange))
+```
+</details>
+
+## Creating 'EachFileName'Trimmed.rds files to be used in permutation tests
+
+`RosterAdmin.rds` keeps all 800 members which will be used in attrition and randomisation tests. Add *BStatus* etc. from the admin roster file (`RosterAdminData.rds`) to all files and save as: 
+
+`PathToSaveFolder/'EachFileName'Trimmed.rds`
+
+Produced files are called "Trimmed" files as we keep only `grepl("old|iRej|^g", Mstatus)` (old members, individual rejection, group rejection, group erosion). Here, we have not yet dropped `grepl("tw|dou", TradGroup)` (twice received, double received in traditional arm). We use "Trimmed" files for attrition and randomisation tests to assess differnces at baseline. 
+
+```{r obs of ar, echo = F}
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+ar[, ini := 1:.N, by = .(survey, hhid)]
+```
+
+To produce Trimmed files, first create `r paste0(DataFileNames[3], "Trimmed.rds")` sample from `RosterAdminData.rds` and attach its variables to each files. 
+
+In `RosterAdminData.rds`, there are `r ar[ini == 1 & o800 == 1L & survey == 1, length(unique(hhid))]` HHs at the baseline, whose size shrinks by attrition: `r ar[ini == 1 & o800 == 1L & survey != 1, .(num=length(unique(hhid))), by = survey][, num]`. 
+
+
+<details><summary>Click here to see the code to produce "Trimmed" files.</summary>
+```{r keep based on Mstatus Mgroup create dummies interactions, warning = F}
+#### All files are created by merging admin files in ReadFilesMergeAdminRoster.rnw
+s1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds")) # dummyHadCows?
+lvoL <- readRDS(paste0(pathsaveHere, "LivestockLongAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+obr <- readRDS(paste0(pathsaveHere, "OtherBorrowingAdminData.rds"))
+shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+#### Add shock variables to each file
+shk <- shk[survey == 1, ]
+shk[, grepout("gid|Dat|Ye|Mo|surv|code", colnames(shk)) := NULL]
+shk[is.na(groupid), groupid := as.integer(substr(hhid, 1, 8))]
+setkey(shk, groupid, hhid)
+#### shk[, Month := factor(Month, levels = 
+####   c("January", "February", "March", "April", 
+####   #"May", "June", "July",
+####   "August", "September", "November", "October",   "December"))]
+setnames(s1, "tee", "meet.tee") # meeting periods
+setnames(s1, "i.tee", "tee") # tee = survey rounds
+Obs <- NULL
+for (j in 1:length(datafiles)) {
+  dd <- get(datafiles[j])
+  setkey(dd, hhid, Year, Month)
+  if (!any(grepl("^tee$", colnames(dd)))) dd[, tee := 1:.N, by = hhid]
+  dd[, Arm := droplevels(Arm)]
+  if (any(grepl("IntDate", colnames(dd))))
+    dd[, Year :=  as.integer(strftime(IntDate, format = "%Y"))] else
+  if (any(grepl("^Date$", colnames(dd))))
+    dd[, Year :=  as.integer(strftime(Date, format = "%Y"))]
+  # 1. Keep only membership = 1 or 4, which corresponds to 
+  # Mstatus old, iRej, gR, gE (on going members, indiv rejecters, group rejecters, group erosion)
+  addmargins(table(dd[o800 == 1L & tee == 1, .(Arm)]))
+  dd <- dd[grepl("old|iRej|^g", Mstatus), ]
+  # 2. Keep only continuing, dropouts members in Mgroup.
+  #dd <- dd[grepl("con|dro", Mgroup), ]
+  # Rejecters do not receive loans. So I need to relax creditstatus = yes condition.
+  # Remark out the following:
+  # dd <- dd[grepl("Yes", creditstatus), ]
+  #  dd <- dd[as.Date(DisDate1) < as.Date("2015-01-01"), ]
+  # drop TradGroup = twice, double. This drops 24 members in traditional. When I do this, they will not be included in any data that are merged with ar.
+  tb <- as.data.frame.matrix(table(ar[o800 == 1 & tee == 1 & grepl("tw|dou", TradGroup), 
+    .(gid, DisDate1)]))
+  # DisDates of 24 traditional arm members disbursement is less than 3 times.
+  # tb[apply(tb, 1, sum)>0, ]
+  # one can drop 24 members of trad, but leave it to later to decide
+  #dd <- dd[!grepl("tw|dou", TradGroup), ]
+#grepl("es", creditstatus) & as.Date(DisDate1) <= as.Date("2015-01-01") & !grepl("tw|dou", TradGroup)
+  setkey(dd, groupid, hhid)
+  dd[, MonthGap := min(DisDate1, na.rm = T), by = groupid]
+  dd[MonthGap == Inf, MonthGap := NA]
+  dd[, MonthGap := round(
+    as.numeric(DisDate1 - MonthGap)/(60*60*24*30.4375), 2)]
+#### BStatus is defined in ReadFilesMergeAdmin
+####   dd[, BStatus := BorrowerStatus]
+####   dd[grepl("gRe", Mstatus), BStatus := "group rejection"]
+####   dd[grepl("iRej", Mstatus), BStatus := "individual rejection"]
+####   dd[grepl("gEr", Mstatus), BStatus := "rejection by flood"]
+####   dd[, BStatus := factor(BStatus, levels = c("borrower", "pure saver", 
+####     "individual rejection", "group rejection", "rejection by flood"))]
+  # merge shock module
+  setkey(dd, groupid, hhid)
+  # Below way of merge drops 4 HHs in roster admin data: 800 => 796. Should be avoided.
+  # setkey(dd, hhid, Year, Month)
+  # shk[, o800 := NULL]
+  # Use this merge instead.
+  dd2 <- merge(dd, shk, by = c("groupid", "hhid", "o800"), all.x = T)
+  addmargins(table0(dd2[o800 == 1L, .(tee, Arm)]))
+  dd2[, c("en") := NULL]
+  dd2[, teeyr := 1]
+  dd2[Year == 2014, teeyr := 2]
+  dd2[Year == 2015, teeyr := 3]
+  dd2[Year == 2016, teeyr := 3]
+  dd2[Year == 2017, teeyr := 4]
+  dd2[, Time := teeyr]
+  setkey(dd2, hhid, Year, teeyr)
+  dd2 <- data.table(dd2, 
+    makeDummyFromFactor(dd2[, Arm], reference = NULL))
+  if (any(grepl("dummyLarge grace", colnames(dd2)))) 
+    setnames(dd2, grepout("dummyLarge grace", colnames(dd2)), 
+      gsub("dummyLarge g", "dummyLargeG", 
+        grepout("dummyLarge grace", colnames(dd2))))
+  if (any(grepl("dummyNANA", colnames(dd2)))) 
+    dd2[, dummyNANA := NULL]
+  #dd2[, dummyDropOuts := NULL]
+  dd2[, povertystatus := factor(povertystatus, 
+    labels = c("Ultra Poor", "Moderately Poor"))]
+  dd2 <- data.table(dd2, 
+    makeDummyFromFactor(dd2[, povertystatus], reference = NULL))
+  setnames(dd2, c("dummyUltra Poor", "dummyModerately Poor"),
+    c("dummyUltraPoor", "dummyModeratelyPoor"))
+  dd2[, c("Size", "Grace", "Item") := .("SmallSize", "WithoutGrace", "Cash")]
+  dd2[!grepl("tra", Arm), Size := "LargeSize"]
+  dd2[grepl("gr|cow|catt", Arm), Grace := "WithGrace"]
+  dd2[grepl("cow|catt", Arm), Item := "InKind"]
+  dd2[, c("Grace", "Size", "Item") := 
+    .(factor(Grace), factor(Size, levels = c("LargeSize", "SmallSize")), 
+      factor(Item))]
+  dd2 <- data.table(dd2, 
+    makeDummyFromFactor(dd2[, Size], reference = NULL),
+    makeDummyFromFactor(dd2[, Grace], reference = NULL),
+    makeDummyFromFactor(dd2[, Item], reference = NULL))
+  # create demeaned dummies
+  tobe.interacted <- c(ArmsC2, povertystatus, 
+    c("SmallSize", "LargeSize", "WithoutGrace", "WithGrace", "Cash", "InKind"))
+  for (k in tobe.interacted)
+    dd2[, paste0("DemeanedDummy", k) := 
+      eval(parse(text = 
+        paste0("dummy", k)
+      )) - 
+      mean(
+        eval(parse(text = 
+          paste0("dummy", k)
+        ))
+        , na.rm = T)
+    ]
+  # Arm-Time interactions
+  for (i in interterms) {
+  # interterms are Time.T, T = 2, 3, 4
+  # Demeand interactions between characteristics dummies (Arm, poverty, etc.) * time
+    i1 <- unlist(strsplit(i, "\\."))
+    i2 <- i1[2]; i1 <- i1[1] # i2 = T, i1 = Time
+    i0 <- gsub("\\.", "", i)
+    dd2[, (i) := as.numeric(eval(parse(text=i1)) == i2)]
+    # DemeanedTimeT
+    dd2[, paste0("Demeaned", i0) := 
+      eval(parse(text=i)) - mean(eval(parse(text=i)), na.rm = T)] 
+    # dummyArm.TimeX = DemeanedArm*DemeanedTimeX
+    for (k in tobe.interacted)
+      dd2[, paste0("dummy", k, ".", i0) := 
+        eval(parse(text=paste0("Demeaned", i0))) * 
+        eval(parse(text=paste0("DemeanedDummy", k)))]
+    # undemeand (UD) interactions: UDdummyArm.TimeX
+    for (k in tobe.interacted)
+      dd2[, paste0("UDdummy", k, ".", i0) := 
+        eval(parse(text=i)) * 
+        eval(parse(text = paste0("dummy", k)))]
+  }
+  # Only for livestock to create demeand HadCows*Arm, HadCows*Arm*Time interactions 
+  dd2[, .Arm := paste0(toupper(substr(Arm, 1, 1)), substr(Arm, 2, 100))]
+  dd2[, .Arm := factor(.Arm, levels = ArmsC)]
+  dd2[, .Arm := factor(.Arm, labels = ArmsC2)]
+  if (grepl("^lvo$", datafiles[j])) {
+    # demean HadCows
+    dd2[, "DemeanedHadCows" := dummyHadCows - mean(dummyHadCows, na.rm = T)]
+    dd2[, paste0("dummyHadCows.", "dummy", levels(dd2[, .Arm])) := 0L]
+    dd2[, paste0(rep(paste0("dummyHadCows.", "dummy", levels(dd2[, .Arm])), 2),  
+      rep(paste0(".Time", 3:4), each = 4)) := 0L]
+    # HadCows * Arm, HadCows * Arm * Time
+    for (a in c(levels(dd2[, .Arm]), levels(dd2[, Size]), levels(dd2[, Grace]), levels(dd2[, Item]))) {
+      dd2[, paste0("dummyHadCows.dummy", a) := 
+        eval(parse(text=paste0("DemeanedDummy", a, "*DemeanedHadCows")))]
+      dd2[, paste0("dummyHadCows.dummy", a, ".Time", 3:4) := 
+        .(eval(parse(text = paste0("dummyHadCows.dummy", a))) * DemeanedTime3,
+          eval(parse(text = paste0("dummyHadCows.dummy", a))) * DemeanedTime4)]
+    }
+  }
+  dd2[, .Arm := NULL]
+  dd2[, grepout("Demea|i.group|group.id", colnames(dd2)) := NULL]
+  Obs <- rbind(Obs, cbind(datafiles[j], dd2[, .(obs = .N), by = .(Arm, tee)]))
+  assign(datafiles[j], dd2)
+  saveRDS(dd2, paste0(pathsaveHere, DataFileNames[j], "Trimmed.rds"))
+  fwrite(dd2, paste0(pathsaveHere, DataFileNames[j], "Trimmed.prn"), 
+    sep = "\t", quote = F)
+}
+```
+
+
+Check asset file entries. There are `r nrow(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
+by = .(hhid)][tee == 1, ])` households who respond at least once to asset questionnaire, but only
+`r nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])` 
+households respond at baseline (out of `r nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])`, response rate of `r round((nrow(ass[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ])/nrow(ar[o800 == 1L & survey == 1, .(Arm, tee = 1:.N), by = hhid][tee == 1, ]))*100, 2)`%). Below displays the timing of first reponse on assets by HHs. 
+
+```{r Check asset file entries, echo = T}
+addmargins(table0(ass[o800 == 1L, .(Arm, survey, tee = 1:.N), 
+  by = .(hhid)][tee == 1, .(survey, Arm)]))
+```
+
+Among which, if we drop the sample in `Traditional` arm who receive the loan only twice, we have:
+```{r Check asset file entries 2, echo = T}
+addmargins(table0(ass[o800 == 1L & !grepl("tw|dou", TradGroup) & 
+  hhid %in% hhid[survey==1], 
+  .(Arm, tee = 1:.N), by = .(survey, hhid)][tee == 1, .(survey, Arm)]))
+```
+</details>
+
+<details><summary>Click here to see the code of tabulating number of entries. </summary>
+
+Tabulate number of obs in each files. Read: `r paste0(pathsaveHere, DataFileNames[2], "AdminData.rds")`.
+```{r tabulation of obs using these files by page, results = "hide", class.output="scroll-100"}
+s1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+ar <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+arA <- readRDS(paste0(pathsaveHere, "AllMeetingsRosterAdminData.rds"))
+ass <- readRDS(paste0(pathsaveHere, "AssetAdminData.rds"))
+lvo <- readRDS(paste0(pathsaveHere, "LivestockAdminData.rds"))
+lvoL <- readRDS(paste0(pathsaveHere, "LivestockLongAdminData.rds"))
+lvp <- readRDS(paste0(pathsaveHere, "LivestockProductsAdminData.rds"))
+lab <- readRDS(paste0(pathsaveHere, "LabourIncomeAdminData.rds"))
+far <- readRDS(paste0(pathsaveHere, "FarmRevenueAdminData.rds"))
+con <- readRDS(paste0(pathsaveHere, "ConsumptionAdminData.rds"))
+obr <- readRDS(paste0(pathsaveHere, "OtherBorrowingAdminData.rds"))
+shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+ar[, teenum := 1:.N, by = .(hhid, survey)]
+lab[, teenum := 1:.N, by = .(hhid, survey)]
+con[, tee := (1:.N)+1, by = hhid]
+s1[, tee := survey]
+armtabs <- armtabs.o1600 <- NULL
+for (i in 1:length(datafiles[-c(2, 6)])) {
+  dx <- get(datafiles[-c(2, 6)][i])
+  setorder(dx, hhid, survey, Year, Month)
+  if (!any(grepl("^tee$", colnames(dx)))) dx[, tee := 1:.N, by = hhid]
+  dx <- dx[tee < AttritIn, ]
+  if (i != grep("con", datafiles[-c(2, 6)])) {
+    for (j in 1:4) {
+      armtabs <- rbind(armtabs,
+         table0(dx[tee == j, Arm]))
+      armtabs.o1600 <- rbind(armtabs.o1600,
+         table0(dx[tee == j & o1600 == 1L, Arm]))
+     }
+  } else
+    for (j in 2:4) {
+      armtabs <- rbind(armtabs,
+         table0(dx[tee == j & AttritIn != 2, Arm]))
+      armtabs.o1600 <- rbind(armtabs.o1600,
+         table0(dx[tee == j & AttritIn != 2 & o1600 == 1L, Arm]))
+    }
+}
+armtabs <- data.table(armtabs)
+armtabs[, total := rowSums(armtabs)]
+armtabs <- data.table(
+files = 
+  paste0("\\makebox[1cm]{\\scriptsize ", 
+    c(rep(datafiles[-c(2, grep("lvoL|con|obr", datafiles))], each = 4), 
+      rep("con", each = 3),
+      rep("obr", each = 3)
+      )
+      ,
+    "}")
+, 
+rounds = 
+  c(rep(1:4, length(datafiles)-4), 2:4, c(1, 2, 4))
+, armtabs)
+armtabs[-c(seq(1, nrow(armtabs)-3, 4), nrow(armtabs)-2), files := ""]
+armtabs.o1600 <- data.table(armtabs.o1600)
+armtabs.o1600[, total := rowSums(armtabs.o1600)]
+armtabs.o1600 <- data.table(
+files = 
+  paste0("\\makebox[1cm]{\\scriptsize ", 
+    c(rep(datafiles[-c(2, grep("lvoL|con|obr", datafiles))], each = 4), 
+      rep("con", each = 3),
+      rep("obr", each = 3)
+      )
+      ,
+    "}")
+, 
+rounds = 
+  c(rep(1:4, length(datafiles)-4), 2:4, c(1, 2, 4))
+, armtabs.o1600)
+armtabs.o1600[-c(seq(1, nrow(armtabs.o1600)-3, 4), 
+  nrow(armtabs.o1600)-2), files := ""]
+amt <- latextab(as.matrix(armtabs), 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(1, rep(1.5, ncol(armtabs)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.4ex", 
+  delimiterline= NULL,
+  alternatecolor = "gray90")
+amt.o1600 <- latextab(as.matrix(armtabs.o1600), 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(1, rep(1.5, ncol(armtabs.o1600)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.4ex", 
+  delimiterline= NULL, alternatecolor = "gray90")
+write.tablev(amt,  
+  paste0(pathsaveHere, "NumObsOriginalHHs_all.tex"), 
+  colnamestrue = F)
+write.tablev(amt.o1600,  
+  paste0(pathsaveHere, "NumObsOriginalHHs_o1600.tex"),
+  colnamestrue = F)
+```
+
+Tabulate number of obs in each files for original 800 households (before dropping 24 HHs in trad). 
+```{r tabulation of obs InitialSample, class.output="scroll-100"}
+#### for (i in 1:length(DataFileNames))
+####   assign(datafiles[i], readRDS(
+####     paste0(pathsaveHere, DataFileNames[i], "InitialSample.rds")
+####     ))
+for (dtyp in c("AdminData", "Trimmed")) 
+{
+  if (dtyp == "AdminData") {
+    s1 <- readRDS(paste0(pathsaveHere, "RosterAdminSchoolingData.rds"))
+    ar <- readRDS(paste0(pathsaveHere, "Roster", dtyp, ".rds"))
+    far <- readRDS(paste0(pathsaveHere, "FarmRevenue", dtyp, ".rds"))
+  } else {
+    s1 <- readRDS(paste0(pathsaveHere, "Schooling", dtyp, ".rds"))
+    ar <- readRDS(paste0(pathsaveHere, "Repayment", dtyp, ".rds")) 
+    far <- readRDS(paste0(pathsaveHere, "FarmIncome", dtyp, ".rds"))
+  }
+  ass <- readRDS(paste0(pathsaveHere, "Asset", dtyp, ".rds"))
+  lvo <- readRDS(paste0(pathsaveHere, "Livestock", dtyp, ".rds"))
+  lvp <- readRDS(paste0(pathsaveHere, "LivestockProducts", dtyp, ".rds"))
+  lab <- readRDS(paste0(pathsaveHere, "LabourIncome", dtyp, ".rds"))
+  con <- readRDS(paste0(pathsaveHere, "Consumption", dtyp, ".rds"))
+  obr <- readRDS(paste0(pathsaveHere, "OtherBorrowing", dtyp, ".rds"))
+  shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
+  lab[, teenum := 1:.N, by = .(hhid, survey)]
+  con[, tee := (1:.N)+1, by = hhid]
+  lab[, teenum := 1:.N, by = .(hhid, survey)]
+  s1[, tee := survey]
+  ar[, teenum := 1:.N, by = .(hhid, survey)]
+  ar[, tee := survey]
+  armtabs.o800 <- NULL
+  for (i in 1:length(datafiles[-c(2, 6)])) {
+    dx <- get(datafiles[-c(2, 6)][i])
+    setorder(dx, hhid, survey, Year, Month)
+    if (!any(grepl("^tee$", colnames(dx)))) dx[, tee := 1:.N, by = hhid]
+    if (i == grep("^ar$", datafiles[-c(2, 6)])) {
+      # ar has monthly data, keep only 1st month of each survey
+      dx[, teeinsurvey := 1:.N, by = .(hhid, survey)]
+      dx <- dx[teeinsurvey == 1, ] 
+      dx[, teeinsurvey := NULL]
+    }
+    dx <- dx[tee < AttritIn, ]
+    if (!(i %in% grep("con|obr", datafiles[-2]))) {
+      for (j in 1:4) {
+        armtabs.o800 <- rbind(armtabs.o800,
+           table0(dx[tee == j & o800 == 1L, Arm])
+           )
+       }
+    } else
+    if (i == grep("con", datafiles[-c(2, 6)])) {
+      for (j in 2:4) {
+        armtabs.o800 <- rbind(armtabs.o800,
+           table0(dx[tee == j & AttritIn != 2 & o800 == 1L, Arm])
+           )
+      }
+    } else
+      for (j in c(1, 2, 4)) {
+        #dx[survey == 3, c("OutBal", "NetOutBal") := NA]
+        armtabs.o800 <- rbind(armtabs.o800,
+           table0(dx[survey == j & o800 == 1L, Arm])
+           )
+      }
+  }
+  armtabs.o800 <- data.table(armtabs.o800)
+  armtabs.o800[, total := rowSums(armtabs.o800)]
+  armtabs.o800 <- data.table(
+    files = 
+      paste0("\\makebox[1cm]{\\scriptsize ", 
+        c(rep(datafiles[-c(2, grep("lvoL|con|obr", datafiles))], each = 4), 
+          rep("con", each = 3),
+          rep("obr", each = 3)
+          )
+          ,
+        "}")
+    , 
+    rounds = 
+      c(rep(1:4, length(datafiles)-4), 2:4, c(1, 2, 4))
+    , armtabs.o800)
+  armtabs.o800[-c(seq(1, nrow(armtabs.o800)-3, 4), 
+    nrow(armtabs.o800)-2), files := ""]
+  assign(paste0("a8", dtyp), armtabs.o800)
+  amt.o800 <- latextab(as.matrix(armtabs.o800), 
+    hleft = "\\scriptsize\\hfil$", 
+    hcenter = c(1, rep(1.5, ncol(armtabs.o800)-1)), 
+    hright = "$",  headercolor = "gray80", 
+    adjustlineskip = "-.4ex", delimiterline= NULL,
+    alternatecolor = "gray90")
+  write.tablev(amt.o800,  
+    paste0(pathsaveHere, "NumObsOriginalHHs", dtyp, "_o800.tex"),
+    colnamestrue = F)
+}
+```
+
+Above gives <span class="latex">L<sup>a</sup>T<sub>e</sub>X</span> tables that summarise data trimming results:
+
+NumObsOriginalHHs_all.tex, NumObsOriginalHHs_o1600.tex, `r paste0("NumObsOriginalHHs", c("AdminData", "Trimmed"), "_o800.tex")`
+</details>
+
+
+Number of observations in files used for estimation.
+
+```{r amstab for o800 HHs, echo = F}
+a8 <- get("a8Trimmed")
+a8[, files := gsub("^.*size ", "", files)]
+a8[, files := gsub("\\}", "", files)]
+a8[, rounds := as.integer(rounds)]
+a8[, total := as.integer(total)]
+a8
+```
+
+
+Schooling information needs a separate cleaning process as we need to work on housheold member levels and drop observations with no schooling information. To do so, we create a variable `SchPattern` that shows schooling pattern of individuals in a separate file `ReadTrimSchoolingOriginalHHsFDData2.R`. It takes enrollment = 0, 1, NA, transforms them to `0, 1, n` and paste across 4 periods for each individuals, so they will have values of `1111`, `1011`, `n100`, etc.  
+```{r ReadTrimSchoolingFDData original 1600 HHs, cache = F, eval = T, echo = F, warning = F, messages = F, results = "hide"}
+source(paste0(pathprogram, "ReadTrimSchoolingOriginalHHsFDData2.R"))
+```
+
+Enrollment pattern in original schooling panel. `n' indicates NA (either attrition or not reported).
+```{r Enrollment pattern in original 1600 panel}
+table0(s.1x[tee == 1, .(ObPattern, SchPattern)])
+```
+
+<details><summary>Click here to see the number of entries before and after dropping `nnn`.</summary>
+Left panel is before, right panel is after, dropping `nnn`.  
+```{r Left panel is before dropping nnn right panel is after original 1600 panel}
+cbind(table0(s.1x[, .(tee, Arm)]), 
+  table0(s1x[, .(tee, Arm)]))
+```
+</details>
+
+
+Schooling data `s.1x` has `r nrow(s.1x)` rows. Drop `r nrow(s.1x[grepl("nnn", SchPattern), ])` observations with `nnn` in  `SchPattern`. After dropping these observations, we rename the data as `s1x`.
+
+```{r schooling FD read data original 1600 HHs, warning = F, echo = F}
+s1x[, Enrolled := as.numeric(Enrolled)]
+s1x[, Tee := .N, by = HHMid]
+ds1xd[, Tee := .N, by = HHMid]
+```
+
+With OLS,  `r table(s1x[tee == 1, Tee])` individuals are repeatedly observed for `r names(table(s1x[tee == 1, Tee]))` times, respectively. With FD, `s1x` is reduced to `r nrow(ds1xd)` rows after first-differencing with `r table(ds1xd[tee == 2, Tee])` individuals with repeatedly observed for `r as.numeric(names(table(ds1xd[tee == 2, Tee])))` times, respectively.
+Individuals with NAs in `Enrolled`: `r nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])` obs for `s1x`. 
+
+Check missingness in schooling level (junior, high) information.
+
+```{r tab s1x dummyprimary 1600}
+table0(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum))
+```
+
+Drop `r sum(apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum)==0)` observations without school level information.
+
+```{r Drop obs without school level information 1600}
+s1x <- s1x[apply(s1x[, .(dummyJunior, dummyHigh)], 1, sum) == 1, ]
+ds1xd[, grepout("^Tee$", colnames(ds1xd)) := NULL]
+```
+```{r tab s1x arm info 1600, eval = F, echo = F}
+table0(apply(s1x[, .(dummyTraditional, dummyLarge, dummyLargeGrace, dummyCattle)], 1, sum))
+```
+```{r Obs for s1x 1600, eval = F, echo = F}
+table(ds1xd[, tee])
+```
+
+
+## Creating 'EachFileName'InitialSample.rds files to be used in estimation
+
+
+`InitialSample` is produced by dropping 24 HHs of traditional arm (who received only 2 loans [twice and double in `TradGroup`]) from Trimmed Sample. This is done for all files except `r DataFileNames[3]`. 
+
+```{r read trimmed files to objects}
+for (i in (1:length(DataFileNames))[-c(3)])
+  assign(datafiles[i], readRDS(
+    paste0(pathsaveHere, DataFileNames[i], "Trimmed.rds")
+    ))
+```
+
+```{r save InitialSample files after dropping 24 members}
+for (i in (1:length(DataFileNames))[-c(3)]) {
+  dd <- readRDS(paste0(pathsaveHere, DataFileNames[i], "Trimmed.rds"))
+  dd <- dd[!grepl("tw|dou", TradGroup), ]
+  saveRDS(dd, paste0(pathsaveHere, DataFileNames[i], "InitialSample.rds"))
+  write.tablev(dd, paste0(pathsaveHere, DataFileNames[i], "InitialSample.prn")
+    , colnamestrue = F)
+}
+```
+
+For remaining `r DataFileNames[3]`, read `r paste0(DataFileNames[3], "Trimmed.rds")`, drop 24 obs, and save as `r paste0(DataFileNames[3], "InitialSample.rds")`. 
+<details><summary>Click here to see before and after dropping 24 obs.</summary>
+```{r check late disbursement in ar, echo = F, warning = F}
+arT <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+arT[, MonthGap := min(DisDate1, na.rm = T), by = groupid]
+arT[MonthGap == Inf, MonthGap := NA]
+arT[, MonthGap := round(
+  as.numeric(DisDate1 - MonthGap)/(60*60*24*30.4375), 2)]
+addmargins(table0(arT[o800 == 1L & tee == 1, 
+  .(Arm, Only2Loans = grepl("tw|dou", TradGroup))]))
+ra <- readRDS(paste0(pathsaveHere, "RosterAdminData.rds"))
+ar <- arT[!grepl("tw|dou", TradGroup), ]
+rbind(before=addmargins(table0(ra[o800 == 1L & tee == 1, Arm])), 
+  after=addmargins(table0(ar[o800 == 1L & tee == 1, Arm])))
+```
+</details>
+
+```{r save ar}
+ar <- arT[!grepl("tw|dou", TradGroup), ]
+saveRDS(ar, paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))
+```
+
+
+```{r compute InitialSample by MonthGap, eval = F, echo = F}
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "InitialSample.rds"))
+nrowsforthis <- function(i) 
+  nrow(ar[o1600 == 1L & tee == 1 & 
+  (MonthGap <= InitialSampleMonthUpperBound+i | 
+  grepl("sav", BorrowerStatus)), ])
+nrowsInAr <- data.table(t(as.numeric(lapply(-6:6, nrowsforthis))))
+nrowsInAr <- cbind(
+  "\\makebox[2.5cm]{\\scriptsize number of observations}", nrowsInAr)
+setnames(nrowsInAr, c("Months after first loan", -6:6+6))
+UpAndN <- latextab(as.matrix(nrowsInAr), 
+  hleft = "\\scriptsize\\hfil$", 
+  hcenter = c(2.5, rep(.5, ncol(nrowsInAr)-1)), hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", 
+  delimiterline= NULL, alternatecolor = "gray90")
+write.tablev(UpAndN,  
+  paste0(pathsaveHere, "MonthsGapUBAndSampleSize.tex"),
+  colnamestrue = F)
+```
+
+<details><summary> Click here to see code of further corrections (repay before disbursement is loan year = -1).</summary>
+Correct NAs in `LoanYear` to -1 when members start repayment before disbursement.
+```{r correcting LoanYear in ar and arA, class.output="scroll-100"}
+#### roster file has wrong tee numbering, Redefine as TEE.
+setkey(ar, hhid, mid, Date)
+ar[, TEE := 1:.N, by = .(hhid, mid)]
+setkey(ar, hhid, Date, mid)
+arA[, tee := NULL]
+arA[, tee := as.integer(1:.N), by = hhid]
+#### in ar: Date is NA and TEE == 1. Produced by forcing TEE == 1 
+#### to added to roster file.
+#### Set LoanYear to 1
+ar[TEE == 1 & is.na(Date) & is.na(LoanYear), LoanYear := 1]
+#### Some members start repayment before loan disbursement.
+#### Loan year is NA for such cases. 
+#### Define LYear that includes LoanYear = -1 or 5.
+#### SO: https://stackoverflow.com/a/1995984
+elapsed_months <- function(end_date, start_date) {
+    ed <- as.POSIXlt(end_date)
+    sd <- as.POSIXlt(start_date)
+    12 * (ed$year - sd$year) + (ed$mon - sd$mon)
+}
+for (aobj in c("ar", "arA")) {
+  aob <- get(aobj)
+  if (!any(grepl("LYear$", colnames(aob))))
+  {
+    aob[, LYear := LoanYear]
+    aob[Date < DisDate1, LYear := -1]
+    DueDate <- as.POSIXlt(aob[, DisDate1])
+    DueDate$mon <- DueDate$mon + 48
+    aob[elapsed_months(Date, DisDate1) <= 48 & 
+      elapsed_months(Date, DisDate1) > 36, LYear := 4]
+    aob[Date > DueDate, LYear := 5]
+    assign(aobj, aob)
+  }
+}
+#### display NAs in LYear while repaying
+tb <- table0(ar[o800 == 1L & tee == 1L, .(BStatus, Arm)])
+tb1 <- cbind(tb, total = apply(tb, 1, sum))
+tb <- table0(ar[tee == 1L, .(BStatus, Arm)])
+tb2 <- cbind(tb, total = apply(tb, 1, sum))
+tb <- cbind(tb1, tb2)
+tb <- rbind(tb, total = apply(tb, 2, sum))
+tb <- as.matrix(cbind(
+  paste0("\\makebox[2.5cm]{\\scriptsize\\hfill ", rownames(tb), "}"), tb))
+IniSampByArmar <- latextab(tb,
+  hleft = "\\scriptsize\\hfil$", hcenter = c(2.5, rep(.95, ncol(tb)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 5, separatingcolwidth = .2,
+  separatingcoltitle = c("initial sample", "all sample"),
+  addsubcoltitlehere = T)
+write.tablev(IniSampByArmar,  
+  paste0(pathsaveHere, "InitialSampleSizeByArmInAr.tex")
+  , colnamestrue = F)
+```
+Tabulation of membership of InitialSample by arms using arA. 
+```{r Tabulation of membership of InitialSample by arms using arA, warning = F, class.output="scroll-100"}
+tb <- table0(arA[o800 == 1L & tee == 1L & !grepl("tw|dou", TradGroup), 
+  .(BStatus, Arm)])
+tb1 <- cbind(tb, total = apply(tb, 1, sum))
+tb <- table0(arA[tee == 1L & !grepl("tw|dou", TradGroup), .(BStatus, Arm)])
+tb2 <- cbind(tb, total = apply(tb, 1, sum))
+tb <- cbind(tb1, tb2)
+tb <- rbind(tb, total = apply(tb, 2, sum))
+tb <- as.matrix(cbind(
+  paste0("\\makebox[2.5cm]{\\scriptsize\\hfill ", rownames(tb), "}"), tb))
+IniSampByArmar <- latextab(tb,
+  hleft = "\\scriptsize\\hfil$", hcenter = c(2.5, rep(.95, ncol(tb)-1)), 
+  hright = "$", 
+  headercolor = "gray80", adjustlineskip = "-.2ex", delimiterline= NULL,
+  alternatecolor = "gray90",
+  addseparatingcols = 5, separatingcolwidth = .2,
+  separatingcoltitle = c("initial sample", "all sample"),
+  addsubcoltitlehere = T)
+write.tablev(IniSampByArmar,  
+  paste0(pathsaveHere, "InitialSampleSizeByArmInArA.tex")
+  , colnamestrue = F)
+```
+</details>
+
+## Descriptive statistics
+
+<!-- 
+For mixed knitr and plain latex file, need to use knitr_child function. A chunk child-file style gives a latex compilation error. Use knitr::knit_child().
+-->
+
+\Sexpr{knit_child(paste0(pathprogram, "FormSample.rnw"))}
+
+```{r form sample data, eval = F, echo = F, cache = F}
+#### source(paste0(pathprogram, "FormSampleCommandsOnly.R"))
+```
+
+<details><summary> Click here to see code of descriptive statistics.</summary>
+```{r read destat data asv, class.output="scroll-100"}
+asv <- readRDS(paste0(pathsaveHere, "DestatData.rds"))
+arms <- c("traditional", "large", "large grace", "cow")
+armsC <- c("traditional", "large", "large grace", "cattle")
+ArmsC <- c("Traditional", "Large", "Large grace", "Cattle")
+MeanAndStd0 <- function(x, NARM = T) {
+  nx <- names(x)
+  if (is.null(dim(x))) x <- matrix(x)
+  ms <- c(apply(x, 2, mean, na.rm = NARM), 
+    apply(x, 2, function(z) var(z, na.rm = NARM)^.5))
+  names(ms) <- paste0(nx, rep(c(".mean", ".std"), each = ncol(x)))
+  return(ms) 
+}
+#### destat for main text
+iiM <- c("HeadLiteracy", "HeadAge", "HHsize", "FloodInRd1", 
+  "NLHAssetAmount",  "PAssetAmount", 
+  "TotalImputedValue", "NumCows", 
+  "NetValue", "NetBroadValue",
+  "Attrited", "IRejected", "GRejected", "Active",
+  "RiskPrefVal", "TimePref1Val", "TimePref2Val", "PresentBias")
+#### FloodInRd1 has NAs, all entries are NAs for 5 HHs
+dm <- asv[, 
+  lapply(.SD, sum), .SDcols = iiM, by = Arm]
+desMain <- asv[, 
+  lapply(.SD, MeanAndStd0), .SDcols = iiM, by = Arm]
+desMain2 <- asv[, 
+  lapply(.SD, MeanAndStd0), .SDcols = iiM]
+#### Kruskal-Wallis equality of location between groups 
+#### without normality and equal variance assumptions
+kw <- lapply(iiM, function(x) kruskal.test(
+  formula(paste0(x , "~ Arm")), data = asv))
+kw <- lapply(kw, function(x) 
+  formatC((x$p.value)*100, digits = 2, format = "f"))
+#### ANOVA equality of location between groups under normality 
+#### and equal variance assumptions
+ano <- lapply(iiM, function(x) summary(aov(
+  formula(paste0(x , "~ Arm")), data = asv)))
+ano <- lapply(ano, function(x) 
+  formatC((x[[1]]$P[1])*100, digits = 2, format = "f"))
+#### Shapiro-Wilks tests for normality
+sha <- lapply(iiM, function(x) 
+  shapiro.test(unlist(asv[, x, with = F]))$p.value)
+sha <- lapply(sha, function(x) 
+  formatC(x*100, digits = 2, format = "f"))
+#### Flinger-Killeen's test of equal variance robust to nonnormality
+eqv <- lapply(iiM, function(x) fligner.test(
+  formula(paste0(x , "~ Arm")), data = asv)$p.value)
+eqv <- lapply(eqv, function(x) 
+  formatC(x*100, digits = 2, format = "f"))
+#### N
+desMainN <- asv[, (N = .N), by = Arm]
+setnames(desMainN, "V1", "N")
+desMainN <- rbind(desMainN, 
+  list(Arm = "overall", N = sum(desMainN[, N])))
+desMain2[, Arm := "overall"]
+desMain <- rbindlist(list(desMain, desMain2), use.names = T)
+ascols <- c("NLHAssetAmount", "PAssetAmount", 
+  "TotalImputedValue", "NetValue", "NetBroadValue",
+  "RiskPrefVal", "TimePref1Val", "TimePref2Val")
+desMain[, (ascols) := lapply(.SD, round, 0), .SDcols = ascols]
+othecols <- c("HeadLiteracy", "HeadAge", "HHsize", 
+  "FloodInRd1", "NumCows", "Attrited", 
+  "IRejected", "GRejected", "Active", "PresentBias")
+desMain[, (othecols) := lapply(.SD, round, 3), .SDcols = othecols]
+desMmean <- desMain[seq(1, nrow(desMain), 2), ]
+desMstd <- desMain[-seq(1, nrow(desMain), 2), ]
+setkey(desMmean, Arm)
+setkey(desMstd, Arm)
+desMmean <- data.table(variables = colnames(desMmean), t(desMmean))
+setnames(desMmean, c("variables", as.character(desMmean[1, -1])))
+desMmean <- desMmean[-1, ]
+desMstd <- data.table(variables = colnames(desMstd), t(desMstd))
+setnames(desMstd, c("variables", as.character(desMstd[1, -1])))
+desMstd <- desMstd[-1, ]
+armso <- c(armsC, "overall")
+desMstd[, (armso) := lapply(.SD, function(x) 
+  paste0("(", x, ")")), .SDcols = armso]
+setkey(desMmean, variables, physical = F)
+setkey(desMstd, variables, physical = F)
+desM <- rbind(desMmean, desMstd)
+setkey(desM, variables)
+rnum <- NULL
+for (i in 1:nrow(desMmean)) 
+  rnum <- c(rnum, 
+    grep(paste0("^", desMmean[i, variables]), desM[, variables]))
+desM <- desM[rnum, ]
+#### change Active to non-attriting borrowers
+desM[grepl("Active", variables), 
+  variables := "Non-attriting borrowers"]
+#### add N
+desMainN2 <- data.table(t(desMainN[, N]))
+setnames(desMainN2, as.character(desMainN[, Arm]))
+desMainN2[, variables := "N"]
+desM <- rbindlist(list(desM, desMainN2), use.names = T, fill = T)
+desM[seq(2, nrow(desM), 2), variables := ""]
+desM[seq(1, nrow(desM), 2), variables := 
+  paste0("\`", variables, "`")]
+setnames(desM, c("variables", armsC, "overall"), 
+  c("Variable", ArmsC, "Overall"))
+#### desM[, ANOVA := c(unlist(lapply(ano, function(x) c(x, ""))), "")]
+#### desM[, "K-W" := c(unlist(lapply(kw, function(x) c(x, ""))), "")]
+#### desM[, "S-W" := c(unlist(lapply(sha, function(x) c(x, ""))), "")]
+#### desM[, "F-K" := c(unlist(lapply(eqv, function(x) c(x, ""))), "")]
+#### substitute covariate names 
+source(paste0(pathprogram, "SubstTableANCOVA.R"))
+rn <- rn2 <- as.character(unlist(desM[, 1]))
+for (i in 1:nrow(subst.tableA)) 
+  rn <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn)
+#### for LaTeX
+rn <- gsub("\\{", "{(", rn[seq(1, length(rn), 2)])
+rn <- gsub("\\}", ")}", rn)
+rn <- gsub("textsf", "textrm", rn)
+rn <- gsub("\\{", "\\{\\\\scriptsize ", rn)
+rn <- c(t(cbind(rn2[seq(1, length(rn2), 2)], rn)))
+rn <- rn[-length(rn)]
+desM[, Variable := rn] 
+DestatMainByArm <- latextab(as.matrix(desM),
+  hleft = c("\\scriptsize\\hfill ", 
+    rep("\\scriptsize\\hfil$", ncol(desM)-1)), 
+  hcenter = c(3.5, rep(1.05, ncol(desM)-1)), 
+  hright = c("", rep("$", ncol(desM)-1)), 
+  headercolor = "gray80", adjustlineskip = "-.4ex", 
+  delimiterline= NULL, alternatecolor2 = "gray90")
+write.tablev(DestatMainByArm,  
+  paste0(pathsaveHere, "DestatMainByArm.tex")
+  , colnamestrue = F)
+#### For html
+library(kableExtra)
+rn2 <- gsub("\\\\textsf\\{(.*?)\\}", "\\1", rn2)
+for (i in 1:nrow(subst.tableA)) 
+  rn2 <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn2)
+desM[, Variable := rn2] 
+#### The problem is that (31) is one of the ways Pandoc Markdown 
+#### uses to indicate an ordered list. To disable this, 
+#### you can escape the parenthesis using a backslash 
+#### (which would have to be a double backslash in an R string), 
+#### e.g. "(31)" would become "\\(31)".
+#### https://stackoverflow.com/a/59644337
+desM <- sapply(desM, function(x) gsub("\\(", "\\\\(", x))
+ktft <-   paste("Source: Estimated with GUK administrative", 
+    "and survey data at the period 2. Survey respondents include", 
+    "nonparticipants to the experiments.\\n",
+    "Notes: 1. Information of original 800 households.",
+    "Values are means, values in brackets are standard",
+    "deviations. 2. `HeadLiteracy`, `HeadAge` are literacy",
+    "and ages of household heads.",
+    "`HHsize` is total number of household members. `FloodInRd1`", 
+    "is flood exposure at period 2. `NLHAssetAmount`",
+    "is non-land household", 
+    "asset holding value, `PAssetAmount` is productive",
+    "asset holding value,",
+    "`TotalImputedAmount` is imputed value of livestock",
+    "holding. `NumCows` is cattle holding per household.",
+    "`NetValue` is net asset values",
+    "per housheold for asset items observed in all 4 rounds given by",
+    "`NLHAssetAmount`+`PAssetAmount`+",
+    "`TotalImputedAmount` - total debt.",
+    "`NetBroadValue` is net asset values per housheold",
+    "for all asset items.",
+    "All asset values are expressed in BDT. `Attrited`",
+    "indicates attrition rates",
+    "in the household survey, and `GRejected` and", 
+    "`IRejected` show group",
+    "rejection rates and individual rejection rates to",
+    "the lending program.",
+    "`Active` indicates the nonattrited borrower ratios.",
+    "Because attrition",
+    "and rejection are separate events, a household can", 
+    "reject and attrit, so active members $\\geqslant$", 
+    "total - (rejected members + attrited members).",
+    PrefTestsDefinitions1)
+ktft <-   paste("Source: Estimated with GUK administrative", 
+    "and survey data at the period 2. Survey respondents include", 
+    "nonparticipants to the experiments.\\n",
+    "Notes: 1. Information of original 800 households.",
+    "Values are means, values in brackets are standard",
+    "deviations. 2. `Head literate`, `Head age` are literacy",
+    "and ages of household heads.",
+    "`Household size` is total number of household members. `Flood in round 1`", 
+    "is flood exposure at period 2. `HAssetAmount`",
+    "is household's non-production related", 
+    "asset holding value excluding livestock, `PAssetAmount` is production related",
+    "asset holding value excluding livestock,",
+    "`Total livestock value` is imputed value of livestock using median prices",
+    "holding. `NumCows` is cattle holding per household.",
+    "`Net asset value` is net assets value",
+    "per housheold for asset items observed in all 4 rounds given by",
+    "`Household asset value`+`Production asset value`+",
+    "`Total livestock value` - total debts.",
+    "`Net broad asset value` is net asset values per housheold",
+    "for all asset items.",
+    "All asset values are expressed in BDT. `Attrited`",
+    "indicates attrition rates",
+    "in the household survey, and `Individually rejected` and", 
+    "`Group rejected` show individual",
+    "rejection rates and group rejection rates to",
+    "the lending program.",
+    "`Non attriting borrowers` indicates the non-attrited borrower ratios.",
+    "Because attrition",
+    "and rejection are separate events, a household can", 
+    "reject and attrit, so active members $\\geqslant$", 
+    "total - (rejected members + attrited members).",
+    PrefTestsDefinitions1)
+kt <- kable(desM, format = "html", align = c("r", rep("c", 5)))
+#### kt <- kableExtra::footnote(kt, general = ktft)
+kt <- column_spec(kt, 1, width = "4cm; min-width:4cm;")
+kt <- column_spec(kt, 2:6, width = "2.5cm; min-width:2.5cm;")
+#### kt <- kable_classic(kt, html_font = "Cambria")
+```
+</details>
+
+
+Descriptive statistics   
+`r kt`  
+<p class="description"><small>Note: `r ktft`</small></p>
+
+```{r correct disbursement dates of 4 members, echo = F, results = 'hide', class.output="scroll-100"}
+arACompletePanel = copy(arA)
+arACompletePanel <- arACompletePanel[
+  hhid %in% ass[tee == 1 & !is.na(NLHAssetAmount), hhid] &
+  hhid %in% ass[tee == 2 & !is.na(NLHAssetAmount), hhid] &
+  hhid %in% ass[tee == 3 & !is.na(NLHAssetAmount), hhid] &
+  hhid %in% ass[tee == 4 & !is.na(NLHAssetAmount), hhid], ]
+for (aobj in c("ar", "arA", "arACompletePanel")) {
+  aob <- get(aobj)
+  aob[, value.EffRepay := value.repay + value.NetSaving]
+  ## To migrate to Data preparation?: Starts here
+  table0(aob[tee == 1 & is.na(MonthsElapsed) & grepl("old", Mship), 
+    .(BStatus, groupid)])
+  # 81693: Thee are 4 members whose disbursement dates are NA
+  table0(aob[groupid == 81693 & grepl("bo", BStatus) & tee==1, 
+    .(DisDate1, BStatus)])
+  # These are borrowers, but all disbursement dates are NAs
+  table0(aob[groupid == 81693 & grepl("bo", BStatus) & tee==48 & is.na(DisDate1),
+   .(CumNetSaving, CumRepaid)])
+  # Their distbursement dates must be the same as others in the same group
+  # Copy from others
+  ddates <- c("DisDate1", "DisDate2", "DisDate3")
+  aob[groupid == 81693 & grepl("bo", BStatus), 
+    (ddates) := lapply(.SD, function(z) z[!is.na(z)][1]), .SDcols = ddates, by = groupid]
+  # update MonthsElapsed by referring to tee
+  aob[groupid == 81693 & grepl("bo", BStatus), 
+    MonthsElapsed := lapply(.SD, function(z) z[!is.na(z)][1]), 
+    .SDcols = "MonthsElapsed", by = .(groupid, tee)]
+  aob[grepl("bo", BStatus) & -11 <= MonthsElapsed & MonthsElapsed <= -0, 
+    LoanYear := -1]
+  aob[grepl("bo", BStatus) & -23 <= MonthsElapsed & MonthsElapsed <= -12, 
+    LoanYear := -2]
+  aob[grepl("bo", BStatus) & -35 <= MonthsElapsed & MonthsElapsed <= -24, 
+    LoanYear := -3]
+  aob[grepl("bo", BStatus) & 1 <= MonthsElapsed & MonthsElapsed <= 12, 
+    LoanYear := 1]
+  aob[grepl("bo", BStatus) & 13 <= MonthsElapsed & MonthsElapsed <= 24,
+    LoanYear := 2]
+  aob[grepl("bo", BStatus) & 25 <= MonthsElapsed & MonthsElapsed <= 36, 
+    LoanYear := 3]
+  aob[grepl("bo", BStatus) & 37 <= MonthsElapsed & MonthsElapsed <= 48, 
+    LoanYear := 4]
+  # repayment
+  # Need to change value.missw NA => 1 for continuing members
+  aob[!grepl("drop", Mgroup) & grepl("oldMem", Mstatus) & 
+    !grepl("pure saver", BorrowerStatus) & 
+    is.na(value.missw) & (is.na(value.repay) | value.repay == 0), 
+    value.missw := 1]
+  aob[, CumMisses := cumsum(value.missw), by = hhid]
+  assign(aobj, aob)
+  addmargins(table(aob[is.na(LoanYear), .(tee, Mgroup)]))
+  ## To migrate to Data preparation?: Ends here
+  #  HH characteristics from ar
+  iiH <- c("HeadLiteracy", "HeadAge", "HHsize", "FloodInRd1")
+  # FloodInRd1 has NAs, all entries are NAs for 5 HHs
+  summary(aob[hhid %in% hhid[is.na(FloodInRd1)], 
+    .(hhid = factor(hhid), FloodInRd1)])
+  aob[tee==1, c("groupid", "hhid", "Mstatus", iiH), with = F]
+  desH <- aob[o800 == 1 & tee == 1, 
+    lapply(.SD, mean, na.rm = T), .SDcols = iiH, by = Arm]
+  desN <- aob[o800 == 1 & tee == 1, lapply(.SD, function(z) length(z[!is.na(z)])), 
+    .SDcols = iiH, by = Arm]
+  cns <- colnames(desH[, -1])
+  # below avoids flipping order of Arm
+  setkey(desH, Arm)
+  desH <- data.table(t(desH[, -1]))
+  setnames(desH, armsC)
+  desH[, variables := cns]
+  setcolorder(desH, c("variables", armsC))
+  desH[, (armsC) := lapply(.SD, formatC, digits = 2, format = "f"), .SDcol = armsC]
+  assign(paste0("desH.", aobj), desH)
+  assign(paste0("desN.", aobj), desN)
+}
+```
+```{r, echo = F}
+####
+```
+
+### Anomalies in asset entries
+
+Asset entries are consistently observed only for selected items. We cosider entries as anomalous if between period difference in total asset value is more than BDT 50000. As shown below, we have one household with anomalous asset entries. 
+
+* We could have ruled this out by winsorising the asset items, but we do not do so.  
+* We use narrowly defined assets that are observed in all rounds.  
+* We use broadly defined assets that use all asset items with no winsorising in a robustness check.  
+
+
+If we winsorise cassette players, radios, and bicycles, there is no HH with anomalous asset values (changes in narrow net asset values $<-50000$).
+
+<details><summary> Click to see the code and anomalous entries.</summary>
+```{r read cleaned net assets data}
+xpa <- readRDS(paste0(path1234, "ProdAssetsCleaned.rds"))
+xha <- readRDS(paste0(path1234, "HHAssetsCleaned.rds"))
+xas2 <- readRDS(paste0(path1234, "MergedAssetsCleaned.rds"))
+#### Trimmed data are before dropping 26 HHs.
+ar <- readRDS(paste0(pathsaveHere, 
+  DataFileNames[3], "Trimmed.rds"))
+completeAsset <- readRDS(paste0(path1234, 
+  "ListOfCompleteAssetsInAllRounds.rds"))
+```
+```{r Check anomalous values}
+#### asset data anomalous HHs
+xha[, DNLHAval := c(NA, diff(NLHAssetAmount)), by = hhid]
+xha[, DvalAnomalous := hhid %in% hhid[DNLHAval < -50000] ]
+#### attaches Arm and limits obs to o800 == 1L
+ar2 <- unique(ar[o800 == 1L, .(Arm, hhid)]) 
+#### HHs with anomalous data entries: hhid = 8169717 (trad)
+da50K <- unique(xha[(DvalAnomalous) & 
+  hhid %in% hhid[amount > 50000] & hhid %in% ar2[, hhid], hhid])
+setkey(ar2, hhid)
+setkey(xha, hhid)
+xha2 <- xha[ar2]
+for (h in da50K)
+  print(xha2[hhid == h, .(Arm, hhid, t=survey, type, amount, 
+    H=NLHAssetAmount, BH=BroadNLHAssetAmount, NLHAssetNum)])
+```
+</details>
+

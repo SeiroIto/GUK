@@ -1,26 +1,39 @@
-common.excl <- "^Cum|UD|LYear|Pure|Tra|^cred|survey|^val|^Excess|dum.*Tim|^.Arm|Used|Time"
+common.excl <- "^Cum|UD|LYear|Pure|Tra|^cred|survey|^val|^Excess|dum.*Tim|^.Arm|Used|LY"
 excl.base <- paste0("Size|Poo|With|InK|Cash|Trad|", common.excl)
 excla.base <- paste0("dummy[TC]|rge$|rge[\\.G]|Witho|Poor|Small|Cows.C|",
   common.excl)
 exclP.base <- paste0("dummy[CMST]|rge$|rge[\\.G]|Witho|Cows.C",
   common.excl)
-exclT.base <- paste0("LY2|", excl.base)
-exclTa.base <- paste0("LY2|", excla.base)
-exclTP.base <- paste0("LY2|", exclP.base)
-exclTPa.base <- paste0("LY2|", exclP.base)
+# exclT.base <- paste0("LY2|", excl.base)
+# exclTa.base <- paste0("LY2|", excla.base)
+# exclTP.base <- paste0("LY2|", exclP.base)
+# exclTPa.base <- paste0("LY2|", exclP.base)
+exclT.base <- paste0("LY.?2|", gsub("LY", "^LY$", excl.base))
+exclTa.base <- paste0("LY.?2|", gsub("LY", "^LY$", excla.base))
+exclTP.base <- "Pure|UD|Mod|Siz|Wi|InK|Cash|Tra|LY.?2|^LY$"
+exclTPa.base <- paste0("LY.?2|", gsub("LY", "^LY$", exclP.base))
 # additions are common additional covariates after inclX1
 additions <-     c(
     NA, # net saving regression
-    "|^LY", # shows evolution of repayment without baseline outcome as a covariate
+#     "|^LY", # shows evolution of repayment without baseline outcome as a covariate
+#     "|^NetSaving0$",
+#     "|^LY",
+#     "|Head.*0|Flood|HHs.*0",
     "|^NetSaving0$",
-    "|^LY",
-    "|Head.*0|Flood|HHs.*0",
+    "|Head|Flood|HHs.*0",
+#    "|^dummyHadCows",
+#    "|NumCows0",
     NA, # repayment regression
-    "|^LY",
+#     "|^LY",
+#     "|^Repaid0$",
+#     "|^LY",
+#     "|Head.*0|Flood|HHs.*0",
+#     "|^NetSaving0$", #added for regressions only of net saving, repayment
     "|^Repaid0$",
-    "|^LY",
     "|Head.*0|Flood|HHs.*0",
-    "|^NetSaving0$", #added for regressions only of net saving, repayment
+#    "|^dummyHadCows",
+#    "|NumCows0",
+    "|^NetSaving0$|^Repaid0$", # a dummy column to include NetSaving0 in reg table
     NA, # effective repayment (repayment+net saving) regression (not used)
     "|^LY",
     "|^EffectiveRepayment0$",
@@ -34,12 +47,10 @@ for (a in regsuffixes) {
       "^dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$") else 
   if (grepl("Ta?$", a))
     assign(paste0("incl", a, 1), 
-      # disallow level covariates
-      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.") 
       # allow level covariates
-	#      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.") else
+	#      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^.*LY.*") else
       # allow level covariates but not HadCows
-       "^(?=dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$)(?!.*Had)") else
+       "^(?=dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|^.*LY.*)(?!.*Had)") else
    # if TP, TPa: add any variable with "Poor"
     assign(paste0("incl", a, 1), 
       # disallow level covariates
@@ -47,13 +58,14 @@ for (a in regsuffixes) {
       # allow level covariates
       #"^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
       # allow level covariates but not HadConw
-      "(?=^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|U.*Poor)(?!.*Had)")
+      "(?=^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|U.*Poor|^.*LY.*)(?!.*Had)")
   for (m in 2:length(additions)) 
-    if (m == 3 | m == 8) # if m==3, 9, use inclX1
-      assign(paste0("incl", a, m), 
-        paste0(get(paste0("incl", a, 1)), additions[m])) else
+#    if (m == 3 | m == 8) # if m==3, 9, use inclX1
+#      assign(paste0("incl", a, m), 
+#        paste0(get(paste0("incl", a, 1)), additions[m])) else
     #if (m == 6 | m == 11) # if m== 6,  11, use inclX1: marked off for regressions only of net saving, repayment
-    if (m == 6) # if m== 6, use inclX1
+#    if (m == 6) # if m== 6, use inclX1
+    if (m == 4) # if m== 3, use inclX1
       assign(paste0("incl", a, m), get(paste0("incl", a, 1))) else
       assign(paste0("incl", a, m), 
         paste0(get(paste0("incl", a, m-1)), additions[m])

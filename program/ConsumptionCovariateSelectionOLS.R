@@ -13,10 +13,10 @@ exclTPa.base <- paste0("Time.?2|",
 additions <-     c(
     NA,
     "|Head.*0|Flood|HH.*0",
-    "|^NA$", # need two NAs so m=4 (first reg spec of TotalExpenditure) 
-    "|^NA$", # we set back to no covariates
-    "|Head.*0|Flood|HH.*0",
-    "|TotalExpenditure0$"
+#    "|^NA$", # need two NAs so m=4 (first reg spec of TotalExpenditure) 
+#    "|^NA$", # we set back to no covariates
+#    "|Head.*0|Flood|HH.*0",
+    NA
   )
 for (a in regsuffixes) {
   if (!grepl("T", a))

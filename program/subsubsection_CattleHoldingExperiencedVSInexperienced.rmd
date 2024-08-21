@@ -15,6 +15,7 @@ if (CreateHTMLTable)
     caption = "Number of cattle holding at baseline by experience")
 ```
 
+<details><summary>Click here to see the code of cattle size impacts by experience.</summary>
 ```{r ReadTrim NumCows By experience, cache = F, warning = F}
 source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
 remove(list = ls(pattern = "^incl.?\\d"))
@@ -47,6 +48,8 @@ dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
+</details>
+<details><summary>Click here to see the code of cattle size impacts by experience subgroups.</summary>
 ```{r numcows 2 separate subsample by experience}
 FileName0 <- "NumCowsByExperience"
 Regressands <- rep("NumCows", 7)
@@ -167,9 +170,7 @@ for (k in 1:length(listheader)) {
     , colnamestrue = F)
 }
 ```
-
-
-
+</details>
 <details><summary>Click here to see the code of results table on owned cattle of owners.</summary>
 Number of owned cattle: Owners  
 `r HTML_NumCowsByExperienceoTimeVarying`

@@ -4,13 +4,12 @@ In estimating impacts on repayment and saving, we use borrower only data `r past
 gc()
 source(paste0(pathprogram, "ReadTrimRepaymentANCOVA.R"))
 ```
-By survey rounds, in repayment and saving file, there are `r apply(table(arA[o800==1L, .(unqsvy = unique(survey)), by = hhid]), 2, sum)` observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the `InitialSample` size of `r nrow(ar[o800 == 1& tee == 1, ])` in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.
 
-Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In repayment and saving regressions, we aggregate the data at survey rounds. This is because we have no household survey information at the monthly frequency that we can attribute the causes of monthly repayment and saving fluctuations.
+* In repayment and saving file, there are `r apply(table(arA[o800==1L, .(unqsvy = unique(survey)), by = hhid]), 2, sum)` observations of households in rounds 1, 2, 3, 4, respectively. This is smaller than the `InitialSample` size of `r nrow(ar[o800 == 1& tee == 1, ])` in the survey roster file because the survey includes rejecters and residents whose houses are washed away by flood, while repayment is defined only for the borrowers.  
+* Saving started in rd 1. Repayment and saving are more frequent than survey rounds. In repayment and saving regressions, we aggregate the data at survey rounds. This is because we have no household survey information at the monthly frequency that we can attribute the causes of monthly repayment and saving fluctuations.
+* Read administrative meeting data attached with HH information `r paste0(DataFileNames[2], ".rds")` (called `arA` in the below code). 
 
-
-Read administrative meeting data attached with HH information `r paste0(DataFileNames[2], ".rds")` (called `arA` in the below code). 
-
+<details><summary>Click here to see the code in tabulating group meeting member information.</summary>
 ```{r prepare data for saving regressions original HHs, warning = F, message = F, results = "hide"}
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
 if (Only800) arA <- arA[o800 == 1L & !grepl("tw|dou", TradGroup) & 
@@ -29,6 +28,7 @@ Tabulation of group meeting data at rd 1 (12th month):
 ```{r Tabulation at rd 1 for arA}
 addmargins(table0(arA[o800 == 1L & tee == 12, .(Mstatus, Arm)]))
 ```
+</details>
 
 
 ```{r ReadTrimRepayment ANCOVA, echo = F, cache = F, warning = F, message = F, results = "hide"}
@@ -43,9 +43,9 @@ FileNameHeader <- c("", "PovertyStatus", "Attributes",
 ####  length(arsuffixes) = Number of est results tables to be produced
 regsuffixes <- c("", "P", "a", "T", "TP", "Ta")
 listheader <- paste0("sv", regsuffixes)
-#### net saving (5), repayment (5), and a mean/std column for table
-Regressands <-  c(rep(c("NetSaving", "Repaid"), each = 5), "Repaid")
-Addseparatingcols = c(1, 6); Separatingcolwidth = rep(.1, 2)
+#### net saving (2), repayment (2), and a mean/std column for table
+Regressands <-  c(rep(c("NetSaving", "Repaid"), each = 3), "Repaid")
+Addseparatingcols = c(1, 4); Separatingcolwidth = rep(.1, 2)
 Separatingcoltitle = c("", "Net saving", "Repayment"
 #### We omit net saving + repayment as regressand because it is repetitive
 #### , "\\mpage{3cm}{\\hfil Net saving \\\\\\hfil + repayment}"
@@ -55,7 +55,7 @@ source(paste0(pathprogram, "RepaymentCovariateSelectionANCOVA.R"))
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 #### jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
-jay <- 11 # net saving (5), repayment (5), and a dummy column for table
+jay <- 7 
 #### arA: all individuals, arA2: only borrowers (but arA=arA2, so redundant)
 DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
 dig.depmean <- 0
@@ -70,12 +70,12 @@ gc()
 <details><summary>Click here to see the table of time varying repayment impacts by arm.</summary>
 `r HTML_RepaymentTimeVarying`
 
-Note: Columns 1. - 5. show results for net saving, 6. - 10. show results for repayment. 
+Note: Columns 1. - 2. show results for net saving, 3. - 4. show results for repayment. 
 </details>
 <details><summary>Click here to see the table of time varying repayment impacts by arm and by poverty class.</summary>
 `r HTML_RepaymentTimeVaryingPovertyStatus`
 
-Note: Columns 1. - 5. show results for net saving, 6. - 10. show results for repayment. 
+Note: Columns 1. - 2. show results for net saving, 3. - 4. show results for repayment. 
 </details>
 
 

@@ -4,7 +4,7 @@ source(paste0(pathprogram, "ReadTrimConsumptionANCOVA.R"))
 
 Consumption is observed in rd 2-4. There are `r nrow(con)` observations. As we lack the initial value, we use OLS using rd 2- 4 values to measure the impacts. It should be less precise but still gives consistent estimates.  
 
-6 regression specifications differ in terms of regressand and covariates. For regressands, we use per capita expenditure for (1) - (3), total expenditure for (4) - (6). (1), (4) are OLS with no covariates, (2), (5) are OLS with covariates. (3), (6) are dummy entries used only to compute mean and standard deviation.
+Regression specifications differ in terms of regressand and covariates. For regressands, we use per capita expenditure for (1) - (2), total expenditure for (3) - (4). (1), (3) are OLS with no covariates, (2), (4) are OLS with covariates. (5) is a dummy entry used only to compute mean and standard deviation.
 
 ```{r consumption OLS regression set parameters original HHs}
 source(paste0(pathprogram, "ReadTrimConsumptionANCOVA.R"))
@@ -20,7 +20,7 @@ jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 Regressands <- c(rep("PCExpenditure", 3), rep("TotalExpenditure", 3),
   "PCExpenditure")
 DataToUse1 <- DataToUse2 <- rep("conOLS", 7)
-Addseparatingcols = c(1, 4); Separatingcolwidth = rep(.2, 2)
+Addseparatingcols = NULL; Separatingcolwidth = NULL
 Separatingcoltitle = c("", "Per capita consumption (Tk)", 
   "Total consumption (Tk)")
 dig.depmean <- 0

@@ -12,6 +12,7 @@ FormulaList <- vector(mode = "list", length = length(listheader))
 #    T: TimeVarying, Ta: TimeVaryingAttributes,
 #    TP: TimeVaryingPovertyStatus, TPa: TimeVaryingPovertyStatusAttributes
 # For specification with Ta and beyond, use DataToUse2
+# k: index of regression types (base, P, a, T, TP, Ta, TPa)
 for (k in 1:length(listheader)) {
   if (k <= grep("^Ta$", regsuffixes)) 
     DataToUse <- DataToUse1 else
@@ -19,6 +20,7 @@ for (k in 1:length(listheader)) {
 ###_ Estimate	###_
   Formulae <- DepMean <- IniMean <- e.T <- NULL
   CovariateMean <- CovNames <- formlist <- vector(mode = "list", length = jay)
+  # j: j-th regression specification of k-th regression type
   for (j in 1:jay) {
     x = copy(get(DataToUse[j]))
     # first, drop unnecessary variables for an ease of writing reg expr #
@@ -30,7 +32,7 @@ for (k in 1:length(listheader)) {
     # exclTP.base: Pure|UD|Mod|Siz|Wi|InK|Cash|Tra|Time.?2|^Time$
     # exclTPa.base: Time.?2|Pure|dummy[CMST]|Large$|Large\\.|[et]Grace|Cows.C|^Time$
     exclstring <- paste(get(paste0(exclheader[k], ".base")), 
-          "UD|^Tee$|teeyr|^Time$|00$|_|^Ass|status$|cy$", sep = "|")
+          "UD|^Tee$|teeyr|^Time$|^LYear$|00$|_|^Ass|status$|cy$", sep = "|")
     x <- x[, grepout(exclstring, colnames(x)) := NULL]
     # second, pick covariates #
     # For nea:
@@ -243,10 +245,13 @@ for (k in 1:length(listheader)) {
     c("\\bar{R}^{2}", e.R), 
     c("N", e.N))
   centerBox <- 1.3
-  if (grepl("Repay", FileName)) centerBox <- .88
-  #### ConsumptionOLS: Drop reg spec 3. 
+  if (grepl("Repay", FileName)) {
+    centerBox <- .88
+    e.tb <- e.tb[, -c(1, 4)]
+  }
+  #### ConsumptionOLS: Keep only reg spec 1-2. 
   ####  (first 2 cols are variable name and mean)
-  if (grepl("Con.*O", FileName)) e.tb <- e.tb[, -5]
+  if (grepl("Con.*O", FileName)) e.tb <- e.tb[, 1:4]
   ## Number of output tables: How many to be split into
   #    Sch with T (3 tables), NumCows, NetAssets, income (2 tables), 
   #    ByExperience (combine subsample tables after this file), others (1 table)
@@ -393,9 +398,9 @@ for (k in 1:length(listheader)) {
       c("R2", e.R),
       c("Mean of dependent variable", DepMean), 
       c("N", e.N))
-    #### ConsumptionOLS: Drop reg spec 3. 
-    ####  (first cols are variable names, mean/std)
-    if (grepl("Con.*O", FileName)) slt <- slt[, -5]
+    if (grepl("Repay", FileName)) {
+      slt <- slt[, -c(3, 6)]
+    }
     colnames(slt) <- c("covariates", "mean/std", 1:(ncol(slt)-2))
     if (SimpleHTMLTable) {
     ## kableExtra does not place tables correctly in Tufte
@@ -406,8 +411,8 @@ for (k in 1:length(listheader)) {
       kt <- kable(slt, row.names = F, align = c("l", rep("c", ncol(slt)-1)),
         caption = paste0(FileName, ", ", FileNameHeader[k]),
         format = "html", label = paste0(FileName, FileNameHeader[k]))
-      kt <- column_spec(kt, 1, width = "6cm; min-width:5cm;")
-      kt <- column_spec(kt, 2:ncol(slt), width = "2.5cm; min-width:2.5cm;")
+      kt <- column_spec(kt, 1, width = "7.5cm; min-width:6cm;")
+      kt <- column_spec(kt, 2:ncol(slt), width = "2.0cm; min-width:2.0cm;")
       assign(paste0("HTML_", FileName, FileNameHeader[k]), kt)
     } else {
       kt <- kbl(slt, 

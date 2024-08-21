@@ -1,4 +1,4 @@
-In enrollment regressions, initial enrollment is defined only for school age children at the initial period. 
+Sample is restricted to school age children at the initial period. This is because we use initial variable in ANCOVA. In addition, we drop children with no enrollment information for three periods. 
 <!--
 ANCOVA estimates should be used only to school age children in 2012 who are not old enough that they may naturally stop schooling by the endline.
 -->
@@ -13,7 +13,11 @@ s1x[, Tee := .N, by = HHMid]
 ```{r Enrollment pattern in original panel, echo = F, eval = F}
 addmargins(table0(s.1x[tee == 1, .(ObPattern, SchPattern)]))
 ```
-Enrollment pattern in schooling panel. `n` indicates NA (either attrition or not reported). Schooling data has `r nrow(s.1x)` rows. Drop `r nrow(s.1x[grepl("nnn", SchPattern), ])` observations with `nnn` in `SchPattern`. With OLS,  `r table(s1x[tee == 1, Tee])` individuals are repeatedly observed for `r names(table(s1x[tee == 1, Tee]))` times, respectively. Number of individuals with NAs in `Enrolled`: `r nrow(s1x[is.na(Enrolled) & tee == 1, , drop = F])` obs. ANCOVA is estimated with data after dropping observations with `nnn` in `SchPattern`. 
+
+* `ReadTrimSchoolingOriginalHHsFDData2.R` creates a variable called `SchPattern` that summarises enrollment pattern in the panel and merges with livestock data to attach baseline cattle holding. We drop all observations with `nnn` (NA in three consecutive rounds) in `SchPattern`.^[`n` indicates NA (either attrition or not reported). ]  Student level schooling panel data have `r nrow(s.1x)` rows. We drop `r nrow(s.1x[grepl("nnn", SchPattern), ])` observations with `nnn` in `SchPattern`. 
+* `r table(s1x[tee == 1, Tee])` individuals are repeatedly observed for `r names(table(s1x[tee == 1, Tee]))` times, respectively. ANCOVA is estimated with data after dropping observations with `nnn` in `SchPattern`.
+* See [ReadTrimSchoolingOriginalHHsFDData2.R](../program/ReadTrimSchoolingOriginalHHsFDData2.R) to see the code.  
+
 
 ```{r schooling regression set parameters ANCOVA, warning = F, message = F}
 source(paste0(pathprogram, "ReadTrimSchoolingANCOVA.R"))

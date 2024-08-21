@@ -1,4 +1,5 @@
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
 arA[, grepout("^Time$|UD|[mM]issw|Small|^Size", 
   colnames(arA)) := NULL]
 arA[, CumSave := CumNetSaving - CumRepaid]

@@ -6,6 +6,7 @@ Income sources are mainly labour incomes (`lab`) and farm revenues (`far`) with 
 ```{r Labour income regression set parameters original HHs, echo = F}
 source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
 FileName <- "LabourIncome"
+#### Regression types
 FileNameHeader <- c("", "PovertyStatus", "Attributes",
   "TimeVarying", "TimeVaryingAttributes",
   "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
@@ -13,12 +14,15 @@ regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 listheader <- paste0("lb", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
+#### Regression specifications: Selecting covariates
 source(paste0(pathprogram, "LabourIncomeCovariateSelectionANCOVA3.R"))
+#### Number of regression specifications = jay
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 Regressands <- c(rep("TotalHHLabourIncome", 6))
 DataToUse1 <- DataToUse2 <- rep("lab", 6)
 Addseparatingcols = NULL; Separatingcolwidth = NULL
 Separatingcoltitle = NULL
+#### Use livestock data to attach NumCows0, HadCows, livestock values
 source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
@@ -26,7 +30,8 @@ source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
 ```{r Farm income regression set parameters original HHs}
 FileName <- "FarmIncome"
-FileNameHeader <- c("", "Attributes", "PovertyStatus", "TimeVarying", "TimeVaryingAttributes")
+FileNameHeader <- c("", "Attributes", "PovertyStatus", 
+  "TimeVarying", "TimeVaryingAttributes")
 regsuffixes <- c("", "a", "P", "T", "Ta")
 listheader <- paste0("fr", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
