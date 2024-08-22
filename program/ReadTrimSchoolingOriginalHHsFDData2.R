@@ -195,18 +195,19 @@ for (j in 1) {
 s1x[, c("Age_1", grepout("Primary", colnames(s1x))) := NULL]
 s1xR[, c("Age_1", grepout("Primary", colnames(s1xR))) := NULL]
 s1x34[, c("Age_1", grepout("Primary", colnames(s1x34))) := NULL]
-#### Below is used only in 
-# datas <- c(paste0("s", rep(1, each = 2), c("x", "xR")), "s1x34")
-# ddatas <- paste0("d", datas)
-# ddatasd <- paste0(ddatas, "d")
-# for (i in 1:length(datas)) {
-# #### keep last period level variable...
-#    dl <- FirstDiffPanelData(X = get(datas[i]), 
-#      Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid",
-#      LevelCovariates = paste0("^dummy[A-Z].*[a-z]$|Head|",
-#       "^Time\\..$|Female$|Floo|Eldest|xid$|Sch.*Pa|^Arm$|BSta"))
-#   dat <- dl$diff
-#   dat[, grepout("^en$|Sch.*P", colnames(dat)) := NULL]
-#   assign(ddatas[i], dl)
-#   assign(ddatasd[i], dat)
-# }
+#### Below is used only in ReadAndCleanData_Tufte.rmd in a
+#### non essential way.
+datas <- c(paste0("s", rep(1, each = 2), c("x", "xR")), "s1x34")
+ddatas <- paste0("d", datas)
+ddatasd <- paste0(ddatas, "d")
+for (i in 1:length(datas)) {
+###keep last period level variable...
+   dl <- FirstDiffPanelData(X = get(datas[i]), 
+     Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid",
+     LevelCovariates = paste0("^dummy[A-Z].*[a-z]$|Head|",
+      "^Time\\..$|Female$|Floo|Eldest|xid$|Sch.*Pa|^Arm$|BSta"))
+  dat <- dl$diff
+  dat[, grepout("^en$|Sch.*P", colnames(dat)) := NULL]
+  assign(ddatas[i], dl)
+  assign(ddatasd[i], dat)
+}
