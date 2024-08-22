@@ -354,7 +354,7 @@ margin-left: 2em;
 
 <h1 class="title toc-ignore">Reading and cleaning data for GUK</h1>
 <h4 class="author">Seiro Ito</h4>
-<h4 class="date">2024年08月22日 18:22</h4>
+<h4 class="date">2024年08月22日 18:25</h4>
 
 
 <div id="TOC">
@@ -438,7 +438,6 @@ margin-right: -0.15em;
 margin-left: zero !important;
 }```
 </style>
-<p><a href="file:ANCOVAEstimationFile3.R"><code>ANCOVAEstimationFile3.R</code></a> does the following:</p>
 <div id="overview" class="section level1">
 <h1>Overview</h1>
 <p>This note uses ANCOVA as the estimator of choice. ANCOVA assumes the initial value of outcome variable is a pure nusissance that it only adds a noise and is uncorrelated with the main regressor of interest, hence uses it as a covariate. Under such assumptions, it is shown that ANCOVA is more efficient than DID as it renders data to control for baseline differences in outcomes <span class="citation">(<label for="tufte-mn-1" class="margin-toggle">&#8853;</label><input type="checkbox" id="tufte-mn-1" class="margin-toggle">Frison and Pocock 1992<span class="marginnote">Frison, Lars, and Stuart J. Pocock. 1992. <span>“Repeated Measures in Clinical Trials: Analysis Using Mean Summary Statistics and Its Implications for Design.”</span> <em>Statistics in Medicine</em> 11 (13): 1685–1704. <a href="https://doi.org/10.1002/sim.4780111304">https://doi.org/10.1002/sim.4780111304</a>.</span>)</span>. ANCOVA become numerically the same as DID if the estimated coefficient on the covariate is unity. As shown in the results, we see that it smaller and the claim that DID overcorrects for the initial values applies to our data.</p>

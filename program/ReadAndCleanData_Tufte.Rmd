@@ -156,8 +156,6 @@ data_sim <- fread(FPath("docs/Workshop2024Mar26/code/EstimationCode/R",
   "data_simulatedCD_20230426.csv"))
 ```
 
-[`ANCOVAEstimationFile3.R`](file:ANCOVAEstimationFile3.R) does the following:  
-
 
 # Overview
 

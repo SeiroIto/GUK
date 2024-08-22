@@ -335,7 +335,7 @@ No covariates
 
 ### ANCOVA, cluster robust SEs, and result tabulation
 
-[`ANCOVAEstimationFile3.R`](file:./program/ANCOVAEstimationFile3.R) does the following:  
+[`ANCOVAEstimationFile3.R`](../program/ANCOVAEstimationFile3.R) does the following:  
 
 1. Estimate: Run a linear regression with specified covariates, use `clx` function^[`clx` is written by [Mahmood Arai](https://www.researchgate.net/publication/251965897_Cluster-robust_standard_errors_using_R). It uses `lmtest` and `sandwich` packages. While there are other packages that provide cluster robust standard errors, `clx` is simple, minimal and does the job. ] to compute cluster robust SEs.  
 1. Collect and tabulate estimates: From a list of regression results, tabulate with `tabs2latex3` function. Compute variable means and standard deviations, collect regression statistics, and attach to tabulated results.  
