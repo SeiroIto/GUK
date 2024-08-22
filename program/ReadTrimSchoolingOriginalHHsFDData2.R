@@ -1,19 +1,18 @@
-#s.1x <- readRDS(paste0(pathsaveHere, "Roster", DataFileNames[1], "AdminDataUsedForEstimation.rds"))
 s.1x <- readRDS(paste0(pathsaveHere, DataFileNames[1], "InitialSample.rds"))
+#### Use only original 800 HHs
 if (Only800) s.1x <- s.1x[o800 == 1L, ]
 s.1x[, Enrolled := as.numeric(Enrolled)]
 for (t in 2:4){
   s.1x[, (paste0("Time.", t)) := 0L]
   s.1x[tee == t, (paste0("Time.", t)) := 1L]
 }
-#s1x <- s.1x[!grepl("nnn", Spattern), ]
-#s1x <- s.1x[!grepl("1001", EnrollPattern), ]
 s.1x[, SchObPattern := paste(as.character(tee), collapse = ""), 
-by = .(hhid, mid)]
+  by = .(hhid, mid)]
 s.1x[, EnrollChar := as.character(Enrolled)]
 s.1x[is.na(Enrolled), EnrollChar := "n"]
+#### Create SchPattern
 s.1x[, SchPattern := paste(EnrollChar, collapse = ""), 
-by = .(hhid, mid)]
+  by = .(hhid, mid)]
 s.1x[SchObPattern == "123", SchPattern := 
   paste0(SchPattern, "n")]
 s.1x[SchObPattern == "234", SchPattern := 
@@ -42,14 +41,14 @@ s.1x[SchObPattern == "4", SchPattern :=
 table0(s.1x[grepl(".*?1.*?1.*?1", SchPattern), SchPattern])
 table0(s.1x[grepl("nnn", SchPattern), SchPattern])
 table0(s.1x[, tee])
-# get HadCows
+#### get HadCows
 lvo0 <- readRDS(paste0(pathsaveHere, DataFileNames[5], "InitialSample.rds"))
 lvo0 <- unique(lvo0[, .(hhid, dummyHadCows)])
 s.1x[, dummyHadCows := 0L]
 s.1x[hhid %in% lvo0[dummyHadCows == 1L, hhid], dummyHadCows := 1L]
-# Drop any string with \textsf{nnn} in \textsf{SchPattern} as it does not form a panel.
+#### Drop any string with \textsf{nnn} in \textsf{SchPattern} as it does not form a panel.
 s1x <- s.1x[!grepl("nnn", SchPattern), ]
-# schooling FD prepare data original HHs
+#### Drop variables we do not use
 schstrings <- "groupid|hhid|^mid$|sex|Eldest|Age|tee|^dummy[A-Z]|Tim|RM|HHsi|Head|Enrolled|Floo|Schoo|xid$|InKind|^Arm$|o8|BSta"
 if (any(grepl("Fromxid", colnames(s1x)))) 
   s1x <- s1x[(Fromxid), grepout(schstrings, colnames(s1x)), with = F] else
@@ -60,6 +59,7 @@ if (any(s1x[, is.na(mid)])) {
   summary(s1x[HHMid %in% HHMid[is.na(mid)], .(hhid, mid, o800, Enrolled, BStatus)])
   s1x <- s1x[!(HHMid %in% HHMid[is.na(mid)]), ]
 }
+#### School level
 s1x[is.na(Schooling) & Age_1 >= 5 & Age_1 <= 13, Schooling := "primary0512"]
 s1x[is.na(Schooling) & Age_1 >= 13 & Age_1 <= 15, Schooling := "junior1315"]
 s1x[is.na(Schooling) & Age_1 >= 16 & Age_1 <= 18, Schooling := "high1618"]
@@ -195,23 +195,18 @@ for (j in 1) {
 s1x[, c("Age_1", grepout("Primary", colnames(s1x))) := NULL]
 s1xR[, c("Age_1", grepout("Primary", colnames(s1xR))) := NULL]
 s1x34[, c("Age_1", grepout("Primary", colnames(s1x34))) := NULL]
-datas <- c(paste0("s", rep(1, each = 2), c("x", "xR")), "s1x34")
-ddatas <- paste0("d", datas)
-ddatasd <- paste0(ddatas, "d")
-for (i in 1:length(datas)) {
-# keep last period level variable...
-#   dl <- prepFDData(X = get(datas[i]), 
-#     Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid", 
-#     LevelCovariates = paste0("^dummy[A-Z].*[a-z]$|Head|",
-#       "^Time\\..$|Female$|Floo|Eldest|xid$|SchPa"), 
-#     drop.if.NA.in.differencing = T, LevelPeriodToKeep = "last",
-#     use.var.name.for.dummy.prefix = F, print.messages = F)
-   dl <- FirstDiffPanelData(X = get(datas[i]), 
-     Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid",
-     LevelCovariates = paste0("^dummy[A-Z].*[a-z]$|Head|",
-      "^Time\\..$|Female$|Floo|Eldest|xid$|Sch.*Pa|^Arm$|BSta"))
-  dat <- dl$diff
-  dat[, grepout("^en$|Sch.*P", colnames(dat)) := NULL]
-  assign(ddatas[i], dl)
-  assign(ddatasd[i], dat)
-}
+#### Below is used only in 
+# datas <- c(paste0("s", rep(1, each = 2), c("x", "xR")), "s1x34")
+# ddatas <- paste0("d", datas)
+# ddatasd <- paste0(ddatas, "d")
+# for (i in 1:length(datas)) {
+# #### keep last period level variable...
+#    dl <- FirstDiffPanelData(X = get(datas[i]), 
+#      Group = "^HHMid$", TimeVar = "tee", Cluster = "groupid",
+#      LevelCovariates = paste0("^dummy[A-Z].*[a-z]$|Head|",
+#       "^Time\\..$|Female$|Floo|Eldest|xid$|Sch.*Pa|^Arm$|BSta"))
+#   dat <- dl$diff
+#   dat[, grepout("^en$|Sch.*P", colnames(dat)) := NULL]
+#   assign(ddatas[i], dl)
+#   assign(ddatasd[i], dat)
+# }

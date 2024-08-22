@@ -28,23 +28,18 @@ for (a in regsuffixes) {
     # and {^dummyUltraPoor$}
     assign(paste0("incl", a, 1), 
       # disallow (covariates * Time) interactions such as
-      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T") 
+      #  "^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T" 
       # allow level covariates (that do not end with .TimeX or have Female) 
       # or dummyYY.dummyUltraPoor (= dummy.*Poor$)
       "^(?=dummy[CI].*[ed]$|^dummy[LW].*[cgz]e$|dummy.*Poor$)(?!.*Female)") else 
   if (grepl("Ta?$", a)) # if T or Ta
     assign(paste0("incl", a, 1), 
       # allow level and interactions of covariates
-	#      "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.") else
+	#   "^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\."
       # allow level covariates but not HadCows
        "^(?=dummy[CI].*[ed].*|^dummy[LW].*[cgz]e.*|^Time\\.)(?!.*Had)") else
-   # if TP, TPa: add any variable with "Poor"
+   # if TP, TPa: add any variable with "dummy.*Poor" to T or Ta
     assign(paste0("incl", a, 1), 
-      # disallow level covariates
-      #"^dummy[CI].*[ed]\\.T|^dummy[LW].*[cgz]e\\.T|^Time\\.|Poor") 
-      # allow level covariates
-      #"^dummy[CI].*[ed]|^dummy[LW].*[cgz]e|^Time\\.|Poor")
-      # allow level covariates but not HadConw
       "^(?=dummy[CI].*[ed]|^dummy[LW].*[cgz]e.*|^Time\\.|^d.*Poor)(?!.*Had)")
   for (m in 2:length(additions)) 
     if (m == 5) # if m==5, addo to inclX3

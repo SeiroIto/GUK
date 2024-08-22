@@ -11,8 +11,7 @@ source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 <p class="description"><small>`r grepout(lvostrings, colnames(lvo))`</small></p>
 -->
 * To see the code, open [`ComputeNetAssetsANCOVA.R`](../program/ComputeNetAssetsANCOVA.R).  
-
-
+* Also open [``NetAssetCovariateSelectionANCOVA2.R](../program/NetAssetCovariateSelectionANCOVA2.R) for covariate selection.  
 
 <details><summary>Click here to see the code of net asset regressions.</summary>
 ```{r Net asset set parameters original HHs}

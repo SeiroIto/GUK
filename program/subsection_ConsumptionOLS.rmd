@@ -6,6 +6,7 @@ Consumption is observed in rd 2-4. There are `r nrow(con)` observations. As we l
 
 Regression specifications differ in terms of regressand and covariates. For regressands, we use per capita expenditure for (1) - (2), total expenditure for (3) - (4). (1), (3) are OLS with no covariates, (2), (4) are OLS with covariates. (5) is a dummy entry used only to compute mean and standard deviation.
 
+<details><summary>Click here to see the code of consumption impacts OLS estimation.</summary>
 ```{r consumption OLS regression set parameters original HHs}
 source(paste0(pathprogram, "ReadTrimConsumptionANCOVA.R"))
 # Page 6 of rd 4 questionnaire.
@@ -28,6 +29,7 @@ AddMeanStdColumn <- T
 UseRawDataForDestat <- F
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
+</details>
 
 <details><summary>Click here to see the table of OLS time varying consumption impacts by arm.</summary>
 `r HTML_ConsumptionOLSTimeVarying`

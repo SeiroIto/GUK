@@ -3,7 +3,8 @@ source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
 ```
 Income sources are mainly labour incomes (`lab`) and farm revenues (`far`) with `r nrow(lab[o800 == 1L & tee == 2,])` and `r nrow(far[o800 == 1L & tee == 2,])` observations at baseline, respectively. We ignore farm incomes due to small number of observations.
 
-```{r Labour income regression set parameters original HHs, echo = F}
+<details><summary>Click here to see the code of labour income impacts estimation.</summary>
+```{r Labour income regression set parameters original HHs}
 source(paste0(pathprogram, "ReadTrimIncomeANCOVA.R"))
 FileName <- "LabourIncome"
 #### Regression types
@@ -28,7 +29,8 @@ dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
-```{r Farm income regression set parameters original HHs}
+</details>
+```{r Farm income regression set parameters original HHs, echo = F}
 FileName <- "FarmIncome"
 FileNameHeader <- c("", "Attributes", "PovertyStatus", 
   "TimeVarying", "TimeVaryingAttributes")

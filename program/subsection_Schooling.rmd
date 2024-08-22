@@ -17,26 +17,38 @@ addmargins(table0(s.1x[tee == 1, .(ObPattern, SchPattern)]))
 * `ReadTrimSchoolingOriginalHHsFDData2.R` creates a variable called `SchPattern` that summarises enrollment pattern in the panel and merges with livestock data to attach baseline cattle holding. We drop all observations with `nnn` (NA in three consecutive rounds) in `SchPattern`.^[`n` indicates NA (either attrition or not reported). ]  Student level schooling panel data have `r nrow(s.1x)` rows. We drop `r nrow(s.1x[grepl("nnn", SchPattern), ])` observations with `nnn` in `SchPattern`. 
 * `r table(s1x[tee == 1, Tee])` individuals are repeatedly observed for `r names(table(s1x[tee == 1, Tee]))` times, respectively. ANCOVA is estimated with data after dropping observations with `nnn` in `SchPattern`.
 * See [ReadTrimSchoolingOriginalHHsFDData2.R](../program/ReadTrimSchoolingOriginalHHsFDData2.R) to see the code.  
+* See also [SchoolingCovariateSelectionANCOVA3.R](../program/SchoolingCovariateSelectionANCOVA3.R) to see the code of covariate selection.  
 
 
 ```{r schooling regression set parameters ANCOVA, warning = F, message = F}
+#### Read schooling data and drop observations with nnn in SchPattern
 source(paste0(pathprogram, "ReadTrimSchoolingANCOVA.R"))
+#### Set file name to be used in saving results
 FileName <- "Schooling"
+#### Regression types
 FileNameHeader <- c("", "Attributes", "PovertyStatus",
   "TimeVarying", "TimeVaryingAttributes",
   "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
 regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
+#### For schooling, we drop estimation by poverty class
 regsuffixes <- c("", "a", "P", "T", "Ta")
+#### Below 2 objects are used internally to select covariates
 listheader <- paste0("sc", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
+#### Choose covariates
 source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA3.R"))
+#### jay: Number of regression speficiations including OLS (=6 in schooling)
 jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
+#### Regressand of each reg specification
 Regressands <- rep("Enrolled", jay)
+#### Data to be used: s1 (produced in ReadTrimSchoolingANCOVA.R)
 DataToUse1 <- DataToUse2 <- rep("s1", jay)
+#### LaTeX tabulation specifications
 Addseparatingcols = NULL; Separatingcolwidth = .2
 dig.depmean <- 2
 AddMeanStdColumn <- UseRawDataForDestat <- T
+#### Estimate
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
 

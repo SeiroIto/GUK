@@ -171,17 +171,17 @@ for (k in 1:length(listheader)) {
 }
 ```
 </details>
-<details><summary>Click here to see the code of results table on owned cattle of owners.</summary>
+<details><summary>Click here to see the table of owned cattle impacts by owner group.</summary>
 Number of owned cattle: Owners  
 `r HTML_NumCowsByExperienceoTimeVarying`
 </details>
 
-<details><summary>Click here to see the code of results table on owned cattle of Adi.</summary>
+<details><summary>Click here to see the table of owned cattle impacts by Adi group.</summary>
 Number of owned cattle: Adi  
 `r HTML_NumCowsByExperienceaTimeVarying`
 </details>
 
-<details><summary>Click here to see the code of results table on owned cattle of others.</summary>
+<details><summary>Click here to see the table of owned cattle impacts by other group.</summary>
 Number of owned cattle: Others  
 `r HTML_NumCowsByExperiencenTimeVarying` 
 </details>

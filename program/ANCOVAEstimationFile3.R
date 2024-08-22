@@ -100,7 +100,7 @@ for (k in 1:length(listheader)) {
     print0(exclheader[k])
     print0(Formulae)
   }
-###_ Collect estimates ###_
+###_ Collect and tabulate estimates ###_
   # elist: list of ANCOVA estimation results objects #
   elist <- eval(parse(text = 
     paste("list(", paste(listheader[k], 1:jay, sep = "", collapse = ", "), ")")
@@ -225,7 +225,8 @@ for (k in 1:length(listheader)) {
   }
   rn <- rownames(e.tab)
   thisEsttab <- e.tab
-###_ Format tables ###_
+###_ Print tables ###_
+  #### 3. Use latextab (for LaTeX) and kable (for HTML) to print. ####
   # reorder rows: rn.new #
   source(paste0(pathprogram, 
     "ReorderingOfRowsInEstimatedResultsANCOVATable.R"))
@@ -239,7 +240,7 @@ for (k in 1:length(listheader)) {
   rn <- paste0("\\makebox[3cm]{\\scriptsize\\hfill ", rn, "}")
   # attach bottom of table rows #
   e.tb <- rbind(as.matrix(cbind(covariates = rn, e.tab)), 
-#    c("\\mbox{mean of initial value}", IniMean), 
+    #    c("\\mbox{mean of initial value}", IniMean), 
     c("\\mbox{mean of dependent variable}", DepMean), 
     e.T,
     c("\\bar{R}^{2}", e.R), 

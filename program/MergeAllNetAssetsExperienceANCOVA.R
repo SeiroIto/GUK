@@ -70,9 +70,7 @@ NeA1R <- merge(ass1R, lvo1, by = commoncols, all.x = T)
 NeA1R[is.na(TotalImputedValue), TotalImputedValue := 0]
 NeA1R[is.na(TotalImputed2Value), TotalImputed2Value := 0]
 NeA1R[, TotalValue := TotalImputedValue + NLHAssetAmount + PAssetAmount]
-#NeA1R[, NarrowTotalValue := TotalImputedValue + NarrowNLHAssetAmount + PAssetAmount]
 NeA1R[, Total2Value := TotalImputed2Value + NLHAssetAmount + PAssetAmount]
-#NeA1R[, NarrowTotal2Value := TotalImputed2Value + NarrowNLHAssetAmount + PAssetAmount]
 NeA1R[, NetValueGUK := TotalValue - a2b(DebtOutstanding.before, NA, 0)]
 # net assets old (subtract GUK and nonGUK borrowing)
 NeA1R[, NetValueOld := TotalValue - a2b(DebtOutstanding.before, NA, 0) - a2b(NetOutBal, NA, 0)]
@@ -97,18 +95,18 @@ IniVariables <- grepout("Total2?V|Net2?V|HHsize|HeadL|NumCows$|OwnCattle|AdiCatt
   colnames(NeAE))
 setkey(NeAE, hhid, tee)
 NeAE[, paste0(IniVariables, 0) := .SD[1, ], by = hhid, .SDcols = IniVariables]
-# create PureControl
-NeAE[, PureControl := 0L]
-NeAE[!grepl("borro", BStatus), PureControl := 1L]
-NeAE[, paste0("PureControl.Time", 2:4) := PureControl]
-NeAE[tee != 2, PureControl.Time2 := 0L]
-NeAE[tee != 3, PureControl.Time3 := 0L]
-NeAE[tee != 4, PureControl.Time4 := 0L]
-# UDPureControl is used in mean/std column
-NeAE[, UDPureControl := PureControl]
-pctstring <- paste0("PureControl.Time", 2:4)
-NeAE[, (paste0("UD", pctstring)) := eval(parse(text=
-  paste0("list(", paste(pctstring, collapse = ","), ")")))]
+# # create PureControl
+# NeAE[, PureControl := 0L]
+# NeAE[!grepl("borro", BStatus), PureControl := 1L]
+# NeAE[, paste0("PureControl.Time", 2:4) := PureControl]
+# NeAE[tee != 2, PureControl.Time2 := 0L]
+# NeAE[tee != 3, PureControl.Time3 := 0L]
+# NeAE[tee != 4, PureControl.Time4 := 0L]
+# # UDPureControl is used in mean/std column
+# NeAE[, UDPureControl := PureControl]
+# pctstring <- paste0("PureControl.Time", 2:4)
+# NeAE[, (paste0("UD", pctstring)) := eval(parse(text=
+#   paste0("list(", paste(pctstring, collapse = ","), ")")))]
 # create Arm*UltraPoor interactions (dummyArm, dummyUP are not demeaned)
 # also create UDxxx for mean/std column in estimate table
 FileNameForUD <- "NeAE"
@@ -139,33 +137,32 @@ saveRDS(netAD, paste0(pathsaveHere, "NetAssetsExperienceFigure.rds"))
 write.tablev(NeAE2, paste0(pathsaveHere, "NetAssetsExperienceANCOVA.prn"), 
   colnamestrue = F)
 
-cat("\n\nNumber of obs based on assets\n")
-print(addmargins(table0(NeAE2[, .(Arm, tee)])))
-print(addmargins(table0(NeAE2[tee == 1, .(Arm, AttritIn)])))
-cat("\n\nNumber of obs based on roster\n")
-print(addmargins(table0(NeAE2[tee==1, .(Arm, AttritIn)])))
-NeAE2[, Tee := .N, by = hhid]
-NeAE2[, LastRd := .N, by = hhid]
-cat("\n\nNumber of nonattriting obs but with lacking 4 entries in assets\n")
-print(addmargins(table0(NeAE2[AttritIn == 9 & Tee != 4 & tee == 1, .(Arm, ObPattern)])))
-#NeAE2[AttritIn == 9 & Tee != 4 & tee == Tee, .(Arm, hhid, tee, BStatus, Tee)]
-PrevWidth <- options()$width 
-options(width = 90)
-ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
-setkey(ar, Arm, BStatus, o800, survey)
-ar[, MaxTee := max(tee), by = hhid]
-# HHs with incomplete obs but classified as nonattriting, 
-# which is correct, as they lack rd1-3 info but has rd4 info 
-ar[hhid %in% NeAE2[AttritIn == 9 & Tee < 4, hhid] & tee == 1, 
-  .(Arm, hhid, tee, AttritIn, BStatus, creditstatus, ObPattern)][order(Arm, hhid), ]
-ass[, MaxteeInAsset := max(tee), by = hhid]
-ass[hhid %in% NeAE2[AttritIn == 9 & Tee < 4, hhid] & tee == MaxteeInAsset, 
-  .(Arm, hhid, MaxteeInAsset, AttritIn, BStatus,  ObPattern)][order(Arm, hhid), ]
-options(width = PrevWidth)
-NeAfig <- NeAFig[, .(Arm, groupid, hhid, UDdummyUltraPoor, tee, NetValue)]
-setnames(NeAfig, "UDdummyUltraPoor", "UltraPoor")
-NeAfig[, povertystatus := "ultra poor"]
-NeAfig[UltraPoor == 0L, povertystatus := "moderately poor"]
-NeAfig[, povertystatus := factor(povertystatus, 
-  levels = c("ultra poor","moderately poor"))]
-NeAfig[, UltraPoor := NULL]
+# cat("\n\nNumber of obs based on assets\n")
+# print(addmargins(table0(NeAE2[, .(Arm, tee)])))
+# print(addmargins(table0(NeAE2[tee == 1, .(Arm, AttritIn)])))
+# cat("\n\nNumber of obs based on roster\n")
+# print(addmargins(table0(NeAE2[tee==1, .(Arm, AttritIn)])))
+# NeAE2[, Tee := .N, by = hhid]
+# NeAE2[, LastRd := .N, by = hhid]
+# cat("\n\nNumber of nonattriting obs but with lacking 4 entries in assets\n")
+# print(addmargins(table0(NeAE2[AttritIn == 9 & Tee != 4 & tee == 1, .(Arm, ObPattern)])))
+# PrevWidth <- options()$width 
+# options(width = 90)
+# ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+# setkey(ar, Arm, BStatus, o800, survey)
+# ar[, MaxTee := max(tee), by = hhid]
+# # HHs with incomplete obs but classified as nonattriting, 
+# # which is correct, as they lack rd1-3 info but has rd4 info 
+# ar[hhid %in% NeAE2[AttritIn == 9 & Tee < 4, hhid] & tee == 1, 
+#   .(Arm, hhid, tee, AttritIn, BStatus, creditstatus, ObPattern)][order(Arm, hhid), ]
+# ass[, MaxteeInAsset := max(tee), by = hhid]
+# ass[hhid %in% NeAE2[AttritIn == 9 & Tee < 4, hhid] & tee == MaxteeInAsset, 
+#   .(Arm, hhid, MaxteeInAsset, AttritIn, BStatus,  ObPattern)][order(Arm, hhid), ]
+# options(width = PrevWidth)
+# NeAfig <- NeAFig[, .(Arm, groupid, hhid, UDdummyUltraPoor, tee, NetValue)]
+# setnames(NeAfig, "UDdummyUltraPoor", "UltraPoor")
+# NeAfig[, povertystatus := "ultra poor"]
+# NeAfig[UltraPoor == 0L, povertystatus := "moderately poor"]
+# NeAfig[, povertystatus := factor(povertystatus, 
+#   levels = c("ultra poor","moderately poor"))]
+# NeAfig[, UltraPoor := NULL]

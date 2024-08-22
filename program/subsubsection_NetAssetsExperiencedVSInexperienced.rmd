@@ -4,7 +4,14 @@ library(readstata13)
 fnlv0 <- list.files("C:/data/GUK/received/cleaned_by_RA/raw_source_files/P1_Check_20170513/2012/", 
   pattern = "8a", full.names = T)
 ```
-```{r read rd 1 Table 8a, echo = F, eval = F}
+
+We attach cattle rearing experience information to net assets.  
+
+* Use `r gsub("^.*/", "", fnlv0)` to get information and save as `LivestockExperienceAtBaseline.rds`.  
+* Correct information based on cattle ownership in livestock data, redefine `AdiCattle` as LeasInCattle $==$ 1 or has experience of Adi in last 3 years. Save it as `LivestockExperienceAtBaselineCorrected.rds`.  
+
+<details><summary>Click here to see the code that produces LivestockExperienceAtBaseline.rds.</summary>
+```{r read rd 1 Table 8a, eval = F}
 fnlv <- read.dta13(fnlv0, generate.factors = T, nonint.factors = T)
 fnlv <- data.table(fnlv)
 ####  Page 20 of rd 1 questionnaire
@@ -21,8 +28,10 @@ fnlv <- data.table(fnlv)
 ####  s8a_b_26: last year of adi
 ####  s8a_b_27_1: reason discontinuing adi
 ####  s8a_b_27_2: reason discontinuing adi, other
-setnames(fnlv, paste0("s8a_a_", 1:4), paste0("Own", c("Lvstk", "Cow", "Ox", "Calf")))
-setnames(fnlv, paste0("s8a_b_", 7:10), paste0("LeaseIn", c("Lvstk", "Cow", "Ox", "Calf")))
+setnames(fnlv, paste0("s8a_a_", 1:4), 
+  paste0("Own", c("Lvstk", "Cow", "Ox", "Calf")))
+setnames(fnlv, paste0("s8a_b_", 7:10), 
+  paste0("LeaseIn", c("Lvstk", "Cow", "Ox", "Calf")))
 setnames(fnlv, paste0("s8a_a_", c(26, "27_1", "27_2")), 
   c("YearsSinceLastAdi", "ReasonStopAdi", "ReasonStopAdiOther"))
 fnlv[, OwnCattle := 0L]
@@ -42,12 +51,9 @@ LvEx <- unique(fnlv[, .(hh_id, OwnCattle, LeaseInCattle, YearsSinceLastAdi)])
 setnames(LvEx, "hh_id", "hhid")
 saveRDS(LvEx, paste0(pathsaveHere, "LivestockExperienceAtBaseline.rds"))
 ```
-We attach cattle rearing experience information to net assets.  
+</details>
 
-* Use `r gsub("^.*/", "", fnlv0)` to get information and save as `LivestockExperienceAtBaseline.rds`.  
-* Correct information based on cattle ownership in livestock data, define `Adi` as LeasInCattle $==$ 1 or has experience of Adi in last 3 years. Save it as `LivestockExperienceAtBaselineCorrected.rds`.  
-
-
+<details><summary>Click here to see the code that defines LeaseInCattle (renamed as AdiCattle later).</summary>
 ```{r compare cattle experience with livestock holding in data}
 ####  Below data is created in ReadTrimLivestockANCOVA.R 
 ####  in livestock regression preparation
@@ -64,8 +70,6 @@ Tabulation of cattle lease-in and its experience at baseline.
 addmargins(table0(lvLv[o800==1L, .(YearsSinceLastAdi, LeaseInCattle)]))
 ```
 
-
-<details><summary>Click here to see the code that defines Adi.</summary>
 Even LeaseInCattle $==$ 0 \& OwnCattle $==$ 0, some had Adi experiences.
 ```{r }
 addmargins(table0(lvLv[o800==1L & LeaseInCattle == 0, .(YearsSinceLastAdi, OwnCattle)]))
@@ -80,7 +84,7 @@ addmargins(table0(lvLv[o800==1L, .(NumCows0, OwnCattle)]))
 ```
 </details>
 
-<details><summary>Click here to see the code that redefines number of cattle and Adi.</summary>
+<details><summary>Click here to see the code that corrects number of cattle and LeaseInCattle.</summary>
 
 NumCows are computed in `read_clean_data.rnw` by:
 
@@ -115,12 +119,11 @@ saveRDS(lvLv, paste0(pathsaveHere, "LivestockExperienceAtBaselineCorrected.rds")
 
 </details>
 
-In MergeAllNetAssetsExperienceANCOVA.R:  
+Estimation uses data called `NeA1` created in `MergeAllNetAssetsExperienceANCOVA.R`. Below shows how they are created:  
 
 * `r paste0(DataFileNames[4], "Trimmed.rds")` (assets) + `r paste0(DataFileNames[11], "Trimmed.rds")` (debts) + `r paste0(DataFileNames[2], "Trimmed.rds")` (admin data) + `r paste0(DataFileNames[5], "InitialSample.rds")` (livestock) &rArr; `NeA1R` data.  
-* `NeA1R` + `LivestockExperienceAtBaselineCorrected.rds` (livestock experience) &rArr; `NeAE`, and `NeAE1` is obtained after dropping 24 members of trad. `NeAE1` is used in estimation and is saved as `NetAssetsExperienceRegData.rds`.  
+* `NeA1R` + `LivestockExperienceAtBaselineCorrected.rds` (livestock experience created in the above) &rArr; `NeAE`, and we call the data `NeAE1` after dropping 24 members of trad from `NeAE`.^[24 members are dropped only when `UseTrimmedSample = T` in `EstimationMemo_OptionSetting.rnw`.] `NeAE1` is saved as `NetAssetsExperienceRegData.rds`.  
    * `LeaseInCattle` is renamed as `AdiCattle`.  
-   * 24 members are dropped only when `UseTrimmedSample = T` in `EstimationMemo_OptionSetting.rnw`.  
 * Open [MergeAllNetAssetsExperienceANCOVA.R](../program/MergeAllNetAssetsExperienceANCOVA.R) to see the code.  
 
 <details><summary>Click here to see the code of net assets impacts by experiece.</summary>
@@ -257,17 +260,17 @@ for (k in 1:length(listheader)) {
 }
 ```
 </details>
-<details><summary>Click here to see the code of results table on net assets of owners.</summary>
+<details><summary>Click here to see the table on net asset impacts of owners.</summary>
 Net assets: Owners  
 `r HTML_NetAssetsByExperienceoTimeVarying`
 </details>
 
-<details><summary>Click here to see the code of results table on net assets of adi.</summary>
+<details><summary>Click here to see the table on net asset impacts of adi.</summary>
 Net assets: Adi  
 `r HTML_NetAssetsByExperienceaTimeVarying`
 </details>
 
-<details><summary>Click here to see the code of results table on net assets of others.</summary>
+<details><summary>Click here to see the table on net asset impacts of others.</summary>
 Net assets: Others  
 `r HTML_NetAssetsByExperiencenTimeVarying`
 </details>

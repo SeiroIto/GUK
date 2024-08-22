@@ -1,6 +1,18 @@
 grepout <- function(str, x)
   # returns element of match (not numbers)
   x[grep(str, x, perl = T)]
+a2b <- function(obj, a, b)
+# changes "a" (scalar) in a matrix x to "b" (scalar)
+# can be used to a matrix with NAs
+{
+  i <- sapply(obj, is.factor)
+  if (any(i)) obj[i] <- lapply(obj[i], as.character)
+  if (is.na(a)) obj[is.na(obj)] <- b else
+  if (is.nan(a)) stop("cannot be used for nan.") else
+  obj[obj == a] <- b
+  if (any(i)) obj[i] <- lapply(obj[i], as.factor)
+  return(obj)
+}
 # These functions get covariates specified in exclXX,
 # and paste them by specification
 GetCovariates <- function(Listheader, Listcovariates, Jay = jay) {

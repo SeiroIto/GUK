@@ -88,14 +88,13 @@ commoncols <- intersect(colnames(ass1R), colnames(lvo1))
 NeA1R <- merge(ass1R, lvo1, by = commoncols, all.x = T)
 addmargins(table0(NeA1R[o800==1L, .(tee, NumCows)]))
 # Livestock assets
-#   ImputedValue: Median sales price are used to impute values 
-#   Imputed2Value: Median annual prices for cows are used, because cow prices vary a lot by years.
+#   TotalImputedValue: Median sales price are used to impute values 
+#   TotalImputed2Value: Median annual prices for cows are used, because cow prices vary a lot by years.
 NeA1R[is.na(TotalImputedValue), TotalImputedValue := 0]
 NeA1R[is.na(TotalImputed2Value), TotalImputed2Value := 0]
 addmargins(table0(NeA1R[o800 == 1L, 
   .(tee, 
     NonNAAllAssets = !is.na(TotalImputedValue))]))
-
 # Given there are many NAs in livestock data, define non-livestock assets.
 # xas has the following lines in read_cleaned_data.rnw in chunk define asset amounts
 # xas[, NLAssetAmount := HAssetAmount+PAssetAmount]
@@ -111,10 +110,9 @@ addmargins(table0(NeA1R[o800 == 1L,
 # NeA1R[, RBroadNLAssetValue := RBroadNLHAssetAmount + PAssetAmount] # not incl. livestock
 # NeA1R[, RNarrowNLAssetValue := RNarrowNLHAssetAmount + PAssetAmount] # not incl. livestock
 # Define NetValue.
-#   NLAssetAmount is created in
+#   NLAssetAmount is created in chunk: define asset amounts of read_cleaned_data.rnw
 #    xas[, NLAssetAmount := NLHAssetAmount+PAssetAmount]
 #    xas[, BroadNLAssetAmount := BroadNLHAssetAmount+PAssetAmount]
-#   chunk: define asset amounts of read_cleaned_data.rnw
 NeA1R[, TotalValue := TotalImputedValue + NLAssetAmount]
 NeA1R[, Total2Value := TotalImputed2Value + NLAssetAmount]
 NeA1R[, TotalBroadValue := TotalImputedValue + BroadNLAssetAmount]
@@ -128,9 +126,9 @@ NeA1R[, Net2Value := Total2Value - TotalDebt]
 NeA1R[, NetBroadValue := TotalBroadValue - TotalDebt]
 # NetNLAssetValue: Net non livestock asset values.
 NeA1R[, NetNLAssetValue := NLAssetAmount - TotalDebt]
-NeA1R[, c(#"TotalImputedValue", "NLHAssetAmount", 
-  "NarrowNLHAssetAmount", 
-  "BroadNLHAssetAmount", "TotalValue", "Total2Value") := NULL]
+NeA1R[, c(
+  "NarrowNLHAssetAmount", "BroadNLHAssetAmount", 
+  "TotalValue", "Total2Value") := NULL]
 NeA1R[, grepout("before", colnames(NeA1R)) := NULL]
 cat("\n\nNumber of obs by membership status and attrition\n")
 print(addmargins(table0(NeA1R[o800 == 1L & tee == 1, .(BStatus, AttritIn)])))
@@ -272,27 +270,9 @@ saveRDS(NeAfig, paste0(pathsaveHere, "NetAssetsFigureData.rds"))
 saveRDS(NeAfig0, paste0(pathsaveHere, "NetAssetsFigureMeanData.rds"))
 saveRDS(NeAfigAll, paste0(pathsaveHere, "AllNetAssetsFigureMeanData.rds"))
 saveRDS(cpneaAll, paste0(pathsaveHere, "CPNetAssetsFigureMeanData.rds"))
-
-#cat("\n\nNumber of obs based on narrow assets\n")
-#print(addmargins(table0(NeA1R2[, .(Arm, tee)])))
-#print(addmargins(table0(NeA1R2[tee == 1, .(Arm, AttritIn)])))
-#cat("\n\nNumber of obs based on roster\n")
-#print(addmargins(table0(NeA1R2[tee==1, .(Arm, AttritIn)])))
 NeA1R2[, Tee := .N, by = hhid]
 NeA1R2[, LastRd := .N, by = hhid]
-#cat("\n\nNumber of nonattriting obs but with lacking 4 entries in assets\n")
-#print(addmargins(table0(NeA1R2[AttritIn == 9 & Tee != 4 & tee == 1, .(Arm, ObPattern)])))
-#NeA1R2[AttritIn == 9 & Tee != 4 & tee == Tee, .(Arm, hhid, tee, BStatus, Tee)]
 PrevWidth <- options()$width 
 options(width = 100)
 ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
-setkey(ar, Arm, BStatus, o800, survey)
-ar[, MaxTee := max(tee), by = hhid]
-# HHs with incomplete obs but classified as nonattriting, 
-# which is correct, as they lack rd1-3 info but has rd4 info 
-ar[hhid %in% NeA1R2[AttritIn == 9 & Tee < 4, hhid] & tee == 1, 
-  .(Arm, hhid, tee, AttritIn, BStatus, creditstatus, ObPattern)][order(Arm, hhid), ]
-ass[, MaxteeInAsset := max(tee), by = hhid]
-ass[hhid %in% NeA1R2[AttritIn == 9 & Tee < 4, hhid] & tee == MaxteeInAsset, 
-  .(Arm, hhid, MaxteeInAsset, AttritIn, BStatus,  ObPattern)][order(Arm, hhid), ]
 options(width = PrevWidth)

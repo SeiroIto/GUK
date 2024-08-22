@@ -8,6 +8,7 @@ source(paste0(pathprogram, "ReadTrimLivestockByExperienceANCOVA.R"))
 lvoEN = copy(lvoE)
 ```
 
+<details><summary>Click here to see the code of cattle holding impacts estimation.</summary>
 ```{r Numcows set parameters original HHs}
 FileName <- "NumCows"
 FileNameHeader <- c("", "PovertyStatus", "Attributes",
@@ -29,7 +30,7 @@ dig.depmean <- 2
 AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
-
+</details>
 <details><summary>Click here to see the results table on net non-livestock assets..</summary>
 <div class="row">
   <div class="col-sm-9"> `r HTML_NumCowsTimeVarying` </div>

@@ -2,6 +2,7 @@ Net broad assets = Broad assets + net saving - debt to GUK - debts to relatives 
 ```{r net broad assets merge assets livestock saving data for est and figure, echo = F, results = "hide", cache = F, warning = F}
 source(paste0(pathprogram, "ComputeNetAssetsANCOVA.R"))
 ```
+<details><summary>Click here to see the code of net broad asset impacts and annual price net asset impacts estimation.</summary>
 ```{r Net broad asset set parameters original HHs}
 NeA1 <- readRDS(paste0(pathsaveHere, "NetAssetsRegData.rds"))
 # Drop confusing variables
@@ -27,7 +28,6 @@ AddMeanStdColumn <- UseRawDataForDestat <- T
 NeA1[, grepout("Net2", colnames(NeA1)) := NULL]
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
-
 We also examine net asset annual price ANCOVA estimation.
 ```{r net asset annual price ancova estimation}
 NeA1R <- readRDS(paste0(pathsaveHere, "NetAssetsANCOVATrimmed.rds"))
@@ -41,6 +41,7 @@ AddMeanStdColumn <- UseRawDataForDestat <- T
 source(paste0(pathprogram, "NetAssetCovariateSelectionANCOVA2.R"))
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))
 ```
+</details>
 
 
 

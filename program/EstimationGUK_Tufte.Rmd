@@ -219,7 +219,7 @@ PermRepTimes <- 100000
 ```
 
 
-# Estimation
+# Estimation strategy
 
 Estimation uses `initial sample` HHs (800 households less the members receiving less than 3 loans in `Traditional` arm). 
 
@@ -236,6 +236,8 @@ exclheader <- paste0("excl", regsuffixes)
 inclheader <- gsub("ex", "in", exclheader)
 source(paste0(pathprogram, "SchoolingCovariateSelectionANCOVA3.R"))
 ```
+
+## Econometric specification
 
 ANCOVA is a model that controls for the preexisting differences by including initial values of $y$ as a covariate (usually a continuous variable which can be seen as a nuissance) to the estimated impacts of a categorical variable (treated/control). We use ANCOVA because it is more effcient than DID if randomisation is successful.  
 
@@ -267,6 +269,8 @@ b_{ta_{1}} & b_{ta_{2}} & b_{ta_{3}}
 
 Our main interest is on the time-varying impacts of $k$-th non-traditional arm relative to the traditional arm outcomes. In equation (2), this is captured by $b_{a_{k}}$ for period 2, $b_{a_{k}} + b_{3a_{k}}$ for period 3, and $b_{a_{k}} + b_{4a_{k}}$ for period 4. We plot these estimates for time-varying impacts using error bar charts in the next section. Given our sample is obtained by cluster sampling with clusters as chars, and intervention was randomised at the char level, all the standard errors are clustered at the char (group) level as suggested by \citet{AbadieAtheyImbensWooldridge2022}.
 
+## Code outline
+
 In the estimation, there are `r length(FileNameHeader)` regression types (`regtype`) in estimation, which are:  
 
 * By arm (base)   
@@ -285,7 +289,61 @@ In our analysis, we mainly rely on "Time varying by arm," and refer to "Time var
 1. $+$ Household level characteristics + Baseline owned cattle size  
 1. $+$ Household level characteristics + Baseline owned cattle size + Baseline cattle ownership (indicator)  
 
+## ANCOVA implemetation
 
+Estimation of various impacts follows the same steps.^[See schooling estimation for commented code.]
+
+### Setting up
+
+Choose  
+
+* Outcome (`FileName`, `Regressand`)  
+* Data (`DataToUse`)  
+* Regression type (`FileNameHeader`)  
+* Covariates (`additions`)^[Before adding covariates, we drop certain variables to make coding easier. E.g., we drop `dummyLargeSize` when we want to use `dummyLarge` so regular expression becomes simpler.]  
+
+Covariates give 5 regression specifications.  
+
+<pre>
+Spec 1:  No covariates (OLS)
+Spec 2:  └── + lagged outcomes (ANCOVA, hereafter)
+Spec 3:      └── + household level variables
+Spec 4:          ├── + cattle ownership and interaction
+Spec 5:          └── + cattle herd size
+Spec 6:              └──  + cattle ownership and interaction
+</pre>
+
+<!--
+```
+No covariates
++-- Lagged outcomes
+|    +-- Household level variables
+|        +-- Cattle ownership and interactions
+|        +-- Cattle herd size
+|            +-- Cattle ownership and interactions
+```
+
+```
+No covariates
++-- Lagged outcomes
+|    \-- Household level variables
+|        \-- Cattle ownership and interactions
+|        +-- Cattle herd size
+|            \-- Cattle ownership and interactions
+```
+-->
+
+### ANCOVA, cluster robust SEs, and result tabulation
+
+[`ANCOVAEstimationFile3.R`](../program/ANCOVAEstimationFile3.R) does the following:  
+
+1. Estimate: Run a linear regression with specified covariates, use `clx` function^[`clx` is written by [Mahmood Arai](https://www.researchgate.net/publication/251965897_Cluster-robust_standard_errors_using_R). It uses `lmtest` and `sandwich` packages. While there are other packages that provide cluster robust standard errors, `clx` is simple, minimal and does the job. ] to compute cluster robust SEs.  
+1. Collect and tabulate estimates: From a list of regression results, tabulate with `tabs2latex3` function. Compute variable means and standard deviations, collect regression statistics, and attach to tabulated results.  
+1. Print Tables: Use `latextab` (for LaTeX) and `kable` (for HTML) to print.^[For HTML, `kableExtra` is also used but minimally only for column specifications. In a `tufte::tufte_html` output, `kbl` or `kable_styling` functions mess up the table's horizontal placement `position` or `full_width`.]  
+1. Save regression objects (`ANCOVA_XXX.qs`) to be used in inference (hypothesis testing).  
+
+
+# Estimation
 
 ## Schooling
 
