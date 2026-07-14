@@ -6,6 +6,7 @@
 .Rapp.history
 .DS_Store
 program*.7z
+xref.sqlite
 paper/*
 slides/*
 save/*

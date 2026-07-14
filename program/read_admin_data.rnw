@@ -334,7 +334,9 @@ adw[, c("CumRepaidRate", "CumEffectiveRepaidRate") :=
     round(CumEffectiveRepayment/CumPlannedInstallment, 3))]
 # TotalDebt owed
 adw[, TotalDebt := as.integer(125 * MonthsOfRepayment * 3)]
-adw[!grepl("gr|cat", Arm), TotalDebt := as.integer(190 * MonthsOfRepayment * 2)]
+#adw[!grepl("gr|cat", Arm), TotalDebt := as.integer(190 * MonthsOfRepayment * 2)]
+#### CLAUDE bug4: 2026-05-14 inverted condition: traditional+large got 190*45*2; should be gr/cat
+adw[grepl("gr|cat", Arm), TotalDebt := as.integer(190 * MonthsOfRepayment * 2)]
 adw[, c("OutstandingRate", "EffectiveOutstandingRate") := 
   .(round(1-CumRepaid/TotalDebt, 3), round(1-CumEffectiveRepayment/TotalDebt, 3))]
 # Need to define these rates as NA because repayment has not begun, so ratios become infinite

@@ -54,6 +54,8 @@ DataToUse2 <- rep("lvo3N", 7)
 lvoN = copy(lvo)
 lvoN[, TotalImputedValue:= NULL]
 lvoN[, grepout("TotalImputed2?Value.?", colnames(lvo)) := NULL]
+#### CLAUDE frg: 2026-05-14 FileName="NumCows" also used in subsubsection_CattleHolding.rmd
+#### (lvoEN data). Do not rename either without updating both + ANCOVALivestockResults.rnw.
 FileName <- "NumCows"
 FileNameHeader <- c("", "PovertyStatus", "Attributes",
     "TimeVarying", "TimeVaryingAttributes")

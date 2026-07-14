@@ -214,7 +214,7 @@ PrintFormulae <- F
 PermRepTimes <- 100000
 ```
 </details>
-```{r TableFootnotes, file = "../program/TableFootnotePiecesHTML.R", echo = F}
+```{r TableFootnotes, file = "../program/TableFootnotesHTML.R", echo = F}
 ```
 
 
@@ -3402,8 +3402,9 @@ confi1 <- confi[
 confi1[grepl("^Large$", attributes), attributes := "Large/Upfront"]
 cols <- c("FileName", "regressand", "attributes", "regtype")
 confi1[, (cols) := droplevels(.SD), .SDcols = cols]
-confi1[, attributes := factor(attributes, levels = 
-  c("Large/Upfront", "LargeGrace", "Cattle", "WithGrace", "InKind"))]
+confi1[, attributes := factor(attributes, levels =
+  c("Large/Upfront", "LargeGrace", "Cattle", "WithGrace", "InKind"),
+  labels = c("Large/Upfront", "Large grace", "Cattle", "WithGrace", "InKind"))]
 confi1[, num := factor(num-1)]
 p <- ggplot(data = confi1
   , aes(x = factor(period), y = estimate, 
@@ -3457,6 +3458,7 @@ confi1 <- confi[
 confi1[grepl("^Large$", attributes), attributes := "Large"]
 cols <- c("FileName", "regressand", "attributes", "regtype")
 confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confi1$attributes)[levels(confi1$attributes) == "LargeGrace"] <- "Large grace"
 confi1[, regressand := factor(regressand, levels = 
   c("net assets, AP", "net non-livestock assets", "net broad assets", "cattle"))]
 confi1[, regressand := factor(regressand, labels = 
@@ -3506,7 +3508,7 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Net asset impacts are estimated with ANCOVA. `Large/Upfront` , `LargeGrace`, and `Cattle` give impacts relative to `Traditional` arm. ``WithGrace` gives the grace period impacts relative to `Upfront`. `InKind` gives the impacts of managerial supports relative to the combination of `Upfront` and `WithGrace`.
+Net asset impacts are estimated with ANCOVA. `Large/Upfront` , `Large grace`, and `Cattle` give impacts relative to `Traditional` arm. ``WithGrace` gives the grace period impacts relative to `Upfront`. `InKind` gives the impacts of managerial supports relative to the combination of `Upfront` and `WithGrace`.
 s```
 ```{r plot NetAssetsEffects, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics("figure/EstimationMemo/NetAssetsEffects.jpg")
@@ -3541,8 +3543,8 @@ cols <- c("FileName", "school", "attributes")
 confi2[, (cols) := droplevels(.SD), .SDcols = cols]
 confi2[, attributes := factor(attributes, levels = 
   c("Traditional", "Large/Upfront", "LargeGrace", "Cattle"))]
-confi2[, attributes := factor(attributes, labels = 
-  c("Traditional", "Large", "LargeGrace", "Cattle"))]
+confi2[, attributes := factor(attributes, labels =
+  c("Traditional", "Large", "Large grace", "Cattle"))]
 #### Trad: Level in each period at school i
 confi2t <- confi2[(grepl("^Tra", attributes) & grepl("lev.* trad.*ea", ImpactType)) & num >= 5, ]
 #### Nontrad: nontrad - trad, in each period, at school i
@@ -3670,7 +3672,7 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Schooling impacts by arm and by period. Impacts are relative to concurrent `Traditional` arm. `Traditional` shows raw enrollment rates of `Traditional` arm. `Large` , `LargeGrace`, and `Cattle` give impacts relative to concurrent `Traditional` arm. 
+Schooling impacts by arm and by period. Impacts are relative to concurrent `Traditional` arm. `Traditional` shows raw enrollment rates of `Traditional` arm. `Large` , `Large grace`, and `Cattle` give impacts relative to concurrent `Traditional` arm.
 ```
 ```{r figure SchoolingEffectsWithTradByArm, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics(
@@ -3705,8 +3707,10 @@ confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
 confi2[grepl("Fun", AtType), 
   AtType := "Functional attributes\n (relative to Upfront, Upfront+WithGrace)"]
 confi2 <- confi2[!grepl("^Up", attributes), ]
-confi2[, attributes := factor(attributes, levels = 
+confi2[, attributes := factor(attributes, levels =
   c("Traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"),
+  labels = c("Traditional", "Large/Upfront", "Large grace", "Cattle",
     "WithGrace", "InKind"))]
 confi3 <- confi2[!grepl("Tra", attributes), ]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
@@ -3761,7 +3765,7 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Consumption and labour income impacts. `Large/Upfront` , `LargeGrace`, and `Cattle` give impacts relative to `Traditional` arm. Consumption impacts are estimated with OLS, labour income impacts are estimated with ANCOVA. There are only two regression specifications for consumption, because we do not expect net asset at baseline or cattle holding at baseline to affect consumption changes. Results using these covariates give qualitatively the same results. 
+Consumption and labour income impacts. `Large/Upfront` , `Large grace`, and `Cattle` give impacts relative to `Traditional` arm. Consumption impacts are estimated with OLS, labour income impacts are estimated with ANCOVA. There are only two regression specifications for consumption, because we do not expect net asset at baseline or cattle holding at baseline to affect consumption changes. Results using these covariates give qualitatively the same results. 
 ```
 ```{r plot IncomeConsumptionEffects, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics("figure/EstimationMemo/IncomeConsumptionEffects.jpg")
@@ -3780,6 +3784,7 @@ cie1 <- confi[
   grepl("^T$", regtype), ]
 cols <- c("FileName", "regressand", "attributes", "ImpactType")
 cie1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(cie1$attributes)[levels(cie1$attributes) == "LargeGrace"] <- "Large grace"
 cie1[, SubGroup := factor(gsub(".*ts\\, ", "", regressand))]
 cie1[, SubGroup := factor(SubGroup, levels = c("Own", "Adi", "None"))]
 cie1[, SubGroup := factor(SubGroup, labels = c("Owner", "Adi", "None"))]
@@ -3854,6 +3859,7 @@ confie1 <- confi[
   !grepl("Trad", attributes), ]
 cols <- c("FileName", "regressand", "attributes")
 confie1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confie1$attributes)[levels(confie1$attributes) == "LargeGrace"] <- "Large grace"
 confie1[, SubGroup := factor(gsub(".*tle\\, ", "", regressand))]
 confie1[, SubGroup := factor(SubGroup, levels = c("cattle", "Own", "Adi", "None"))]
 confie1[, SubGroup := factor(SubGroup, labels = c("All members", "Owner", "Adi", "None"))]
@@ -3933,6 +3939,7 @@ confi2[grepl("on", regressand), regressand := "Per capita consumption\n(BDT)"]
 confi2[!grepl("on", regressand), regressand := "Labour income\n(BDT)"]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
 confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confi2$attributes)[levels(confi2$attributes) == "LargeGrace"] <- "Large grace"
 confi2[grepl("lab", regressand), num := num-1]
 confi2[, num := factor(num)]
 p <- ggplot(data = confi2

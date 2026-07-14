@@ -354,7 +354,7 @@ margin-left: 2em;
 
 <h1 class="title toc-ignore">Reading and cleaning data for GUK</h1>
 <h4 class="author">Seiro Ito</h4>
-<h4 class="date">2024年08月22日 18:25</h4>
+<h4 class="date">2024年08月23日 10:13</h4>
 
 
 <div id="TOC">
@@ -1365,7 +1365,6 @@ desM[, Variable := rn2]
 #### (which would have to be a double backslash in an R string), 
 #### e.g. &quot;(31)&quot; would become &quot;\\(31)&quot;.
 #### https://stackoverflow.com/a/59644337
-desM &lt;- sapply(desM, function(x) gsub(&quot;\\(&quot;, &quot;\\\\(&quot;, x))
 ktft &lt;-   paste(&quot;Source: Estimated with GUK administrative&quot;, 
     &quot;and survey data at the period 2. Survey respondents include&quot;, 
     &quot;nonparticipants to the experiments.\\n&quot;,
@@ -1430,12 +1429,649 @@ ktft &lt;-   paste(&quot;Source: Estimated with GUK administrative&quot;,
     &quot;reject and attrit, so active members $\\geqslant$&quot;, 
     &quot;total - (rejected members + attrited members).&quot;,
     PrefTestsDefinitions1)
-kt &lt;- kable(desM, format = &quot;html&quot;, align = c(&quot;r&quot;, rep(&quot;c&quot;, 5)))
+gttb &lt;- gt::gt(as.data.frame(desM))
+desM &lt;- sapply(desM, function(x) gsub(&quot;\\(&quot;, &quot;\\\\(&quot;, x))
+kt &lt;- kable(data.table(desM), format = &quot;html&quot;, align = c(&quot;r&quot;, rep(&quot;c&quot;, 5)), escape = F)
+kt &lt;- column_spec(kt, 1, width = &quot;6cm; min-width:6cm;&quot;)
+kt &lt;- column_spec(kt, 2:6, width = &quot;3.5cm; min-width:3.5cm;&quot;)
 #### kt &lt;- kableExtra::footnote(kt, general = ktft)
-kt &lt;- column_spec(kt, 1, width = &quot;4cm; min-width:4cm;&quot;)
-kt &lt;- column_spec(kt, 2:6, width = &quot;2.5cm; min-width:2.5cm;&quot;)
 #### kt &lt;- kable_classic(kt, html_font = &quot;Cambria&quot;)</code></pre>
 </details>
+<div id="uugborgcau" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#uugborgcau table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#uugborgcau thead, #uugborgcau tbody, #uugborgcau tfoot, #uugborgcau tr, #uugborgcau td, #uugborgcau th {
+border-style: none;
+}
+#uugborgcau p {
+margin: 0;
+padding: 0;
+}
+#uugborgcau .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 16px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #A8A8A8;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#uugborgcau .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#uugborgcau .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#uugborgcau .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#uugborgcau .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#uugborgcau .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#uugborgcau .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#uugborgcau .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#uugborgcau .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#uugborgcau .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#uugborgcau .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#uugborgcau .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#uugborgcau .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#uugborgcau .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#uugborgcau .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#uugborgcau .gt_from_md > :first-child {
+margin-top: 0;
+}
+#uugborgcau .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#uugborgcau .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#uugborgcau .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#uugborgcau .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#uugborgcau .gt_row_group_first td {
+border-top-width: 2px;
+}
+#uugborgcau .gt_row_group_first th {
+border-top-width: 2px;
+}
+#uugborgcau .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#uugborgcau .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#uugborgcau .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#uugborgcau .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#uugborgcau .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#uugborgcau .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#uugborgcau .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#uugborgcau .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#uugborgcau .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#uugborgcau .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#uugborgcau .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#uugborgcau .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#uugborgcau .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#uugborgcau .gt_left {
+text-align: left;
+}
+#uugborgcau .gt_center {
+text-align: center;
+}
+#uugborgcau .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#uugborgcau .gt_font_normal {
+font-weight: normal;
+}
+#uugborgcau .gt_font_bold {
+font-weight: bold;
+}
+#uugborgcau .gt_font_italic {
+font-style: italic;
+}
+#uugborgcau .gt_super {
+font-size: 65%;
+}
+#uugborgcau .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#uugborgcau .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#uugborgcau .gt_indent_1 {
+text-indent: 5px;
+}
+#uugborgcau .gt_indent_2 {
+text-indent: 10px;
+}
+#uugborgcau .gt_indent_3 {
+text-indent: 15px;
+}
+#uugborgcau .gt_indent_4 {
+text-indent: 20px;
+}
+#uugborgcau .gt_indent_5 {
+text-indent: 25px;
+}
+#uugborgcau .katex-display {
+display: inline-flex !important;
+margin-bottom: 0.75em !important;
+}
+#uugborgcau div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Variable">Variable</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Traditional">Traditional</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Large">Large</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Large grace">Large grace</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Cattle">Cattle</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Overall">Overall</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="Variable" class="gt_row gt_left">`Head literate`</td>
+<td headers="Traditional" class="gt_row gt_right">0.097</td>
+<td headers="Large" class="gt_row gt_right">0.110</td>
+<td headers="Large grace" class="gt_row gt_right">0.105</td>
+<td headers="Cattle" class="gt_row gt_right">0.155</td>
+<td headers="Overall" class="gt_row gt_right">0.117</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.296)</td>
+<td headers="Large" class="gt_row gt_right">(0.314)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.307)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.363)</td>
+<td headers="Overall" class="gt_row gt_right">(0.322)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Head age`</td>
+<td headers="Traditional" class="gt_row gt_right">38.429</td>
+<td headers="Large" class="gt_row gt_right">37.465</td>
+<td headers="Large grace" class="gt_row gt_right">38.409</td>
+<td headers="Cattle" class="gt_row gt_right">38.015</td>
+<td headers="Overall" class="gt_row gt_right">38.067</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(10.115)</td>
+<td headers="Large" class="gt_row gt_right">(10.165)</td>
+<td headers="Large grace" class="gt_row gt_right">( 9.271)</td>
+<td headers="Cattle" class="gt_row gt_right">(10.746)</td>
+<td headers="Overall" class="gt_row gt_right">(10.075)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Household size`</td>
+<td headers="Traditional" class="gt_row gt_right">4.091</td>
+<td headers="Large" class="gt_row gt_right">4.295</td>
+<td headers="Large grace" class="gt_row gt_right">4.245</td>
+<td headers="Cattle" class="gt_row gt_right">4.115</td>
+<td headers="Overall" class="gt_row gt_right">4.189</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(1.447)</td>
+<td headers="Large" class="gt_row gt_right">(1.506)</td>
+<td headers="Large grace" class="gt_row gt_right">(1.492)</td>
+<td headers="Cattle" class="gt_row gt_right">(1.368)</td>
+<td headers="Overall" class="gt_row gt_right">(1.454)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Flood in round 1`</td>
+<td headers="Traditional" class="gt_row gt_right">0.463</td>
+<td headers="Large" class="gt_row gt_right">0.618</td>
+<td headers="Large grace" class="gt_row gt_right">0.407</td>
+<td headers="Cattle" class="gt_row gt_right">0.497</td>
+<td headers="Overall" class="gt_row gt_right">0.497</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.500)</td>
+<td headers="Large" class="gt_row gt_right">(0.487)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.493)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.501)</td>
+<td headers="Overall" class="gt_row gt_right">(0.500)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Household asset value</td>
+<td headers="Traditional" class="gt_row gt_right">1428</td>
+<td headers="Large" class="gt_row gt_right">1268</td>
+<td headers="Large grace" class="gt_row gt_right">1317</td>
+<td headers="Cattle" class="gt_row gt_right">1534</td>
+<td headers="Overall" class="gt_row gt_right">1383</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">( 922)</td>
+<td headers="Large" class="gt_row gt_right">( 762)</td>
+<td headers="Large grace" class="gt_row gt_right">( 698)</td>
+<td headers="Cattle" class="gt_row gt_right">(1174)</td>
+<td headers="Overall" class="gt_row gt_right">( 910)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Productive asset value</td>
+<td headers="Traditional" class="gt_row gt_right">1020</td>
+<td headers="Large" class="gt_row gt_right">1234</td>
+<td headers="Large grace" class="gt_row gt_right">2022</td>
+<td headers="Cattle" class="gt_row gt_right">1027</td>
+<td headers="Overall" class="gt_row gt_right">1332</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(1724)</td>
+<td headers="Large" class="gt_row gt_right">(2330)</td>
+<td headers="Large grace" class="gt_row gt_right">(9364)</td>
+<td headers="Cattle" class="gt_row gt_right">(2572)</td>
+<td headers="Overall" class="gt_row gt_right">(5118)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Livestock value</td>
+<td headers="Traditional" class="gt_row gt_right">4343</td>
+<td headers="Large" class="gt_row gt_right">6500</td>
+<td headers="Large grace" class="gt_row gt_right">5397</td>
+<td headers="Cattle" class="gt_row gt_right">4121</td>
+<td headers="Overall" class="gt_row gt_right">5111</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(11116)</td>
+<td headers="Large" class="gt_row gt_right">(14725)</td>
+<td headers="Large grace" class="gt_row gt_right">(13147)</td>
+<td headers="Cattle" class="gt_row gt_right">(10304)</td>
+<td headers="Overall" class="gt_row gt_right">(12490)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Number of cattle`</td>
+<td headers="Traditional" class="gt_row gt_right">0.217</td>
+<td headers="Large" class="gt_row gt_right">0.325</td>
+<td headers="Large grace" class="gt_row gt_right">0.270</td>
+<td headers="Cattle" class="gt_row gt_right">0.206</td>
+<td headers="Overall" class="gt_row gt_right">0.256</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.556)</td>
+<td headers="Large" class="gt_row gt_right">(0.736)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.657)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.515)</td>
+<td headers="Overall" class="gt_row gt_right">(0.624)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`NetValue`</td>
+<td headers="Traditional" class="gt_row gt_right"> 8011</td>
+<td headers="Large" class="gt_row gt_right">10074</td>
+<td headers="Large grace" class="gt_row gt_right"> 9671</td>
+<td headers="Cattle" class="gt_row gt_right"> 5649</td>
+<td headers="Overall" class="gt_row gt_right"> 8375</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(14877)</td>
+<td headers="Large" class="gt_row gt_right">(16402)</td>
+<td headers="Large grace" class="gt_row gt_right">(21510)</td>
+<td headers="Cattle" class="gt_row gt_right">(11752)</td>
+<td headers="Overall" class="gt_row gt_right">(16557)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`NetBroad Value`</td>
+<td headers="Traditional" class="gt_row gt_right"> 9012</td>
+<td headers="Large" class="gt_row gt_right">10830</td>
+<td headers="Large grace" class="gt_row gt_right"> 9931</td>
+<td headers="Cattle" class="gt_row gt_right"> 6962</td>
+<td headers="Overall" class="gt_row gt_right"> 9206</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(15030)</td>
+<td headers="Large" class="gt_row gt_right">(16604)</td>
+<td headers="Large grace" class="gt_row gt_right">(21371)</td>
+<td headers="Cattle" class="gt_row gt_right">(12878)</td>
+<td headers="Overall" class="gt_row gt_right">(16784)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Attrited`</td>
+<td headers="Traditional" class="gt_row gt_right">0.182</td>
+<td headers="Large" class="gt_row gt_right">0.040</td>
+<td headers="Large grace" class="gt_row gt_right">0.145</td>
+<td headers="Cattle" class="gt_row gt_right">0.115</td>
+<td headers="Overall" class="gt_row gt_right">0.119</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.387)</td>
+<td headers="Large" class="gt_row gt_right">(0.196)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.353)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.320)</td>
+<td headers="Overall" class="gt_row gt_right">(0.323)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Individually rejected`</td>
+<td headers="Traditional" class="gt_row gt_right">0.176</td>
+<td headers="Large" class="gt_row gt_right">0.045</td>
+<td headers="Large grace" class="gt_row gt_right">0.065</td>
+<td headers="Cattle" class="gt_row gt_right">0.185</td>
+<td headers="Overall" class="gt_row gt_right">0.116</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.382)</td>
+<td headers="Large" class="gt_row gt_right">(0.208)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.247)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.389)</td>
+<td headers="Overall" class="gt_row gt_right">(0.320)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Group rejected`</td>
+<td headers="Traditional" class="gt_row gt_right">0.227</td>
+<td headers="Large" class="gt_row gt_right">0.100</td>
+<td headers="Large grace" class="gt_row gt_right">0.050</td>
+<td headers="Cattle" class="gt_row gt_right">0.000</td>
+<td headers="Overall" class="gt_row gt_right">0.090</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.420)</td>
+<td headers="Large" class="gt_row gt_right">(0.301)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.218)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.000)</td>
+<td headers="Overall" class="gt_row gt_right">(0.287)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Non-attriting borrowers`</td>
+<td headers="Traditional" class="gt_row gt_right">0.472</td>
+<td headers="Large" class="gt_row gt_right">0.820</td>
+<td headers="Large grace" class="gt_row gt_right">0.800</td>
+<td headers="Cattle" class="gt_row gt_right">0.735</td>
+<td headers="Overall" class="gt_row gt_right">0.714</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.501)</td>
+<td headers="Large" class="gt_row gt_right">(0.385)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.401)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.442)</td>
+<td headers="Overall" class="gt_row gt_right">(0.452)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Risk preference value`</td>
+<td headers="Traditional" class="gt_row gt_right">115</td>
+<td headers="Large" class="gt_row gt_right">108</td>
+<td headers="Large grace" class="gt_row gt_right">113</td>
+<td headers="Cattle" class="gt_row gt_right">110</td>
+<td headers="Overall" class="gt_row gt_right">111</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(31)</td>
+<td headers="Large" class="gt_row gt_right">(32)</td>
+<td headers="Large grace" class="gt_row gt_right">(37)</td>
+<td headers="Cattle" class="gt_row gt_right">(32)</td>
+<td headers="Overall" class="gt_row gt_right">(33)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Time preference value 1`</td>
+<td headers="Traditional" class="gt_row gt_right">374</td>
+<td headers="Large" class="gt_row gt_right">373</td>
+<td headers="Large grace" class="gt_row gt_right">376</td>
+<td headers="Cattle" class="gt_row gt_right">407</td>
+<td headers="Overall" class="gt_row gt_right">383</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(132)</td>
+<td headers="Large" class="gt_row gt_right">(153)</td>
+<td headers="Large grace" class="gt_row gt_right">(147)</td>
+<td headers="Cattle" class="gt_row gt_right">(142)</td>
+<td headers="Overall" class="gt_row gt_right">(144)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Time preference value 2`</td>
+<td headers="Traditional" class="gt_row gt_right">483</td>
+<td headers="Large" class="gt_row gt_right">485</td>
+<td headers="Large grace" class="gt_row gt_right">476</td>
+<td headers="Cattle" class="gt_row gt_right">512</td>
+<td headers="Overall" class="gt_row gt_right">490</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(127)</td>
+<td headers="Large" class="gt_row gt_right">(137)</td>
+<td headers="Large grace" class="gt_row gt_right">(155)</td>
+<td headers="Cattle" class="gt_row gt_right">(121)</td>
+<td headers="Overall" class="gt_row gt_right">(136)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`Present bias`</td>
+<td headers="Traditional" class="gt_row gt_right">0.470</td>
+<td headers="Large" class="gt_row gt_right">0.450</td>
+<td headers="Large grace" class="gt_row gt_right">0.480</td>
+<td headers="Cattle" class="gt_row gt_right">0.458</td>
+<td headers="Overall" class="gt_row gt_right">0.464</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left"></td>
+<td headers="Traditional" class="gt_row gt_right">(0.501)</td>
+<td headers="Large" class="gt_row gt_right">(0.499)</td>
+<td headers="Large grace" class="gt_row gt_right">(0.501)</td>
+<td headers="Cattle" class="gt_row gt_right">(0.500)</td>
+<td headers="Overall" class="gt_row gt_right">(0.499)</td></tr>
+    <tr><td headers="Variable" class="gt_row gt_left">`N`</td>
+<td headers="Traditional" class="gt_row gt_right">176</td>
+<td headers="Large" class="gt_row gt_right">200</td>
+<td headers="Large grace" class="gt_row gt_right">200</td>
+<td headers="Cattle" class="gt_row gt_right">200</td>
+<td headers="Overall" class="gt_row gt_right">776</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
 Descriptive statistics<br />
 
 <table>
@@ -1463,217 +2099,217 @@ Overall
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 <code>Head literate</code>
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.097
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.110
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.105
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.155
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.117
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.296)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.314)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.307)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.363)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.322)
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 <code>Head age</code>
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 38.429
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 37.465
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 38.409
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 38.015
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 38.067
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (10.115)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (10.165)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 ( 9.271)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (10.746)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (10.075)
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 <code>Household size</code>
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 4.091
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 4.295
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 4.245
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 4.115
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 4.189
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1.447)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1.506)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1.492)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1.368)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1.454)
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 <code>Flood in round 1</code>
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.463
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.618
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.407
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.497
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 0.497
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.500)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.487)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.493)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.501)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (0.500)
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
-<code>Household asset value &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 1428 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 1268 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 1317 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 1534 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 1383 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \( 922) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \( 762) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \( 698) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(1174) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \( 910) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Productive asset value
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
+<code>Household asset value &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 1428 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 1268 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 1317 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 1534 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 1383 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \( 922) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \( 762) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \( 698) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(1174) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \( 910) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Productive asset value
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 1020
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 1234
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 2022
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 1027
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 1332
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (1724)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (2330)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (9364)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (2572)
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 (5118)
 </td>
 </tr>
 <tr>
-<td style="text-align:right;width: 4cm; min-width:4cm;; ">
-<code>Livestock value &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 4343 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 6500 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 5397 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 4121 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 5111 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(11116) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(14725) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(13147) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(10304) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(12490) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Number of cattle<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.217 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.325 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.270 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.206 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.256 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.556) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.736) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.657) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.515) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.624) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>NetValue<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 8011 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 10074 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 9671 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 5649 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 8375 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(14877) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(16402) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(21510) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(11752) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(16557) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>NetBroad Value<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 9012 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 10830 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 9931 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 6962 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 9206 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(15030) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(16604) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(21371) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(12878) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(16784) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Attrited<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.182 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.040 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.145 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.115 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.119 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.387) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.196) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.353) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.320) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.323) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Individually rejected<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.176 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.045 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.065 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.185 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.116 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.382) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.208) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.247) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.389) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.320) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Group rejected<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.227 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.100 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.050 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.000 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.090 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.420) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.301) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.218) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.000) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.287) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Non-attriting borrowers<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.472 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.820 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.800 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.735 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.714 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.385) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.401) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.442) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.452) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Risk preference value<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 115 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 108 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 113 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 110 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 111 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(31) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(32) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(37) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(32) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(33) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Time preference value 1<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 374 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 373 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 376 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 407 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 383 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(132) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(153) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(147) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(142) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(144) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Time preference value 2<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 483 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 485 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 476 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 512 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 490 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(127) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(137) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(155) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(121) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(136) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>Present bias<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.470 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.450 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.480 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.458 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; 0.464 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.499) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.500) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 2.5cm; min-width:2.5cm;; &quot;&gt; \(0.499) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 4cm; min-width:4cm;; &quot;&gt;</code>N`
+<td style="text-align:right;width: 6cm; min-width:6cm;; ">
+<code>Livestock value &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 4343 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 6500 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 5397 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 4121 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 5111 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(11116) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(14725) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(13147) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(10304) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(12490) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Number of cattle<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.217 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.325 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.270 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.206 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.256 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.556) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.736) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.657) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.515) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.624) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>NetValue<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 8011 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 10074 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 9671 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 5649 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 8375 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(14877) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(16402) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(21510) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(11752) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(16557) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>NetBroad Value<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 9012 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 10830 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 9931 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 6962 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 9206 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(15030) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(16604) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(21371) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(12878) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(16784) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Attrited<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.182 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.040 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.145 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.115 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.119 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.387) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.196) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.353) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.320) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.323) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Individually rejected<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.176 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.045 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.065 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.185 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.116 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.382) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.208) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.247) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.389) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.320) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Group rejected<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.227 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.100 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.050 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.000 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.090 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.420) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.301) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.218) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.000) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.287) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Non-attriting borrowers<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.472 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.820 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.800 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.735 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.714 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.385) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.401) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.442) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.452) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Risk preference value<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 115 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 108 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 113 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 110 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 111 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(31) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(32) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(37) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(32) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(33) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Time preference value 1<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 374 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 373 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 376 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 407 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 383 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(132) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(153) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(147) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(142) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(144) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Time preference value 2<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 483 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 485 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 476 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 512 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 490 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(127) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(137) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(155) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(121) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(136) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>Present bias<code>&lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.470 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.450 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.480 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.458 &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; 0.464 &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;  &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.499) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.501) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.500) &lt;/td&gt;    &lt;td style=&quot;text-align:center;width: 3.5cm; min-width:3.5cm;; &quot;&gt; \(0.499) &lt;/td&gt;   &lt;/tr&gt;   &lt;tr&gt;    &lt;td style=&quot;text-align:right;width: 6cm; min-width:6cm;; &quot;&gt;</code>N`
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 176
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 200
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 200
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 200
 </td>
-<td style="text-align:center;width: 2.5cm; min-width:2.5cm;; ">
+<td style="text-align:center;width: 3.5cm; min-width:3.5cm;; ">
 776
 </td>
 </tr>

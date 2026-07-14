@@ -2,13 +2,15 @@
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); library(knitr); knit("merge_across_rounds.rnw", "merge_across_rounds.tex"); system("platex merge_across_rounds"); system("dvipdfmx merge_across_rounds")
 %  path0 <- "c:/data/GUK/"; path <- paste0(path0, "analysis/"); setwd(pathprogram <- paste0(path, "program/")); pathsource.mar <- paste0(path, "source/mar/"); pathreceived.mar <- paste0(path0, "received/mar/"); system("recycle c:/data/GUK/analysis/program/cache/merge_across_rounds/"); library(knitr); knit("merge_across_rounds.rnw", "merge_across_rounds.tex"); system("platex merge_across_rounds"); system("dvipdfmx merge_across_rounds")
 
-\input{c:/data/knitr_preamble.rnw}
+\input{c:/seiro/settings/Rsetting/knitrPreamble/knitr_preamble.rnw}
 
 
 \begin{document}
 \setlength{\baselineskip}{12pt}
 
-<<option setting 1, cache = F, child='c:/data/knitr_initial_option_setting_chunk.rnw'>>=
+% old: child='c:/data/knitr_initial_option_setting_chunk.rnw'
+% CLAUDE tpo: 2026-05-14 stale c:/data path; correct location is c:/seiro/settings/Rsetting/knitrPreamble
+<<option setting 1, cache = F, child='c:/seiro/settings/Rsetting/knitrPreamble/knitr_initial_option_setting_chunk.rnw'>>=
 <<option setting 2, cache = F>>=
 opts_chunk$set(fig.path='figure/merge_across_rounds', cache.path='cache/merge_across_rounds', cache = F, echo = T, results = 'markup', tidy.opts=list(blank=FALSE, width.cutoff=40))
 options(digits = 6, width = 80)
@@ -182,7 +184,7 @@ Here is how \textsf{membership.status} and \textsf{memstatus} correspond:
 table0(idf[, .(membership.status, memstatus)])
 @
 Create \textsf{arm} for covenience and understandability.
-<<>>>=
+<<>>=
 idf[, arm := tolower(rand.arm)]
 idf[grepl("^L.*t$", rand.arm), arm := "large"]
 idf[grepl("^L.*gr", rand.arm), arm := "large grace"]

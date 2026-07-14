@@ -1,4 +1,7 @@
 ass0 <- readRDS(paste0(pathsaveHere, DataFileNames[4], "InitialSample.rds"))
+#### CLAUDE com: 2026-04-29 filter before demean (unlike Repayment/NetAssets
+#### which demean on full sample then filter). Not a bug: OLS invariant to
+#### centering when main effects included; 800-HH means used for demeaning.
 if (Only800) ass0 <- ass0[o800 == 1L, ]
 print(addmargins(table(ass0[o800 == 1L & tee == 1, .(Arm, AttritIn)])))
 ass0[, grepout("Loan|UD|Forced|00|^Time$|\\.before|\\.after", colnames(ass0)) := NULL]

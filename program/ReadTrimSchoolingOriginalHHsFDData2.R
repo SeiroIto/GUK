@@ -189,7 +189,7 @@ for (j in 1) {
   sj[, grepout("RM", colnames(sj)) := NULL]
   sj34[, grepout("RM", colnames(sj34)) := NULL]
   assign(paste0("s", j, "x"), sj)
-  assign(paste0("s", j, "xR"), sj)
+  assign(paste0("s", j, "xR"), sjR) #### AG: bug
   assign(paste0("s", j, "x34"), sj34)
 }
 s1x[, c("Age_1", grepout("Primary", colnames(s1x))) := NULL]

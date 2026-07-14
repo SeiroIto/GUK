@@ -29,7 +29,9 @@ subst.tableA <- matrix(
     "^NetBroad.*", "Net broad asset value",
     "TotalHHLa.*\\}", "household labour income$_{1}$}",
     "TotalRev.*\\}", "farm revenue$_{1}$}",
-    "PCExpe.*\\}", "Pser capita consumption$_{2}$}",
+    #"PCExpe.*\\}", "Pser capita consumption$_{2}$}",
+    #### CLAUDE tpo: 2026-05-14
+    "PCExpe.*\\}", "Per capita consumption$_{2}$}",
     "TotalExpe.*\\}", "Household consumption$_{2}$}",
     "\\.", " $\\\\times$ ",
     "Lag(.*)", "\\1$_{t-1}$",

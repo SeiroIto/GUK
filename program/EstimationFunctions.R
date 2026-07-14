@@ -113,11 +113,20 @@ FirstDiffPanelData <- function(X, Group, TimeVar = "time", Cluster = NULL,
   # Shift one period ahead of LevelCovariates and rename as L(original colname)
   # This takes time. Maybe too long.
   FDLVariates <- c(FDThese, levelstring)
-  if (LevelPeriodToKeep == "first")
-    X[, (paste0("L", FDLVariates)) := shift(.SD, 1L, type = "lag")
-      , by = IDstring, .SDcols = FDLVariates] else
+  #### CLAUDE bug5: 2026-05-14 else branch was identical to "first" (both lag);
+  ####   "first" needs lag on FDThese (correct FD sign) + lead on levelstring
+  ####   (drops t=T, keeping t=1 as baseline level). "last" keeps lag throughout.
+  if (LevelPeriodToKeep == "first") {
+    X[, (paste0("L", FDThese)) := shift(.SD, 1L, type = "lag")
+      , by = IDstring, .SDcols = FDThese]
+    X[, (paste0("L", levelstring)) := shift(.SD, 1L, type = "lead")
+      , by = IDstring, .SDcols = levelstring]
+  #old: X[, (paste0("L", FDLVariates)) := shift(.SD, 1L, type = "lag")
+  #old:   , by = IDstring, .SDcols = FDLVariates]
+  } else {
     X[, (paste0("L", FDLVariates)) := shift(.SD, 1L, type = "lag")
       , by = IDstring, .SDcols = FDLVariates]
+  }
   # Take an FD of time-variant variates, overwrite levels of time-variant variables
   for (i in 1:length(FDThese))
     set(X, j = grep(paste0("^", FDThese[i], "$"), colnames(X)), 
@@ -155,7 +164,8 @@ FirstDiffPanelData <- function(X, Group, TimeVar = "time", Cluster = NULL,
   } else droppedRows <- list(OnlyOnePeriod = droppedRows, ForNA = NA)
   #  turn cluster as a numeric vector
   if (!is.null(Cluster)) {
-    qclusterstring <- quote(list(clusterstring))
+    #qclusterstring <- quote(list(clusterstring))
+    #### CLAUDE dea: 2026-05-14 qclusterstring assigned but never read; eval() uses quote() directly
     clusterNum <- X[, eval(quote(clusterstring)), with = F]
     clusterNum <- as.numeric(factor(asc(clusterNum)))
   } else clusterNum <- NULL

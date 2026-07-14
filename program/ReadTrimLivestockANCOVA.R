@@ -7,6 +7,7 @@ setkey(lvo0, hhid, survey)
 lvo0[, paste0(IniVariables, 0) := .SD[1, ], by = hhid, .SDcols = IniVariables]
 lvo0[, FirstObs := 0L]
 lvo0[, minrd := min(survey), by = hhid][minrd == survey, FirstObs := 1L]
+lvo0[, minrd := NULL] #### AG (antigravity): dea
 lvo0[, FirstObs := NULL]
 # create PureControl
 lvo0[, PureControl := 0L]

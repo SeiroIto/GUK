@@ -1,3 +1,4 @@
+
 ---
 title: "Estimation of GUK interventions"
 author: "Seiro Ito"
@@ -115,7 +116,7 @@ pre[class] {
   margin-right: -0.15em;
 }
 .TableOnLeft {
-  margin-left: zero !important;
+  margin-left: 0 !important;
 }```
 ```{r setup, echo = F, results = "hide"} 
 #### include = F <==> echo=F & results = F
@@ -137,6 +138,7 @@ gc()
 ```
 
 ```{r here setup, eval = F, echo = F}
+#### here package tests and workshop chunk
 library(here)
 library(rprojroot)
 #### Need to set project root
@@ -169,8 +171,10 @@ pathprogram <- paste0(path, "program/");
 pathsource <- paste0(path0, "source/")
 pathsave <- paste0(path, "save/")
 pathsaveHere <- paste0(pathsave, "EstimationMemo/")
-pathfigure <- pathsavefigure <- paste0(pathprogram, "figure/")
-pathtable <- paste0(pathprogram, "table/")
+#### CLAUDE dea: 2026-04-29 pathfigure, pathsavefigure, pathtable assigned but
+####   never read in any project file (verified via xref.sqlite, 832k refs)
+# pathfigure <- pathsavefigure <- paste0(pathprogram, "figure/")
+# pathtable <- paste0(pathprogram, "table/")
 pathreceived <- paste0(path0, "received/")
 pathcleaned <- paste0(pathreceived, "cleaned_by_RA/")
 path1234 <- paste0(pathcleaned, "clean_panel_data_by_section/")
@@ -199,7 +203,8 @@ DataFileNames <- c(
 ShortfallFileNames<- c("Group", "Individual", "o800")
 FileNameHeader <- paste0(c("", "Grace", "PovertyStatus", "Size", "Attributes"),
   "OriginalHHs")
-filenamelist <- c("Group", "Individual")
+#### CLAUDE dea: 2026-04-29 filenamelist assigned but never read anywhere
+# filenamelist <- c("Group", "Individual")
 arms <- c("traditional", "large", "large grace", "cow")
 Arms <- c("Traditional", "Large", "LargeGrace", "Cow")
 armsC <- c("traditional", "large", "large grace", "cattle")
@@ -215,7 +220,7 @@ PrintFormulae <- F
 PermRepTimes <- 100000
 ```
 </details>
-```{r TableFootnotes, file = "../program/TableFootnotePiecesHTML.R", echo = F}
+```{r TableFootnotes, file = "../program/TableFootnotesHTML.R", echo = F}
 ```
 
 
@@ -229,7 +234,7 @@ FileNameHeader <- c("", "Attributes", "PovertyStatus",
   "TimeVarying", "TimeVaryingAttributes",
   "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
 rm(additions)
-regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
+#### regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 regsuffixes <- c("", "a", "P", "T", "Ta")
 listheader <- paste0("sc", regsuffixes)
 exclheader <- paste0("excl", regsuffixes)
@@ -291,7 +296,7 @@ In our analysis, we mainly rely on "Time varying by arm," and refer to "Time var
 
 ## ANCOVA implemetation
 
-Estimation of various impacts follows the same steps.^[See schooling estimation for commented code.]
+Estimation of various impacts follows the same steps.^[See schooling estimation for commented code. ]
 
 ### Setting up
 
@@ -300,7 +305,7 @@ Choose
 * Outcome (`FileName`, `Regressand`)  
 * Data (`DataToUse`)  
 * Regression type (`FileNameHeader`)  
-* Covariates (`additions`)^[Before adding covariates, we drop certain variables to make coding easier. E.g., we drop `dummyLargeSize` when we want to use `dummyLarge` so regular expression becomes simpler.]  
+* Covariates (`additions`)^[Before adding covariates, we drop certain variables to make coding easier. E.g., we drop `dummyLargeSize` when we want to use `dummyLarge` so regular expression becomes simpler. ]  
 
 Covariates give 5 regression specifications.  
 
@@ -339,7 +344,7 @@ No covariates
 
 1. Estimate: Run a linear regression with specified covariates, use `clx` function^[`clx` is written by [Mahmood Arai](https://www.researchgate.net/publication/251965897_Cluster-robust_standard_errors_using_R). It uses `lmtest` and `sandwich` packages. While there are other packages that provide cluster robust standard errors, `clx` is simple, minimal and does the job. ] to compute cluster robust SEs.  
 1. Collect and tabulate estimates: From a list of regression results, tabulate with `tabs2latex3` function. Compute variable means and standard deviations, collect regression statistics, and attach to tabulated results.  
-1. Print Tables: Use `latextab` (for LaTeX) and `kable` (for HTML) to print.^[For HTML, `kableExtra` is also used but minimally only for column specifications. In a `tufte::tufte_html` output, `kbl` or `kable_styling` functions mess up the table's horizontal placement `position` or `full_width`.]  
+1. Print Tables: Use `latextab` (for LaTeX) and `kable` (for HTML) to print.^[For HTML, `kableExtra` is also used but minimally only for column specifications. In a `tufte::tufte_html` output, `kbl` or `kable_styling` functions mess up the table's horizontal placement `position` or `full_width`. ]  
 1. Save regression objects (`ANCOVA_XXX.qs`) to be used in inference (hypothesis testing).  
 
 
@@ -426,7 +431,7 @@ No covariates
 
 As a general idea, we test the following:  
 
-* `Traditional` arm "impact" = 0.^[Strictly speaking, we cannot estimate the impacts of Traditional arm. We abuse the term "impacts" where it should correctly be "estimates".]  
+* `Traditional` arm "impact" = 0.^[Strictly speaking, we cannot estimate the impacts of Traditional arm. We abuse the term "impacts" where it should correctly be "estimates". ]  
 * Non-`Traditional` arm impact (relative to `Traditional`) = 0.   
 
 If the regression type is time-varying, we test:  
@@ -695,7 +700,9 @@ for (r in 2:length(ListHeaderListForQS)) {
           paste0(c(FNames[r], regtype, s, g, "None", "level of reference nontrad", startnum), collapse = "")
         # hvN1: difference of period 2 Arm relative to period 2 trad
         #  [[1]][2] "dummyInKind"
-        cumstrings0 <- peristrings0 <- paste0("^", covadd.nontrad[[1]][2], "$")
+        #### CLAUDE dea: 2026-04-29 cumstrings0 assigned but never read; peristrings0 kept
+        # cumstrings0 <- peristrings0 <- paste0("^", covadd.nontrad[[1]][2], "$")
+        peristrings0 <- paste0("^", covadd.nontrad[[1]][2], "$")
         hvN1 <- rep(0, length(coeffvec))
         hvN1[grepl(
             paste0("^", covadd.nontrad[[1]][2], "$")
@@ -1317,7 +1324,8 @@ for (rr in 1:length(reglists[[r]])) {
     thisreg <- regobj[[s]]$lm
     coeffvec <- thisreg$coeff
     thisV <- regobj[[s]]$robust$V
-    thisres <- regobj[[s]]$robust$est
+    #### CLAUDE dea: 2026-04-29 thisres assigned but never read in any project file
+    # thisres <- regobj[[s]]$robust$est
     for (g in lattributes) {
       # lattributes: 
       #  Arms (Large, LargeGrace, Cattle) or 
@@ -1556,11 +1564,13 @@ for (rr in 1:length(reglists[[r]])) {
           # hvMofNinT: diff = 0 (of nontrad relative to concurrent trad, at school iin period X)
           #  Arm + School + TimeX + Arm.School + Arm.TimeX + School.TimeX + Arm.School.TimeX 
           #    - (School + TimeX + School.TimeX)
-          #  = Arm + Arm.School + Arm.TimeX + Arm.School.TimeX 
-          #  = hvMofTinT + dMofNinT
+          #  = Arm + Arm.School + Arm.TimeX + Arm.School.TimeX
+          #  = hvMofN + dMofNinT
           # addteeMofNinT: ^dummyLarge.Time3$, ^dummyLarge.dummyJunior.Time3$,
           #   ^dummyLarge.dummyHigh.Time3$
-          hvMofNinT <- hvMofTinT + dMofNinT
+          #### hvMofNinT <- hvMofTinT + dMofNinT
+          #### CLAUDE tpo: hvMofTinT ==should be==> hvMofN
+          hvMofNinT <- hvMofN + dMofNinT
           # hvMofN (Arm + Arm.School)
           if (tee == 2) hvMofNinT <- hvMofN
           lhcow <- glht(model=thisreg, linfct = matrix(hvMofNinT, 
@@ -1631,13 +1641,17 @@ for (rr in 1:length(reglists[[r]])) {
           #  (intercept) + School + TimeX + School.TimeX 
           #    + Arm + Arm.School 
           #    + Arm.TimeX + Arm.School.TimeX 
-          #  = hvMofTinTL + hvMofN + hvMofNinT
-          hvMofNinTL <- hvMofTinTL + hvMofN + hvMofNinT
+          #  = hvMofTinTL + hvMofN + dMofNinT
+          #### hvMofNinTL <- hvMofTinTL + hvMofN + hvMofNinT
+          #### CLAUDE tpo: hvMofNinT ==should be==> dMofNinT
+          hvMofNinTL <- hvMofTinTL + hvMofN + dMofNinT
           #  if tee == 2
-          #  (intercept) + School + Arm + Arm.School 
-          #  = hvMofTA
-          if (tee == 2) hvMofNinTL <- hvMofTA
-          lhcow <- glht(model=thisreg, linfct = matrix(hvMofNinT, 
+          #  (intercept) + School + Arm + Arm.School
+          #  = hvMofNA
+          #### if (tee == 2) hvMofNinTL <- hvMofTA
+          #### CLAUDE tpo: hvMofTA ==should be==> hvMofNA
+          if (tee == 2) hvMofNinTL <- hvMofNA
+          lhcow <- glht(model=thisreg, linfct = matrix(hvMofNinTL, 
             byrow = T, nrow=1), alternative="two.sided", vcov.=thisV)
           confis <- rbind(confis, 
                c(FileNames[r], regtype, s, g, "male", schlevels[i], 
@@ -1655,12 +1669,16 @@ for (rr in 1:length(reglists[[r]])) {
           #   + Arm.Female + Arm.School.Female  (dFofNA)
           #   +  Arm.Female.TimeX + Arm.School.Female.TimeX  (dFofNinT0)
           # = hvMofNinTL + dFofT + dFofTinT + dFofNA + dFofNinT0
-          hvFofNinTL <- hvMofTinTL + dFofT + dFofTinT + dFofNA + dFofNinT0
+          #### hvFofNinTL <- hvMofTinTL + dFofT + dFofTinT + dFofNA + dFofNinT0
+          #### CLAUDE tpo: hvMofTinTL ==should be==> hvMofNinTL
+          hvFofNinTL <- hvMofNinTL + dFofT + dFofTinT + dFofNA + dFofNinT0
           #  if tee == 2
-          #  (intercept) + School + Arm + Arm.School  (hvMofTA)
+          #  (intercept) + School + Arm + Arm.School  (hvMofNA)
           #   + Female + School.Female  (dFofT)
           #   + Arm.Female + Arm.School.Female  (dFofNA)
-          if (tee == 2) hvFofNinTL <- hvMofTA + dFofT + dFofNA
+          #### if (tee == 2) hvFofNinTL <- hvMofTA + dFofT + dFofNA
+          #### CLAUDE tpo: hvMofTA ==should be==> hvMofNA
+          if (tee == 2) hvFofNinTL <- hvMofNA + dFofT + dFofNA
           lhcow <- glht(model=thisreg, linfct = matrix(hvFofNinTL, 
             byrow = T, nrow=1), alternative="two.sided", vcov.=thisV)
           confis <- rbind(confis, 
@@ -2407,8 +2425,9 @@ confi1 <- confi[
 confi1[grepl("^Large$", attributes), attributes := "Large/Upfront"]
 cols <- c("FileName", "regressand", "attributes", "regtype")
 confi1[, (cols) := droplevels(.SD), .SDcols = cols]
-confi1[, attributes := factor(attributes, levels = 
-  c("Large/Upfront", "LargeGrace", "Cattle", "WithGrace", "InKind"))]
+confi1[, attributes := factor(attributes, levels =
+  c("Large/Upfront", "LargeGrace", "Cattle", "WithGrace", "InKind"),
+  labels = c("Large/Upfront", "Large grace", "Cattle", "WithGrace", "InKind"))]
 confi1[, num := factor(num-1)]
 p <- ggplot(data = confi1
   , aes(x = factor(period), y = estimate, 
@@ -2450,6 +2469,7 @@ pdf(
   , width = 2*12/2.54, height = 2*5/2.54)
 print(p)
 whatever <- dev.off()
+```
 ```{r figure BroadNet etc, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 10}
 library(ggplot2)
 confi <- qread(paste0(pathsaveHere, "EstimatesCI.qs"))
@@ -2462,6 +2482,7 @@ confi1 <- confi[
 confi1[grepl("^Large$", attributes), attributes := "Large"]
 cols <- c("FileName", "regressand", "attributes", "regtype")
 confi1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confi1$attributes)[levels(confi1$attributes) == "LargeGrace"] <- "Large grace"
 confi1[, regressand := factor(regressand, levels = 
   c("net assets, AP", "net non-livestock assets", "net broad assets", "cattle"))]
 confi1[, regressand := factor(regressand, labels = 
@@ -2511,8 +2532,8 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Net asset impacts are estimated with ANCOVA. `Large/Upfront` , `LargeGrace`, and `Cattle` give impacts relative to `Traditional` arm. ``WithGrace` gives the grace period impacts relative to `Upfront`. `InKind` gives the impacts of managerial supports relative to the combination of `Upfront` and `WithGrace`.
-s```
+Net asset impacts are estimated with ANCOVA. `Large/Upfront` , `Large grace`, and `Cattle` give impacts relative to `Traditional` arm. ``WithGrace` gives the grace period impacts relative to `Upfront`. `InKind` gives the impacts of managerial supports relative to the combination of `Upfront` and `WithGrace`.
+```
 ```{r plot NetAssetsEffects, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics("figure/EstimationMemo/NetAssetsEffects.jpg")
 ```
@@ -2546,8 +2567,8 @@ cols <- c("FileName", "school", "attributes")
 confi2[, (cols) := droplevels(.SD), .SDcols = cols]
 confi2[, attributes := factor(attributes, levels = 
   c("Traditional", "Large/Upfront", "LargeGrace", "Cattle"))]
-confi2[, attributes := factor(attributes, labels = 
-  c("Traditional", "Large", "LargeGrace", "Cattle"))]
+confi2[, attributes := factor(attributes, labels =
+  c("Traditional", "Large", "Large grace", "Cattle"))]
 #### Trad: Level in each period at school i
 confi2t <- confi2[(grepl("^Tra", attributes) & grepl("lev.* trad.*ea", ImpactType)) & num >= 5, ]
 #### Nontrad: nontrad - trad, in each period, at school i
@@ -2557,9 +2578,6 @@ confi3[, num := factor(num-4)]
 faccol <- c("attributes", "gender", "ImpactType", "hv", "regtype", "num")
 confi3[, (faccol) := lapply(.SD, droplevels), .SDcol = faccol]
 table(confi3[,.(ImpactType, attributes)])
-confi3[, numgen := paste0(gender, ", spec", num)]
-confi3[, effects := "Level estimates"]
-confi3[!grepl("Trad", attributes), effects := "Marginal impacts relative to Traditional"]
 confi3[, numgen := paste0(gender, ", spec", num)]
 confi3[, effects := "Level estimates"]
 confi3[!grepl("Trad", attributes), effects := "Marginal impacts relative to Traditional"]
@@ -2675,7 +2693,7 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Schooling impacts by arm and by period. Impacts are relative to concurrent `Traditional` arm. `Traditional` shows raw enrollment rates of `Traditional` arm. `Large` , `LargeGrace`, and `Cattle` give impacts relative to concurrent `Traditional` arm. 
+Schooling impacts by arm and by period. Impacts are relative to concurrent `Traditional` arm. `Traditional` shows raw enrollment rates of `Traditional` arm. `Large` , `Large grace`, and `Cattle` give impacts relative to concurrent `Traditional` arm.
 ```
 ```{r figure SchoolingEffectsWithTradByArm, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics(
@@ -2710,8 +2728,10 @@ confi2[grepl("^Large$", attributes), attributes := "Large/Upfront"]
 confi2[grepl("Fun", AtType), 
   AtType := "Functional attributes\n (relative to Upfront, Upfront+WithGrace)"]
 confi2 <- confi2[!grepl("^Up", attributes), ]
-confi2[, attributes := factor(attributes, levels = 
+confi2[, attributes := factor(attributes, levels =
   c("Traditional", "Large/Upfront", "LargeGrace", "Cattle",
+    "WithGrace", "InKind"),
+  labels = c("Traditional", "Large/Upfront", "Large grace", "Cattle",
     "WithGrace", "InKind"))]
 confi3 <- confi2[!grepl("Tra", attributes), ]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
@@ -2766,7 +2786,7 @@ whatever <- dev.off()
 ```
 </details>
 ```{marginfigure}
-Consumption and labour income impacts. `Large/Upfront` , `LargeGrace`, and `Cattle` give impacts relative to `Traditional` arm. Consumption impacts are estimated with OLS, labour income impacts are estimated with ANCOVA. There are only two regression specifications for consumption, because we do not expect net asset at baseline or cattle holding at baseline to affect consumption changes. Results using these covariates give qualitatively the same results. 
+Consumption and labour income impacts. `Large/Upfront` , `Large grace`, and `Cattle` give impacts relative to `Traditional` arm. Consumption impacts are estimated with OLS, labour income impacts are estimated with ANCOVA. There are only two regression specifications for consumption, because we do not expect net asset at baseline or cattle holding at baseline to affect consumption changes. Results using these covariates give qualitatively the same results. 
 ```
 ```{r plot IncomeConsumptionEffects, echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics("figure/EstimationMemo/IncomeConsumptionEffects.jpg")
@@ -2785,6 +2805,7 @@ cie1 <- confi[
   grepl("^T$", regtype), ]
 cols <- c("FileName", "regressand", "attributes", "ImpactType")
 cie1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(cie1$attributes)[levels(cie1$attributes) == "LargeGrace"] <- "Large grace"
 cie1[, SubGroup := factor(gsub(".*ts\\, ", "", regressand))]
 cie1[, SubGroup := factor(SubGroup, levels = c("Own", "Adi", "None"))]
 cie1[, SubGroup := factor(SubGroup, labels = c("Owner", "Adi", "None"))]
@@ -2859,6 +2880,7 @@ confie1 <- confi[
   !grepl("Trad", attributes), ]
 cols <- c("FileName", "regressand", "attributes")
 confie1[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confie1$attributes)[levels(confie1$attributes) == "LargeGrace"] <- "Large grace"
 confie1[, SubGroup := factor(gsub(".*tle\\, ", "", regressand))]
 confie1[, SubGroup := factor(SubGroup, levels = c("cattle", "Own", "Adi", "None"))]
 confie1[, SubGroup := factor(SubGroup, labels = c("All members", "Owner", "Adi", "None"))]
@@ -2938,6 +2960,7 @@ confi2[grepl("on", regressand), regressand := "Per capita consumption\n(BDT)"]
 confi2[!grepl("on", regressand), regressand := "Labour income\n(BDT)"]
 cols <- c("FileName", "regressand", "attributes", "hv", "ImpactType", "AtType")
 confi2[, (cols) := droplevels(.SD), .SDcols = cols]
+levels(confi2$attributes)[levels(confi2$attributes) == "LargeGrace"] <- "Large grace"
 confi2[grepl("lab", regressand), num := num-1]
 confi2[, num := factor(num)]
 p <- ggplot(data = confi2

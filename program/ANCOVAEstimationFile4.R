@@ -1,3 +1,6 @@
+#### ANCOVAEstimationFile4.R: cosmetic change from ANCOVAEstimationFile3.R.
+####   Eliminates standalone if(grepl("^TPa$",...)) at File3 L373 by folding it
+####   into the if-else chain as else if, before the all-other else branch.
 gc()
 #### CLAUDE dea: 2026-04-29 GroupVar assigned but never read in this file;
 ####   consumed in ANCOVAEstimationFile.R L21, FDEstimationFile.R L16,29,32,37
@@ -21,7 +24,6 @@ for (k in 1:length(listheader)) {
     DataToUse <- DataToUse2
 ###_ Estimate	###_
   Formulae <- DepMean <- IniMean <- e.T <- NULL
-  elist <- vector("list", jay)
   CovariateMean <- CovNames <- formlist <- vector(mode = "list", length = jay)
   # j: j-th regression specification of k-th regression type
   for (j in 1:jay) {
@@ -62,13 +64,12 @@ for (k in 1:length(listheader)) {
     Formulae <- c(Formulae, Formula)
     # four, estimate and do inference #
     lmx <- lm(Formula, data = x)
-    #### CLAUDE spl: simplification/refactoring for readability and efficiency
-    ####   2026-04-30 assign/get(paste0(listheader[k],j)) → elist[[j]]
-    elist[[j]] <-
+    assign(paste0(listheader[k], j),
       if (is.null(lmx$na.action))
         list(lm = lmx, robust = clx(lmx, cluster = x[, groupid], returnV = T), data = x) else
         list(lm = lmx, robust = clx(lmx, cluster = x[-lmx$na.action, groupid], returnV = T),
           data = x[-lmx$na.action, ])
+      )
     # five, calculate other statistics #
     DepMean <- c(DepMean, mean(unlist(x[, Regressands[j], with = F]), na.rm = T))
     IniMean <- c(IniMean, 
@@ -78,14 +79,14 @@ for (k in 1:length(listheader)) {
          na.rm = T) else NA)
     # six, add a column of mean(Dummy==1) for each dummy variables #
     # using the data with all covariates (typically the last regression data)
-    CovariateM <- unlist(lapply(elist[[j]]$
+    CovariateM <- unlist(lapply(get(paste0(listheader[k], j))$
       data[, Covariates, with = F], mean))
     CovM <- matrix(c(
         rbind(
           formatC(CovariateM, digits = 3, format = "f"),
           paste0("(", 
             formatC(
-              unlist(lapply(elist[[j]]$data[, Covariates, with = F],
+              unlist(lapply(get(paste0(listheader[k], j))$data[, Covariates, with = F], 
                 function(x) var(x)^(1/2))), digits = 2, format = "f")
             , ")")
         )
@@ -106,10 +107,9 @@ for (k in 1:length(listheader)) {
   }
 ###_ Collect and tabulate estimates ###_
   # elist: list of ANCOVA estimation results objects #
-  #### CLAUDE spl: 2026-04-30 elist built incrementally above; eval(parse) dropped
-  # elist <- eval(parse(text =
-  #   paste("list(", paste(listheader[k], 1:jay, sep = "", collapse = ", "), ")")
-  #   ))
+  elist <- eval(parse(text = 
+    paste("list(", paste(listheader[k], 1:jay, sep = "", collapse = ", "), ")")
+    ))
   dataused <- lapply(elist, "[[", "data")
   e.roblist <- lapply(elist, "[[", "robust")
   e.estlist <- lapply(e.roblist, "[[", "est")
@@ -118,7 +118,6 @@ for (k in 1:length(listheader)) {
   # collect other regression info #
   e.N <- unlist(lapply(dataused, nrow))
   e.R <- unlist(lapply(lapply(lapply(elist, "[[", "lm"), summary), "[[", "adj.r.squared"))
-  if (grepl("NumCows", FileName)) cat("DEBUG in-loop k=", k, "FileName=", FileName, "dig.depmean=", dig.depmean, "DepMean=", DepMean, "\n")
   IniMean <- round(IniMean, dig.depmean)
   DepMean <- round(DepMean, dig.depmean)
   e.R <- formatC(e.R, digits = 3, format = "f")
@@ -146,7 +145,7 @@ for (k in 1:length(listheader)) {
   if (!grepl("Repay", FileName) #& k <= grep("^Ta$", regsuffixes)
   ) {
     if (ncol(ttab) == 3) {
-      # Sometimes ttab is cbind-ed in an unordered way.
+      # Sometimes ttab is cbind-ed in an unodered way.
       # names(ttab) (3, 1, 2) should be mapped to 2, 3, 1
       if (any(names(ttab) != c("1", "2", "3"))) 
         setcolorder(ttab, order(as.numeric(names(ttab)))) else 
@@ -186,27 +185,19 @@ for (k in 1:length(listheader)) {
       Cova <- 
         x[, c(paste0("UD", Covnames[!(Covnames %in% Cardi)]), Cardi), with = F]
       # keep only nonNA rows
-      Cova <- Cova[complete.cases(Cova)] #### CLAUDE eff: 2026-05-01
+      Cova <- Cova[apply(!is.na(Cova), 1, all), ]
       # all dummies == 1 ==> max of demeaned interaction values (No: neg*neg=pos)
       # all other smaller values have zero in at least one of dummy variables
   #       for (ii in grepout("\\.", colnames(Cova)))
   #         Cova[, (ii) := as.numeric(eval(parse(text = ii)) == 
   #           max(eval(parse(text = ii))))]
-      CovRow <- matrix(c(
-          rbind(
-            formatC(colMeans(Cova),   digits = 3, format = "f"),
-            paste0("(", formatC(sapply(Cova, sd), digits = 2, format = "f"), ")")
-          )
-        )) #### CLAUDE eff: 2026-05-01
-      ####                   [,1]
-      #### (Intercept)       ""
-      #### p$_{(Intercept)}$ ""
-      #### age               "32.500"
-      #### p$_{age}$         "(2.10)"
-      #### land              " 1.234"
-      #### p$_{land}$        "(0.30)"
-      #### dummyCattle       " 0.456"
-      #### p$_{dummyCattle}$ "(0.20)"
+      CovariateP <- rbindlist(lapply(Cova, 
+        function(x) data.table(t(c(mean(x), var(x)^(1/2))))))
+      CovRow <- matrix(c(rbind(
+          formatC(CovariateP[, V1], digits = 3, format = "f")
+          ,
+          paste0("(", formatC(CovariateP[, V2], digits = 2, format = "f"), ")")
+        )))
       cncr <- gsub("UD", "", colnames(Cova))
       rownames(CovRow) <- c(rbind(cncr, paste0("p$_{", cncr, "}$")))
       CovRow <- rbind("(Intercept)" = "", "p$_{(Intercept)}$" = "", CovRow)
@@ -318,9 +309,7 @@ for (k in 1:length(listheader)) {
   } else if (
     # 1st if ends
      # NumCows, NetAsset, Labour incomes, Schooling with TP or TPa
-    #### CLAUDE bug1: 2026-05-18 bare "nc" matches "ByExperience" mid-string
-    ####   (experie*nc*e); ByExperience files must reach 3rd if to assign etb{mm}{k}
-    grepl("NumCows$|NetAssets$|nco|Sch", FileName) & grepl("TP", regsuffixes[k]) 
+    grepl("NumCows$|NetAssets$|nc|Sch", FileName) & grepl("TP", regsuffixes[k])
   )
   { # 2nd if starts
     # save: divide a long table into 2 in time-varying regressions #
@@ -365,40 +354,39 @@ for (k in 1:length(listheader)) {
   ) 
   { # 3rd if starts
     assign(paste0("etb", mm, k), e.tb)
-  } else 
+  } else if (grepl("^TPa$", regsuffixes[k])){
+    # Shrink adjustlineskip for a long table if not splitting into multiple pages.
+      e.ltxtb <- latextab(e.tb,
+        hleft = "\\scriptsize\\hfil$",
+        hcenter = c(3.25, rep(centerBox, ncol(e.tb)-1)), hright = "$",
+        headercolor = "gray80", adjustlineskip = "-.65ex", delimiterline= NULL,
+        alternatecolor2 = "gray90",
+        addseparatingcols = Addseparatingcols,
+        separatingcolwidth = Separatingcolwidth,
+        separatingcoltitle = Separatingcoltitle,
+        addsubcoltitlehere = length(Addseparatingcols) > 0)
+      write.tablev(e.ltxtb,
+        paste0(pathsaveHere, FileName,
+          FileNameHeader[k], "ANCOVAEstimationResults.tex")
+        , colnamestrue = F)
+  } else
    # 3rd if ends
   { # all other starts
     # save: other tables #
-      e.ltxtb <- latextab(e.tb, 
-        hleft = "\\scriptsize\\hfil$", 
-        hcenter = c(3.25, rep(centerBox, ncol(e.tb)-1)), hright = "$", 
+      e.ltxtb <- latextab(e.tb,
+        hleft = "\\scriptsize\\hfil$",
+        hcenter = c(3.25, rep(centerBox, ncol(e.tb)-1)), hright = "$",
         headercolor = "gray80", adjustlineskip = "-.6ex", delimiterline= NULL,
-        alternatecolor2 = "gray90", 
-        addseparatingcols = Addseparatingcols, 
-        separatingcolwidth = Separatingcolwidth, 
-        separatingcoltitle = Separatingcoltitle, 
+        alternatecolor2 = "gray90",
+        addseparatingcols = Addseparatingcols,
+        separatingcolwidth = Separatingcolwidth,
+        separatingcoltitle = Separatingcoltitle,
         addsubcoltitlehere = length(Addseparatingcols) > 0)
-      write.tablev(e.ltxtb, 
-        paste0(pathsaveHere, FileName, 
+      write.tablev(e.ltxtb,
+        paste0(pathsaveHere, FileName,
           FileNameHeader[k], "ANCOVAEstimationResults.tex")
         , colnamestrue = F)
   } # all other ends
-  # Shrink adjustlineskip for a long table if not splitting into multiple pages.
-  if (grepl("^TPa$", regsuffixes[k])){
-      e.ltxtb <- latextab(e.tb, 
-        hleft = "\\scriptsize\\hfil$", 
-        hcenter = c(3.25, rep(centerBox, ncol(e.tb)-1)), hright = "$", 
-        headercolor = "gray80", adjustlineskip = "-.65ex", delimiterline= NULL,
-        alternatecolor2 = "gray90", 
-        addseparatingcols = Addseparatingcols, 
-        separatingcolwidth = Separatingcolwidth, 
-        separatingcoltitle = Separatingcoltitle, 
-        addsubcoltitlehere = length(Addseparatingcols) > 0)
-      write.tablev(e.ltxtb, 
-        paste0(pathsaveHere, FileName, 
-          FileNameHeader[k], "ANCOVAEstimationResults.tex")
-        , colnamestrue = F)
-  }
 ###_ confidence interval data ###_
   estlist[[k]] <- elist
 ###_ HTML table ###_
@@ -406,7 +394,7 @@ for (k in 1:length(listheader)) {
     for (i in 1:nrow(subst.tableA)) 
       rn0 <- gsub(subst.tableA[i, 1], subst.tableA[i, 2], rn0)
     rn0 <- gsub("^p\\$.*", "", rn0)
-    rn0 <- gsub("$\\times$", " * ", rn0, fixed = TRUE) #### CLAUDE bug: 2026-04-30
+    rn0 <- gsub("$\\times$", " * ", rn0)
     slt <- cbind(covariates = gsub("\\scriptsize", "", rn0), e.tab)
     #### slt <- slt[-(rep(grep("fill rd [2-4]|Flood|Head|6M", rn0), each = 2)+
     ####  rep(0:1, length(grep("fill rd [2-4]|Flood|Head|6M", rn0)))), ]

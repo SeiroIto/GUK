@@ -115,7 +115,8 @@ pre[class] {
   margin-right: -0.15em;
 }
 .TableOnLeft {
-  margin-left: zero !important;
+  #### CLAUDE tpo: "zero" is not valid CSS, changed to 0
+  margin-left: 0 !important;
 }```
 ```{r setup, echo = F, results = "hide"} 
 #### include = F <==> echo=F & results = F
@@ -123,6 +124,8 @@ pre[class] {
 #### library(renv)
 library(knitr)
 library(tufte)
+#### AG: Add functions.R as requested by user
+source("c:/seiro/settings/Rsetting/functions.R")
 #### invalidate cache when the tufte version changes
 knitr::opts_chunk$set(
   tidy = FALSE, cache.extra = packageVersion('tufte'), 
@@ -216,7 +219,7 @@ PrintFormulae <- F
 PermRepTimes <- 100000
 ```
 </details>
-```{r TableFootnotes, file = "../program/TableFootnotePiecesHTML.R", echo = F}
+```{r TableFootnotes, file = "../program/TableFootnotesHTML.R", echo = F}
 ```
 
 
@@ -454,14 +457,15 @@ for (j in 1:length(datafiles)) {
   setkey(dd2, hhid, Year, teeyr)
   dd2 <- data.table(dd2, 
     makeDummyFromFactor(dd2[, Arm], reference = NULL))
-  if (any(grepl("dummyLarge grace", colnames(dd2)))) 
-    setnames(dd2, grepout("dummyLarge grace", colnames(dd2)), 
-      gsub("dummyLarge g", "dummyLargeG", 
+  if (any(grepl("dummyLarge grace", colnames(dd2))))
+    setnames(dd2, grepout("dummyLarge grace", colnames(dd2)),
+      gsub("dummyLarge g", "dummyLargeG",
         grepout("dummyLarge grace", colnames(dd2))))
   if (any(grepl("dummyNANA", colnames(dd2)))) 
     dd2[, dummyNANA := NULL]
   #dd2[, dummyDropOuts := NULL]
-  dd2[, povertystatus := factor(povertystatus, 
+  dd2[, povertystatus := factor(povertystatus,
+    levels = c("Ultra Poor", "Moderate Poor"),
     labels = c("Ultra Poor", "Moderately Poor"))]
   dd2 <- data.table(dd2, 
     makeDummyFromFactor(dd2[, povertystatus], reference = NULL))
@@ -681,7 +685,10 @@ for (dtyp in c("AdminData", "Trimmed"))
   shk <- readRDS(paste0(pathsaveHere, "Shocks.rds"))
   lab[, teenum := 1:.N, by = .(hhid, survey)]
   con[, tee := (1:.N)+1, by = hhid]
-  lab[, teenum := 1:.N, by = .(hhid, survey)]
+  #### CLAUDE dup: deleted a perfect duplicate of L685
+  ####   deleted line was: lab[, teenum := 1:.N, by = .(hhid, survey)]
+  ####   verified: no merge/join uses lab$teenum between L685 and here,
+  ####   and nothing mutates lab in between (L686 touches con only).
   s1[, tee := survey]
   ar[, teenum := 1:.N, by = .(hhid, survey)]
   ar[, tee := survey]
@@ -1026,8 +1033,8 @@ eqv <- lapply(iiM, function(x) fligner.test(
 eqv <- lapply(eqv, function(x) 
   formatC(x*100, digits = 2, format = "f"))
 #### N
-desMainN <- asv[, (N = .N), by = Arm]
-setnames(desMainN, "V1", "N")
+desMainN <- asv[, .(N = .N), by = Arm]
+#### setnames(desMainN, "V1", "N") #### CLAUDE tpo: 2026-05-14
 desMainN <- rbind(desMainN, 
   list(Arm = "overall", N = sum(desMainN[, N])))
 desMain2[, Arm := "overall"]
@@ -1114,7 +1121,6 @@ desM[, Variable := rn2]
 #### (which would have to be a double backslash in an R string), 
 #### e.g. "(31)" would become "\\(31)".
 #### https://stackoverflow.com/a/59644337
-desM <- sapply(desM, function(x) gsub("\\(", "\\\\(", x))
 ktft <-   paste("Source: Estimated with GUK administrative", 
     "and survey data at the period 2. Survey respondents include", 
     "nonparticipants to the experiments.\\n",
@@ -1179,17 +1185,23 @@ ktft <-   paste("Source: Estimated with GUK administrative",
     "reject and attrit, so active members $\\geqslant$", 
     "total - (rejected members + attrited members).",
     PrefTestsDefinitions1)
-kt <- kable(desM, format = "html", align = c("r", rep("c", 5)))
+gttb <- gt::gt(as.data.frame(desM))
+desM <- sapply(desM, function(x) gsub("\\(", "\\\\(", x))
+kt <- kable(data.table(desM), format = "html", align = c("r", rep("c", 5)), escape = F)
+kt <- column_spec(kt, 1, width = "6cm; min-width:6cm;")
+kt <- column_spec(kt, 2:6, width = "3.5cm; min-width:3.5cm;")
 #### kt <- kableExtra::footnote(kt, general = ktft)
-kt <- column_spec(kt, 1, width = "4cm; min-width:4cm;")
-kt <- column_spec(kt, 2:6, width = "2.5cm; min-width:2.5cm;")
 #### kt <- kable_classic(kt, html_font = "Cambria")
 ```
 </details>
 
+```{r, echo = F}
+gttb
+```
 
 Descriptive statistics   
 `r kt`  
+
 <p class="description"><small>Note: `r ktft`</small></p>
 
 ```{r correct disbursement dates of 4 members, echo = F, results = 'hide', class.output="scroll-100"}

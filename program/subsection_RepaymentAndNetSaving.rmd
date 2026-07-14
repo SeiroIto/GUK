@@ -57,7 +57,10 @@ inclheader <- gsub("ex", "in", exclheader)
 #### jay <- max(as.numeric(gsub("incl", "", ls(pattern = "^incl\\d"))))
 jay <- 7 
 #### arA: all individuals, arA2: only borrowers (but arA=arA2, so redundant)
-DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
+#### CLAUDE dea: 2026-05-14 arA2 entries unreachable: loop runs k=1..length(listheader)=6;
+####             rep(c("arA","arA2"), each=7) indices 8-14 never accessed
+#DataToUse1 <- DataToUse2 <- rep(c("arA", "arA2"), each = jay)
+DataToUse1 <- DataToUse2 <- rep("arA", jay)
 dig.depmean <- 0
 AddMeanStdColumn <- UseRawDataForDestat <- CreateHTMLTable <- T
 source(paste0(pathprogram, "ANCOVAEstimationFile3.R"))

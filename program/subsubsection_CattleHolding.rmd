@@ -10,6 +10,8 @@ lvoEN = copy(lvoE)
 
 <details><summary>Click here to see the code of cattle holding impacts estimation.</summary>
 ```{r Numcows set parameters original HHs}
+#### CLAUDE frg: 2026-05-14 FileName="NumCows" also used in subsubsection_Livestock.rnw
+#### (lvoN data). Do not rename either without updating both + ANCOVALivestockResults.rnw.
 FileName <- "NumCows"
 FileNameHeader <- c("", "PovertyStatus", "Attributes",
   "TimeVarying", "TimeVaryingAttributes",

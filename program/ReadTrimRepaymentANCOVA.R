@@ -1,13 +1,18 @@
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
-ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+#### ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
+#### AG: dea
 arA[, grepout("^Time$|UD|[mM]issw|Small|^Size", 
   colnames(arA)) := NULL]
 arA[, CumSave := CumNetSaving - CumRepaid]
 arA[, CumEffectiveRepayment := CumNetSaving + CumRepaid]
 arA[, Arm := droplevels(Arm)]
 arA[, HeadLiteracy := HeadLiteracy + 0]
+#### Non-borrowers: repay=0, due=0, so zero-fill is correct.
+#### Name "ExcessRepayment" = repay - due (flow). For non-borrowers a
+#### neutral name like "CashDeposit" would be more accurate, but
+#### renaming across files is not done here.
 arA[, ExcessRepayment := 0]
-arA[grepl("bo", BorrowerStatus), 
+arA[grepl("bo", BorrowerStatus),
   ExcessRepayment := value.repay - PlannedInstallment]
 for (rr in grepout("^RM", colnames(arA)))
   arA[, (rr) := eval(parse(text=paste0(rr, "*RMDenomination")))]
@@ -28,6 +33,7 @@ setkey(arA, hhid, survey)
 arA[, paste0(IniVariables, 0) := .SD[1, ], by = hhid, .SDcols = IniVariables]
 arA[, FirstObs := 0L]
 arA[, minrd := min(survey), by = hhid][minrd == survey, FirstObs := 1L]
+arA[, minrd := NULL] #### AG: dea
 arA[, FirstObs := NULL]
 # create PureControl
 arA[, PureControl := 0L]
@@ -48,8 +54,12 @@ arA <- arA[tee > 1, ]
 #   by = survey][survey == 1, ]
 if (Only800) arA <- arA[o800 == 1L & !is.na(LoanYear) &
   !grepl("tw|dou", TradGroup), ]
-# arA2: use only borrowers
-arA2 <- arA[grepl("bo", BorrowerStatus), 
-  grepout("^groupid|^hhid|survey|tee|UD|LY|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|ExcessRepayment$|RMOther|RMvalue.[rN]|HeadA|HeadL|Floo|With|Size|^value\\.|^EffectiveR|^Arm$|BSta", 
-  colnames(arA)), with = F]
-datas <- c("arA", "arA2")
+#### CLAUDE dea: 2026-04-29
+#### arA2: use only borrowers
+#### DataToUse1/DataToUse2 in rmd iterate only over positions 1..jay=7
+#### (all "arA"); positions 8..14 ("arA2") are never reached.
+# arA2 <- arA[grepl("bo", BorrowerStatus),
+#   grepout("^groupid|^hhid|survey|tee|UD|LY|^dummy[A-Z]|^dummy.*[a-z]$|Time|CumRepaid$|CumE.*t$|CumNet|ExcessRepayment$|RMOther|RMvalue.[rN]|HeadA|HeadL|Floo|With|Size|^value\\.|^EffectiveR|^Arm$|BSta",
+#   colnames(arA)), with = F]
+#### CLAUDE dea:
+# datas <- c("arA", "arA2")
