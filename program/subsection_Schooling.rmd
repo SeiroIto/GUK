@@ -29,7 +29,10 @@ FileName <- "Schooling"
 FileNameHeader <- c("", "Attributes", "PovertyStatus",
   "TimeVarying", "TimeVaryingAttributes",
   "TimeVaryingPovertyStatus", "TimeVaryingPovertyStatusAttributes")
-regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
+#### CLAUDE dea: 2026-07-16 dead line: the 7-spec regsuffixes below is
+#### replaced by the 5-spec version two lines down; the first read of
+#### regsuffixes (listheader <- paste0("sc", regsuffixes)) sees only 5-spec
+# regsuffixes <- c("", "a", "P", "T", "Ta", "TP", "TPa")
 #### For schooling, we drop estimation by poverty class
 regsuffixes <- c("", "a", "P", "T", "Ta")
 #### Below 2 objects are used internally to select covariates

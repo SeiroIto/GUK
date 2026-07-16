@@ -1,6 +1,7 @@
 arA <- readRDS(paste0(pathsaveHere, DataFileNames[2], "InitialSample.rds"))
-#### ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
-#### AG: dea
+#### CLAUDE tpo: 2026-07-15 Claude masked as dea which later gave an error,
+####   so unmasking
+ar <- readRDS(paste0(pathsaveHere, DataFileNames[3], "Trimmed.rds"))
 arA[, grepout("^Time$|UD|[mM]issw|Small|^Size", 
   colnames(arA)) := NULL]
 arA[, CumSave := CumNetSaving - CumRepaid]

@@ -117,8 +117,9 @@ pre[class] {
 }
 .TableOnLeft {
   margin-left: 0 !important;
-}```
-```{r setup, echo = F, results = "hide"} 
+}
+```
+```{r setup, echo = F, results = "hide"}
 #### include = F <==> echo=F & results = F
 #### renv::init()
 #### library(renv)
@@ -307,7 +308,9 @@ Choose
 * Regression type (`FileNameHeader`)  
 * Covariates (`additions`)^[Before adding covariates, we drop certain variables to make coding easier. E.g., we drop `dummyLargeSize` when we want to use `dummyLarge` so regular expression becomes simpler. ]  
 
-Covariates give 5 regression specifications.  
+Covariates give up to 6 regression specifications (2--6 depending on the outcome).
+<!-- CLAUDE com: 2026-07-16 was "5"; all saved ANCOVA_*.qs hold 2-6 specs, max 6 -->
+
 
 <pre>
 Spec 1:  No covariates (OLS)
@@ -601,6 +604,17 @@ peristrings2 <- paste(peristrings0, paste0("^", covadd.nontrad[[i]][2], "$"), se
 
 ## Tests for non-schooling outcomes
 
+```{r linhyp rexlog init, eval = T, echo = F}
+#### Added by Claude
+#### rexlog: every regex actually used by the linear-hypothesis vectors
+#### below, captured in the same statement that builds it. The map chunk
+#### after this section renders from rexlog, so the map can never drift
+#### from the patterns the loop really used.
+#### CLAUDE spl: 2026-07-14
+rexlog <- list()
+rexctx <- list()
+```
+
 <details><summary>Click here to see the code to run hypothesis testing.</summary>
 ```{r construct confi Do This Mannually, eval = T, warning = F}
 confi <- linhyp <- NULL
@@ -615,10 +629,12 @@ for (r in 2:length(ListHeaderListForQS)) {
   # r: outcomes
   for (rr in 1:length(robj[[r]])) {
     # rr: regression type: "b", "P", "a", "T", "Ta", "PT", "PTa"
-    # regobj: e.g., "asT" with s=2,...,7 regression specifications
+    #### CLAUDE com: 2026-07-16 old comment said "s=2,...,7"; s runs
+    ####   1..length(regobj) covariate specifications (6/4/2 by outcome)
+    # regobj: one regression type's results, e.g. "asT"; elements = s specs
     regtype <- gsub("^..", "", reglists[[r]][rr])
     if (grepl("a", regtype)) 
-      lattributes <- lattributeList[[2]] else
+      lattributes <- lattributeList[[2]] else 
       lattributes <- lattributeList[[1]]
     regobj <- robj[[r]][[rr]]
     if (grepl("cn", ListHeaderListForQS[r])) regobj <- regobj[1:3] # consumption: 4-6 are HH aggregates
@@ -642,7 +658,17 @@ for (r in 2:length(ListHeaderListForQS)) {
     }
     covadd.trad <- lapply(covadd, function(x) x[1])
     for (s in 1:length(regobj)) {
-      # s: 7 regression specifications
+      #### CLAUDE com: 2026-07-16 old comment said "7 regression
+      ####   specifications" -- 7 is the count of regression TYPES rr
+      ####   (regsuffixes "", "P", "a", "T", "Ta", "TP", "TPa"), not of s.
+      # s: covariate specifications, length(regobj) varies by outcome:
+      #    6 (assets, schooling), 4 (livestock), 2 (consumption)
+      # Spec 1:  no covariates (OLS)
+      # Spec 2:  └── + lagged outcomes (ANCOVA)
+      # Spec 3:      └── + household level variables
+      # Spec 4:          ├── + cattle ownership and interaction
+      # Spec 5:          └── + cattle herd size
+      # Spec 6:              └── + cattle ownership and interaction
       thisreg <- lmlist[[s]]
       coeffvec <- coefflist[[s]]
       thisV <- Vlist[[s]]
@@ -654,10 +680,10 @@ for (r in 2:length(ListHeaderListForQS)) {
       # trad
       # hvT0: picks covariates to test overall change
       #  [[1]]"\\(Intercept\\)"
+      #### CLAUDE spl: 2026-07-14 pattern named + logged in one statement.
+      rexlog$hvT0 <- paste0("^", covadd.trad[[1]], "$")
       hvT0 <- rep(0, length(coeffvec))
-      hvT0[grepl(
-           paste0("^", covadd.trad[[1]], "$")
-          , names(coeffvec))] <- 1*Mult
+      hvT0[grepl(rexlog$hvT0, names(coeffvec))] <- 1*Mult
       lhcow <- glht(model=thisreg, linfct = matrix(hvT0, byrow = T, nrow=1), 
         alternative="two.sided", vcov.=thisV)
       confi <- rbind(confi, 
@@ -682,12 +708,11 @@ for (r in 2:length(ListHeaderListForQS)) {
         #  [1] "Time.4"           "dummyLarge.Time4"
         # hvN0: period 2 level for Arm
         #  [[1]]"\\(Intercept\\)", "dummyInKind"
+        #### CLAUDE spl: 2026-07-14
+        rexlog$hvN0 <- paste(paste0("^", covadd.nontrad[[1]], "$"),
+          collapse = "|")
         hvN0 <- rep(0, length(coeffvec))
-        hvN0[grepl(
-          paste(
-            paste0("^", covadd.nontrad[[1]], "$")
-           , collapse = "|")
-           , names(coeffvec))] <- 1*Mult
+        hvN0[grepl(rexlog$hvN0, names(coeffvec))] <- 1*Mult
         lhcow <- glht(model=thisreg, linfct = matrix(hvN0, byrow = T, nrow=1), 
           alternative="two.sided", vcov.=thisV)
         confi <- rbind(confi, 
@@ -702,11 +727,11 @@ for (r in 2:length(ListHeaderListForQS)) {
         #  [[1]][2] "dummyInKind"
         #### CLAUDE dea: 2026-04-29 cumstrings0 assigned but never read; peristrings0 kept
         # cumstrings0 <- peristrings0 <- paste0("^", covadd.nontrad[[1]][2], "$")
-        peristrings0 <- paste0("^", covadd.nontrad[[1]][2], "$")
+        #### CLAUDE spl: 2026-07-14
+        peristrings0 <- rexlog$hvN1 <- 
+          paste0("^", covadd.nontrad[[1]][2], "$")
         hvN1 <- rep(0, length(coeffvec))
-        hvN1[grepl(
-            paste0("^", covadd.nontrad[[1]][2], "$")
-           , names(coeffvec))] <- 1*Mult
+        hvN1[grepl(rexlog$hvN1, names(coeffvec))] <- 1*Mult
         lhcow <- glht(model=thisreg, linfct = matrix(hvN1, byrow = T, nrow=1), 
           alternative="two.sided", vcov.=thisV)
         confi <- rbind(confi, 
@@ -721,18 +746,18 @@ for (r in 2:length(ListHeaderListForQS)) {
          ## 2 way (Arm*Time) interactions ##
         if (grepl("T", regtype)) {
           # i: period loop. Start from startnum+1 (=2. Only in consumption, =3.)
-          #for (i in (startnum+1):length(covadd.trad)) {
-          # i: period loop. Start from startnum (=1. Only in consumption, =2.)
+          # for (i in (startnum+1):length(covadd.trad)) {
+          #  i: period loop. Start from startnum (=1. Only in consumption, =2.)
           #  1: Time2 or reference period. 2: Time3, 3: Time4
           for (i in startnum:length(covadd.trad)) {
             # i: period index
             # trad
             # hvTinT: difference = 0 (of trad in time X relative to trad in time 2)
             # [[2]] "Time.4"
+            #### CLAUDE spl: 2026-07-14
+            rexlog$hvTinT <- paste0("^", covadd.trad[[i]], "$")
             hvTinT <- rep(0, length(coeffvec))
-            hvTinT[grepl(
-                paste0("^", covadd.trad[[i]], "$")
-              , names(coeffvec))] <- 1*Mult
+            hvTinT[grepl(rexlog$hvTinT, names(coeffvec))] <- 1*Mult
             lhcow <- glht(model=thisreg, linfct = matrix(hvTinT, byrow = T, nrow=1), 
               alternative="two.sided", vcov.=thisV)
             confi <- rbind(confi, 
@@ -764,12 +789,11 @@ for (r in 2:length(ListHeaderListForQS)) {
             #   = TimeX + Arm.TimeX
             # [[2]] "Time.4", "dummyInKind.Time4"
             # For period 2, it gives period 2 level of Arm. 
+            #### CLAUDE spl: 2026-07-14
+            rexlog$hvNinT <- paste(paste0("^", covadd.nontrad[[i]], "$"),
+              collapse = "|")
             hvNinT <- rep(0, length(coeffvec))
-            hvNinT[grepl(
-              paste(
-                paste0("^", covadd.nontrad[[i]], "$")
-              , collapse = "|")
-              , names(coeffvec))] <- 1*Mult
+            hvNinT[grepl(rexlog$hvNinT, names(coeffvec))] <- 1*Mult
             lhcow <- glht(model=thisreg, linfct = matrix(hvNinT, byrow = T, nrow=1), 
               alternative="two.sided", vcov.=thisV)
             confi <- rbind(confi, 
@@ -784,10 +808,10 @@ for (r in 2:length(ListHeaderListForQS)) {
             # dhvNinT: Difference = 0 (of Arm g relative to trad, in time X)
             # Marginal difference between g and trad in time X.
             # [[2]][1] "dummyInKind.Time4"
+            #### CLAUDE spl: 2026-07-14
+            rexlog$dhvNinT <- paste0("^", covadd.nontrad[[i]][2], "$")
             dhvNinT <- rep(0, length(coeffvec))
-            dhvNinT[grepl(
-                paste0("^", covadd.nontrad[[i]][2], "$")
-              , names(coeffvec))] <- 1*Mult
+            dhvNinT[grepl(rexlog$dhvNinT, names(coeffvec))] <- 1*Mult
             lhcow <- glht(model=thisreg, linfct = matrix(dhvNinT, byrow = T, nrow=1), 
               alternative="two.sided", vcov.=thisV)
             confi <- rbind(confi, 
@@ -820,9 +844,12 @@ for (r in 2:length(ListHeaderListForQS)) {
             # Total difference between g and trad in time X.
             #  "dummyInKind"+"dummyInKind.TimeX" for cumulative effects relative to trad in time X
             # "dummyInKind" is stored in peristrings0 at hvN1
+            #### CLAUDE spl: 2026-07-14 peristrings2 -> rexlog$periNrelativeT
+            rexlog$periNrelativeT <- paste(peristrings0,
+              paste0("^", covadd.nontrad[[i]][2], "$"), sep = "|")
             periNrelativeT <- rep(0, length(coeffvec))
-            peristrings2 <- paste(peristrings0, paste0("^", covadd.nontrad[[i]][2], "$"), sep = "|")
-            periNrelativeT[grepl(peristrings2, names(coeffvec))] <- 1*Mult
+            periNrelativeT[grepl(rexlog$periNrelativeT,
+              names(coeffvec))] <- 1*Mult
             lhcow <- glht(model=thisreg, linfct = matrix(periNrelativeT, byrow = T, nrow=1), 
               alternative="two.sided", vcov.=thisV)
             confi <- rbind(confi, 
@@ -838,7 +865,14 @@ for (r in 2:length(ListHeaderListForQS)) {
             # hvN2: level = 0 (of nontrad in period t)
             # = cumulative trad + relative to concurrent trad
             # Intercept+TimeX+Arm+TimeX.Arm=hvT0 + hvNinT
-            hvN2 <- hvT0 + hvNinT
+            #### CLAUDE bug: 2026-07-16 code omitted Arm, contradicting the
+            #### intent comment above (user-confirmed intended effect):
+            #### hvN2 = (Intercept + TimeX) + (Arm + Arm.TimeX)
+            ####      = <hvTL>              + <periNrelativeT>
+            #### old hvT0 + hvNinT = Intercept + TimeX + Arm.TimeX (no Arm);
+            #### at i = 1 old and new coincide (both 2*Intercept + Arm).
+            # hvN2 <- hvT0 + hvNinT
+            hvN2 <- hvTL + periNrelativeT
             lhcow <- glht(model=thisreg, linfct = matrix(hvN2, byrow = T, nrow=1), 
               alternative="two.sided", vcov.=thisV)
             confi <- rbind(confi, 
@@ -874,10 +908,14 @@ for (r in 2:length(ListHeaderListForQS)) {
 
                 # dhvJ0: dummyAdiCattle0
                 # Difference between j and trad at period 2
+                 #### CLAUDE spl: 2026-07-14 record which iteration the map shows.
+                 #### CLAUDE spl: 2026-07-15 also record names(coeffvec) so the
+                 #### map chunk can print the coefficient vector it matches on.
+                 rexctx <- list(FileName = FNames[r], regtype = regtype,
+                   g = g, i = i, j = j, coefnames = names(coeffvec))
+                 rexlog$dhvJ0 <- paste0("^", j, "$")
                  dhvJ0 <- rep(0, length(coeffvec))
-                 dhvJ0[grepl(
-                     paste0("^", j, "$")
-                   , names(coeffvec))] <- 1*Mult
+                 dhvJ0[grepl(rexlog$dhvJ0, names(coeffvec))] <- 1*Mult
                  lhcow <- glht(model=thisreg, linfct = matrix(dhvJ0, byrow = T, nrow=1), 
                    alternative="two.sided", vcov.=thisV)
                  confi <- rbind(confi, 
@@ -891,10 +929,10 @@ for (r in 2:length(ListHeaderListForQS)) {
                    paste0(c(FNames[r], regtype, s, g, j, "jg - trad in period 2", i), collapse = "")
                 # dhvJinT: dummyAdiCattle0.TimeX
                 # dhvJinT: Difference between j and concurrent trad in period X.
+                 #### CLAUDE spl: 2026-07-14
+                 rexlog$dhvJinT <- paste0("^", j, ".Time.$")
                  dhvJinT <- rep(0, length(coeffvec))
-                 dhvJinT[grepl(
-                     paste0("^", j, ".Time.$")
-                   , names(coeffvec))] <- 1*Mult
+                 dhvJinT[grepl(rexlog$dhvJinT, names(coeffvec))] <- 1*Mult
                  lhcow <- glht(model=thisreg, linfct = matrix(dhvJinT, byrow = T, nrow=1), 
                    alternative="two.sided", vcov.=thisV)
                  confi <- rbind(confi, 
@@ -910,15 +948,29 @@ for (r in 2:length(ListHeaderListForQS)) {
                 #  dummyAdiCattle0 + dummyAdiCattle0.TimeX
                  hvJinT <- dhvJ0+dhvJinT
                 # hvJG0: dummyAdiCattle0.Large
+                 #### CLAUDE bug: 2026-07-14 StandingIssues #1 FIXED.
+                 #### Was: paste0("^", j, "$") -- matched dummyAdiCattle0, the
+                 #### 2-way base, i.e. exactly what dhvJ0 already selects, so
+                 #### JGinT re-tested the j main effect instead of the 3-way
+                 #### j*g term. Verified on ANCOVA_NetAssetsExperience.qs
+                 #### (rr=6, s=4): the real coefficient is dummyAdiCattle0.Cattle.
+                 # rexlog$hvJG0 <- paste0("^", j, "$")
+                 rexlog$hvJG0 <- paste0("^", j, ".", g, "$")
                  hvJG0 <- rep(0, length(coeffvec))
-                 hvJG0[grepl(
-                     paste0("^", j, "$")
-                   , names(coeffvec))] <- 1*Mult
+                 hvJG0[grepl(rexlog$hvJG0, names(coeffvec))] <- 1*Mult
                 # dhvJGinT: dummyAdiCattle0.Large.TimeX
+                 #### CLAUDE bug: 2026-07-14 StandingIssues #1 FIXED.
+                 #### Was: paste0("^", j, ".", covadd.nontrad[[i]][2]) -- but
+                 #### covadd.nontrad[[i]][2] is already "dummyCattle.Time4", so
+                 #### the pattern became "^dummyAdiCattle0.dummyCattle.Time4"
+                 #### and matched NOTHING (all-zero vector), and had no closing
+                 #### "$". Strip the "dummy" prefix; real coefficient is
+                 #### dummyAdiCattle0.Cattle.Time4.
+                 # rexlog$dhvJGinT <- paste0("^", j, ".", covadd.nontrad[[i]][2])
+                 rexlog$dhvJGinT <- paste0("^", j, ".",
+                   gsub("^dummy", "", covadd.nontrad[[i]][2]), "$")
                  dhvJGinT <- rep(0, length(coeffvec))
-                 dhvJGinT[grepl(
-                     paste0("^", j, ".", covadd.nontrad[[i]][2])
-                   , names(coeffvec))] <- 1*Mult
+                 dhvJGinT[grepl(rexlog$dhvJGinT, names(coeffvec))] <- 1*Mult
                 # hvJGinT: dummyAdiCattle0.Large + dummyAdiCattle0.Large.TimeX
                  hvJGinT <- hvJG0 + dhvJGinT
                  lhcow <- glht(model=thisreg, linfct = matrix(hvJGinT, byrow = T, nrow=1), 
@@ -951,8 +1003,8 @@ for (r in 2:length(ListHeaderListForQS)) {
                   paste0(c(FNames[r], regtype, s, g, j, "jg - trad in each period", i), collapse = "")
               } # end: cattle experience (Own/Adi) j loop
             } # end: if "sExperience in FileName[r]" loop
-            ### Some outcomes do not have dummyUltraPoor as a level covariate. Need to fix it.
-            ### Before doing so, abort these outcomes.
+            #### Some outcomes do not have dummyUltraPoor as a level covariate. Need to fix it.
+            #### Before doing so, abort these outcomes.
             if (grepl("Exper", FNames[r])) next
             if (grepl("Pa?$", reglists[[r]][rr])) {
               # if time-invariant poverty wise impacts are estimated
@@ -970,29 +1022,51 @@ for (r in 2:length(ListHeaderListForQS)) {
                 function(x) gsub("T", "dummyUltraPoor.T", x))
               covadd.tradP <- lapply(covadd.tradP, 
                 function(x) gsub("Time\\.", "Time", x))
+              #### CLAUDE bug: 2026-07-16 user-directed redesign to
+              #### per-period poverty tests (was [[1]] only, "time
+              #### invariant"):
+              #### matPT = Poor + Poor.TimeX   (poor - nonpoor | trad,
+              ####         period i+1; at i = 1 just Poor)
+              #### CLAUDE spl: 2026-07-14
+              # rexlog$matPT <- paste0("^", covadd.tradP[[1]], "$")
+              rexlog$matPT <- paste(paste0("^",
+                unique(c(covadd.tradP[[1]], covadd.tradP[[i]])), "$"),
+                collapse = "|")
               matPT <- rep(0, length(coeffvec))
-              matPT[grepl(
-                paste0("^", covadd.tradP[[1]], "$")
-              , names(coeffvec))] <- 1*Mult
+              matPT[grepl(rexlog$matPT, names(coeffvec))] <- 1*Mult
               # dummyInKind.Time4 ==> dummyInKind.UltraPoor.Time4
-              covadd.nontradP <- lapply(covadd.nontrad, 
+              covadd.nontradP <- lapply(covadd.nontrad,
                 function(x) gsub("T", "UltraPoor.T", x[2]))
-              # nontrad 
+              # nontrad
+              #### CLAUDE bug: 2026-07-16 matPN = Arm.Poor + Arm.Poor.TimeX;
+              #### row2 = matPT + matPN = Poor + Arm.Poor + Poor.TimeX
+              ####        + Arm.Poor.TimeX (user formula).
+              #### Old gsub could not build the time-invariant Arm.Poor
+              #### (arm names carry no "T"): i = 1 picked the arm dummy
+              #### itself, i >= 2 only the .TimeX interaction. Verified on
+              #### ANCOVA_Land coefficient names (dummyInKind.UltraPoor).
+              #### CLAUDE spl: 2026-07-14
+              # rexlog$matPN <- paste0("^", covadd.nontradP[[i]], "$")
+              rexlog$matPN <- paste(unique(c(
+                paste0("^", covadd.nontrad[[1]][2], ".UltraPoor$"),
+                if (i > 1) paste0("^", covadd.nontradP[[i]], "$"))),
+                collapse = "|")
               matPN <- rep(0, length(coeffvec))
-              matPN[grepl(
-                  paste0("^", covadd.nontradP[[i]], "$")
-                , names(coeffvec))] <- 1*Mult
+              matPN[grepl(rexlog$matPN, names(coeffvec))] <- 1*Mult
               matP <- rbind(matPT, matPN=matPT+matPN)
               lhcow <- glht(model=thisreg, linfct = matP, 
                 alternative="two.sided", vcov.=thisV)
-              confi <- rbind(confi, 
-                c(FNames[r], regtype, s, g, "poor", "Poor + Arm.Poor = 0, time invariant", 
-                  "matP", 
-                   "2-4", confint(lhcow)$confint[1, ], 
+              #### CLAUDE bug: 2026-07-16 store i (was literal "2-4" ->
+              #### as.numeric NA at reshape); labels = the formulas (old
+              #### ", time invariant" no longer applies).
+              confi <- rbind(confi,
+                c(FNames[r], regtype, s, g, "poor", "Poor + Poor.TimeX = 0, trad",
+                  "matP",
+                   i, confint(lhcow)$confint[1, ],
                    if (sum(lhcow$linfct) != 0) summary(lhcow)$test$pvalues[1] else NA),
-                c(FNames[r], regtype, s, g, "poor + arm*poor", "Poor + Arm.Poor = 0, time invariant", 
-                  "matP", 
-                   "2-4", confint(lhcow)$confint[2, ], 
+                c(FNames[r], regtype, s, g, "poor + arm*poor", "Poor + Arm.Poor + Poor.TimeX + Arm.Poor.TimeX = 0",
+                  "matP",
+                   i, confint(lhcow)$confint[2, ],
                    if (sum(lhcow$linfct) != 0) summary(lhcow)$test$pvalues[2] else NA)
                )
             } # end: if time-invariant poverty wise impacts are estimated
@@ -1009,18 +1083,25 @@ for (r in 2:length(ListHeaderListForQS)) {
                 function(x) gsub("T", "dummyUltraPoor.T", x))
               covadd.tradP <- lapply(covadd.tradP, 
                 function(x) gsub("Time\\.", "Time", x))
+              #### CLAUDE spl: 2026-07-14
+              rexlog$dmatPTinT <- paste0("^", covadd.tradP[[i]], "$")
               dmatPTinT <- rep(0, length(coeffvec))
-              dmatPTinT[grepl(
-                paste0("^", covadd.tradP[[i]], "$")
-              , names(coeffvec))] <- 1*Mult
+              dmatPTinT[grepl(rexlog$dmatPTinT, names(coeffvec))] <- 1*Mult
               # dummyInKind.Time4 ==> dummyInKind.UltraPoor.Time4
-              covadd.nontradP <- lapply(covadd.nontrad, 
+              covadd.nontradP <- lapply(covadd.nontrad,
                 function(x) gsub("T", "UltraPoor.T", x[2]))
-              # nontrad 
+              # nontrad
+              #### CLAUDE bug: 2026-07-16 at i=1 the gsub returned the arm
+              #### dummy unchanged (no "T" to anchor on), so the row tested
+              #### dummyInKind = 0 instead of dummyInKind.UltraPoor = 0.
+              #### Build the interaction name directly at i=1.
+              #### CLAUDE spl: 2026-07-14
+              # rexlog$dmatPNinT <- paste0("^", covadd.nontradP[[i]], "$")
+              rexlog$dmatPNinT <- if (i == 1)
+                paste0("^", covadd.nontrad[[1]][2], ".UltraPoor$") else
+                paste0("^", covadd.nontradP[[i]], "$")
               dmatPNinT <- rep(0, length(coeffvec))
-              dmatPNinT[grepl(
-                  paste0("^", covadd.nontradP[[i]], "$")
-                , names(coeffvec))] <- 1*Mult
+              dmatPNinT[grepl(rexlog$dmatPNinT, names(coeffvec))] <- 1*Mult
               # matPTinT: sum of (poor trad - nonpoor trad, in each period)
               # Time = 2: Poor = 0; Time = 3: Poor + Poor.Time3 = 0  for trad
               #   = matP + dmatPTinT
@@ -1030,8 +1111,24 @@ for (r in 2:length(ListHeaderListForQS)) {
               # Poor = 0 for trad
               matP <- rep(0, length(coeffvec))
               matP[grep("^dummyUltraPoor$", names(coeffvec))] <- 1*Mult
-              matPTinT <- matP + dmatPTinT
-              matPNinT <- matPTinT + dmatPNinT
+              #### CLAUDE bug: 2026-07-16 dmatPTinT at i=1 already holds
+              #### dummyUltraPoor; adding matP doubled it:
+              #### skip "+ matP" at i=1 => matPTinT = dummyUltraPoor
+              ####  add "+ matP" at i>1 => matPTinT = dummyUltraPoor
+              ####                                  + dummyUltraPoor.TimeX
+              # matPTinT <- matP + dmatPTinT
+              matPTinT <- if (i == 1) dmatPTinT else matP + dmatPTinT
+              #### CLAUDE bug: 2026-07-16 dummyInKind.UltraPoor never entered
+              #### matPNinT (unreachable by the gsub); add it via dmatPN0:
+              #### at i=1 => matPNinT = dummyUltraPoor + dummyInKind.UltraPoor
+              #### at i>1 => matPNinT = dummyUltraPoor + dummyInKind.UltraPoor
+              ####            + dummyUltraPoor.TimeX + dummyInKind.UltraPoor.TimeX
+              dmatPN0 <- rep(0, length(coeffvec))
+              dmatPN0[grepl(paste0("^", covadd.nontrad[[1]][2],
+                ".UltraPoor$"), names(coeffvec))] <- 1*Mult
+              # matPNinT <- matPTinT + dmatPNinT
+              matPNinT <- matPTinT + dmatPN0 +
+                (if (i == 1) 0 else dmatPNinT)
               lhcow1 <- glht(model=thisreg, linfct = t(matrix(dmatPTinT)),
                 alternative="two.sided", vcov.=thisV)
               lhcow2 <- glht(model=thisreg, linfct = t(matrix(dmatPNinT)),
@@ -1066,6 +1163,178 @@ for (r in 2:length(ListHeaderListForQS)) {
   } # end: reg type rr loop ("", "P", "a", "T", "Ta", ...)
 } # end: outcome r loop
 ```
+
+</details>
+
+The table below shows one example slice of `confi` — the seven per-period
+tests (net assets, `Ta` regression type, specification 1, `LargeSize` arm,
+stored period 2 = survey period 3). `CombiOfCoeff` gives the coefficient
+combination behind each linear-hypothesis vector (generic names: `Arm` =
+`dummyLargeSize` here; `Time3` because stored period 2 + 1 = 3).
+
+```{r confi example table, eval = T, warning = F, message = F}
+library(tinytable)
+cfe <- data.table::as.data.table(confi)
+setnames(cfe, c("FileName", "regtype", "num", "attributes", "experience",
+  "ImpactType", "hv", "period", "Estimate", "lwr", "upr", "pvalue"))
+cfe <- cfe[FileName == "NetAssets" & regtype == "Ta" & num == "1" &
+  period == "2" & attributes %in% c("trad", "LargeSize"), ]
+combi <- c(
+  TinT           = "Time3",
+  TL             = "Intercept + Time3",
+  NinT           = "Time3 + Arm*Time3",
+  dNinT          = "Arm*Time3",
+  NinT2          = "Time3 + Arm + Arm*Time3",
+  periNrelativeT = "Arm + Arm*Time3",
+  N2             = "Intercept + Time3 + Arm + Arm*Time3")
+cfe[, CombiOfCoeff := combi[hv]]
+cfe[, Estimate := round(as.numeric(Estimate))]
+cfe[, lwr := round(as.numeric(lwr))]
+cfe[, upr := round(as.numeric(upr))]
+cfe[, pvalue := round(100*as.numeric(pvalue), 2)]
+setnames(cfe, "pvalue", "p (%)")
+tt(cfe[, .(hv, CombiOfCoeff, ImpactType, Estimate, lwr, upr, `p (%)`)],
+  caption = "The seven per-period tests: NetAssets, Ta, spec 1, period 3")
+```
+
+Reading the table:
+
+* The `period` column of `confi` stores the loop index `i`; the reshape
+  chunk later adds 1 (`period := period + 1`), so `period` 2 rows test
+  survey period 3.
+* Labels such as "level of trad in period X" keep `X` as a placeholder
+  deliberately: the reshape chunk matches these exact strings in
+  `factor(ImpactType, levels = )`, and the actual period is carried by the
+  `period` column. Replacing `X` with a number in the construction code
+  would send those rows to `NA`.
+* Identities visible above: `NinT` $-$ `TinT` $=$ `dNinT`;
+  `N2` $-$ `TL` $=$ `periNrelativeT`; `NinT2` $=$ `TinT` $+$ `periNrelativeT`.
+* `periNrelativeT` $=$ `Arm + Arm*Time3` $=$ (nontrad $-$ trad gap in
+  period 2) $+$ (change in the gap by period 3) $=$ the total
+  nontrad $-$ trad gap in period 3. The "sum of" in its label refers to
+  these two components, not to a sum over periods.
+* `N2` $=$ `TL` $+$ `periNrelativeT` $=$ the level of nontrad in the
+  period, per the intended combination (fixed 2026-07-16: the pre-fix
+  code `hvT0 + hvNinT` omitted `Arm`, understating nontrad levels by the
+  arm main effect).
+* These seven tests repeat for every arm and every period in any
+  regression type containing `T`; `a` types append the attribute (`j`)
+  tests after them.
+
+```{r linhyp map, echo = F, results = 'asis'}
+#### Renders the linear-hypothesis vectors as a nested map. The regex column
+#### is taken from rexlog, i.e. the strings the loop above actually used, so
+#### it cannot drift from the code. Only the nesting shape is static here.
+#### rexctx records which iteration the shown values come from.
+#### CLAUDE spl: 2026-07-14
+lhstruct <- rbind(
+  c(0, "hvT0",                                          "regex"),
+  c(0, "for (g in lattributes) {",                      "open"),
+  c(1, "hvN0",                                          "regex"),
+  c(1, "hvN1",                                          "regex"),
+  c(1, "if (grepl(\"T\", regtype)) {",                  "open"),
+  c(2, "for (i in startnum:length(covadd.trad)) {",     "open"),
+  c(3, "hvTinT",                                        "regex"),
+  c(3, "hvTL = hvT0 + hvTinT",                          "derived"),
+  c(3, "hvNinT",                                        "regex"),
+  c(3, "dhvNinT",                                       "regex"),
+  c(3, "hvNinT2 = hvN1 + hvNinT",                       "derived"),
+  c(3, "periNrelativeT",                                "regex"),
+  c(3, "hvN2 = hvTL + periNrelativeT",                  "derived"),
+  c(3, "if (grepl(\"sExpe\", FNames[r])) {",            "open"),
+  c(4, "for (j in dummy(Own|Adi)Cattle0) {",            "open"),
+  c(5, "dhvJ0",                                         "regex"),
+  c(5, "dhvJinT",                                       "regex"),
+  c(5, "hvJinT = dhvJ0 + dhvJinT",                      "derived"),
+  c(5, "hvJG0",                                         "regex"),
+  c(5, "dhvJGinT",                                      "regex"),
+  c(5, "hvJGinT = hvJG0 + dhvJGinT",                    "derived"),
+  c(5, "periJGinT = periNrelativeT + hvJinT + hvJGinT", "derived"),
+  c(4, "}",                                             "close"),
+  c(3, "}",                                             "close"),
+  c(3, "if (grepl(\"Pa?$\", reglists[[r]][rr])) {",      "open"),
+  c(4, "matPT",                                         "regex"),
+  c(4, "matPN",                                         "regex"),
+  c(4, "matP = rbind(matPT, matPT + matPN)",            "derived"),
+  c(3, "}",                                             "close"),
+  c(3, "if (grepl(\"TPa?$\", reglists[[r]][rr])) {",     "open"),
+  c(4, "dmatPTinT",                                     "regex"),
+  c(4, "dmatPNinT",                                     "regex"),
+  c(3, "}",                                             "close"),
+  c(2, "}",                                             "close"),
+  c(1, "}",                                             "close"),
+  c(0, "}",                                             "close")
+  )
+colnames(lhstruct) <- c("lev", "vec", "kind")
+
+esc <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;",  x, fixed = TRUE)
+  gsub(">", "&gt;", x, fixed = TRUE)
+}
+namecol <- 34
+body <- character(nrow(lhstruct))
+for (a in 1:nrow(lhstruct)) {
+  lev <- as.integer(lhstruct[a, "lev"])
+  ind <- strrep("  ", lev)
+  vec <- lhstruct[a, "vec"]
+  knd <- lhstruct[a, "kind"]
+  if (knd %in% c("open", "close")) {
+    body[a] <- paste0(ind, '<span class="lp">', esc(vec), "</span>")
+  } else if (knd == "derived") {
+    body[a] <- paste0(ind, '<span class="dv">', esc(vec), "</span>")
+  } else {
+    pat <- rexlog[[vec]]
+    if (is.null(pat)) pat <- "(not reached in this run)"
+    pad <- max(1, namecol - nchar(ind) - nchar(vec))
+    body[a] <- paste0(ind, '<span class="vc">', esc(vec), "</span>",
+      strrep(" ", pad), '<span class="rx">', esc(pat), "</span>")
+  }
+}
+hdr <- if (length(rexctx))
+  paste0("shown for: ", rexctx$FileName, " | regtype ", rexctx$regtype,
+    " | g = ", rexctx$g, " | i = ", rexctx$i, " | j = ", rexctx$j) else
+  "no iteration recorded"
+#### CLAUDE spl: 2026-07-15 coefficient vector the regexes match on
+nmtxt <- if (length(rexctx) && !is.null(rexctx$coefnames))
+  paste(esc(rexctx$coefnames), collapse = ", ") else
+  "(no coefficients recorded)"
+cat('
+<div class="lhmap">
+<style>
+.lhmap {border:1px solid #d0d7de; border-radius:6px; margin:1em 0;}
+.lhmap .hd {background:#f6f8fa; border-bottom:1px solid #d0d7de;
+  padding:6px 10px; font-weight:600; font-size:90%;}
+.lhmap .ct {background:#fffbdd; border-bottom:1px solid #d0d7de;
+  padding:4px 10px; font-size:80%; color:#57606a; font-family:monospace;}
+.lhmap .nm {border-bottom:1px solid #d0d7de; padding:4px 10px;
+  font-size:80%; color:#24292e; font-family:monospace; line-height:1.5;}
+.lhmap pre {margin:0; padding:10px 12px; background:#fff;
+  font-size:85%; line-height:1.5; overflow-x:auto;}
+.lhmap .lp {color:#005cc5; font-weight:600;}
+.lhmap .vc {color:#24292e; font-weight:600;}
+.lhmap .rx {color:#d73a49;}
+.lhmap .dv {color:#24292e; font-style:normal;}
+.lhmap .lg {padding:6px 10px; border-top:1px solid #d0d7de;
+  background:#f6f8fa; font-size:80%; color:#57606a;}
+</style>
+<div class="hd">Linear-hypothesis vectors: nesting and the regex actually used</div>
+<div class="ct">', esc(hdr), '</div>
+<div class="nm"><b>names(coeffvec):</b> ', nmtxt, '</div>
+<pre>
+', paste(body, collapse = "\n"), '
+</pre>
+<div class="lg">
+<b>bold</b> = vector built by regex &nbsp;|&nbsp;
+<span style="color:#24292e">upright black</span> = derived (sum of others, no regex) &nbsp;|&nbsp;
+<span style="color:#d73a49">red</span> = the regex matched against
+<code>names(coeffvec)</code>, taken live from <code>rexlog</code>
+</div>
+</div>
+', sep = "")
+```
+
+<details><summary>Click here to see the code to reshape confi.</summary>
 ```{r reshape confi Do This Mannually, eval = T, warning = F}
 confi <- data.table(unique(confi))
 setnames(confi, c("FileName", "regtype", "num", "attributes", "experience",
@@ -1095,7 +1364,12 @@ confi[, ImpactType := factor(ImpactType,
     "j*g - trad, in period 2",
     "j*g - trad, in each period",
     "j*g - g, in each period",
-    "Poor + Arm.Poor = 0, time invariant",
+    #### CLAUDE bug: 2026-07-16 "Poor + Arm.Poor = 0, time invariant"
+    #### removed: zero rows carry it since the matP redesign, and the
+    #### second factor(labels=) call rebuilds levels from present values
+    #### only -> length mismatch error on knit
+    "Poor + Poor.TimeX = 0, trad",
+    "Poor + Arm.Poor + Poor.TimeX + Arm.Poor.TimeX = 0",
     "poor trad - nonpoor trad, in each period",
     "poor nontrad - nonpoor nontrad, in each period",
     "sum of (poor trad - nonpoor trad, in each period)",
@@ -1117,7 +1391,8 @@ confi[, ImpactType := factor(ImpactType,
     "j*g - trad in period 2",
     "j*g - trad, in each period",
     "j*g - g, in each period",
-    "poor - nonpoor, in all arms, time invariant",
+    "poor - nonpoor, trad, in each period",
+    "poor - nonpoor, in arm g, in each period",
     "poor trad - nonpoor trad, in each period",
     "poor nontrad - nonpoor nontrad, in each period",
     "sum of (poor trad - nonpoor trad, in each period)",
@@ -1144,10 +1419,21 @@ confi[, attributes := factor(attributes,
 confi[, attributes := factor(attributes, 
   labels = c("Traditional", "Large", "LargeGrace", "Cattle",
   "Upfront", "WithGrace", "InKind"))]
-confi[, experience := factor(experience, 
-  levels = c("None", "dummyAdiCattle0", "dummyOwnCattle0"))]
-confi[, experience := factor(experience, 
-  labels = c("None", "AdiCattle", "OwnCattle"))]
+#### CLAUDE bug: 2026-07-16 poverty-test tags were absent from levels ->
+#### 3,978 rows (matP 1,314 + dmatP*/matP*inT 2,664) coerced to NA
+#### (StandingIssues: matP rows lose identity). All six tags added.
+# confi[, experience := factor(experience,
+#   levels = c("None", "dummyAdiCattle0", "dummyOwnCattle0"))]
+# confi[, experience := factor(experience,
+#   labels = c("None", "AdiCattle", "OwnCattle"))]
+confi[, experience := factor(experience,
+  levels = c("None", "dummyAdiCattle0", "dummyOwnCattle0",
+    "poor", "poor + arm*poor", "dpoor.TimeX", "dpoor.Arm.TimeX",
+    "poor.TimeX", "poor.Arm.TimeX"))]
+confi[, experience := factor(experience,
+  labels = c("None", "AdiCattle", "OwnCattle",
+    "poor", "poor + arm*poor", "dpoor.TimeX", "dpoor.Arm.TimeX",
+    "poor.TimeX", "poor.Arm.TimeX"))]
 #### NumCows reg specs
 #### 1. NA,
 #### 2. "|NumCows0$",
@@ -2541,7 +2827,7 @@ knitr::include_graphics("figure/EstimationMemo/NetAssetsEffects.jpg")
 
 ```{marginfigure}
 Robustness checks: Impacts on various asset measures. Time-varying impacts on net assets evaluated with annualised price, net broad assets, non-livestock assets (BDT), and cattle holding (counts). Net asset value = livestock asset value + non-livestock asset value - debt. `Net broad assets` use all asset items, net assets in our main results only use asset items appearing in all rounds. `Net assets, annual price` uses annual median price for livestock evaluation while `Net assets` uses median price of all rounds. Columns of `Large`, `Large grace`, and `Cattle` show impacts relative to the `Traditional arm`. 4th and 5th regression specifications use baseline cattle count and baseline cattle ownership dummy variable as covariates, hence they are omitted from impacts on Cattle (counts).
-s```
+```
 ```{r plot NetAssetsNetBroadAssetsNLAssetsCattleEffects., echo = F, fig.fullwidth=F, fig.width = 8}
 knitr::include_graphics("figure/EstimationMemo/NetAssetsNetBroadAssetsNLAssetsCattleEffects.jpg")
 ```
@@ -2623,6 +2909,7 @@ pdf(
   , width = 12*2/2.54, height = 12*2/2.54)
 print(p)
 whatever <- dev.off()
+```
 ```{r figure sch func attributes concurrent, eval = T, warning = F, message = F, fig.align='center', fig.height = 12, fig.width = 14, fig.cap = paste0("Effects on schooling by functional attributes per period", "\\\\ {\\footnotesize \\setlength{\\baselineskip}{8pt}}"), fig.lp = 'Figure '}
 library(ggplot2)
 confis <- qread(paste0(pathsaveHere, "EstimatesCISchooling.qs"))
